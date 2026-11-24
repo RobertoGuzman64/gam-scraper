@@ -239,7 +239,7 @@ test("Manain: pesos con cuatro decimales acreditados no se confunden con miles",
   assert.deepEqual(resolveAttribute(unmeasured, attribute("Peso")), { status: "not_observed", value: null });
   assert.deepEqual(resolveAttribute(unmeasured, attribute("Peso operativo")), { status: "not_observed", value: null });
   assert.equal(prepareProduct(unmeasured, catalog).status, "review");
-  assert.equal(prepareProduct(unmeasured, catalog).product.spec.Peso, "kg");
+  assert.equal(Object.hasOwn(prepareProduct(unmeasured, catalog).product.spec, "Peso"), false);
   assert.equal(resolveAttribute({ ...unmeasured, providerId: "gam" }, attribute("Peso")).status, "invalid");
   for (const peso of ["5.2340 kg", "5.2000 mm", "5.2000-6 kg"]) {
     assert.equal(resolveAttribute({ ...tool, specs: { ...tool.specs, Peso: peso } }, attribute("Peso")).status,

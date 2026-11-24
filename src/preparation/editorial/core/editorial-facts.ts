@@ -149,6 +149,38 @@ const verifiedBasketDimensions = (raw: SpecValue | undefined): readonly [number,
   return length >= 0.5 && length <= 12 && width >= 0.4 && width <= 6 ? [length, width] : null;
 };
 
+export const hasPlatformRetractedHeight = (record: ProductRecord, family: EditorialFamily): boolean =>
+  isPlatform(family) && record.specs?.["Altura replegada"] !== undefined;
+
+const platformStoredHeight = (record: ProductRecord, workingHeight: number | null): number | null => {
+  const height = editorialMetricOf(record.specs, ["Altura almacenaje", "Altura replegada"]);
+  return height !== null && height >= 0.5 && height <= 30 &&
+    (workingHeight === null || height <= workingHeight) ? height : null;
+};
+
+const platformLengthKeys = ["Longitud de plataforma", "Longitud plataforma"];
+const platformWidthKeys = ["Anchura de plataforma", "Ancho plataforma", "Anchura plataforma"];
+
+export const hasSeparatePlatformDimensions = (record: ProductRecord): boolean =>
+  [...platformLengthKeys, ...platformWidthKeys].some((key) => record.specs?.[key] !== undefined);
+
+const verifiedPlatformDimensions = (record: ProductRecord): readonly [number, number] | null => {
+  const combined = record.specs?.["Dimensiones Cesta"];
+  if (!hasSeparatePlatformDimensions(record)) return verifiedBasketDimensions(combined);
+  const pair = combined === undefined ? null : verifiedBasketDimensions(combined);
+  if (combined !== undefined && pair === null) return null;
+  const hasLength = platformLengthKeys.some((key) => record.specs?.[key] !== undefined);
+  const hasWidth = platformWidthKeys.some((key) => record.specs?.[key] !== undefined);
+  const length = hasLength ? editorialMetricOf(record.specs, platformLengthKeys) : pair?.[0] ?? null;
+  const width = hasWidth ? editorialMetricOf(record.specs, platformWidthKeys) : pair?.[1] ?? null;
+  if (length === null || width === null || length < 0.5 || length > 12 || width < 0.4 || width > 6) return null;
+  if (pair && (pair[0] !== length || pair[1] !== width)) return null;
+  const exteriorWidth = editorialMetricOf(record.specs, ["Anchura", "Ancho total", "Anchura total", "Ancho"]);
+  const exteriorLength = editorialMetricOf(record.specs, ["Longitud", "Longitud total", "Largo"]);
+  if (exteriorWidth !== null && width > exteriorWidth || exteriorLength !== null && length > exteriorLength) return null;
+  return [length, width];
+};
+
 const verifiedMast = (value: SpecValue | undefined): "dúplex" | "tríplex" | "simple" | null => {
   if (typeof value !== "string") return null;
   const normalized = normalize(value);
@@ -200,7 +232,8 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
   const telehandler = family === "manipulador-telescopico";
   const work = platform || telehandler ? sourceMetric(source.workingHeight, "m") : null;
   const platformHeight = platform ? editorialMetricOf(record.specs, ["Altura plataforma", "Altura Plataforma"]) : null;
-  const storedHeight = platform || telehandler || hasHandlingMeasurements(family) ||
+  const storedHeight = hasPlatformRetractedHeight(record, family) ?
+    platformStoredHeight(record, work) : platform || telehandler || hasHandlingMeasurements(family) ||
     family === "fregadora" || family === "barredora" || family === "maquina-limpieza" ?
     editorialMetricOf(record.specs, ["Altura almacenaje"]) : null;
   const lateralFamily = family === "plataforma-telescopica" || family === "plataforma-articulada" ||
@@ -237,7 +270,7 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
   const gradeability = editorialQuantityOf(record.specs, ["Pendiente superable"], "%");
   const loadCenter = hasHandlingMeasurements(family) ? corroboratedMillimetres(record.specs?.["Centro de carga"], record.longDescription, "Centro de carga", 350, 2000) : null;
   const turningRadius = isHandling(family) ? corroboratedMillimetres(record.specs?.["Radio de giro"], record.longDescription, "Radio de giro", 750, 7500) : null;
-  const basket = isPlatform(family) ? verifiedBasketDimensions(record.specs?.["Dimensiones Cesta"]) : null;
+  const basket = platform ? verifiedPlatformDimensions(record) : null;
   const drawbar = family === "tractor-arrastre" ? editorialQuantityOf(record.specs, ["Tiro a la barra nominal"], "N") : null;
   const mast = hasHandlingMeasurements(family) ? verifiedMastOf(record) : null;
   const cleaningWidth = ["fregadora", "barredora", "maquina-limpieza"].includes(family) ?

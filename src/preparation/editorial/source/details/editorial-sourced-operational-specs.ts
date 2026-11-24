@@ -1,8 +1,11 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { editorialFamilyOf } from "../../core/editorial-families.js";
 import { resolveSourcedEquipmentDetails } from "./editorial-sourced-equipment-details.js";
-import { editorialMetricOf, editorialQuantityOf, formatEditorialQuantity } from "../../measurements/editorial-measurements.js";
+import { editorialMetricOf, editorialQuantity, editorialQuantityOf, formatEditorialQuantity } from "../../measurements/editorial-measurements.js";
 import { sameEditorialUnit, verifiedEditorialIdentity } from "../../core/editorial-source-contract.js";
+import { containsEditorialBrandModel, containsEditorialIdentity } from "../../identity/editorial-identity-match.js";
+import { verifiedEditorialUnitPair } from "../../identity/editorial-unit-provenance.js";
+import { containsEditorialSourceSlugModel } from "../editorial-source-url.js";
 
 const matchingSpecs = (source: ProductRecord, prepared: ProductRecord, key: string): string | null => {
   const value = source.specs?.[key];
@@ -79,11 +82,57 @@ const transportContext = (source: ProductRecord, prepared: ProductRecord, genera
   return `${technical}${registration}${inspection}`;
 };
 
+const reachStackerContext = (source: ProductRecord, prepared: ProductRecord, general: string): string | null => {
+  const brand = source.brand?.trim();
+  const model = source.model?.trim();
+  const summary = source.shortDescription?.trim();
+  const original = source.longDescription?.trim();
+  const family = /\breach\s*stacker\b/iu;
+  const normalizeSpace = (value: string): string => value.trim().replace(/\s+/gu, " ");
+  if (!brand || !model || !summary || !original || !verifiedEditorialUnitPair(source, prepared) ||
+    source.shortDescription !== prepared.shortDescription ||
+    source.longDescription !== prepared.longDescription ||
+    !family.test(source.title ?? "") || !family.test(prepared.title ?? "") || !family.test(summary) ||
+    !containsEditorialBrandModel(summary, brand, model) || containsEditorialIdentity(general, model) ||
+    !containsEditorialIdentity(original, brand) ||
+    !/\b(?:reach\s*stackers?|apilador(?:es)?\s+telesc[oó]pic[oa]s?|manipulaci[oó]n\s+de\s+contenedores)\b/iu.test(original) ||
+    normalizeSpace(general) !== normalizeSpace(original) ||
+    !containsEditorialSourceSlugModel(new URL(source.url).pathname.split("/").filter(Boolean).at(-1) ?? "", model, source.specs?.Motor)) return null;
+  const escapedBrand = brand.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  const modelMention = new RegExp(`\\b${escapedBrand}\\s+[\\p{L}\\d./-]*\\d[\\p{L}\\d./-]*`, "iu");
+  if (modelMention.test(original) || /\b(?:modelo|variante)\s+[\p{L}\d./-]*\d[\p{L}\d./-]*/iu.test(original) ||
+    /\b(?:capacidad\s+(?:nominal|de\s+carga)|altura\s+de\s+elevaci[oó]n|centro\s+de\s+carga|radio\s+de\s+giro|peso)\s+(?:de\s+)?\d/iu.test(original)) return null;
+  const capacityKeys = ["Capacidad de carga (kg)", "Capacidad de carga", "Capacidad"];
+  const capacity = editorialQuantityOf(source.specs, capacityKeys, "kg");
+  const preparedCapacity = editorialQuantityOf(prepared.specs, capacityKeys, "kg");
+  const announced = [...summary.matchAll(/\bcapacidad\s+de\s+carga\s+de\s+(\d[\d., ]*)\s*kg\b/giu)];
+  if (capacity === null || capacity !== preparedCapacity || capacity < 1000 || capacity > 100000 ||
+    announced.length !== 1 || editorialQuantity(`${announced[0]?.[1] ?? ""} kg`, "kg") !== capacity) return null;
+  const measures = [`capacidad de carga declarada de ${formatEditorialQuantity(capacity)} kg`];
+  const add = (label: string, value: number | null, minimum: number, maximum: number, unit: string): void => {
+    if (value !== null && value >= minimum && value <= maximum) measures.push(`${label} de ${formatEditorialQuantity(value)} ${unit}`);
+  };
+  const matchedMetric = (keys: readonly string[]): number | null => {
+    const value = editorialMetricOf(source.specs, keys);
+    return value === editorialMetricOf(prepared.specs, keys) ? value : null;
+  };
+  add("altura de elevación indicada", matchedMetric(["Altura de elevación (m)", "Altura de elevación (mm)", "Altura de elevación"]), 1, 30, "m");
+  add("peso declarado", editorialQuantity(matchingSpecs(source, prepared, "Peso") ?? undefined, "kg"), 1000, 200000, "kg");
+  add("centro de carga indicado", editorialQuantity(matchingSpecs(source, prepared, "Centro de carga") ?? undefined, "mm"), 100, 5000, "mm");
+  add("radio de giro indicado", matchedMetric(["Radio de giro", "Radio de giro (mm)"]), 1, 30, "m");
+  if (measures.length < 3) return null;
+  return `El manipulador de contenedores (reach stacker) ${brand} ${model} figura con ${measures.slice(0, -1).join(", ")} y ${measures.at(-1)}. ` +
+    "La capacidad efectiva depende del alcance y de la configuración; debe contrastarse con el diagrama de cargas.\n\n" +
+    `Descripción de gama aportada por el proveedor, sin acreditar el equipamiento específico de esta referencia: ${general.trim()}`;
+};
+
 export const resolveSourcedOperationalSpecs = (
   source: ProductRecord, prepared: ProductRecord, general: string | null, authenticatedOrigin: boolean
 ): string | null => {
-  if (!authenticatedOrigin || !general?.trim() || general.trim().split(/\s+/u).length >= 60 ||
-    !sameEditorialUnit(source, prepared)) return null;
+  if (!authenticatedOrigin || !general?.trim() || !sameEditorialUnit(source, prepared)) return null;
+  const containerHandler = reachStackerContext(source, prepared, general);
+  if (containerHandler !== null) return containerHandler;
+  if (general.trim().split(/\s+/u).length >= 60) return null;
   const addition = batteryContext(source, prepared, general) ?? towerContext(source, prepared, general) ?? transportContext(source, prepared, general) ??
     resolveSourcedEquipmentDetails(source, prepared, general, authenticatedOrigin);
   return addition ? `${general.trim()} ${addition}` : null;

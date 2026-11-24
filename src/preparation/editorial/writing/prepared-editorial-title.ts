@@ -18,7 +18,7 @@ export const resolvePreparedEditorialTitle = (record: ProductRecord, sourceUnitR
   if (facts && sameEditorialUnit(record, sourceUnitRecord) && verifiedEditorialIdentity(sourceUnitRecord) &&
     hasEditorialMillimetreUnit(sourceUnitRecord.specs?.["Altura máxima de elevación"]) &&
     sourceUnitRecord.title?.trim()) return sourceUnitRecord.title.trim();
-  if (!facts) return resolveDocumentedFamilyTitle(sourceUnitRecord) ??
+  if (!facts) return resolveDocumentedFamilyTitle(sourceUnitRecord, record) ??
     (record.title?.trim() || sourceUnitRecord.title?.trim() || null);
   const family = editorialFamilyName(facts.family);
   const energy = facts.energy === "eléctrica" ? editorialFamilyIsMasculine(facts.family) ? " eléctrico" : " eléctrica" :

@@ -18,7 +18,7 @@ import { resolveKnowledgeEditorial } from "./knowledge-editorial.js";
 import { resolvePreparedSourceGeneral } from "../source/context/prepared-source-general.js";
 import { removeSourcedPromotionalClosing } from "../writing/editorial-sourced-commercial-tail.js";
 import { isGamDocumentedYaleDimensionsSource } from "../../gam/identity/evidence/model-dimensions-source.js";
-import { conciseVerifiedUnitGeneral, conciseSignedUnitGeneral, resolveEditorialIdentitySummary, unresolvedEditorialModelVariantShort, unresolvedEditorialModelVariantGeneral } from "../identity/editorial-identity-summary.js";
+import { conciseVerifiedUnitGeneral, conciseSignedUnitGeneral, resolveEditorialIdentitySummary, resolveCorroboratedEditorialVariantGeneral, unresolvedEditorialModelVariantShort, unresolvedEditorialModelVariantGeneral } from "../identity/editorial-identity-summary.js";
 import { compressVerifiedSourceShort, expandVerifiedSourceShort } from "../source/editorial-source-brief.js";
 import { corroboratedSourceUnitBrief } from "../source/editorial-source-unit-brief.js";
 import { editorialFamilyFromSourceGeneral } from "./editorial-families.js";
@@ -127,9 +127,12 @@ export const resolvePreparedEditorialSource = (
   const structuredGeneral = authenticatedOrigin && !signedGeneral && !crossedIdentity &&
     !variantConflict && !sourceModelConflict && !modelDimensions ?
     structureSourcedLongGeneral(editorialSourceUnit, editorialRecord, widthGeneral ?? sourceClean.general, authenticatedOrigin) : null;
+  const finalGeneral = structuredGeneral ?? widthGeneral ?? sourceClean.general;
+  const variantGeneral = !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict && !heightConflict && !modelDimensions ?
+    resolveCorroboratedEditorialVariantGeneral(sourceUnitRecord, record, finalGeneral, authenticatedOrigin) : null;
   return {
     verifiedTitle: knowledge?.title ?? null,
-    descriptions: distinguishDescriptions(reconciledShort ?? finalShort, structuredGeneral ?? widthGeneral ?? sourceClean.general),
+    descriptions: distinguishDescriptions(reconciledShort ?? finalShort, variantGeneral ?? finalGeneral),
     sourceModelConflict,
     sourceMotorConflict,
     heightConflict

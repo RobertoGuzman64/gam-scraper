@@ -100,7 +100,7 @@ export const mercaelevaTechnicalCandidate = (record: ProductRecord, attribute: A
     publishedText(record, "Tipo de cabina") === "guardia superior") value = "Techo protector";
   if (attribute.name === "Certificación / Marcado CE" && attribute.type === "BOOLEAN") {
     const certificate = publishedText(record, "Certificación CE");
-    if (certificate === "yes") value = true;
+    if (certificate === "yes" || certificate === "si") value = true;
     if (certificate === "no") value = false;
   }
   if (attribute.name === "Tipo de tracción" && attribute.type === "SELECT") value = traction(record, attribute);

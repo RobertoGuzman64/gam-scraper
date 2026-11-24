@@ -7,6 +7,7 @@ import { readVerifiedManainRecordSource } from "../../../infrastructure/filesyst
 import { prepareImportBatch } from "../../product/batch-identity.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { normalizePreparedTechnicalSpecs } from "../../technical/preparation-technical-stages.js";
+import { normalizeOriginalEnergyPresentation, normalizeOriginalLengthPresentation, normalizeOriginalMassPresentation } from "../../technical/technical-presentation.js";
 import { captureSourceEditorialEvidence } from "../../editorial/claims/source-editorial-evidence.js";
 import { resolveEditorialSource } from "../../editorial/core/editorial-source.js";
 import { prepareVerifiedManainRecord } from "../prepare.js";
@@ -46,7 +47,11 @@ test("Manain: el original verificado atraviesa íntegramente el motor editorial 
     assert.equal(prepared.product.sourceUrl, source.url);
     assert.equal(prepared.product.reference, source.reference);
     assert.deepEqual(prepared.product.images, source.images);
-    assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(source, source.specs ?? {}));
+    const originalSpecs = source.specs ?? {};
+    const normalizedSpecs = normalizePreparedTechnicalSpecs(source, originalSpecs);
+    const expectedSpecs = normalizeOriginalEnergyPresentation(normalizeOriginalLengthPresentation(
+      normalizeOriginalMassPresentation(normalizedSpecs, originalSpecs), originalSpecs), originalSpecs);
+    assert.deepEqual(prepared.product.spec, expectedSpecs);
     assert.equal(prepared.product.categorySellID, null);
     assert.deepEqual(prepared.product.attributes, []);
     assert.equal(prepared.status, prepared.issues.length === 0 ? "ready" : "review");

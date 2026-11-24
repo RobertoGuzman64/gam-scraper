@@ -1,5 +1,5 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { resolveEditorialFacts } from "./editorial-facts.js";
+import { hasPlatformRetractedHeight, hasSeparatePlatformDimensions, resolveEditorialFacts } from "./editorial-facts.js";
 import { editorialFamilyFromSourceGeneral, editorialFamilyIsMasculine, editorialFamilyName, editorialFamilyOf } from "./editorial-families.js";
 import { editorialQuantity, formatEditorialQuantity } from "../measurements/editorial-measurements.js";
 import { hasUnconditionalEditorialClaim } from "../claims/editorial-claim-evidence.js";
@@ -9,6 +9,7 @@ import { containsEditorialBrandModel } from "../identity/editorial-identity-matc
 import { resolveDocumentedBatteryConfiguration } from "../claims/editorial-battery-claims.js";
 import { corroboratedAnnouncedUnitSummary } from "../source/context/editorial-source-announced-unit.js";
 import type { EditorialFamily } from "./editorial-families.js";
+import { resolveEquipmentConfigurationDetails, resolveHandlingOperationalDetails, resolvePlatformOperationalDetails, resolveTransportOperationalDetails } from "../source/details/editorial-sourced-equipment-details.js";
 
 const quantity = (value: number | null, unit: string, label: string): string | null =>
   value === null ? null : `${label} de ${formatEditorialQuantity(value)} ${unit}`;
@@ -27,13 +28,13 @@ const asserted = (facts: EditorialFacts): readonly string[] => {
   return metrics.filter((item): item is string => item !== null);
 };
 
-const details = (facts: EditorialFacts, battery: string | null): readonly string[] => [
+const details = (facts: EditorialFacts, battery: string | null, record: ProductRecord): readonly string[] => [
   quantity(facts.weightKg, "kg", "peso declarado"),
   quantity(facts.discDiameterMm, "mm", "diámetro máximo de disco"),
   quantity(facts.lengthM, "m", "longitud"),
   quantity(facts.widthM, "m", "anchura"),
   quantity(facts.heightM, "m", "altura del equipo"),
-  quantity(facts.storedHeightM, "m", "altura de almacenaje"),
+  quantity(facts.storedHeightM, "m", hasPlatformRetractedHeight(record, facts.family) ? "altura replegada" : "altura de almacenaje"),
   quantity(facts.voltageV, "V", "voltaje declarado"),
   battery,
   quantity(facts.gradeabilityPercent, "%", "pendiente superable declarada"),
@@ -42,7 +43,7 @@ const details = (facts: EditorialFacts, battery: string | null): readonly string
   quantity(facts.cleaningWidthM, "m", "anchura de trabajo de limpieza"),
   quantity(facts.drawbarPullN, "N", "tiro nominal a la barra"),
   facts.basketLengthM !== null && facts.basketWidthM !== null ?
-    `cesta de ${formatEditorialQuantity(facts.basketLengthM)} × ${formatEditorialQuantity(facts.basketWidthM)} m` : null,
+    `${hasSeparatePlatformDimensions(record) ? "plataforma" : "cesta"} de ${formatEditorialQuantity(facts.basketLengthM)} × ${formatEditorialQuantity(facts.basketWidthM)} m` : null,
   facts.mastType !== null ? `mástil ${facts.mastType} declarado` : null
 ].filter((item): item is string => item !== null);
 
@@ -102,8 +103,11 @@ export const resolveReusableEditorial = (
 ): { readonly short: string | null; readonly general: string | null } => {
   const prepared = resolveEditorialFacts(record, familyOverride);
   if (!prepared) return { short: null, general: null };
+  const separatePlatformDimensions = hasSeparatePlatformDimensions(record);
+  const retractedPlatformHeight = hasPlatformRetractedHeight(record, prepared.family);
   const source = sourceUnitRecord === record ? prepared :
-    (prepared.loadCenterMm !== null || prepared.turningRadiusM !== null) &&
+    (prepared.loadCenterMm !== null || prepared.turningRadiusM !== null ||
+      separatePlatformDimensions || retractedPlatformHeight) &&
       sameEditorialUnit(sourceUnitRecord, record) ? resolveEditorialFacts(sourceUnitRecord, familyOverride) : null;
   const corroborated = (key: "Centro de carga" | "Radio de giro"): boolean =>
     source !== null && source.family === prepared.family &&
@@ -111,8 +115,15 @@ export const resolveReusableEditorial = (
   const dumperCapacityConfirmed = sameEditorialUnit(sourceUnitRecord, record) &&
     ["Capacidad de carga (kg)", "Capacidad de carga", "Capacidad"].some((key) =>
       sourceUnitRecord.specs?.[key] !== undefined && sourceUnitRecord.specs[key] === record.specs?.[key]);
+  const dimensionsCorroborated = !separatePlatformDimensions || source?.family === prepared.family &&
+    source.basketLengthM === prepared.basketLengthM && source.basketWidthM === prepared.basketWidthM;
+  const storedHeightCorroborated = !retractedPlatformHeight ||
+    source?.family === prepared.family && source.storedHeightM === prepared.storedHeightM;
   const facts: EditorialFacts = {
     ...prepared,
+    basketLengthM: dimensionsCorroborated ? prepared.basketLengthM : null,
+    basketWidthM: dimensionsCorroborated ? prepared.basketWidthM : null,
+    storedHeightM: storedHeightCorroborated ? prepared.storedHeightM : null,
     loadCapacityKg: prepared.family === "dumper" && !dumperCapacityConfirmed ? null : prepared.loadCapacityKg,
     loadCenterMm: corroborated("Centro de carga") && source?.loadCenterMm === prepared.loadCenterMm
       ? prepared.loadCenterMm : null,
@@ -124,7 +135,7 @@ export const resolveReusableEditorial = (
   const measures = [...asserted(facts), ...towerMeasures(record, sourceUnitRecord, facts)];
   const extras = details(facts, resolveDocumentedBatteryConfiguration(
     sourceUnitRecord, record, facts.family, facts.voltageV
-  ));
+  ), record);
   if (measures.length === 0 && extras.length === 0) return { short: null, general: null };
   const fuel = facts.energy === "eléctrica" ? editorialFamilyIsMasculine(facts.family) ? " eléctrico" : " eléctrica" :
     facts.energy === "diésel" ? " diésel" :
@@ -134,7 +145,10 @@ export const resolveReusableEditorial = (
   const unit = [facts.year !== null ? `año de fabricación ${facts.year}` : null,
     facts.hours !== null ? `${formatEditorialQuantity(facts.hours)} ${facts.hours === 1 ? "hora registrada" : "horas registradas"}` : null]
     .filter((value): value is string => value !== null);
-  const generalClauses = [...measures, ...extras];
+  const generalClauses = [...measures, ...extras, ...resolvePlatformOperationalDetails(sourceUnitRecord, record, facts.family),
+    ...resolveHandlingOperationalDetails(sourceUnitRecord, record, facts.family),
+    ...resolveTransportOperationalDetails(sourceUnitRecord, record, facts.family, facts.heightM !== null),
+    ...resolveEquipmentConfigurationDetails(sourceUnitRecord, record, facts.family)];
   const generalDetails = generalClauses.length ? join(generalClauses) : main;
   const sourceYear = differentiatedSourceYear(record, sourceUnitRecord, facts);
   const unitSummary = corroboratedAnnouncedUnitSummary(record, sourceUnitRecord, facts);

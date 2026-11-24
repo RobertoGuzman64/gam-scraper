@@ -5,7 +5,7 @@ import { containsEditorialIdentity, containsEditorialBrandModel } from "./editor
 import { verifiedEditorialIdentity, verifiedEditorialStructuredIdentity } from "../core/editorial-source-contract.js";
 import { resolveSourceEditorialClaims } from "../claims/editorial-source-claims.js";
 import { cleanAuthenticatedSourceEditorial } from "../writing/editorial-text-hygiene.js";
-import { conciseVerifiedUnitGeneral } from "./editorial-identity-summary.js";
+import { conciseVerifiedUnitGeneral, resolveCorroboratedEditorialVariantGeneral } from "./editorial-identity-summary.js";
 import { normalizeVerifiedEditorialCapacity } from "../measurements/coherence/editorial-capacity-coherence.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import {
@@ -116,4 +116,116 @@ test("sin corroboración de ficha técnica no se permite el modo de composición
     assert.equal(verifiedEditorialStructuredIdentity(conflict), false);
     assert.equal(resolveSourceEditorialClaims(conflict, conflict, general), general);
   }
+});
+
+
+const variantSource = (basis: ProductRecord, descriptor: "MWB" | "LWB" | "pedestrian" = "MWB"): ProductRecord => {
+  const family = descriptor === "pedestrian" ? "Apilador eléctrico a pie" : "Carretilla elevadora eléctrica";
+  return {
+    ...basis,
+    url: basis.providerId === "gam" ? `https://online.gamrentals.com/es/manutencion/${basis.reference}-marca-modelo10` :
+      "https://www.gomarizrent.com/producto/marca-modelo10/",
+    model: `MODELO10 (${descriptor})`,
+    title: `${family} MARCA MODELO10`,
+    shortDescription: `MARCA MODELO10. ${family} con capacidad de carga de 2500 kg.`,
+    longDescription: `La ${family.toLowerCase()} MARCA MODELO10 dispone de un sistema de accionamiento eléctrico.`,
+    specs: { Marca: "MARCA", Modelo: `MODELO10 (${descriptor})`, "Capacidad de carga (kg)": "2500 kg" }
+  };
+};
+
+test("recupera la denominación literal de la variante y distingue el texto del modelo base", () => {
+  for (const factory of [controlledGamForklift, controlledGomarizForklift]) {
+    for (const descriptor of ["MWB", "LWB", "pedestrian"] as const) {
+      const source = variantSource(factory(), descriptor);
+      const before = structuredClone(source);
+      const output = resolveCorroboratedEditorialVariantGeneral(source, source, source.longDescription, true) ?? "";
+      assert.ok(output.includes(`MARCA MODELO10 (${descriptor})`), `${source.providerId}: ${descriptor}`);
+      assert.match(output, /capacidad de carga declarada de 2\.500 kg/u);
+      assert.match(output, /denominación base MARCA MODELO10/u);
+      assert.ok(output.endsWith(source.longDescription ?? ""));
+      assert.equal(resolveCorroboratedEditorialVariantGeneral(source, source, output, true), null);
+      assert.deepEqual(source, before);
+    }
+  }
+});
+
+test("la identificación de una variante requiere coincidencia de familia, denominación, origen y capacidad", () => {
+  const source = variantSource(controlledGamForklift());
+  const invalid: readonly ProductRecord[] = [
+    { ...source, providerId: "gomariz" },
+    { ...source, reference: "OTRA-UNIDAD" },
+    { ...source, url: source.url.replace("modelo10", "modelo100") },
+    { ...source, url: `${source.url}-lwb` },
+    { ...source, url: source.url.replace("online.gamrentals.com", "example.org") },
+    { ...source, title: "Carretilla elevadora MARCA MODELO10-X" },
+    { ...source, shortDescription: "MARCA MODELO10. Apilador con capacidad de carga de 2500 kg." },
+    { ...source, shortDescription: "MARCA MODELO10. Carretilla elevadora con capacidad de carga de 2000 kg." },
+    { ...source, longDescription: `${source.longDescription} La versión LWB es la anunciada.` },
+    { ...source, longDescription: `${source.longDescription} La carretilla MARCA MODELO10-XX incorpora otro mástil.` },
+    { ...source, longDescription: `${source.longDescription} Tiene capacidad de carga de 2.000 kg.` },
+    { ...source, specs: { ...source.specs, Modelo: "MODELO10 (LWB)" } }
+  ];
+  for (const variant of invalid) {
+    assert.equal(resolveCorroboratedEditorialVariantGeneral(source, variant, source.longDescription, true), null);
+    assert.equal(resolveCorroboratedEditorialVariantGeneral(variant, variant, variant.longDescription, true), null);
+  }
+  assert.equal(resolveCorroboratedEditorialVariantGeneral(source, source, source.longDescription, false), null);
+  assert.equal(resolveCorroboratedEditorialVariantGeneral(source, source, "Carretilla MARCA MODELO11.", true), null);
+});
+
+test("rechaza una variante con batería discordante y admite la configuración concordante sin inferir equipamiento", () => {
+  const source = variantSource(controlledGamForklift());
+  const battery = { ...source, specs: { ...source.specs, "Capacidad de la batería": "80 V / 450 Ah (V/Ah)" },
+    longDescription: `${source.longDescription} La batería declarada es de 80 V y 450 Ah.` };
+  assert.ok(resolveCorroboratedEditorialVariantGeneral(battery, battery, battery.longDescription, true));
+  const incompatible = { ...battery, longDescription: `${battery.longDescription} Otra mención indica 600 Ah.` };
+  assert.equal(resolveCorroboratedEditorialVariantGeneral(incompatible, incompatible, incompatible.longDescription, true), null);
+  assert.equal(resolveCorroboratedEditorialVariantGeneral(battery,
+    { ...battery, specs: { ...battery.specs, "Capacidad de la batería": "80 V / 600 Ah (V/Ah)" } }, battery.longDescription, true), null);
+});
+
+const lithiumVariantSource = (basis: ProductRecord): ProductRecord => ({
+  ...basis,
+  url: basis.providerId === "gam" ? `https://online.gamrentals.com/es/plataformas/${basis.reference}-marca-modelo10-li` :
+    "https://www.gomarizrent.com/producto/marca-modelo10-li/",
+  model: "MODELO10-LI",
+  title: "Plataforma de tijera MARCA MODELO10 con batería de litio",
+  shortDescription: "MARCA MODELO10-LI. Plataforma de tijera con capacidad de la cesta de 250 kg.",
+  longDescription: "La plataforma de tijera MARCA MODELO10 con batería de litio tiene capacidad de carga de 250 kg.",
+  specs: { Marca: "MARCA", Modelo: "MODELO10-LI", "Tipo de batería": "Batería de litio", "Capacidad de carga (kg)": "250 kg" }
+});
+
+test("la variante de litio requiere identificación completa y tecnología de batería declarada", () => {
+  for (const factory of [controlledGamForklift, controlledGomarizForklift]) {
+    const source = lithiumVariantSource(factory());
+    const before = structuredClone(source);
+    const output = resolveCorroboratedEditorialVariantGeneral(source, source, source.longDescription, true);
+    assert.ok(output);
+    assert.ok(output.startsWith("La tabla técnica identifica esta referencia como MARCA MODELO10-LI, con batería de litio declarada."));
+    assert.ok(output.endsWith(source.longDescription ?? ""));
+    assert.equal(resolveCorroboratedEditorialVariantGeneral(source, source, output, true), null);
+    assert.deepEqual(source, before);
+  }
+});
+
+test("la variante de litio no se deduce del sufijo ni de un anuncio contradictorio", () => {
+  const source = lithiumVariantSource(controlledGamForklift());
+  const invalid: readonly ProductRecord[] = [
+    { ...source, url: source.url.replace("modelo10-li", "modelo10") },
+    { ...source, url: source.url.replace("online.gamrentals.com", "example.org") },
+    { ...source, shortDescription: source.shortDescription?.replace("MODELO10-LI", "XMODELO10-LI") ?? "" },
+    { ...source, shortDescription: source.shortDescription?.replace("250 kg", "450 kg") ?? "" },
+    { ...source, longDescription: `${source.longDescription} La capacidad de carga es de 450 kg.` },
+    { ...source, longDescription: `${source.longDescription} Capacidad de carga de 450 kg.` },
+    { ...source, longDescription: `${source.longDescription} Batería de litio opcional.` },
+    { ...source, longDescription: `${source.longDescription} Batería de 48 V.` },
+    { ...source, longDescription: `${source.longDescription} La plataforma MARCA MODELO10-P tiene otra configuración.` },
+    { ...source, specs: { ...source.specs, "Tipo de batería": "Batería de plomo" } },
+    { ...source, specs: { ...source.specs, "Tipo de batería": "Litio o plomo" } }
+  ];
+  for (const variant of invalid) {
+    assert.equal(resolveCorroboratedEditorialVariantGeneral(variant, variant, variant.longDescription, true), null, JSON.stringify(variant));
+  }
+  assert.equal(resolveCorroboratedEditorialVariantGeneral(source, source, source.longDescription, false), null);
+  assert.equal(resolveCorroboratedEditorialVariantGeneral(source, { ...source, reference: "OTRA" }, source.longDescription, true), null);
 });

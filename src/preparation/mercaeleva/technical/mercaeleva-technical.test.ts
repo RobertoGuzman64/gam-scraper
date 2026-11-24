@@ -90,6 +90,7 @@ test("Mercaeleva: datos técnicos explícitos sin confundir capacidad, peso o ce
 test("Mercaeleva: solo publica certificación CE cuando está expresada en la ficha", () => {
   const source = record("Ausa D450AHG DUMPER GIRATORIO 4500 KG", { "Certificación CE": "Yes" });
   assert.equal(value(source, "Certificación / Marcado CE"), true);
+  assert.equal(value({ ...source, specs: { "Certificación CE": "Sí" } }, "Certificación / Marcado CE"), true);
   assert.equal(value({ ...source, specs: { "Certificación CE": "No" } }, "Certificación / Marcado CE"), false);
   assert.equal(value({ ...source, specs: { "Certificación CE": "Pendiente" } }, "Certificación / Marcado CE"), null);
   assert.equal(value({ ...source, specs: {} }, "Certificación / Marcado CE"), null);

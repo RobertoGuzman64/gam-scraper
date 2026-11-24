@@ -5,6 +5,7 @@ import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js
 
 import type { DocumentedTechnicalSource, ProductTechnicalProvenance, TechnicalSpecEvidence } from "../../contracts/technical-provenance.js";
 import type { TechnicalRecoverySourceField } from "./technical-recovery-observation.js";
+import { resolveEditorialSource } from "../editorial/core/editorial-source.js";
 import { reviewedModelDocumentVerification } from "../technical/reviewed-model-claims.js";
 import { reviewedUnitDescriptionEvidence } from "../technical/reviewed-unit-description-claims.js";
 import { reviewedUnitListingVerification } from "../technical/reviewed-unit-listing-claims.js";
@@ -32,7 +33,8 @@ const attributedSource = (
   sourceField: RecoveryStep["sourceField"], before: SpecsMap
 ): { scope: "unit"; sourceField: string; sourceValue: string } |
   { scope: "unknown"; sourceField: null; sourceValue: null } => {
-  if (sourceField === "longDescription" && (original.providerId === "gam" && isGamUnitUrl(original) || original.providerId === "mercaeleva") &&
+  if (sourceField === "longDescription" && (original.providerId === "gam" && isGamUnitUrl(original) || original.providerId === "mercaeleva" ||
+    mechanism === "src/preparation/technical/platform-geometry-recovery.ts" && resolveEditorialSource(original) !== null) &&
     original.longDescription?.trim() && recoveredFrom.longDescription === original.longDescription) {
     return { scope: "unit", sourceField: "longDescription", sourceValue: original.longDescription };
   }

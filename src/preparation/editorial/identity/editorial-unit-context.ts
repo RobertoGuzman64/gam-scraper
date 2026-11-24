@@ -1,6 +1,9 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { sameEditorialUnit, verifiedEditorialIdentity, verifiedEditorialStructuredIdentity } from "../core/editorial-source-contract.js";
 import { verifiedEditorialUnitPair } from "./editorial-unit-provenance.js";
+import { containsEditorialBrandModel } from "./editorial-identity-match.js";
+import { resolveVerifiedEditorialCondition } from "./editorial-condition.js";
+import { resolveDeclaredBatteryStatus } from "../claims/editorial-battery-claims.js";
 import { hasUnconditionalEditorialClaim } from "../claims/editorial-claim-evidence.js";
 
 const plain = (value: string): string => value.normalize("NFD")
@@ -113,11 +116,78 @@ const corroboratedSellerDetails = (
   return additions;
 };
 
+const declaredHorometerReplacement = (source: ProductRecord, prepared: ProductRecord, texts: string): boolean => {
+  const replacement = (value: unknown): boolean => typeof value === "string" &&
+    /^horometro sustituido(?: horas)?$/u.test(plain(value));
+  if (!replacement(source.specs?.["Horómetro"]) || !replacement(prepared.specs?.["Horómetro"]) ||
+    (source.horometer !== null && !replacement(source.horometer)) ||
+    (prepared.horometer !== null && !replacement(prepared.horometer))) return false;
+  if ([source, prepared].some((record) => ["Horas (h)", "Horas laborales", "Horas de uso", "Horas"]
+    .some((key) => record.specs?.[key] !== undefined))) return false;
+  return !/\bhor[oó]metro\b|\b\d[\d., ]*\s*(?:horas?|h)\b/iu.test(texts);
+};
+
+const declaredMileage = (source: ProductRecord, prepared: ProductRecord, texts: string): string | null => {
+  const keys = ["Kilómetros", "Kilómetros (km)"];
+  const reading = (record: ProductRecord): number | null => {
+    const values = keys.flatMap((key) => record.specs?.[key] === undefined ? [] : [record.specs[key]]);
+    const parsed = values.map((value) => {
+      const match = typeof value === "string" ? /^([1-9]\d{0,6}|[1-9]\d{0,2}(?: \d{3}){1,2})\s*km$/iu.exec(value.trim()) : null;
+      return match?.[1] === undefined ? null : Number(match[1].replace(/ /gu, ""));
+    });
+    const first = parsed[0];
+    return first !== undefined && first !== null && first <= 9999999 && parsed.every((value) => value === first) ? first : null;
+  };
+  if (!verifiedEditorialIdentity(source) || !verifiedEditorialIdentity(prepared)) return null;
+  const original = reading(source);
+  if (original === null || original !== reading(prepared)) return null;
+  const distances = texts
+    .replace(/\b\d+(?:[.,]\d+)?\s*km\s*\/\s*h\b/giu, "")
+    .replace(/\bautonom[ií]a(?:\s+(?:m[aá]xima|anunciada|nominal))?\s*(?::|de)?\s*(?:hasta\s+)?\d+(?:[.,]\d+)?\s*km\b/giu, "")
+    .replace(/\b(?:hasta\s+)?\d+(?:[.,]\d+)?\s*km\s+de\s+autonom[ií]a\b/giu, "");
+  if (/\b(?:kilometraje|kil[oó]metros?|od[oó]metro)\b|\b\d[\d., ]*\s*km\b/iu.test(distances)) return null;
+  return `La ficha del proveedor declara un kilometraje de ${original.toLocaleString("es-ES")} km para esta unidad; no se ha verificado la lectura.`;
+};
+
+const declaredUnitHistory = (source: ProductRecord, prepared: ProductRecord, general: string): readonly string[] => {
+  if (!source.brand || !source.model ||
+    !containsEditorialBrandModel(general, source.brand, source.model) ||
+    resolveVerifiedEditorialCondition(source) !== "Segunda mano" ||
+    resolveVerifiedEditorialCondition(prepared) !== "Segunda mano" || conflictingSourceYears(source)) return [];
+  const texts = [source.title, source.shortDescription, source.longDescription,
+    prepared.title, prepared.shortDescription, prepared.longDescription, general].join(" ");
+  const affirmative = (key: string): boolean => {
+    const value = source.specs?.[key];
+    return typeof value === "string" && plain(value) === "si" &&
+      typeof prepared.specs?.[key] === "string" && plain(prepared.specs[key]) === "si";
+  };
+  const additions: string[] = [];
+  const batteryStatus = resolveDeclaredBatteryStatus(source, prepared, texts);
+  if (batteryStatus !== null) additions.push(batteryStatus);
+  const mileage = declaredMileage(source, prepared, texts);
+  if (mileage !== null) additions.push(mileage);
+  if (declaredHorometerReplacement(source, prepared, texts)) {
+    additions.push("El proveedor declara que el horómetro ha sido sustituido; no consta una lectura total de horas de uso acreditada.");
+  }
+  if (affirmative("Matriculada") && !/\b(?:matr[ií]cul\p{L}*|ITV|homolog\p{L}*)\b/iu.test(texts) &&
+    source.specs?.Matrícula === undefined && prepared.specs?.Matrícula === undefined &&
+    source.specs?.["Reg. no."] === undefined && prepared.specs?.["Reg. no."] === undefined) {
+    additions.push("El proveedor declara que la unidad está matriculada; no se ha comprobado la vigencia de su documentación ni la habilitación para circular.");
+  }
+  if (affirmative("Restaurada") && !/\b(?:restaur\p{L}*|reacondicion\p{L}*|rehabilit\p{L}*|reconstru\p{L}*|second life)\b/iu.test(texts)) {
+    additions.push("El proveedor declara que la unidad está restaurada, sin especificar el alcance de los trabajos ni acreditar una revisión mecánica.");
+  }
+  return additions;
+};
+
 export const resolveVerifiedEditorialUnitContext = (
   record: ProductRecord, general: string | null, prepared: ProductRecord = record
 ): string | null => {
-  if (!general?.trim() || !(verifiedEditorialIdentity(record) || verifiedEditorialStructuredIdentity(record)) ||
-    !verifiedEditorialUnitPair(record, prepared)) return general;
+  if (!general?.trim() || !verifiedEditorialUnitPair(record, prepared)) return general;
+  const history = declaredUnitHistory(record, prepared, general);
+  if (!(verifiedEditorialIdentity(record) || verifiedEditorialStructuredIdentity(record))) {
+    return history.length > 0 ? `${general.trim()}\n\n${history.join(" ")}` : general;
+  }
   const location = record.specs?.Ubicación === prepared.specs?.Ubicación ? sourceLocation(record) : null;
   const serial = record.specs?.["Nº de serie"] === prepared.specs?.["Nº de serie"] &&
     (!prepared.serialNumber || prepared.serialNumber.trim() === record.serialNumber?.trim())
@@ -130,7 +200,7 @@ export const resolveVerifiedEditorialUnitContext = (
     additions.push(`Número de serie declarado para esta unidad: ${serial}.`);
   }
   const sellerDetails = corroboratedSellerDetails(record, prepared, `${general} ${additions.join(" ")}`);
-  additions.push(...sellerDetails);
+  additions.push(...sellerDetails, ...history);
   const details = corroboratedSourceDetails(record, prepared, `${general} ${additions.join(" ")}`);
   if (details.length > 0) {
     additions.push(`Según la ficha del proveedor, esta unidad tiene ${details.join(" y ")}.`);

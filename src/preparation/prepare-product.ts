@@ -17,8 +17,10 @@ import { captureSourceEditorialEvidence } from "./editorial/claims/source-editor
 import { reconcileSourceCategoryTitle, reconcileVerifiedSourceReviewClaims, reconcileVerifiedSourceFamily, reconcileVerifiedSourceFuel, reconcileVerifiedSourceIdentity, reconcileVerifiedManufacturerSourceLoad, reconcileInitialTechnicalEvidence, resolveSourceTechnicalSemanticRecord, reconcileTechnicalSourceForRecovery, reconcileTechnicalBeforeEditorial, reconcileTechnicalAfterEditorial, normalizePreparedTechnicalSpecs } from "./technical/preparation-technical-stages.js";
 import { publicationConflictForMercaeleva } from "./mercaeleva/technical/mercaeleva.js";
 import { hasDocumentedGomarizPriceOnRequest } from "./gomariz/price-on-request.js";
+import { normalizeOriginalEnergyPresentation, normalizeOriginalLengthPresentation, normalizeOriginalMassPresentation } from "./technical/technical-presentation.js";
 import { reconcileHandlingFamilySpecs } from "./technical/handling-family-specifications.js";
 import { presentGamVerifiedRestrictedCapacity } from "./gam/reconciliation/gam-verified-capacity-coherence.js";
+import { recoverSourcePlatformGeometry } from "./technical/platform-geometry-recovery.js";
 import { recoverBaseTechnicalSpecs } from "./technical/base-technical-recovery.js";
 import { recoverDocumentedTechnicalSpecs } from "./technical/documented-technical-recovery.js";
 import { resolvePreparedEditorial } from "./editorial/core/prepared-editorial.js";
@@ -53,7 +55,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const beforeReconciliation = record;
   record = reconcileTechnicalBeforeEditorial(record, technicalProvenance.observe);
   record = reconcileTechnicalAfterEditorial(record);
-  const reconciledSpecs = applyReconciledTechnicalSpecs(beforeReconciliation, record, documentedSpecs);
+  const reconciledSpecs = recoverSourcePlatformGeometry(originalRecord, recoverySource,
+    applyReconciledTechnicalSpecs(beforeReconciliation, record, documentedSpecs), technicalProvenance.observe);
   const editorialRecord = reconcileManainEditorialSourceSpecs({ ...record, specs: reconciledSpecs,
     shortDescription: sourceUnitRecord.shortDescription, longDescription: coherentSource.longDescription });
   const sourceEditorial = captureSourceEditorialEvidence(editorialRecord);
@@ -92,7 +95,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     description_general: descriptions.general,
     image: images[0] ?? null,
     images,
-    spec: handledSpecs,
+    spec: normalizeOriginalEnergyPresentation(normalizeOriginalLengthPresentation(
+      normalizeOriginalMassPresentation(handledSpecs, originalRecord.specs ?? {}), originalRecord.specs ?? {}), originalRecord.specs ?? {}),
     attributes: attributeResult?.attributes ?? []
   };
   const presented = normalizePreparedEditorialPresentation(sourceUnitRecord, product);
