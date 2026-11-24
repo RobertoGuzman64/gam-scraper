@@ -28343,8 +28343,8 @@
     {
       "reference": "RO456",
       "title": "Dynapac LP6500",
-      "categorySellID": null,
-      "category": null,
+      "categorySellID": 68,
+      "category": "Rodillos Tándem de Segunda Mano",
       "condition": "Segunda_Mano",
       "price": null,
       "description_title": "Dynapac LP6500",
@@ -28369,14 +28369,33 @@
         "Motor": "Diésel",
         "Año de fabricación": "2003"
       },
-      "attributes": [],
+      "attributes": [
+        {
+          "attributeID": 46,
+          "value": 696
+        },
+        {
+          "attributeID": 115,
+          "value": "Dynapac"
+        },
+        {
+          "attributeID": 116,
+          "value": "LP6500"
+        },
+        {
+          "attributeID": 117,
+          "value": 2003
+        }
+      ],
       "metadata": {
         "tags": [
           "maquinaria",
           "segunda-mano",
+          "rodillos-tandem-de-segunda-mano",
           "dynapac"
         ],
         "keywords": [
+          "rodillos-tandem-de-segunda-mano",
           "dynapac",
           "lp6500",
           "dynapac-lp6500"
@@ -45991,12 +46010,6 @@
       "reason": "sin-categoria"
     },
     {
-      "identity": "gomariz:ref:ro456",
-      "reference": "RO456",
-      "sourceUrl": "https://www.gomarizrent.com/venta/movimiento-de-tierras-demolicion-y-compactacion/rodillo/dynapac-lp6500-2/",
-      "reason": "sin-categoria"
-    },
-    {
       "identity": "gomariz:ref:br954",
       "reference": "BR954",
       "sourceUrl": "https://www.gomarizrent.com/limpieza/barredora/johnston-cn201/",
@@ -46005,12 +46018,12 @@
   ],
   "summary": {
     "exported": 546,
-    "categorized": 543,
-    "pendingCategory": 3,
+    "categorized": 544,
+    "pendingCategory": 2,
     "excludedLots": 0,
     "excludedTools": 0,
     "excludedAccessories": 0,
-    "attributes": 2989,
+    "attributes": 2993,
     "withLogo": 546,
     "withPrice": 0,
     "withCompany": 546

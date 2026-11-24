@@ -1,7 +1,7 @@
 {
   "version": 2,
   "providerId": "mercaeleva",
-  "publicationSha256": "288b7c9655b5a1d6f770bae2ece4284a596bc7777c27ad4259876eff39b524e9",
+  "publicationSha256": "38eae2f8ce86ce12bd6e899affaada9f351e6d35ef9391af58d6ee56daba4305",
   "environment": "develop",
   "total": 221,
   "products": [
@@ -8354,8 +8354,7 @@
         "Altura de trabajo": "12 m",
         "Alcance horizontal": "6,78 m",
         "Capacidad máxima de plataforma": "227 kg",
-        "Longitud de plataforma": "0,76 m",
-        "Anchura de plataforma": "1,42 m"
+        "Longitud de plataforma": "0,76 m"
       },
       "attributes": [
         {
@@ -8427,8 +8426,7 @@
         "Condición general": "Bueno",
         "Tipo de motor": "Eléctrico",
         "Capacidad nominal de carga": "2000 kg",
-        "Tensión del sistema de batería": "24 V",
-        "Centro de carga": "600 mm"
+        "Tensión del sistema de batería": "24 V"
       },
       "attributes": [
         {

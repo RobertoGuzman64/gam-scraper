@@ -1,20 +1,21 @@
 # EQUIPZILLA — Informe comercial de integración
 
-- Fecha del paquete (UTC): 2026-11-18
+- Fecha del paquete (UTC): 2026-11-24
 - Etapa de preparación: NO EJECUTADA por este comando.
 - Origen: publicaciones técnicas acreditadas seleccionadas como vigentes ANTES de la exportación; no son nuevas publicaciones generadas ahora.
 - Fecha de cada publicación de origen: NO DECLARADA por el contrato de publicación; no se deduce de la fecha del paquete.
-- Etapa de exportación: cuatro JSON generados desde esas publicaciones y sus referencias comerciales vigentes.
-- Huella comercial: 8c09cb3b6562329704ad33785b4cc0db787348e54118dabb77f605ac1b800090
+- Etapa de exportación: 5 JSON generados desde esas publicaciones y sus referencias comerciales vigentes.
+- Huella comercial: 9afd1e41b5d9844a1ccd907e72dc4abb7096b58fce571a595cdf016d3842e14d
 - Entorno: develop
-- Proveedores: GAM, GOMARIZ, MERCAELEVA
+- Proveedores: GAM, GOMARIZ, MERCAELEVA, MANAIN
 - Integración en base de datos: NO VERIFICADO EN BD
 
 ## Resumen del corte
 
-- Fichas técnicas incluidas en las publicaciones: 1743; elegibles: 1733; excluidas: 10.
-- Categorizadas: 1730; pendientes de categoría: 3.
-- Atributos aceptados: 9431; con precio: 445; con logo: 1733; con companyID: 1733.
+- Fichas técnicas incluidas en las publicaciones: 2126; elegibles: 2108; excluidas: 18.
+- Categorizadas: 2105; pendientes de categoría: 3.
+- Aptitud para importación: PENDIENTE · 3 productos elegibles sin categoría comercial; el paquete verificable NO está listo para importar íntegramente.
+- Atributos aceptados: 11733; con precio: 445; con logo: 2108; con companyID: 2108.
 - Excepciones registradas: 6; grupos de referencias visibles coincidentes entre productos exportados: 4.
 - El recuento de origen corresponde a las fichas de la publicación técnica incluida; no acredita el total del catálogo original del proveedor.
 
@@ -22,8 +23,8 @@
 
 ### GAM — gam-commercial.json
 
-- Publicación técnica SHA256: 16678157073bf548fb55527184c316922e1d5accf66fe763d41d6656d0d14851
-- JSON SHA256: 68797239b0f3fbfcccd4a3f18f8bfb603792d907ce5b13a0d939031ceac70485; bytes UTF-8: 3294066.
+- Publicación técnica SHA256: e784ca065ca2fc9751e91daa85895af30a068dfbc7da1871d3b0daa1dcdc8793
+- JSON SHA256: 718ccefabc5248f875b549a1123cb5d1b5ea8049a6d39d5e9277fca4bd7a5e02; bytes UTF-8: 3294066.
 - Técnicas incluidas: 976; exportadas: 966; categorizadas: 966; pendientes: 0.
 - Exclusiones: 10 (lotes 7, herramientas 0, accesorios 3).
 - Atributos aceptados: 5128; con precio: 244; con logo: 966; con companyID: 966.
@@ -36,25 +37,45 @@ Señales y excepciones documentadas:
 ### GOMARIZ — gomariz-commercial.json
 
 - Publicación técnica SHA256: c8b70bbc913368ec87cbb657a54d35864b97ee92f1ebb062c04d1a41cebf3c3b
-- JSON SHA256: 8a0f59fae6a30157c0421f3108f311e38505f245ba64c79022bff34d51848f64; bytes UTF-8: 2419027.
-- Técnicas incluidas: 546; exportadas: 546; categorizadas: 543; pendientes: 3.
+- JSON SHA256: 530126beeeee01cec74982030c2472e3803ce06c2320ac8147ad23eff08db08a; bytes UTF-8: 2419216.
+- Técnicas incluidas: 546; exportadas: 546; categorizadas: 544; pendientes: 2.
 - Exclusiones: 0 (lotes 0, herramientas 0, accesorios 0).
-- Atributos aceptados: 2989; con precio: 0; con logo: 546; con companyID: 546.
-- Excepciones: 3; grupos de referencias visibles coincidentes: 0.
+- Atributos aceptados: 2993; con precio: 0; con logo: 546; con companyID: 546.
+- Excepciones: 2; grupos de referencias visibles coincidentes: 0.
 - Campos comerciales presentes: reference, categorySellID, attributes, price, companyID, logoID, image, images, metadata.
 
+Productos elegibles pendientes de categoría (no listos para importar):
+- BR901 | https://www.gomarizrent.com/limpieza/barredora/eureka-compact-1150-1/
+- BR954 | https://www.gomarizrent.com/limpieza/barredora/johnston-cn201/
+
 Señales y excepciones documentadas:
-- sin-categoria: 3
+- sin-categoria: 2
 
 ### MERCAELEVA — mercaeleva-commercial.json
 
-- Publicación técnica SHA256: 288b7c9655b5a1d6f770bae2ece4284a596bc7777c27ad4259876eff39b524e9
-- JSON SHA256: 5bdeb92f698dca38ef74acd71cde660f2551b655618f102d664cd43fb1b0e95e; bytes UTF-8: 1104925.
+- Publicación técnica SHA256: 38eae2f8ce86ce12bd6e899affaada9f351e6d35ef9391af58d6ee56daba4305
+- JSON SHA256: 509590ea3ddc970474aa2972afadae131d0e2d348d866340ba158350d054b78d; bytes UTF-8: 1104845.
 - Técnicas incluidas: 221; exportadas: 221; categorizadas: 221; pendientes: 0.
 - Exclusiones: 0 (lotes 0, herramientas 0, accesorios 0).
 - Atributos aceptados: 1314; con precio: 201; con logo: 221; con companyID: 221.
 - Excepciones: 0; grupos de referencias visibles coincidentes: 0.
 - Campos comerciales presentes: reference, categorySellID, attributes, price, companyID, logoID, image, images, metadata.
+
+### MANAIN — manain-commercial.json
+
+- Publicación técnica SHA256: 69ec6aa51b56e3a06766d51f9c6239f43b238f1fb9b5a2d0bb0f35e0172a2528
+- JSON SHA256: c69301bfcba00c9d8ba105198997deabe77256af350a8d53e12f6f14b51e6958; bytes UTF-8: 1381290.
+- Técnicas incluidas: 383; exportadas: 375; categorizadas: 374; pendientes: 1.
+- Exclusiones: 8 (lotes 0, herramientas 8, accesorios 0).
+- Atributos aceptados: 2298; con precio: 0; con logo: 375; con companyID: 375.
+- Excepciones: 1; grupos de referencias visibles coincidentes: 0.
+- Campos comerciales presentes: reference, categorySellID, attributes, price, companyID, logoID, image, images, metadata.
+
+Productos elegibles pendientes de categoría (no listos para importar):
+- MAN1188 | https://manain.com/producto/venta-pequena-maquinaria-demolicion-holzstar-tks-316-e/
+
+Señales y excepciones documentadas:
+- sin-categoria: 1
 
 ## Mapa de campos para la integración
 
@@ -80,7 +101,7 @@ Señales y excepciones documentadas:
 
 ## Integridad y reproducción
 
-- Los cuatro JSON exactos y sus huellas SHA256 están dentro del paquete comercial; `commercial-manifest.json` identifica las publicaciones técnicas de origen por SHA256, el entorno y cada archivo.
+- Los 5 JSON exactos y sus huellas SHA256 están dentro del paquete comercial; `commercial-manifest.json` identifica las publicaciones técnicas de origen por SHA256, el entorno y cada archivo.
 - La verificación de fuentes activas debe ejecutarse contra el mismo corte: el SHA256 de publicación no permite por sí solo atribuir una fecha de activación.
 - Las discrepancias del manifiesto histórico de referencias son diagnóstico de procedencia independiente y no autorizan modificarlo ni alterar el contrato comercial v2.
 - Exportar el corte vigente: `npm run exportar:comercial -- --entorno develop` (o production según el destino).
