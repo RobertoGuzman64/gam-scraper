@@ -3,7 +3,7 @@ import test from "node:test";
 import { join } from "node:path";
 import { parseCommercialExportOptions, shouldRefreshLocalPanel } from "../commercial-export.js";
 
-test("predetermina dos ZIP y conserva directorio fuera del repositorio y entorno explícito", () => {
+test("predetermina un ZIP y conserva directorio fuera del repositorio y entorno explícito", () => {
   assert.throws(() => parseCommercialExportOptions([]), /requiere --entorno/);
   assert.deepEqual(parseCommercialExportOptions(["--entorno", "production"]), {
     out: null, environment: "production", dryRun: false

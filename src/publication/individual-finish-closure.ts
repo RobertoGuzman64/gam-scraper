@@ -1,14 +1,15 @@
 import { createHash } from "node:crypto";
 import { lstat, readFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { resolveAccreditedPublication } from "../infrastructure/filesystem/catalog/accredited-publication.js";
 import { publicationApprovalSha } from "../infrastructure/filesystem/catalog/publication-identity.js";
 import {
-  advanceIndividualFinishClosure, individualFinishClosurePhase, openIndividualFinishJournal, withIndividualFinishLock
+  advanceIndividualFinishClosure, individualFinishClosurePhase, openIndividualFinishJournal, renewIndividualFinishReport, withIndividualFinishLock
 } from "../infrastructure/filesystem/catalog/individual-finish-journal.js";
 import type { IndividualFinishClosurePhase, IndividualFinishJournal, IndividualFinishReportReceipt } from "../infrastructure/filesystem/catalog/individual-finish-journal.js";
 import type { IndividualFinishResult } from "./individual-finish.js";
 import { readIndividualActiveSha } from "./individual-finish.js";
+import { inspectRepositoryArtifact } from "../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
 
 export type IndividualFinishClosureResult = {
   readonly journalPath: string;
@@ -20,16 +21,49 @@ export type IndividualFinishClosureResult = {
 type ClosureActions = {
   readonly retention: () => Promise<void>;
   readonly auditor: () => Promise<void>;
-  readonly reporter: () => Promise<{ readonly zipFile: string }>;
+  readonly reporter: () => Promise<{ readonly reportFile: string }>;
 };
 
-const verifyReport = async (receipt: IndividualFinishReportReceipt): Promise<void> => {
+const reportDirectory = (workspace: string): string => join(workspace, "catalogs", "reports", "individual-finish");
+const internalReportPath = (workspace: string, fingerprint: string): string =>
+  join(reportDirectory(workspace), "versions", fingerprint, "INFORME.txt");
+
+const verifyReport = async (workspace: string, receipt: IndividualFinishReportReceipt): Promise<void> => {
+  if (receipt.kind === "internal" && receipt.path !== internalReportPath(workspace, receipt.sha256)) {
+    throw new Error("Recibo FINISH interno no corresponde a su versión");
+  }
   const metadata = await lstat(receipt.path);
   if (!metadata.isFile() || metadata.isSymbolicLink() || metadata.nlink !== 1) {
     throw new Error("Informe FINISH no es un archivo regular e independiente");
   }
   const digest = createHash("sha256").update(await readFile(receipt.path)).digest("hex");
   if (digest !== receipt.sha256) throw new Error("Informe FINISH alterado desde el cierre acreditado");
+  if (receipt.kind === "internal") {
+    const selected = await inspectRepositoryArtifact(reportDirectory(workspace), "INFORME.txt", ["INFORME.txt"]);
+    if (!selected || (selected.sha256 !== receipt.sha256 && selected.previousSha256 !== receipt.sha256)) {
+      throw new Error("Informe FINISH fuera de la retención interna verificable");
+    }
+  }
+};
+
+const reportWasRetired = async (workspace: string, receipt: IndividualFinishReportReceipt): Promise<boolean> => {
+  if (receipt.kind !== "internal" || receipt.path !== internalReportPath(workspace, receipt.sha256)) return false;
+  try { await lstat(receipt.path); return false; }
+  catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
+  }
+  const selected = await inspectRepositoryArtifact(reportDirectory(workspace), "INFORME.txt", ["INFORME.txt"]);
+  return selected !== null && selected.sha256 !== receipt.sha256 && selected.previousSha256 !== receipt.sha256;
+};
+
+const retainReportReceipt = async (workspace: string, actions: ClosureActions): Promise<IndividualFinishReportReceipt> => {
+  const delivered = await actions.reporter();
+  const file = resolve(delivered.reportFile);
+  const selected = await inspectRepositoryArtifact(reportDirectory(workspace), "INFORME.txt", ["INFORME.txt"]);
+  if (!selected || file !== internalReportPath(workspace, selected.sha256)) throw new Error("Informe FINISH no corresponde a la selección interna vigente");
+  const receipt: IndividualFinishReportReceipt = { path: file, sha256: selected.sha256, kind: "internal" };
+  await verifyReport(workspace, receipt);
+  return receipt;
 };
 
 const assertActive = async (workspace: string, journal: IndividualFinishJournal): Promise<void> => {
@@ -62,7 +96,7 @@ export const completeIndividualFinishClosure = async (
     if (individualFinishClosurePhase(journal) === "activated") {
       try { await actions.retention(); }
       catch (error) {
-        throw new Error(`ARCHIVADO PENDIENTE | Publicaciones activas conservadas. Diario: ${path}. ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+        throw new Error(`RETENCIÓN PENDIENTE | Publicaciones activas conservadas. Diario: ${path}. ${error instanceof Error ? error.message : String(error)}`, { cause: error });
       }
       await assertActive(root, journal);
       journal = await advanceIndividualFinishClosure(path, journal, "retained");
@@ -80,10 +114,7 @@ export const completeIndividualFinishClosure = async (
     if (individualFinishClosurePhase(journal) === "audited") {
       let receipt: IndividualFinishReportReceipt;
       try {
-        const delivered = await actions.reporter();
-        const file = resolve(delivered.zipFile);
-        receipt = { path: file, sha256: createHash("sha256").update(await readFile(file)).digest("hex") };
-        await verifyReport(receipt);
+        receipt = await retainReportReceipt(root, actions);
       } catch (error) {
         throw new Error(`INFORME PENDIENTE | Publicaciones activas conservadas. Diario: ${path}. ${error instanceof Error ? error.message : String(error)}`, { cause: error });
       }
@@ -91,11 +122,22 @@ export const completeIndividualFinishClosure = async (
       journal = await advanceIndividualFinishClosure(path, journal, "reported", receipt);
       executed.push("reported");
     }
-    const report = journal.closure?.report;
+    let report = journal.closure?.report;
     if (!report || individualFinishClosurePhase(journal) !== "reported") {
       throw new Error(`FINISH | cierre de diario incompleto: ${path}`);
     }
-    await verifyReport(report);
+    if (await reportWasRetired(root, report)) {
+      try {
+        const renewed = await retainReportReceipt(root, actions);
+        await assertActive(root, journal);
+        journal = await renewIndividualFinishReport(path, journal, renewed);
+        report = renewed;
+        executed.push("reported");
+      } catch (error) {
+        throw new Error(`INFORME PENDIENTE | Recibo interno de una versión retirada. Diario: ${path}. ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+      }
+    }
+    await verifyReport(root, report);
     return { journalPath: path, phase: "reported", executed, reportFile: report.path };
   });
 };

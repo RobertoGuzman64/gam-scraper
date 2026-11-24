@@ -9,7 +9,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const definitions = {
   iniciar: { entry: "cli/commands/maintenance/start.js", usage: "iniciar", description: "Comprobar entorno y descubrir campaña sin extraer" },
   "contrato:comercial": { entry: "GUARDS/tests-commercial-contract-guard.mjs", usage: "contrato:comercial", description: "Verificar el contrato comercial v2 sin compilar ni generar catálogos" },
-  "exportar:comercial": { entry: "cli/commands/catalog/commercial-export.js", usage: "exportar:comercial [-- --entorno develop|production] [--simular] [--salida <directorio-nuevo>]", description: "Entregar dos ZIP comerciales en Escritorio o cuatro JSON mediante --salida, sin publicar" },
+  "exportar:comercial": { entry: "cli/commands/catalog/commercial-export.js", usage: "exportar:comercial [-- --entorno develop|production] [--simular] [--salida <directorio-nuevo>]", description: "Entregar ZIP comercial en Escritorio y actualizar informe interno, o JSON mediante --salida, sin publicar" },
   "auditar:comercial": { entry: "cli/commands/catalog/commercial-audit.js", usage: "auditar:comercial [-- --detalle|--acreditacion|--json|--verificar=RUTA [--informe=ZIP]]", description: "Auditar sin escrituras las propuestas de categoría, atributos y cobertura comercial de publicaciones acreditadas" },
   huecos: { entry: "cli/commands/catalog/catalog-content-gaps.js", usage: "huecos [-- --finales | --tecnicas | --catalogo ruta/-catalog.json | --publicacion ruta/-publishable.json] [--agrupar categoria|marca|modelo] [--min-grupo 8] [--min-ausentes 3] [--top 20] [--detalle] [--json] [--comparar --titulos]", description: "Consultar huecos canónicos o calidad editorial de publicaciones acreditadas; solo lectura" },
   estado: { entry: "cli/commands/campaign/campaign-status.js", usage: "estado [-- --detalle]", description: "Consultar sin escrituras el estado de campaña, entrega, referencia y próximos comandos" },
@@ -17,7 +17,7 @@ const definitions = {
   revisar: { entry: "cli/commands/campaign/campaign-review.js", usage: "revisar", description: "Revisar Ready y Review; puede crear preparaciones que todavía falten" },
   intervenir: { entry: "cli/commands/campaign/campaign-intervene.js", usage: "intervenir -- gam --listar | --consultar <id> | --mantenimiento | --script <archivo.ts> [--aplicar]", description: "Consultar scripts versionados o simular/aplicar correcciones del lote actual", requiresProvider: true },
   acreditar: { entry: "cli/commands/campaign/campaign-finalize.js", usage: "acreditar [-- --listar | --consultar <proveedor> <ref> | --validar | --decidir <proveedor> <ref> <excluir|incluir> --motivo <texto> --evidencia <url> | --aprobar --motivo <texto> | --simular]", description: "Gestionar y aprobar decisiones editoriales mediante comandos, sin editar JSON" },
-  entregar: { entry: "cli/commands/campaign/campaign-deliver.js", usage: "entregar", description: "Entregar ZIP comprobado con cuatro JSON en el Escritorio sin perder la versión anterior" },
+  entregar: { entry: "cli/commands/campaign/campaign-deliver.js", usage: "entregar [-- --publicos | --informes --entorno develop|production]", description: "Entregar campaña o agrupar públicos/informes vigentes bajo demanda" },
   comparar: { entry: "cli/commands/campaign/campaign-compare.js", usage: "comparar", description: "Comparar los originales completos con la última entrega retenida (solo lectura)" },
   referencia: { entry: "cli/commands/campaign/campaign-reference.js", usage: "referencia [-- --actualizar | --recuperar | --exportar <carpeta> | --importar <carpeta> [--sustituir]]", description: "Consultar y trasladar referencias históricas con integridad (legado)" },
   recuperar: { entry: "cli/commands/campaign/campaign-recover.js", usage: "recuperar -- <runId> | --recuperar <runId> | --abandonar <runId> --confirmar <runId>", description: "Consultar y abandonar expresamente un intento fallido; no es limpieza ordinaria" },
@@ -29,7 +29,7 @@ const definitions = {
   "intervenir:preparar": { entry: "cli/commands/interventions/prepare-intervention.js", usage: "intervenir:preparar -- gam --derivado <catalog-derived.json> --origen <original-catalog.json> [--simular]", description: "Preparar manualmente un catálogo intervenido", requiresProvider: true },
   "intervenir:validar": { entry: "cli/commands/interventions/validate-intervention.js", usage: "intervenir:validar -- gam --derivado <catalog-derived.json> --origen <original-catalog.json> --preparacion <preparation.json>", description: "Validar preparación intervenida y su procedencia", requiresProvider: true },
   "catalogo:acreditar": { entry: "cli/commands/catalog/accredit-individual.js", usage: "catalogo:acreditar [-- --proveedor gam|gomariz|mercaeleva] [--simular]", description: "Comando opcional: acreditar automáticamente exclusiones históricas idénticas; el FINISH ya lo hace" },
-  "catalogo:publicar": { entry: "cli/commands/catalog/publish-individual.js", usage: "catalogo:publicar [-- --proveedor gam|gomariz|mercaeleva] [--simular] [--detalle]", description: "Paso 2/2: FINISH, preflight conjunto, ZIP, activación verificada, diario de recuperación, retención y auditor" },
+  "catalogo:publicar": { entry: "cli/commands/catalog/publish-individual.js", usage: "catalogo:publicar [-- --proveedor gam|gomariz|mercaeleva] [--simular] [--detalle]", description: "Paso 2/2: FINISH, preflight conjunto, entrega interna, activación verificada, diario de recuperación, retención y auditor" },
   "catalogo:preparar": { entry: "cli/commands/catalog/prepare-individual.js", usage: "catalogo:preparar [-- --proveedor gam|gomariz|mercaeleva] [--simular] [--detalle]", description: "Paso 1/2: preparar offline los tres proveedores individuales desde originales portátiles, con diagnóstico y reutilización segura" },
   preparar: { entry: "cli/commands/catalog/prepare.js", usage: "preparar -- gam --origen <catalog.json> | manain --origen <partial-all.csv> --censo <censo.json> [--simular]", description: "Preparar un catálogo completo o un registro parcial verificado de Manain", requiresProvider: true },
   validar: { entry: "cli/index.js", prefix: ["validate"], usage: "validar -- gam [--etapa catalogo --origen <catalog.json>]", description: "Validar catálogo o preparación", requiresProvider: true },
@@ -105,7 +105,9 @@ const printHelp = (requested) => {
     console.log("  npm run acreditar -- --consultar gam 6682");
     console.log("  npm run acreditar -- --validar");
     console.log("  npm run acreditar -- --aprobar --motivo \"Motivo global documentado de la campaña\"");
-    console.log("  npm run entregar");
+    console.log("  npm run entregar  (campaña global)");
+    console.log("  npm run entregar -- --publicos  (cuatro JSON vigentes)");
+    console.log("  npm run entregar -- --informes --entorno develop  (informes internos vigentes)");
     console.log("  npm run recuperar -- <runId>  (consulta segura de una campaña fallida)");
     console.log("  LECTURA | estado, comparar, referencia sin argumentos y modos editoriales de consulta.");
     console.log("  PREPARACIÓN/ESCRITURA | iniciar crea carpetas; revisar puede preparar; acreditar crea selección y sus modos de decisión escriben.");
@@ -216,7 +218,7 @@ if (rawCommand === "ayuda") {
               cwd: root, stdio: "inherit", windowsHide: true
             });
             if (retention.error || retention.status !== 0) {
-              console.error(formatScriptStatus("WARN", `Publicación individual activada, pero el archivado local quedó PENDIENTE: ${retention.error?.message ?? `código ${retention.status}`}. Revisar antes de continuar`, process.stderr));
+              console.error(formatScriptStatus("WARN", `Publicación individual activada, pero la retención local quedó PENDIENTE: ${retention.error?.message ?? `código ${retention.status}`}. Revisar antes de continuar`, process.stderr));
               process.exitCode = 1;
             }
           }

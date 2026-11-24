@@ -80,11 +80,11 @@ test("sin TTY o color activo el contenido es exactamente el mismo", () => {
   assert.equal(formatReportLine(formatStatus("PASS", "Completado", true), true), formatStatus("PASS", "Completado", true));
 });
 
-test("distingue activación, candidata verificada y archivado pendiente en color y sin ANSI", () => {
+test("distingue activación, candidata verificada y retención pendiente en color y sin ANSI", () => {
   assert.match(formatReportLine("PUBLICACIÓN | GAM | ACTIVADA", true), /\u001b\[32mACTIVADA\u001b\[0m/);
   assert.match(formatReportLine("PUBLICACIÓN | GAM | CANDIDATA VERIFICADA", true), /\u001b\[32mCANDIDATA VERIFICADA\u001b\[0m/);
-  assert.match(formatReportLine("PUBLICACIÓN | GAM | ARCHIVADO PENDIENTE", true), /\u001b\[33mARCHIVADO PENDIENTE\u001b\[0m/);
-  assert.equal(formatReportLine("PUBLICACIÓN | GAM | ARCHIVADO PENDIENTE", false), "PUBLICACIÓN | GAM | ARCHIVADO PENDIENTE");
+  assert.match(formatReportLine("PUBLICACIÓN | GAM | RETENCIÓN PENDIENTE", true), /\u001b\[33mRETENCIÓN PENDIENTE\u001b\[0m/);
+  assert.equal(formatReportLine("PUBLICACIÓN | GAM | RETENCIÓN PENDIENTE", false), "PUBLICACIÓN | GAM | RETENCIÓN PENDIENTE");
 });
 
 test("los bloques terminales son legibles sin TTY ni color y conservan cierre explícito", () => {

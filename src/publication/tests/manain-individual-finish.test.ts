@@ -8,7 +8,7 @@ import { runPublishIndividual } from "../../cli/commands/catalog/publish-individ
 import { resolveAccreditedPublication, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { publicationOriginalSources } from "../../infrastructure/filesystem/catalog/accredited-publication-original.js";
 import { collectPublishedWork } from "../individual-work-report.js";
-import { deliverPublishedWorkReport } from "../../cli/reporting/published-work-archive.js";
+import { retainPublishedWorkReport } from "../../cli/reporting/published-work-archive.js";
 import type { PublishedWorkReport } from "../../catalog/diagnostics/published-work.js";
 import { deliverIndividualProvider } from "../individual-delivery.js";
 import { listIndividualFinishJournals } from "../../infrastructure/filesystem/catalog/individual-finish-journal.js";
@@ -40,8 +40,8 @@ test("Manain: FINISH requiere acreditación expresa y conserva la procedencia pa
     await assert.rejects(readFile(join(root, "catalogs", "providers", "manain", "publications", "active.json")), { code: "ENOENT" });
     await approveIndividualEditorial(options, "Aprobación editorial simulada en prueba aislada de FINISH");
     const reports: PublishedWorkReport[] = [];
-    const reporter: typeof deliverPublishedWorkReport = async (workspace, directory, result) => {
-      const delivery = await deliverPublishedWorkReport(workspace, directory, result);
+    const reporter: typeof retainPublishedWorkReport = async (workspace, result) => {
+      const delivery = await retainPublishedWorkReport(workspace, result);
       reports.push(delivery.report);
       return delivery;
     };
@@ -70,7 +70,7 @@ test("Manain: FINISH requiere acreditación expresa y conserva la procedencia pa
     assert.equal(journals[0]?.journal.closure?.phase, "reported");
     const retention = JSON.parse(await readFile(join(root, "catalogs", "providers", "manain", "publication-retention.json"), "utf8"));
     assert.equal(retention.previousSha256, null);
-    assert.equal((await readdir(desktop)).length, 2);
+    assert.deepEqual(await readdir(desktop), []);
     assert.equal((await deliverIndividualProvider(options, "verify")).publishable, ready);
     assert.deepEqual(await readFile(source), original);
     const [catalog, references] = await Promise.all([loadImportCatalogSnapshot(), loadCommercialReference()]);

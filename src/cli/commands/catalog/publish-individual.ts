@@ -6,7 +6,6 @@ import { printCommandHeader, printCommandSection, printCommandProvider, printCom
 import { LiveStatus, formatDuration } from "../../reporting/live-status.js";
 import { OperationProgress } from "../../reporting/operation-progress.js";
 import { printCommandError } from "../../reporting/errors.js";
-import { findDesktopDirectory } from "../../../infrastructure/filesystem/desktop-directory.js";
 import { publishIndividualCatalogs } from "../../../publication/individual-finish.js";
 import { completeIndividualFinishClosure } from "../../../publication/individual-finish-closure.js";
 import { individualFinishClosurePhase, listIndividualFinishJournals } from "../../../infrastructure/filesystem/catalog/individual-finish-journal.js";
@@ -14,7 +13,7 @@ import { inspectIndividualFinishPreflight } from "../../../publication/finish-pr
 import type { IndividualFinishResult, IndividualFinishProgress } from "../../../publication/individual-finish.js";
 import type { IndividualCatalogProvider } from "../../../preparation/workflow/individual-context.js";
 import { runCatalogContentGaps } from "./catalog-content-gaps.js";
-import { deliverPublishedWorkReport } from "../../reporting/published-work-archive.js";
+import { retainPublishedWorkReport } from "../../reporting/published-work-archive.js";
 import { formatPublishedWorkTerminal } from "../../reporting/published-work.js";
 
 export const publishIndividualHelp = `Uso:
@@ -27,15 +26,15 @@ export const publishIndividualHelp = `Uso:
   npm run catalogo:publicar -- --estado
 
 Paso 2/2: FINISH. Reutiliza automáticamente exclusiones históricas idénticas y acredita antes de publicar.
-Verifica los ZIP y recibos antes de activar; activa proveedores individuales con diario de recuperación,
+Verifica la publicación interna acreditada antes de activar; activa proveedores individuales con diario de recuperación,
 comprueba integridad, ejecuta retención, auditor e informe de trabajo original → publicado. --simular no escribe ni activa.
 Repetir el comando recupera un conjunto parcial sin sobrescribir entregas.
-No sustituye una campaña global de cuatro proveedores. --detalle muestra diferencias y rutas de entregas.
+No sustituye una campaña global de cuatro proveedores. --detalle muestra diferencias. FINISH no genera ZIP externos.
 --estado consulta sin escritura el diario de activación, retención, auditoría e informe.`;
 
 export const consolidate = async (workspace: string): Promise<void> => {
   const progress = new LiveStatus();
-  progress.update("FINISH | RETENCIÓN | archivando históricos");
+  progress.update("FINISH | RETENCIÓN | retirando históricos elegibles");
   try {
     const child = spawn(process.execPath,
       [join(workspace, "scripts", "maintenance", "consolidate-local-artifacts.mjs"), "--aplicar"],
@@ -55,7 +54,7 @@ export const consolidate = async (workspace: string): Promise<void> => {
     if (processResult.error || processResult.code !== 0) {
       const reason = processResult.error?.message ?? (processResult.signal
         ? `señal ${processResult.signal}` : `código ${processResult.code}`);
-      throw new Error(`ARCHIVADO PENDIENTE | Publicaciones activas conservadas. ${reason}. Corrige el bloqueo y repite catalogo:publicar`);
+      throw new Error(`RETENCIÓN PENDIENTE | Publicaciones activas conservadas. ${reason}. Corrige el bloqueo; si hay una transacción interrumpida, resuelve primero con node scripts/maintenance/consolidate-local-artifacts.mjs --aplicar y repite catalogo:publicar`);
     }
   } finally {
     progress.stop();
@@ -93,7 +92,6 @@ const describeResult = (result: IndividualFinishResult, detailed: boolean): void
     if (removals > 0) printStatus("WARN", `${item.providerId.toUpperCase()} | ${removals} bajas acreditadas en el alcance publicado`);
     if (detailed) {
       printReportLine(`    Especificaciones nuevas ${difference.addedSpecifications.length} · modificadas ${difference.changedSpecifications.length}`);
-      if (item.zipFile) printCommandDeliverable("    ZIP y recibo verificados", item.zipFile);
     }
   }
 };
@@ -104,7 +102,7 @@ export const runPublishIndividual = async (
     readonly desktopDirectory?: string;
     readonly retention?: () => void | Promise<void>;
     readonly auditor?: () => Promise<void>;
-    readonly reporter?: typeof deliverPublishedWorkReport;
+    readonly reporter?: typeof retainPublishedWorkReport;
   } = {}
 ): Promise<IndividualFinishResult | null> => {
   if (args.length === 1 && args[0] === "--help") {
@@ -135,7 +133,6 @@ export const runPublishIndividual = async (
   printCommandHeader("PASO 2/2 · FINISH", parsed.dryRun);
   const root = resolve(workspace);
   const progress = new OperationProgress("FINISH");
-  let desktopDirectory: string | null = null;
   let result: IndividualFinishResult;
   try {
     progress.stage(parsed.dryRun ? "ACREDITACIÓN" : "PREFLIGHT", `${parsed.providerIds.length} ${parsed.providerIds.length === 1 ? "proveedor" : "proveedores"}`);
@@ -147,7 +144,6 @@ export const runPublishIndividual = async (
       }
       progress.update(providerId.toUpperCase(), completed, total);
     };
-    desktopDirectory = parsed.dryRun ? null : hooks.desktopDirectory ?? await findDesktopDirectory();
     if (parsed.dryRun) {
       result = await withFullDiagnostics(root, parsed.providerIds, () => publishIndividualCatalogs({
         workspace: root, providers: parsed.providerIds, dryRun: true, desktopDirectory: null,
@@ -181,7 +177,7 @@ export const runPublishIndividual = async (
       };
       result = await withFullDiagnostics(root, parsed.providerIds, () => publishIndividualCatalogs({
         workspace: root, providers: parsed.providerIds, dryRun: false,
-        desktopDirectory, onProgress: publishingProgress
+        desktopDirectory: null, onProgress: publishingProgress
       }));
     }
     progress.finish();
@@ -206,23 +202,22 @@ export const runPublishIndividual = async (
     retention: async () => { await closeStep("RETENCIÓN", async () => { await (hooks.retention ?? (() => consolidate(root)))(); }); },
     auditor: async () => { await closeStep("AUDITORÍA", async () => { await (hooks.auditor ?? (() => runCatalogContentGaps(["--comparar", "--specs", "--top", "5"])))(); }); },
     reporter: async () => {
-      if (!desktopDirectory) throw new Error("No se ha resuelto el Escritorio del informe");
       const startedAt = Date.now();
-      printStatus("RUN", "FINISH | INFORME | preparando ZIP técnico");
-      const delivery = await (hooks.reporter ?? deliverPublishedWorkReport)(root, desktopDirectory, result);
+      printStatus("RUN", "FINISH | INFORME | actualizando informe técnico interno");
+      const delivery = await (hooks.reporter ?? retainPublishedWorkReport)(root, result);
       printStatus("PASS", `FINISH | INFORME | ${formatDuration(Date.now() - startedAt)}`);
       printCommandSection("TRABAJO REALIZADO");
       for (const line of formatPublishedWorkTerminal(delivery.report, detailed)) printReportLine(line);
       return delivery;
     }
   });
-  printStatus("PASS", closure.executed.includes("retained") ? "RETENCIÓN | ARCHIVADO COMPLETO" : "RETENCIÓN | CIERRE PREVIO CONSERVADO");
+  printStatus("PASS", closure.executed.includes("retained") ? "RETENCIÓN | COMPLETA" : "RETENCIÓN | CIERRE PREVIO CONSERVADO");
   printStatus("PASS", closure.executed.includes("audited") ? "AUDITORÍA | COMPLETADA" : "AUDITORÍA | CIERRE PREVIO CONSERVADO");
-  printCommandDeliverable(closure.executed.includes("reported") ? "INFORME TÉCNICO · ZIP verificado" : "INFORME TÉCNICO · RECIBO YA CERRADO", closure.reportFile);
+  printCommandDeliverable(closure.executed.includes("reported") ? "INFORME TÉCNICO · versión interna verificada" : "INFORME TÉCNICO · RECIBO YA CERRADO", closure.reportFile);
   if (detailed) printReportLine(`  Diario de cierre: ${closure.journalPath}`);
   printCommandResult(result.providers.every((item) => item.status === "YA VIGENTE")
-    ? "FINISH COMPLETO · YA VIGENTE, sin nuevas publicaciones ni ZIP comerciales"
-    : "FINISH COMPLETO · Publicaciones activadas, verificadas y archivadas; consultar cierre del auditor por separado");
+    ? "FINISH COMPLETO · YA VIGENTE, sin nuevas publicaciones ni ZIP externos"
+    : "FINISH COMPLETO · Publicaciones activadas y verificadas, retención completada; consultar cierre del auditor por separado");
   return result;
 };
 

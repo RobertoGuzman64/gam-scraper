@@ -66,7 +66,7 @@ export const shouldRefreshLocalPanel = (options: CommercialExportOptions): boole
 export const runCommercialExport = async (args: readonly string[]): Promise<void> => {
   const options = parseCommercialExportOptions(args);
   if (options === "help") {
-    printReportLine("Uso: npm run exportar:comercial -- --entorno develop|production [--simular] [--salida <directorio-nuevo>]\nPor defecto genera dos ZIP verificados en el Escritorio: comercial (un JSON por proveedor acreditado y manifiesto) e informe de integración. --salida conserva los archivos sueltos en un directorio nuevo. --simular permite verificar sin elegir entorno. También admite --out, --environment y --dry-run. No publica ni importa en backend.");
+    printReportLine("Uso: npm run exportar:comercial -- --entorno develop|production [--simular] [--salida <directorio-nuevo>]\nPor defecto genera un ZIP comercial verificado en el Escritorio (un JSON por proveedor acreditado y manifiesto) y actualiza el informe interno de integración. --salida conserva los archivos sueltos en un directorio nuevo. --simular permite verificar sin elegir entorno. También admite --out, --environment y --dry-run. No publica ni importa en backend.");
     return;
   }
   const progress = new OperationProgress("EXPORTACIÓN COMERCIAL");
@@ -98,7 +98,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
       return;
     }
     if (options.out === null) {
-      progress.stage("ENTREGA", "generando y verificando ZIP comerciales");
+      progress.stage("ENTREGA", "generando y verificando ZIP comercial e informe interno");
       const delivered = await deliverCommercialPackages(root, await findDesktopDirectory(), files);
       progress.finish();
       printCommandHeader("EXPORTACIÓN COMERCIAL");
@@ -110,7 +110,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
       printReportLine(readiness);
       printCommandSection("ENTREGABLES");
       printCommandDeliverable("COMERCIAL", delivered.commercial);
-      printCommandDeliverable("INFORME", delivered.report);
+      if (delivered.report) printCommandDeliverable("INFORME INTERNO", delivered.report);
       if (shouldRefreshLocalPanel(options)) {
         const panelProgress = new OperationProgress("PANEL LOCAL");
         try {
@@ -125,7 +125,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
           throw new Error("Exportación comercial entregada, pero la actualización del panel local no se ha completado", { cause: error });
         }
       }
-      printCommandResult("Dos ZIP comprobados desde publicaciones vigentes; integración en BD NO VERIFICADA");
+      printCommandResult("ZIP comercial e informe interno comprobados desde publicaciones vigentes; integración en BD NO VERIFICADA");
       return;
     }
     const destination = resolve(options.out);

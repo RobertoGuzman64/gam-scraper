@@ -10,6 +10,25 @@ import type { PublishedWorkReport } from "../../catalog/diagnostics/published-wo
 import { renderPublishedWorkMarkdown } from "./published-work.js";
 import { retainRepositoryArtifact } from "../../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
 
+export type PublishedWorkInternalDelivery = {
+  readonly report: PublishedWorkReport;
+  readonly reportFile: string;
+};
+
+const retainReport = async (workspace: string, markdown: string): Promise<string> => {
+  const directory = join(resolve(workspace), "catalogs", "reports", "individual-finish");
+  const fingerprint = await retainRepositoryArtifact(directory, "INFORME.txt", [{ name: "INFORME.txt", content: markdown }]);
+  return join(directory, "versions", fingerprint, "INFORME.txt");
+};
+
+export const retainPublishedWorkReport = async (
+  workspace: string, result: IndividualFinishResult
+): Promise<PublishedWorkInternalDelivery> => {
+  const report = await collectPublishedWork(workspace, result);
+  const reportFile = await retainReport(workspace, renderPublishedWorkMarkdown(report));
+  return { report, reportFile };
+};
+
 export type PublishedWorkDelivery = {
   readonly report: PublishedWorkReport;
   readonly zipFile: string;
@@ -59,7 +78,6 @@ export const deliverPublishedWorkReport = async (
   } finally {
     await rm(pending, { force: true });
   }
-  await retainRepositoryArtifact(join(workspace, "catalogs", "reports", "individual-finish"),
-    "INFORME.txt", [{ name: "INFORME.txt", content: markdown }]);
+  await retainReport(workspace, markdown);
   return { report, zipFile };
 };

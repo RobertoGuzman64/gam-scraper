@@ -108,7 +108,7 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     copyFileSync(join(root, "scripts/build-cache.mjs"), join(temp, "scripts/build-cache.mjs"));
     writeFileSync(join(temp, "scripts/run-build.mjs"), "process.exitCode = 0;\n");
     mkdirSync(join(temp, "scripts/maintenance"), { recursive: true });
-    writeFileSync(join(temp, "scripts/maintenance/consolidate-local-artifacts.mjs"), 'process.stdout.write("ARCHIVADO COMPLETO\\n");\n');
+    writeFileSync(join(temp, "scripts/maintenance/consolidate-local-artifacts.mjs"), 'process.stdout.write("RETENCIÓN COMPLETA\\n");\n');
     const echo = 'console.log(JSON.stringify(process.argv.slice(2)));\n';
     for (const filename of ["cli/commands/catalog/prepare.js", "cli/index.js", "cli/commands/maintenance/storage-clean.js", "cli/commands/maintenance/catalogs-migrate.js", "cli/commands/campaign/campaign-extract.js", "cli/commands/campaign/campaign-status.js", "cli/commands/campaign/campaign-review.js", "cli/commands/campaign/campaign-reference.js", "cli/commands/campaign/campaign-finalize.js", "cli/commands/catalog/catalog-content-gaps.js", "cli/commands/catalog/deliver-provider.js"]) {
       const target = join(temp, "dist", filename);
@@ -178,11 +178,11 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     assert.deepEqual(JSON.parse(received), ["gam", "--source", "C:\\Mi equipo\\catalogo completo.json", "--dry-run"]);
     const npmDelivery = await runNpm(temp, "publicacion-prueba", ["gam", "--origen", "catalogo.json", "--preparacion", "preparacion.json", "--solo-json"]);
     assert.equal(npmDelivery.status, 0, npmDelivery.stderr);
-    assert.match(npmDelivery.stdout, /ARCHIVADO COMPLETO/);
+    assert.match(npmDelivery.stdout, /RETENCIÓN COMPLETA/);
     writeFileSync(join(temp, "scripts/maintenance/consolidate-local-artifacts.mjs"), "process.exitCode = 1;\n");
     const incomplete = await runNpm(temp, "publicacion-prueba", ["gam", "--origen", "catalogo.json", "--preparacion", "preparacion.json", "--solo-json"]);
     assert.equal(incomplete.status, 1);
-    assert.match(incomplete.stderr, /archivado local quedó PENDIENTE/);
+    assert.match(incomplete.stderr, /retención local quedó PENDIENTE/);
     assert.equal(providerExtract.status, 0, providerExtract.stderr);
     assert.deepEqual(JSON.parse(providerExtract.stdout.trim()), ["scrape", "gam", "--category", "venta"]);
     assert.equal(validate.status, 0, validate.stderr);

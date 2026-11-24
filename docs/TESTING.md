@@ -221,7 +221,7 @@ Al renombrar archivos o carpetas, comprobar además referencias dinámicas, ruta
 
 **Huellas de preparación:** `rulesSha256` se obtiene del contenido compilado y de los nombres relativos de módulos del catálogo. Tras cambios estructurales puede variar aunque los datos publicados no hayan cambiado. Verificar la compatibilidad de preparaciones y aprobaciones existentes sin reescribir sus hashes, sin regenerar de forma encubierta `catalogs/` y sin considerar `npm run estado` una acreditación de reglas nuevas. `PASS` de tests, `PASS` de build, integridad de `catalogs/` y aceptación editorial son comprobaciones diferentes.
 
-**Validación del ciclo individual:** ejecutar `npm run catalogo:preparar -- --simular`, `npm run catalogo:publicar -- --simular` y comprobar mediante `npm run estado` los índices de publicación existentes. La simulación no acredita nuevos casos ni activa finales. Una ejecución real de FINISH requiere fuentes y decisiones verificadas; su informe ZIP resume el trabajo original → publicado, no acredita cobertura web ni sustituye el preflight. Ver [Publicación individual](PUBLICATIONS.md).
+**Validación del ciclo individual:** ejecutar `npm run catalogo:preparar -- --simular`, `npm run catalogo:publicar -- --simular` y comprobar mediante `npm run estado` los índices de publicación existentes. La simulación no acredita nuevos casos ni activa finales. Una ejecución real de FINISH requiere fuentes y decisiones verificadas; su informe interno versionado resume el trabajo original → publicado, no acredita cobertura web ni sustituye el preflight. Ver [Publicación individual](PUBLICATIONS.md).
 
 ## Validación ordinaria y de reformas
 

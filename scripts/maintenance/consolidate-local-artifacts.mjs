@@ -1,7 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import { copyFile, lstat, mkdir, open, readFile, readdir, rename, rm, rmdir, writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -383,23 +382,9 @@ const snapshot = async (root, items) => {
       const info = await regularFile(file);
       contents.push({ path: relative(root, file).replaceAll(sep, "/"), size: info.size, sha256: sha256(await readFile(file)) });
     }
-    records.push({ ...item, type: (await lstat(full)).isDirectory() ? "directory" : "file", files: contents });
+    records.push({ ...item, type: (await lstat(full)).isDirectory() ? "directory" : "file", files: contents.sort((a, b) => a.path.localeCompare(b.path)) });
   }
   return records;
-};
-
-const copyTree = async (source, destination) => {
-  const info = await lstat(source);
-  if (info.isFile()) {
-    await regularFile(source);
-    await mkdir(dirname(destination), { recursive: true });
-    await copyFile(source, destination, constants.COPYFILE_EXCL);
-    return;
-  }
-  await regularDirectory(source);
-  await mkdir(dirname(destination), { recursive: true });
-  await mkdir(destination);
-  for (const name of await readdir(source)) await copyTree(join(source, name), join(destination, name));
 };
 
 const restoreTree = async (source, destination) => {
@@ -452,12 +437,12 @@ const operationalStateChange = (before, after, items) => {
   const previous = before.split(/\r?\n/);
   const current = after.split(/\r?\n/);
   if (previous.length !== current.length) return `Número de líneas: antes ${previous.length}, después ${current.length}`;
-  const archivedPartial = new Set();
+  const removedPartial = new Set();
   if (items.some((item) => item.path === "storage/scraped/mercaeleva/scrape-mercaeleva-summary.json")) {
-    archivedPartial.add("MERCAELEVA");
+    removedPartial.add("MERCAELEVA");
   }
   if (items.some((item) => /^storage\/scraped\/manain\/prueba-manain(?:-cdp)?-summary\.json$/.test(item.path))) {
-    archivedPartial.add("MANAIN");
+    removedPartial.add("MANAIN");
   }
   let provider = "";
   for (let index = 0; index < previous.length; index += 1) {
@@ -469,7 +454,7 @@ const operationalStateChange = (before, after, items) => {
     }
     if (/^PASS \|\s+PREPARACIÓN \| CORRECTO \| Preparación acreditada \(\d+ Ready \/ \d+ Review\)$/.test(first) &&
       /^PASS \|\s+PREPARACIÓN \| CORRECTO \| Preparación acreditada \(\d+ Ready \/ \d+ Review\)$/.test(next)) continue;
-    if (archivedPartial.has(provider) &&
+    if (removedPartial.has(provider) &&
       (first === "WARN |   ORIGINAL OPERATIVO | PARCIAL | Extracción parcial conservada; CSV coincide con el resumen" &&
         next === "    ORIGINAL OPERATIVO | AUSENTE | Sin extracción conservada" ||
         first === "WARN |   PREPARACIÓN | PARCIAL | Preparación heredada disponible; no acreditada como preparación offline" &&
@@ -490,7 +475,7 @@ const retentionIndexes = async (root) => {
     if (keep[0].timestamp === null) continue;
     const path = join(root, "storage", "providers", provider, "publication-retention.json");
     let previous = null;
-    try { previous = await readFile(path); } catch (error) { if (!missing(error)) throw error; }
+    try { await regularFile(path); previous = (await readFile(path)).toString("base64"); } catch (error) { if (!missing(error)) throw error; }
     const current = JSON.stringify({
       version: 1, providerId: provider,
       publications: keep.filter((item) => item.timestamp !== null).map((item) => ({
@@ -503,22 +488,220 @@ const retentionIndexes = async (root) => {
   return indexes;
 };
 
-const writeIndexes = async (indexes) => {
-  for (const entry of indexes) {
-    await mkdir(dirname(entry.path), { recursive: true });
-    const stage = `${entry.path}.${randomUUID()}.tmp`;
-    try {
-      await writeFile(stage, entry.current, { flag: "wx" });
-      await rename(stage, entry.path);
-    } finally { await rm(stage, { force: true }); }
+const transactionName = ".equipzilla-consolidation";
+const lockName = ".equipzilla-consolidation.lock";
+const exists = async (path) => {
+  try { return await lstat(path); } catch (error) { if (missing(error)) return null; throw error; }
+};
+
+const safeRelative = (path) => typeof path === "string" && path.length > 0 &&
+  !isAbsolute(path) && !path.includes("\\") && !path.includes(":") &&
+  path.split("/").every((part) => part && part !== "." && part !== "..");
+
+const physicalPath = async (root, path) => {
+  if (!safeRelative(path)) throw new Error(`Ruta de consolidación inválida: ${path}`);
+  await regularDirectory(root);
+  const parts = path.split("/");
+  let current = root;
+  for (const part of parts.slice(0, -1)) {
+    current = join(current, part);
+    if (await exists(current)) await regularDirectory(current);
+  }
+  return join(root, path);
+};
+
+const processAlive = (pid) => {
+  try { process.kill(pid, 0); return true; }
+  catch (error) { if (error.code === "ESRCH") return false; throw error; }
+};
+
+const withConsolidationLock = async (root, action) => {
+  await regularDirectory(root);
+  const folder = join(root, lockName);
+  const token = `${process.pid}-${randomUUID()}`;
+  const claim = join(folder, token);
+  for (;;) {
+    try { await mkdir(folder); } catch (error) { if (error.code !== "EEXIST") throw error; }
+    await regularDirectory(folder).catch((error) => {
+      throw new Error(`Bloqueo de consolidación no reconocido: ${folder}. Revisar el proceso anterior sin borrar datos`, { cause: error });
+    });
+    try { await writeFile(claim, "", { flag: "wx" }); break; }
+    catch (error) { if (!missing(error)) throw error; }
+  }
+  try {
+    for (const entry of await readdir(folder)) {
+      if (entry === token) continue;
+      const match = /^(\d+)-[a-f0-9-]{36}$/.exec(entry);
+      if (!match || !Number.isSafeInteger(Number(match[1])) || Number(match[1]) <= 0) {
+        throw new Error(`Bloqueo de consolidación no reconocido: ${entry}`);
+      }
+      const other = join(folder, entry);
+      try { await regularFile(other); } catch (error) { if (missing(error)) continue; throw error; }
+      if (processAlive(Number(match[1]))) throw new Error("Consolidación concurrente: otro proceso mantiene el bloqueo");
+      await rm(other, { force: true });
+    }
+    return await action();
+  } finally {
+    await rm(claim, { force: true });
+    try { await rmdir(folder); } catch (error) {
+      if (!missing(error) && error.code !== "ENOTEMPTY" && error.code !== "EEXIST") throw error;
+    }
   }
 };
 
-const restoreIndexes = async (indexes) => {
+const atomicWrite = async (path, stage, content) => {
+  await rm(stage, { force: true });
+  const handle = await open(stage, "wx");
+  try { await handle.writeFile(content); await handle.sync(); }
+  finally { await handle.close(); }
+  await rename(stage, path);
+};
+
+const indexValue = async (path) => {
+  try { await regularFile(path); return (await readFile(path)).toString("base64"); }
+  catch (error) { if (missing(error)) return null; throw error; }
+};
+
+const currentIndex = (entry) => Buffer.from(entry.current).toString("base64");
+const indexPathFor = (root, entry) => physicalPath(root, entry.path);
+const checkIndexes = async (root, indexes, allowCurrent = false) => {
   for (const entry of indexes) {
-    if (entry.previous === null) await rm(entry.path, { force: true });
-    else await writeFile(entry.path, entry.previous);
+    const value = await indexValue(await indexPathFor(root, entry));
+    if (value !== entry.previous && !(allowCurrent && value === currentIndex(entry))) {
+      throw new Error(`Índice de retención modificado concurrentemente: ${entry.path}`);
+    }
   }
+};
+
+const updateIndexes = async (root, transaction, indexes, restore = false) => {
+  for (const entry of indexes) {
+    const path = await indexPathFor(root, entry);
+    const value = await indexValue(path);
+    const expected = restore ? currentIndex(entry) : entry.previous;
+    const desired = restore ? entry.previous : currentIndex(entry);
+    if (value === desired) continue;
+    if (value !== expected) throw new Error(`Índice de retención modificado concurrentemente: ${entry.path}`);
+    if (desired === null) await rm(path);
+    else {
+      await mkdir(dirname(path), { recursive: true });
+      await atomicWrite(path, join(transaction, "index.tmp"), Buffer.from(desired, "base64"));
+    }
+  }
+};
+
+const verifyRecord = async (root, record) => {
+  await physicalPath(root, record.path);
+  const [actual] = await snapshot(root, [{ path: record.path, reason: record.reason }]);
+  if (actual.type !== record.type || JSON.stringify(actual.files) !== JSON.stringify(record.files)) {
+    throw new Error(`Huella diferente o miembros alterados: ${record.path}`);
+  }
+};
+
+const verifyRecords = async (root, records) => {
+  for (const record of records) await verifyRecord(root, record);
+};
+
+const validateTransaction = (root, journal) => {
+  if (!isRecord(journal) || journal.version !== 1 || journal.root !== root ||
+    !["pending", "committed", "rolled-back"].includes(journal.state) || typeof journal.initialState !== "string" ||
+    !Array.isArray(journal.records) || journal.records.length === 0 || !Array.isArray(journal.indexes)) {
+    throw new Error("Diario de consolidación inválido");
+  }
+  const paths = new Set();
+  for (const record of journal.records) {
+    if (!isRecord(record) || !safeRelative(record.path) ||
+      !/^(?:storage\/(?:prepared|providers|runs|scraped)\/|catalogs\/providers\/[^/]+\/publications\/)/.test(record.path) ||
+      !["file", "directory"].includes(record.type) || typeof record.reason !== "string" ||
+      !Array.isArray(record.files) || [...paths].some((path) => path === record.path ||
+        path.startsWith(`${record.path}/`) || record.path.startsWith(`${path}/`))) {
+      throw new Error("Ruta o conjunto inválido en diario de consolidación");
+    }
+    paths.add(record.path);
+    if (record.files.some((file) => !isRecord(file) || !safeRelative(file.path) ||
+      (record.type === "file" ? file.path !== record.path : !file.path.startsWith(`${record.path}/`)) ||
+      !Number.isSafeInteger(file.size) || file.size < 0 || !validSha(file.sha256)) ||
+      new Set(record.files.map((file) => file.path)).size !== record.files.length ||
+      (record.type === "file" && record.files.length !== 1)) throw new Error("Huellas inválidas en diario de consolidación");
+  }
+  const indexPaths = new Set(providers.map((provider) => `storage/providers/${provider}/publication-retention.json`));
+  for (const entry of journal.indexes) {
+    if (!isRecord(entry) || !indexPaths.delete(entry.path) || typeof entry.current !== "string" ||
+      (entry.previous !== null && (typeof entry.previous !== "string" ||
+        Buffer.from(entry.previous, "base64").toString("base64") !== entry.previous))) {
+      throw new Error("Índice inválido en diario de consolidación");
+    }
+  }
+};
+
+const writeJournal = (transaction, journal) => atomicWrite(join(transaction, "manifest.json"),
+  join(transaction, "manifest.tmp"), JSON.stringify(journal));
+
+const cleanTransaction = async (transaction, journal = null) => {
+  const files = join(transaction, "files");
+  if (await exists(files)) {
+    await regularDirectory(files);
+    const expected = new Map((journal?.records ?? []).flatMap((record) => record.files).map((file) => [file.path, file]));
+    for (const path of await filesIn(files)) {
+      const name = relative(files, path).replaceAll(sep, "/");
+      const file = expected.get(name);
+      if (journal?.state !== "committed" || !file || (await regularFile(path)).size !== file.size ||
+        sha256(await readFile(path)) !== file.sha256) throw new Error(`Archivo transitorio no reconocido: ${name}`);
+    }
+    await rm(files, { recursive: true });
+  }
+  for (const name of ["index.tmp", "manifest.tmp", "manifest.json"]) {
+    const path = join(transaction, name);
+    if (await exists(path)) { await regularFile(path); await rm(path); }
+  }
+  await rmdir(transaction);
+};
+
+const rollback = async (root, transaction, journal) => {
+  const staged = join(transaction, "files");
+  await checkIndexes(root, journal.indexes, true);
+  for (const record of journal.records) {
+    const source = await physicalPath(root, record.path);
+    const backup = await physicalPath(staged, record.path);
+    const sourceExists = await exists(source);
+    const backupExists = await exists(backup);
+    if (Boolean(sourceExists) === Boolean(backupExists)) throw new Error(`Recuperación con conflicto: ${record.path}`);
+    await verifyRecord(sourceExists ? root : staged, record);
+  }
+  for (const record of journal.records.slice().reverse()) {
+    const source = await physicalPath(root, record.path);
+    const backup = await physicalPath(staged, record.path);
+    if (await exists(backup)) {
+      if (await exists(source)) throw new Error(`Recuperación con conflicto: ${record.path}`);
+      await mkdir(dirname(source), { recursive: true });
+      await rename(backup, source);
+    }
+  }
+  await updateIndexes(root, transaction, journal.indexes, true);
+  await verifyRecords(root, journal.records);
+  if (runStatus(root) !== journal.initialState) throw new Error("Estado operativo diferente tras recuperar la consolidación");
+  await writeJournal(transaction, { ...journal, state: "rolled-back" });
+  await cleanTransaction(transaction, journal);
+};
+
+const recoverTransaction = async (root, transaction) => {
+  if (!(await exists(transaction))) return;
+  await regularDirectory(transaction);
+  const entries = await readdir(transaction);
+  if (entries.some((name) => !["files", "manifest.json", "manifest.tmp", "index.tmp"].includes(name))) {
+    throw new Error("Contenido no reconocido en transacción de consolidación");
+  }
+  if (!entries.includes("manifest.json")) {
+    if (entries.includes("index.tmp") || (entries.includes("files") && (await list(join(transaction, "files"))).length)) {
+      throw new Error("Transacción de consolidación sin diario: recuperación manual necesaria");
+    }
+    await cleanTransaction(transaction);
+    return;
+  }
+  const journal = await readJson(join(transaction, "manifest.json"));
+  validateTransaction(root, journal);
+  if (journal.state === "pending") await rollback(root, transaction, journal);
+  else await cleanTransaction(transaction, journal);
+  return journal.state === "committed" ? journal.records : [];
 };
 
 const cleanEmptyParents = async (root, items) => {
@@ -531,95 +714,114 @@ const cleanEmptyParents = async (root, items) => {
   }
 };
 
-export const consolidateLocalArtifacts = async (root, destination) => {
+const consolidationResult = (records) => {
+  const files = records.flatMap((record) => record.files);
+  return { versions: records.length, files: files.length, bytes: files.reduce((sum, file) => sum + file.size, 0), destination: null };
+};
+
+const selectionSnapshot = async (root) => {
+  const selections = [];
+  for (const provider of providers) {
+    for (const suffix of ["publications/active.json", "publication-retention.json"]) {
+      const path = `catalogs/providers/${provider}/${suffix}`;
+      selections.push({ path, value: await indexValue(await physicalPath(root, path)) });
+    }
+  }
+  return selections;
+};
+
+export const consolidateLocalArtifacts = async (root) => {
   root = resolve(root);
-  destination = resolve(destination);
-  if (destination === root || destination.startsWith(`${root}${sep}`) || root.startsWith(`${destination}${sep}`)) {
-    throw new Error("El archivo externo debe estar fuera del repositorio y no contenerlo");
-  }
-  await regularDirectory(root);
-  await regularDirectory(dirname(destination));
-  try { await lstat(destination); throw new Error(`El destino ya existe: ${destination}`); }
-  catch (error) { if (!missing(error)) throw error; }
-  const lockPath = join(root, ".equipzilla-consolidation.lock");
-  const lock = await open(lockPath, "wx");
-  let records = [];
-  let removed = [];
-  let indexes = [];
-  let indexed = false;
-  let destinationCreated = false;
-  try {
+  return withConsolidationLock(root, async () => {
+    const transaction = join(root, transactionName);
+    const recovered = await recoverTransaction(root, transaction) ?? [];
+    const selections = await selectionSnapshot(root);
     const items = await planConsolidation(root);
-    if (items.length === 0) return { versions: 0, files: 0, bytes: 0, destination: null };
-    records = await snapshot(root, items);
-    indexes = await retentionIndexes(root);
+    if (items.length === 0) return consolidationResult(recovered);
+    for (const item of items) await physicalPath(root, item.path);
+    const records = await snapshot(root, items);
+    const indexes = (await retentionIndexes(root)).map((entry) => ({ ...entry, path: relative(root, entry.path).replaceAll(sep, "/") }));
     const initialState = runStatus(root);
-    await mkdir(destination);
-    destinationCreated = true;
-    for (const item of items) await copyTree(join(root, item.path), join(destination, item.path));
-    await compareSnapshot(destination, records);
-    await writeFile(join(destination, "manifest.json"), JSON.stringify({
-      version: 1, originalRoot: root, createdAt: new Date().toISOString(), records
-    }, null, 2), { flag: "wx" });
-    await compareSnapshot(root, records);
-    indexed = true;
-    await writeIndexes(indexes);
-    for (const record of records) {
-      removed.push(record);
-      await rm(join(root, record.path), { recursive: record.type === "directory" });
+    const journal = { version: 1, root, state: "pending", initialState, records, indexes };
+    const verifySelections = async () => {
+      if (JSON.stringify(await selectionSnapshot(root)) !== JSON.stringify(selections)) throw new Error("Selecciones de publicación modificadas concurrentemente");
+    };
+    validateTransaction(root, journal);
+    if (JSON.stringify(await planConsolidation(root)) !== JSON.stringify(items)) throw new Error("Plan de consolidación modificado concurrentemente");
+    await verifyRecords(root, records);
+    await verifySelections();
+    await checkIndexes(root, indexes);
+    await mkdir(transaction);
+    const staged = join(transaction, "files");
+    await mkdir(staged);
+    await writeJournal(transaction, journal);
+    try {
+      for (const record of records) {
+        await verifyRecord(root, record);
+        const source = await physicalPath(root, record.path);
+        const backup = await physicalPath(staged, record.path);
+        await mkdir(dirname(backup), { recursive: true });
+        await rename(source, backup);
+        await verifyRecord(staged, record);
+      }
+      await updateIndexes(root, transaction, indexes);
+      const stateChange = operationalStateChange(initialState, runStatus(root), items);
+      if (stateChange !== null) throw new Error(`El estado operativo cambió tras retirar los históricos: ${stateChange}`);
+      await verifyRecords(staged, records);
+      await verifySelections();
+      for (const record of records) {
+        if (await exists(await physicalPath(root, record.path))) throw new Error(`Histórico recreado concurrentemente: ${record.path}`);
+      }
+      for (const entry of indexes) {
+        if (await indexValue(await indexPathFor(root, entry)) !== currentIndex(entry)) throw new Error(`Índice modificado: ${entry.path}`);
+      }
+      await cleanEmptyParents(root, items);
+      await verifySelections();
+      await writeJournal(transaction, { ...journal, state: "committed" });
+    } catch (error) {
+      try { await recoverTransaction(root, transaction); }
+      catch (restoreError) { throw new Error(`Consolidación fallida, recuperación incompleta: ${restoreError.message}`, { cause: error }); }
+      throw error;
     }
-    const finalState = runStatus(root);
-    const stateChange = operationalStateChange(initialState, finalState, items);
-    if (stateChange !== null) {
-      throw new Error(`El estado operativo cambió tras retirar los históricos: ${stateChange}`);
-    }
-    await cleanEmptyParents(root, items);
-    const bytes = records.flatMap((record) => record.files).reduce((sum, file) => sum + file.size, 0);
-    return { versions: records.length, files: records.flatMap((record) => record.files).length, bytes, destination };
-  } catch (error) {
-    const errors = [];
-    for (const item of removed.slice().reverse()) {
-      try {
-        await restoreTree(join(destination, item.path), join(root, item.path));
-      } catch (restoreError) { errors.push(`${item.path}: ${restoreError.message}`); }
-    }
-    if (indexed) {
-      try { await restoreIndexes(indexes); }
-      catch (restoreError) { errors.push(`Índices: ${restoreError.message}`); }
-    }
-    if (errors.length) throw new Error(`Consolidación fallida, recuperación incompleta: ${errors.join("; ")}`, { cause: error });
-    if (destinationCreated) {
-      try { await compareSnapshot(destination, records); } catch { }
-    }
-    throw error;
-  } finally {
-    await lock.close();
-    await rm(lockPath, { force: true });
-  }
+    try { await cleanTransaction(transaction, { ...journal, state: "committed" }); }
+    catch (error) { throw new Error(`Retirada confirmada, eliminación definitiva pendiente: ${error.message}. Repetir --aplicar`, { cause: error }); }
+    return consolidationResult([...recovered, ...records]);
+  });
 };
 
 export const restoreLocalArtifacts = async (root, archive) => {
   root = resolve(root);
   archive = resolve(archive);
-  const manifest = await readJson(join(archive, "manifest.json"));
-  if (manifest.version !== 1 || manifest.originalRoot !== root || !Array.isArray(manifest.records)) {
-    throw new Error("Archivo externo no corresponde a este repositorio");
-  }
-  for (const item of manifest.records) {
-    if (!item || typeof item.path !== "string" ||
-      resolve(root, item.path) === root || !resolve(root, item.path).startsWith(`${root}${sep}`)) {
-      throw new Error("Ruta inválida en el manifiesto de recuperación");
+  return withConsolidationLock(root, async () => {
+    if (await exists(join(root, transactionName))) throw new Error("Consolidación pendiente: resolver con --aplicar antes de restaurar archivos antiguos");
+    const manifest = await readJson(join(archive, "manifest.json"));
+    if (manifest.version !== 1 || manifest.originalRoot !== root || !Array.isArray(manifest.records)) {
+      throw new Error("Archivo externo no corresponde a este repositorio");
     }
-    for (const file of item.files ?? []) {
-      if (typeof file.path !== "string" || !resolve(root, file.path).startsWith(`${root}${sep}`)) {
-        throw new Error("Miembro inválido en el manifiesto de recuperación");
+    for (const item of manifest.records) {
+      if (!item || typeof item.path !== "string" ||
+        resolve(root, item.path) === root || !resolve(root, item.path).startsWith(`${root}${sep}`)) {
+        throw new Error("Ruta inválida en el manifiesto de recuperación");
+      }
+      for (const file of item.files ?? []) {
+        if (typeof file.path !== "string" || !resolve(root, file.path).startsWith(`${root}${sep}`)) {
+          throw new Error("Miembro inválido en el manifiesto de recuperación");
+        }
       }
     }
-  }
-  await compareSnapshot(archive, manifest.records);
-  for (const item of manifest.records) await restoreTree(join(archive, item.path), join(root, item.path));
-  await compareSnapshot(root, manifest.records);
-  return manifest.records.length;
+    for (const item of manifest.records) {
+      await physicalPath(root, item.path);
+      await physicalPath(archive, item.path);
+      for (const file of item.files) {
+        await physicalPath(root, file.path);
+        await physicalPath(archive, file.path);
+      }
+    }
+    await compareSnapshot(archive, manifest.records);
+    for (const item of manifest.records) await restoreTree(join(archive, item.path), join(root, item.path));
+    await compareSnapshot(root, manifest.records);
+    return manifest.records.length;
+  });
 };
 
 const entryPoint = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
@@ -631,16 +833,15 @@ if (entryPoint) {
       const total = await restoreLocalArtifacts(root, args[1]);
       process.stdout.write(`RESTAURACIÓN | ${total} conjuntos recuperados\n`);
     } else if (args.length === 1 && args[0] === "--aplicar") {
-      const timestamp = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15);
-      const destination = join(homedir(), "Desktop", `equipzilla-historicos-${timestamp}-${randomUUID().slice(0, 8)}`);
-      const result = await consolidateLocalArtifacts(root, destination);
-      process.stdout.write(`CONSOLIDACIÓN | ${result.versions} conjuntos | ${result.files} archivos | ${(result.bytes / 1048576).toFixed(2)} MiB archivados\n`);
-      if (result.destination) {
-        process.stdout.write(`ARCHIVO EXTERNO | ${result.destination}\n`);
-        process.stdout.write(`RECUPERAR | node scripts/maintenance/consolidate-local-artifacts.mjs --restaurar "${result.destination}"\n`);
-      }
+      const result = await consolidateLocalArtifacts(root);
+      process.stdout.write(`CONSOLIDACIÓN | ${result.versions} conjuntos | ${result.files} archivos | ${(result.bytes / 1048576).toFixed(2)} MiB eliminados definitivamente\n`);
+    } else if (args.length === 1 && args[0] === "--simular") {
+      if (await exists(join(root, transactionName))) throw new Error("Consolidación pendiente: resolver con --aplicar antes de simular");
+      const items = await planConsolidation(root);
+      for (const item of items) process.stdout.write(`${item.path} | ${item.reason}\n`);
+      process.stdout.write(`CONSOLIDACIÓN | SIMULACIÓN | ${items.length} conjuntos elegibles | sin escrituras\n`);
     } else {
-      throw new Error("Uso: node scripts/maintenance/consolidate-local-artifacts.mjs --aplicar | --restaurar ruta-de-archivo");
+      throw new Error("Uso: node scripts/maintenance/consolidate-local-artifacts.mjs --simular | --aplicar | --restaurar ruta-de-archivo");
     }
   } catch (error) {
     console.error(`CONSOLIDACIÓN BLOQUEADA | ${error instanceof Error ? error.message : String(error)}`);

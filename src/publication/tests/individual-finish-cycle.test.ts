@@ -11,7 +11,7 @@ import { createIndividualFinishWorkspace, finishProviders, publishIndividualTest
 const withWorkspace = createIndividualFinishWorkspace();
 const fileSha = async (file: string): Promise<string> => createHash("sha256").update(await readFile(file)).digest("hex");
 
-test("ciclo completo: simular sin escrituras, 3 activaciones, ZIPs, SHA, y repetición idempotente", async () => {
+test("ciclo completo: simular sin escrituras, 3 activaciones sin ZIP, SHA, y repetición idempotente", async () => {
   await withWorkspace(async (root, desktop) => {
     const source = join(root, "catalogs", "providers", "gam", "original", "scrape-gam-catalog.json");
     const sourceSha = await fileSha(source);
@@ -35,7 +35,8 @@ test("ciclo completo: simular sin escrituras, 3 activaciones, ZIPs, SHA, y repet
     assert.equal(published.mode, "complete");
     assert.deepEqual(published.providers.map((item) => item.status), Array(3).fill("ACTIVADA Y VERIFICADA"));
     const zips = await readdir(desktop);
-    assert.equal(zips.length, 3);
+    assert.deepEqual(zips, []);
+    assert.ok(published.providers.every((item) => item.zipFile === null));
     const versions: string[] = [];
     for (const id of finishProviders) {
       const active = await resolveAccreditedPublication(root, id);
@@ -46,8 +47,7 @@ test("ciclo completo: simular sin escrituras, 3 activaciones, ZIPs, SHA, y repet
       const index: { approvalSha256: string } = JSON.parse(await readFile(join(root, "catalogs", "providers", id, "publications", "active.json"), "utf8"));
       assert.equal(index.approvalSha256, approval);
       versions.push(approval);
-      const receipts = await readdir(join(root, "storage", "providers", id, "deliveries"));
-      assert.deepEqual(receipts, [`${approval}.json`]);
+      await assert.rejects(lstat(join(root, "storage", "providers", id, "deliveries")), { code: "ENOENT" });
     }
     const journals = (await readdir(join(root, "storage", "publication", "individual-finish"))).filter((name) => name.endsWith(".json"));
     assert.equal(journals.length, 1);

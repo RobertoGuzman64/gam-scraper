@@ -17,7 +17,6 @@ import { readIndividualSelection } from "./individual-selection.js";
 import { readIndividualEditorialState } from "./individual-editorial.js";
 import type { IndividualEditorialOptions } from "./individual-editorial.js";
 import { selectIndividualPublishable } from "./individual-selection.js";
-import { deliverIndividualArchive } from "./individual-archive.js";
 import { deliverIndividualProvider } from "./individual-delivery.js";
 import { selectActivePublication, differenceBetween } from "./active-publication.js";
 import type { PublicationDifference } from "./active-publication.js";
@@ -163,7 +162,6 @@ export const publishIndividualCatalogs = async (options: {
     if (options.dryRun) {
       return { mode: "simulation", providers: checked.map((item) => ({ ...preview(item), status: "SIMULACIÓN", zipFile: null })) };
     }
-    if (!options.desktopDirectory) throw new Error("FINISH: falta directorio de ZIP; no se activa ningún proveedor");
     const targets: readonly IndividualFinishTarget[] = checked.map((item) => ({
       providerId: item.providerId, approvalSha256: item.approvalSha256, previousSha256: item.activeSha256
     }));
@@ -171,17 +169,12 @@ export const publishIndividualCatalogs = async (options: {
     let journal = original;
     let completed = await reconcile(root, journal);
     journal = await updateIndividualFinishJournal(journalPath, journal, completed);
-    const zipFiles = new Map<IndividualCatalogProvider, string | null>();
     try {
       let deliveredCount = 0;
       for (const item of checked) {
-        if (completed.includes(item.providerId)) {
-          await deliverIndividualProvider(item.options, "verify");
-          zipFiles.set(item.providerId, null);
-        } else {
-          const delivered = await deliverIndividualArchive(item.options, options.desktopDirectory, "publish");
-          if (!delivered.zipFile) throw new Error(`${item.providerId}: falta ZIP acreditado`);
-          zipFiles.set(item.providerId, delivered.zipFile);
+        const delivered = await deliverIndividualProvider(item.options, completed.includes(item.providerId) ? "verify" : "publish");
+        if (await publicationApprovalSha(delivered.publicationDirectory) !== item.approvalSha256) {
+          throw new Error(`${item.providerId}: la entrega interna no corresponde a la aprobación inspeccionada`);
         }
         deliveredCount += 1;
         options.onProgress?.("ENTREGA", item.providerId, deliveredCount, checked.length);
@@ -221,7 +214,7 @@ export const publishIndividualCatalogs = async (options: {
       }
       return { mode: "complete", providers: checked.map((item) => ({
         ...preview(item), status: item.unchanged ? "YA VIGENTE" : "ACTIVADA Y VERIFICADA",
-        zipFile: zipFiles.get(item.providerId) ?? null
+        zipFile: null
       })) };
     } catch (error) {
       const actual = await reconcile(root, journal).catch(() => completed);

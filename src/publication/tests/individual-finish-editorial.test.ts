@@ -26,14 +26,16 @@ test("FINISH reutiliza una publicación para comprobar cierre y reacreditación"
       assert.equal(finished?.mode, "complete");
       assert.equal(retentionCount, 1);
       assert.equal(auditorCount, 1);
-      assert.equal((await readdir(desktop)).filter((name) => name.startsWith("equipzilla-informe-")).length, 1);
+      assert.deepEqual(await readdir(desktop), []);
+      assert.ok((await lstat(join(root, "catalogs", "reports", "individual-finish", "active.json"))).isFile());
       const second = await runPublishIndividual([], root, {
         desktopDirectory: desktop, retention: () => { retentionCount++; }, auditor: async () => { auditorCount++; }
       });
       assert.ok(second?.providers.every((item) => item.status === "YA VIGENTE"));
       assert.equal(retentionCount, 1);
       assert.equal(auditorCount, 1);
-      assert.equal((await readdir(desktop)).filter((name) => name.startsWith("equipzilla-informe-")).length, 1);
+      assert.deepEqual(await readdir(desktop), []);
+      assert.ok((await lstat(join(root, "catalogs", "reports", "individual-finish", "active.json"))).isFile());
     });
 
     await context.test("FINISH reacredita sin interacción las exclusiones idénticas de la publicación vigente", async () => {
@@ -66,7 +68,7 @@ test("FINISH muestra actividad mientras espera la poda y conserva su código de 
     await writeFile(script, 'await new Promise((resolve) => setTimeout(resolve, 40)); console.log("CONSOLIDACIÓN CORRECTA");\n');
     await consolidate(root);
     await writeFile(script, 'console.error("BLOQUEO REAL"); process.exitCode = 5;\n');
-    await assert.rejects(consolidate(root), /ARCHIVADO PENDIENTE.*código 5/);
+    await assert.rejects(consolidate(root), /RETENCIÓN PENDIENTE.*código 5/);
   }, "original");
 });
 
@@ -74,14 +76,15 @@ test("FINISH conserva publicaciones si falla el informe y permite reintentar sin
   await withWorkspace(async (root, desktop) => {
     await assert.rejects(runPublishIndividual([], root, {
       desktopDirectory: desktop, retention: () => undefined, auditor: async () => undefined,
-      reporter: async () => { throw new Error("Escritorio sin permiso"); }
-    }), /INFORME PENDIENTE.*Escritorio sin permiso/);
+      reporter: async () => { throw new Error("Informe interno sin permiso"); }
+    }), /INFORME PENDIENTE.*Informe interno sin permiso/);
     const archives = (await readdir(desktop)).filter((name) => /^equipzilla-(gam|gomariz|mercaeleva)-/.test(name));
-    assert.equal(archives.length, 3);
+    assert.equal(archives.length, 0);
     const recovered = await runPublishIndividual([], root, {
       desktopDirectory: desktop, retention: () => undefined, auditor: async () => undefined
     });
     assert.ok(recovered?.providers.every((item) => item.status === "YA VIGENTE"));
-    assert.equal((await readdir(desktop)).filter((name) => name.startsWith("equipzilla-informe-")).length, 1);
+    assert.deepEqual(await readdir(desktop), []);
+    assert.ok((await lstat(join(root, "catalogs", "reports", "individual-finish", "active.json"))).isFile());
   });
 });

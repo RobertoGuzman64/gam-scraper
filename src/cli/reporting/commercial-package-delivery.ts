@@ -1,8 +1,8 @@
-import { createHash, randomUUID } from "node:crypto";
-import { constants } from "node:fs";
-import { copyFile, lstat, mkdtemp, readFile, realpath, rm, stat, writeFile } from "node:fs/promises";
-import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { createHash } from "node:crypto";
+import { lstat, readFile, rm } from "node:fs/promises";
+import { basename, join, resolve } from "node:path";
 import { createZipArchive, readZipArchive } from "../../infrastructure/archive/zip.js";
+import { publishVerifiedArchives, resolveExternalDeliveryDirectory } from "../../infrastructure/archive/verified-delivery.js";
 import type { CommercialExportFile } from "../../commercial/export/commercial-export.js";
 import { verifyCommercialExportArchive, verifyCommercialExportSources, verifyCommercialExportZip } from "../../commercial/export/commercial-export-verification.js";
 import { assertCommercialPackageProviders, inspectCommercialPackage, validateStoredCommercialPackage } from "../../commercial/export/commercial-package-snapshot.js";
@@ -11,7 +11,7 @@ import { retainRepositoryArtifact } from "../../infrastructure/filesystem/catalo
 
 export type CommercialPackageDelivery = {
   readonly commercial: string;
-  readonly report: string;
+  readonly report: string | null;
   readonly providers: number;
   readonly exported: number;
   readonly attributes: number;
@@ -35,6 +35,10 @@ export const verifyCommercialIntegrationArchive = (
   const data = entries[0].data;
   const markdown = data.toString("utf8");
   if (!Buffer.from(markdown, "utf8").equals(data)) throw new Error("Informe comercial no es UTF-8 válido");
+  return verifyCommercialIntegrationReport(markdown, expected);
+};
+
+export const verifyCommercialIntegrationReport = (markdown: string, expected: readonly CommercialExportFile[]): string => {
   const date = dayFromReport(markdown);
   if (markdown !== renderCommercialIntegrationReport(inspectCommercialPackage(expected), date)) {
     throw new Error("Informe comercial no corresponde con el corte acreditado");
@@ -69,31 +73,6 @@ export const verifyCommercialPackagePair = async (
   }
 };
 
-const verifyStored = async (path: string, expected: Buffer): Promise<void> => {
-  const info = await lstat(path);
-  if (!info.isFile() || info.isSymbolicLink()) throw new Error(`Paquete comercial no regular: ${path}`);
-  const actual = await readFile(path);
-  if (sha256(actual) !== sha256(expected) || !actual.equals(expected)) {
-    throw new Error(`Colisión: ZIP existente con contenido distinto: ${path}`);
-  }
-};
-
-const saveExclusive = async (temporary: string, destination: string, expected: Buffer): Promise<boolean> => {
-  try {
-    await copyFile(temporary, destination, constants.COPYFILE_EXCL);
-  } catch (error) {
-    if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
-    await verifyStored(destination, expected);
-    return false;
-  }
-  try { await verifyStored(destination, expected); }
-  catch (error) {
-    await rm(destination, { force: true });
-    throw error;
-  }
-  return true;
-};
-
 export type PublishedCommercialPair = {
   readonly commercial: string;
   readonly report: string;
@@ -103,31 +82,10 @@ export type PublishedCommercialPair = {
 export const publishCommercialArchivePair = async (
   desktop: string, commercialName: string, commercialArchive: Buffer, reportName: string, reportArchive: Buffer
 ): Promise<PublishedCommercialPair> => {
-  if (commercialName === reportName ||
-    [commercialName, reportName].some((name) => !name.endsWith(".zip") || basename(name) !== name ||
-      name === "." || name === ".." || name.includes("\\"))) {
-    throw new Error("Nombres de entrega comercial inválidos");
-  }
-  const commercial = join(desktop, commercialName);
-  const report = join(desktop, reportName);
-  const stage = await mkdtemp(join(desktop, `.equipzilla-commercial-${randomUUID()}-`));
-  const created: string[] = [];
-  try {
-    const pendingCommercial = join(stage, commercialName);
-    const pendingReport = join(stage, reportName);
-    await writeFile(pendingCommercial, commercialArchive, { flag: "wx" });
-    await writeFile(pendingReport, reportArchive, { flag: "wx" });
-    await verifyStored(pendingCommercial, commercialArchive);
-    await verifyStored(pendingReport, reportArchive);
-    if (await saveExclusive(pendingCommercial, commercial, commercialArchive)) created.push(commercial);
-    if (await saveExclusive(pendingReport, report, reportArchive)) created.push(report);
-    return { commercial, report, created };
-  } catch (error) {
-    for (const path of created.reverse()) await rm(path, { force: true });
-    throw error;
-  } finally {
-    await rm(stage, { recursive: true, force: true });
-  }
+  const created = await publishVerifiedArchives(desktop, [
+    { name: commercialName, archive: commercialArchive }, { name: reportName, archive: reportArchive }
+  ]);
+  return { commercial: join(desktop, commercialName), report: join(desktop, reportName), created };
 };
 
 export const deliverCommercialPackages = async (
@@ -138,35 +96,37 @@ export const deliverCommercialPackages = async (
   const date = now.toISOString().slice(0, 10);
   const identifier = snapshot.manifestSha256.slice(0, 16);
   const suffix = `${date.replace(/-/gu, "")}-${identifier}.zip`;
-  const directory = resolve(desktop);
-  const [physicalDesktop, physicalRoot] = await Promise.all([realpath(directory), realpath(root)]);
-  const inner = relative(physicalRoot, physicalDesktop);
-  if (inner === "" || (inner !== ".." && !inner.startsWith(`..${sep}`) && !isAbsolute(inner))) {
-    throw new Error("Los paquetes comerciales deben quedar fuera del repositorio");
-  }
-  if (!(await stat(physicalDesktop)).isDirectory()) throw new Error("El Escritorio no es un directorio");
+  const physicalDesktop = await resolveExternalDeliveryDirectory(root, desktop);
   const commercialArchive = createZipArchive(files.map((file) => ({ name: file.name, data: file.content })));
   const reportMarkdown = renderCommercialIntegrationReport(snapshot, date);
-  const reportArchive = createZipArchive([{ name: "INFORME.md", data: reportMarkdown }]);
   verifyCommercialExportArchive(commercialArchive, files);
-  verifyCommercialIntegrationArchive(reportArchive, files);
-  const saved = await publishCommercialArchivePair(physicalDesktop,
-    `equipzilla-comercial-${suffix}`, commercialArchive, `equipzilla-informe-comercial-${suffix}`, reportArchive);
+  verifyCommercialIntegrationReport(reportMarkdown, files);
+  const commercialName = `equipzilla-comercial-${suffix}`;
+  const commercial = join(physicalDesktop, commercialName);
+  const created = await publishVerifiedArchives(physicalDesktop, [{ name: commercialName, archive: commercialArchive }]);
+  let report: string | null = null;
   try {
-    await verifyCommercialPackagePair(saved.commercial, saved.report, files);
+    await verifyCommercialExportZip(commercial, files);
     await verifyCommercialExportSources(root, files);
     if (snapshot.environment !== null) {
       await retainRepositoryArtifact(join(root, "catalogs", "commercial", snapshot.environment),
         "commercial-manifest.json", files, validateStoredCommercialPackage);
-      await retainRepositoryArtifact(join(root, "catalogs", "reports", "commercial", snapshot.environment),
+      const reportDirectory = join(root, "catalogs", "reports", "commercial", snapshot.environment);
+      const fingerprint = await retainRepositoryArtifact(reportDirectory,
         "INFORME.txt", [{ name: "INFORME.txt", content: reportMarkdown }]);
+      report = join(reportDirectory, "versions", fingerprint, "INFORME.txt");
+      const stored = await readFile(report);
+      if (!stored.equals(Buffer.from(reportMarkdown, "utf8")) || sha256(stored) !== fingerprint) {
+        throw new Error("Informe comercial interno alterado");
+      }
+      verifyCommercialIntegrationReport(stored.toString("utf8"), files);
     }
   } catch (error) {
-    for (const path of [...saved.created].reverse()) await rm(path, { force: true });
+    for (const path of [...created].reverse()) await rm(path, { force: true });
     throw error;
   }
   return {
-    commercial: saved.commercial, report: saved.report, providers: snapshot.providers.length,
+    commercial, report, providers: snapshot.providers.length,
     environment: snapshot.environment ?? "sin companyID",
     exported: snapshot.providers.reduce((sum, provider) => sum + provider.summary.exported, 0),
     attributes: snapshot.providers.reduce((sum, provider) => sum + provider.summary.attributes, 0)

@@ -12,7 +12,7 @@ export type IndividualFinishTarget = {
 
 export type IndividualFinishClosurePhase = "activated" | "retained" | "audited" | "reported";
 
-export type IndividualFinishReportReceipt = { readonly path: string; readonly sha256: string };
+export type IndividualFinishReportReceipt = { readonly path: string; readonly sha256: string; readonly kind?: "internal" };
 
 export type IndividualFinishJournal = {
   readonly version: 1;
@@ -45,7 +45,8 @@ const validClosure = (value: unknown): boolean => {
   const report = value.report;
   return report !== null && typeof report === "object" && !Array.isArray(report) &&
     "path" in report && typeof report.path === "string" && isAbsolute(report.path) &&
-    "sha256" in report && isHash(report.sha256);
+    "sha256" in report && isHash(report.sha256) &&
+    (!("kind" in report) || report.kind === "internal");
 };
 
 const isJournal = (value: unknown): value is IndividualFinishJournal => {
@@ -217,6 +218,20 @@ export const markIndividualFinishCandidates = async (
   if (journal.status !== "pending") throw new Error("FINISH: no se pueden modificar candidaturas tras la activación completa");
   if (journal.candidatesVerified) return journal;
   const next: IndividualFinishJournal = { ...journal, candidatesVerified: true };
+  await writeAtomic(path, next);
+  return next;
+};
+
+export const renewIndividualFinishReport = async (
+  path: string, journal: IndividualFinishJournal, report: IndividualFinishReportReceipt
+): Promise<IndividualFinishJournal> => {
+  const current = await readJournal(path);
+  if (JSON.stringify(current) !== JSON.stringify(journal) || journal.closure?.phase !== "reported" ||
+    journal.closure.report?.kind !== "internal" || report.kind !== "internal" ||
+    !isAbsolute(report.path) || !isHash(report.sha256)) {
+    throw new Error("Renovación del recibo interno FINISH inválida");
+  }
+  const next: IndividualFinishJournal = { ...journal, closure: { phase: "reported", report } };
   await writeAtomic(path, next);
   return next;
 };

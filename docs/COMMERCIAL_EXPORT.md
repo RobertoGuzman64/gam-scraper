@@ -107,7 +107,7 @@ npm run auditar:comercial -- --verificar=<directorio-existente>
 
 La CLI separa la **coordinación** en `src/cli/commands/catalog/commercial-audit.ts` de la **presentación** en `src/cli/reporting/commercial-audit.ts`. La política está en `src/commercial/projection/category-projection.ts` y las evidencias de procedencia en `source-category-evidence.ts` y `gam-category-evidence.ts`; la exportación y verificación están en `src/commercial/export/`. `--verificar=RUTA` compara el manifiesto comercial y los archivos exportados con el corte vigente, sin reescribirlos.
 
-El exportador real, sin `--salida`, genera **dos ZIP verificados** (comercial e informe) en el Escritorio configurado. Con `--salida` escribe **tres JSON de proveedor y `commercial-manifest.json`** en un directorio nuevo fuera del repositorio, en lugar de los ZIP. Con `--entorno develop|production` incluye el `companyID` correspondiente si está acreditado; sin entorno no se incluye. `--simular` calcula/verifica sin escribir. El informe y la exportación no prueban importación efectiva al backend.
+El exportador real, sin `--salida`, genera **un ZIP comercial verificado** en el Escritorio configurado y actualiza el informe interno versionado en `catalogs/reports/commercial/<entorno>/`. Con `--salida` escribe **un JSON por proveedor acreditado y `commercial-manifest.json`** en un directorio nuevo fuera del repositorio, en lugar del ZIP. Con `--entorno develop|production` incluye el `companyID` correspondiente si está acreditado; sin entorno no se incluye. `--simular` calcula/verifica sin escribir. El informe y la exportación no prueban importación efectiva al backend.
 
 La opción `--arbol` es una vista de inspección: presenta la jerarquía real con IDs, conteos y una línea por producto (proveedor, referencia y título), además de las fichas pendientes. No añade incidencias ni modifica las decisiones del auditor. Para guardarla en un fichero: `npm run --silent auditar:comercial -- --arbol > categorias-comerciales.txt`.
 
@@ -115,7 +115,7 @@ El diagnóstico y el derivado comercial son independientes de los **nuevos snaps
 
 ## Panel local de evidencias
 
-La exportación efectiva `npm run exportar:comercial -- --entorno develop`, **sin** `--salida` y **sin** `--simular`, entrega primero sus dos ZIP y después intenta actualizar el panel local. Ni `production`, ni una simulación, ni la salida a un directorio explícito actualizan el panel. Si la generación falla tras la entrega comercial, el comando lo informa como un fallo **posterior a la entrega**; no debe interpretarse como ausencia de los ZIP ya generados.
+La exportación efectiva `npm run exportar:comercial -- --entorno develop`, **sin** `--salida` y **sin** `--simular`, entrega primero su ZIP comercial y actualiza el informe interno y después intenta actualizar el panel local. Ni `production`, ni una simulación, ni la salida a un directorio explícito actualizan el panel. Si la generación falla tras la entrega comercial, el comando lo informa como un fallo **posterior a la entrega**; no debe interpretarse como ausencia del ZIP comercial ya generado.
 
 `src/panel/evidence/prepare-explorer-technical-evidence.ts` prepara `catalogs/reports/revision/explorer-technical-evidence.json` desde originales, publicaciones y procedencias técnicas cotejadas; `src/panel/evidence/explorer-technical-evidence-cache.ts` verifica la caché y `src/panel/explorer/read-panel-explorer.ts` reúne la lectura por ficha. Los módulos homónimos en `src/tools/catalog/` son fachadas de compatibilidad hacia `panel/`. `src/panel/application/write-local-panel.ts` verifica el corte y escribe `panel/index.html`. El HTML integra su interfaz y datos para consulta local sin servidor. El panel presenta resumen, transformación, controles de calidad y explorador de fichas, con estados de selección editorial/comercial y comparación entre original, FINISH y comercial cuando hay evidencia disponible.
 
@@ -166,3 +166,7 @@ Ver [Arquitectura](ARCHITECTURE.md), [Reglas de datos](DATA_CONTRACTS.md), [Come
 - Resolver el alta/actualización mediante identidad técnica estable, sin fusionar unidades por `externalReference`.
 
 Estos puntos describen **cambios acordados y todavía no aplicados al backend**. Hasta entonces no debe asumirse compatibilidad definitiva de importación. La distinción entre preparación técnica, proyección comercial local e importación externa se mantiene en [Integración](COMMERCIAL_EXPORT.md) y [Arquitectura](ARCHITECTURE.md).
+
+### Entrega agrupada de informes bajo demanda
+
+`npm run entregar -- --informes --entorno develop` (o `production`) entrega un ZIP externo con `tecnico/INFORME.txt` y `comercial/<entorno>/INFORME.txt`, leyendo exclusivamente las versiones activas verificadas. El informe comercial debe corresponder al paquete comercial interno vigente del entorno solicitado. No actualiza informes, catálogos ni panel; no ejecuta auditorías, exportación ni retención. El ZIP es idempotente por contenido y no sobrescribe archivos distintos.

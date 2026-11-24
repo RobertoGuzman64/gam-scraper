@@ -29,7 +29,7 @@ test("FINISH exige preparar y bloquea incidencias nuevas sin antecedente acredit
   }, "original");
 });
 
-test("interrupción tras primer proveedor deja diario PARCIAL y se reanuda sin otro ZIP", async () => {
+test("interrupción tras primer proveedor deja diario PARCIAL y se reanuda sin generar ZIP", async () => {
   await withWorkspace(async (root, desktop) => {
     const progress: string[] = [];
     await assert.rejects(publishIndividualCatalogs({
@@ -47,7 +47,7 @@ test("interrupción tras primer proveedor deja diario PARCIAL y se reanuda sin o
     assert.ok(progress.includes(`ACTIVACIÓN gam 1/${finishProviders.length}`));
     assert.ok(await resolveAccreditedPublication(root, "gam"));
     const zips = await readdir(desktop);
-    assert.equal(zips.length, 3);
+    assert.deepEqual(zips, []);
     const recovered = await publishIndividualTestWorkspace(root, desktop);
     assert.deepEqual(recovered.providers.map((item) => item.status),
       ["YA VIGENTE", "ACTIVADA Y VERIFICADA", "ACTIVADA Y VERIFICADA"]);
@@ -55,16 +55,18 @@ test("interrupción tras primer proveedor deja diario PARCIAL y se reanuda sin o
   });
 });
 
-test("candidata preparada y recibo corrupto impiden activar incluso un solo proveedor", async () => {
+test("candidata preparada y JSON interno corrupto impiden activar incluso un solo proveedor", async () => {
   await withWorkspace(async (root, desktop) => {
     await assert.rejects(publishIndividualCatalogs({
       workspace: root, providers: finishProviders, dryRun: false, desktopDirectory: desktop,
       activate: async (_workspace, _providerId, _sha, _activate) => { throw new Error("detener antes de activar"); }
     }), /FINISH PARCIAL\/BLOQUEADO/);
-    const zip = (await readdir(desktop))[0];
-    assert.ok(zip);
-    await writeFile(join(desktop, zip), "ZIP CORROMPIDO");
-    await assert.rejects(publishIndividualTestWorkspace(root, desktop), /ZIP individual alterado|ZIP distinto|FINISH PARCIAL/);
+    const parent = join(root, "catalogs", "providers", "gam", "publications");
+    const [candidate] = await readdir(parent);
+    assert.ok(candidate);
+    await writeFile(join(parent, candidate, "gam-publishable.json"), "JSON CORROMPIDO");
+    await assert.rejects(publishIndividualTestWorkspace(root, desktop), /archivo alterado|JSON inválido|FINISH PARCIAL/);
+    assert.deepEqual(await readdir(desktop), []);
     for (const id of finishProviders) await assert.rejects(lstat(join(root, "catalogs", "providers", id, "publications", "active.json")), { code: "ENOENT" });
   });
 });

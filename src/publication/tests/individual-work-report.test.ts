@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { basename } from "node:path";
+import { basename, dirname } from "node:path";
 import { readZipArchive } from "../../infrastructure/archive/zip.js";
 import { collectPublishedWork } from "../individual-work-report.js";
-import { deliverPublishedWorkReport } from "../../cli/reporting/published-work-archive.js";
+import { deliverPublishedWorkReport, retainPublishedWorkReport } from "../../cli/reporting/published-work-archive.js";
+import { renderPublishedWorkMarkdown } from "../../cli/reporting/published-work.js";
+import { createHash } from "node:crypto";
 import { createPublishedIndividualFinishWorkspace } from "../../testing/builders/individual-finish-fixture.js";
 
 const withWorkspace = createPublishedIndividualFinishWorkspace();
@@ -46,5 +48,17 @@ test("rechaza simulaciones y aprobaciones distintas de la publicación vigente",
     await assert.rejects(collectPublishedWork(root, {
       ...result, providers: [{ ...first, approvalSha256: "0".repeat(64) }]
     }), /aprobación vigente cambiada/);
+  });
+});
+
+test("informe interno versionado conserva los bytes y no escribe en el escritorio", async () => {
+  await withWorkspace(async (root, desktop, result) => {
+    const before = await readdir(desktop);
+    const delivered = await retainPublishedWorkReport(root, result);
+    const bytes = await readFile(delivered.reportFile);
+    assert.equal(bytes.toString("utf8"), renderPublishedWorkMarkdown(delivered.report));
+    assert.equal(basename(dirname(delivered.reportFile)), createHash("sha256").update(bytes).digest("hex"));
+    assert.equal((await retainPublishedWorkReport(root, result)).reportFile, delivered.reportFile);
+    assert.deepEqual(await readdir(desktop), before);
   });
 });

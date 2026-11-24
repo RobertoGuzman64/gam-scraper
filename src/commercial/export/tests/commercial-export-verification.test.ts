@@ -1,7 +1,7 @@
 import { createPortableTestSymlink } from "../../../testing/builders/portable-symlink-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { access, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -16,6 +16,7 @@ import { assertCommercialPackageProviders, inspectCommercialPackage, validateSto
 import { inspectRepositoryArtifact, retainRepositoryArtifact } from "../../../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
 import { CAMPAIGN_PROVIDERS, LEGACY_CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { renderCommercialIntegrationReport } from "../../../cli/reporting/commercial-integration-report.js";
+import { deliverGrouped } from "../../../cli/reporting/grouped-delivery.js";
 import { deliverCommercialPackages, publishCommercialArchivePair, verifyCommercialIntegrationArchive } from "../../../cli/reporting/commercial-package-delivery.js";
 
 const createFile = (name: string, content: string): CommercialExportFile => ({
@@ -631,22 +632,29 @@ test("las referencias comerciales visibles reutilizan la regla del auditor, sin 
   assert.equal(inspectCommercialPackage(filesForProvider(changed)).providers[0]?.repeatedReferences, 1);
 });
 
-test("entrega dos ZIP acreditados con los cuatro contenidos comerciales intactos", async () => {
+test("entrega un ZIP acreditado y conserva el informe interno de develop sin modificar entregas anteriores", async () => {
   const directory = await mkdtemp(join(tmpdir(), "equipzilla-pair-"));
   const root = await commercialFixtureRoot();
-  const files = await currentCommercialFiles();
+  const files = await buildCommercialExportFiles(root, "develop");
   const date = new Date("2026-11-06T11:00:00.000Z");
   try {
+    const previous = "equipzilla-informe-comercial-20261105-1234567890abcdef.zip";
+    await writeFile(join(directory, previous), "entrega previa");
     const delivered = await deliverCommercialPackages(root, directory, files, date);
-    assert.equal(delivered.providers, 3);
-    assert.equal(delivered.environment, "sin companyID");
-    assert.equal((await readdir(directory)).length, 2);
+    assert.equal(delivered.providers, files.length - 1);
+    assert.equal(delivered.environment, "develop");
+    assert.ok(delivered.report);
     const commercialZip = readZipArchive(await readFile(delivered.commercial));
     assert.deepEqual(commercialZip.map((entry) => entry.name), files.map((file) => file.name));
     for (const entry of commercialZip) {
       assert.ok(entry.data.equals(Buffer.from(files.find((file) => file.name === entry.name)!.content, "utf8")));
     }
-    assert.deepEqual((await readdir(directory)).length, 2);
+    const markdown = renderCommercialIntegrationReport(inspectCommercialPackage(files), "2026-11-06");
+    assert.equal(await readFile(delivered.report, "utf8"), markdown);
+    const selected = await inspectRepositoryArtifact(join(root, "catalogs", "reports", "commercial", "develop"), "INFORME.txt", ["INFORME.txt"]);
+    assert.equal(selected?.sha256, createHash("sha256").update(markdown).digest("hex"));
+    assert.equal(await readFile(join(directory, previous), "utf8"), "entrega previa");
+    assert.equal((await readdir(directory)).length, 2);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -811,4 +819,43 @@ test("rechaza excepciones de especificaciones expuestas o sin un código reconoc
   assert.throws(() => validateCommercialExportFiles(filesForProvider({ ...base,
     exceptions: [{ ...issue, reason: "spec-inventado:Altura" }]
   })), /Excepción técnica no justificada/);
+});
+
+
+test("entrega exclusivamente los informes activos del entorno sin modificar selecciones", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "equipzilla-grouped-reports-"));
+  const root = join(directory, "repo");
+  const desktop = join(directory, "desktop");
+  try {
+    await mkdir(desktop);
+    const [catalog, references] = await Promise.all([loadImportCatalogSnapshot(), loadCommercialReference()]);
+    const files = assembleCommercialExportFiles(CAMPAIGN_PROVIDERS.map((providerId) => ({
+      plan: { ...emptyPlan(), providerId, environment: "develop" }, recognitions: new Map()
+    })), catalog, references, "develop");
+    const commercialDirectory = join(root, "catalogs", "commercial", "develop");
+    await retainRepositoryArtifact(commercialDirectory, "commercial-manifest.json", files, validateStoredCommercialPackage);
+    const technicalDirectory = join(root, "catalogs", "reports", "individual-finish");
+    const commercialReportDirectory = join(root, "catalogs", "reports", "commercial", "develop");
+    const technical = "# EQUIPZILLA — Trabajo acumulado publicado\n\nInforme de prueba\n";
+    const commercial = renderCommercialIntegrationReport(inspectCommercialPackage(files), "2026-11-06");
+    await retainRepositoryArtifact(technicalDirectory, "INFORME.txt", [{ name: "INFORME.txt", content: technical }]);
+    const reportSha = await retainRepositoryArtifact(commercialReportDirectory, "INFORME.txt", [{ name: "INFORME.txt", content: commercial }]);
+    const paths = [technicalDirectory, commercialReportDirectory, commercialDirectory].map((folder) => join(folder, "active.json"));
+    const before = await Promise.all(paths.map((path) => readFile(path, "utf8")));
+    const zip = await deliverGrouped(root, desktop, { kind: "informes", environment: "develop" });
+    assert.deepEqual(readZipArchive(await readFile(zip)), [
+      { name: "tecnico/INFORME.txt", data: Buffer.from(technical) },
+      { name: "comercial/develop/INFORME.txt", data: Buffer.from(commercial) }
+    ]);
+    assert.equal(await deliverGrouped(root, desktop, { kind: "informes", environment: "develop" }), zip);
+    assert.deepEqual(await Promise.all(paths.map((path) => readFile(path, "utf8"))), before);
+    await assert.rejects(deliverGrouped(root, desktop, { kind: "informes", environment: "production" }), /Informe vigente ausente/);
+    const reportPath = join(commercialReportDirectory, "versions", reportSha, "INFORME.txt");
+    await writeFile(reportPath, "alterado");
+    await assert.rejects(deliverGrouped(root, desktop, { kind: "informes", environment: "develop" }), /Huella del artefacto/);
+    await writeFile(reportPath, commercial);
+    await retainRepositoryArtifact(commercialReportDirectory, "INFORME.txt", [{ name: "INFORME.txt", content: commercial.replace("- Entorno: develop", "- Entorno: production") }]);
+    await assert.rejects(deliverGrouped(root, desktop, { kind: "informes", environment: "develop" }), /no corresponde/);
+    assert.equal((await readdir(desktop)).length, 1);
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });

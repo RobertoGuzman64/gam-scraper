@@ -30,3 +30,6 @@ out/
 /catalogs/providers/*/technical/.active-*.tmp
 /catalogs/providers/*/technical/versions/.pending-*
 /reports/
+
+/.equipzilla-consolidation/
+/.equipzilla-consolidation.lock
