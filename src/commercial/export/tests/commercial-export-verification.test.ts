@@ -12,7 +12,9 @@ import { buildCommercialExportFiles, buildCommercialDeliveryPlan, assembleCommer
 import type { CommercialExportPlan } from "../../projection/export-projection.js";
 import { validateCommercialExportFiles, verifyCommercialExportArchive, verifyCommercialExportDirectory, verifyCommercialExportSources } from "../commercial-export-verification.js";
 import { createZipArchive, readZipArchive } from "../../../infrastructure/archive/zip.js";
-import { assertCommercialPackageProviders, inspectCommercialPackage } from "../commercial-package-snapshot.js";
+import { assertCommercialPackageProviders, inspectCommercialPackage, validateStoredCommercialPackage } from "../commercial-package-snapshot.js";
+import { inspectRepositoryArtifact, retainRepositoryArtifact } from "../../../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
+import { CAMPAIGN_PROVIDERS, LEGACY_CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { renderCommercialIntegrationReport } from "../../../cli/reporting/commercial-integration-report.js";
 import { deliverCommercialPackages, publishCommercialArchivePair, verifyCommercialIntegrationArchive } from "../../../cli/reporting/commercial-package-delivery.js";
 
@@ -553,6 +555,47 @@ test("el paquete comercial admite tres publicaciones históricas o las cuatro co
   assert.doesNotThrow(() => assertCommercialPackageProviders({ ...original, providers: entries }));
   assert.throws(() => assertCommercialPackageProviders({ ...original, providers: entries.slice(1) }), /GAM, Gomariz y Mercaeleva/);
   assert.throws(() => assertCommercialPackageProviders({ ...original, providers: [...entries, entries[3]!] }), /GAM, Gomariz y Mercaeleva/);
+});
+
+test("la retención comercial valida cada manifiesto histórico con su propio conjunto de proveedores", async () => {
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-commercial-retention-"));
+  try {
+    const [catalog, references] = await Promise.all([loadImportCatalogSnapshot(), loadCommercialReference()]);
+    const filesFor = (providers: readonly string[]) => assembleCommercialExportFiles(
+      providers.map((providerId) => ({ plan: { ...emptyPlan(), providerId }, recognitions: new Map() })),
+      catalog, references, null);
+    const old = filesFor(LEGACY_CAMPAIGN_PROVIDERS);
+    const current = filesFor(CAMPAIGN_PROVIDERS);
+    const name = "commercial-manifest.json";
+    const previous = await retainRepositoryArtifact(root, name, old, validateStoredCommercialPackage);
+    const active = await retainRepositoryArtifact(root, name, current, validateStoredCommercialPackage);
+    assert.deepEqual(await inspectRepositoryArtifact(root, name, validateStoredCommercialPackage), {
+      sha256: active, previousSha256: previous
+    });
+    for (const file of old) {
+      assert.equal(await readFile(join(root, "versions", previous, file.name), "utf8"), file.content);
+    }
+    await retainRepositoryArtifact(root, name, current, validateStoredCommercialPackage);
+    assert.deepEqual(await inspectRepositoryArtifact(root, name, validateStoredCommercialPackage), {
+      sha256: active, previousSha256: previous
+    });
+    const oldFile = old.find((file) => file.name !== name);
+    assert.ok(oldFile);
+    const path = join(root, "versions", previous, oldFile.name);
+    await writeFile(path, `${oldFile.content} `);
+    await assert.rejects(retainRepositoryArtifact(root, name, current, validateStoredCommercialPackage), /huella discordante/i);
+    await writeFile(path, oldFile.content);
+    await rm(path);
+    await assert.rejects(inspectRepositoryArtifact(root, name, validateStoredCommercialPackage));
+    await writeFile(path, oldFile.content);
+    const extra = join(root, "versions", previous, "extra.json");
+    await writeFile(extra, "{}");
+    await assert.rejects(inspectRepositoryArtifact(root, name, validateStoredCommercialPackage));
+    await rm(extra);
+    assert.deepEqual(await inspectRepositoryArtifact(root, name, validateStoredCommercialPackage), {
+      sha256: active, previousSha256: previous
+    });
+  } finally { await rm(root, { recursive: true, force: true }); }
 });
 
 test("el informe identifica fuentes, excepciones, límites de integración y detecta manipulación", () => {

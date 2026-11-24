@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import type { RepositoryArtifactFile } from "../../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
 import { isReferenceProviderSet } from "../../contracts/campaign-providers.js";
 import type { CommercialEnvironment } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import type { CommercialExportPlan } from "../projection/export-projection.js";
@@ -140,4 +142,11 @@ export const assertCommercialPackageProviders = (snapshot: CommercialPackageSnap
   if (!isReferenceProviderSet(providers)) {
     throw new Error("El paquete comercial exige GAM, Gomariz y Mercaeleva, más Manain cuando su publicación está activa");
   }
+};
+
+export const validateStoredCommercialPackage = (files: readonly RepositoryArtifactFile[]): void => {
+  const snapshot = inspectCommercialPackage(files.map((file) => ({ ...file,
+    sha256: createHash("sha256").update(file.content).digest("hex"), bytes: Buffer.byteLength(file.content, "utf8")
+  })));
+  assertCommercialPackageProviders(snapshot);
 };

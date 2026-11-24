@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
-import { readPortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPanelOriginalProducts } from "../evidence/publication-evidence.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { CommercialDeliveryPlan, CommercialDeliveryProduct } from "../../commercial/export/commercial-export.js";
 import { assertCommercialLineage } from "../evidence/commercial-evidence.js";
@@ -30,17 +30,10 @@ const readExclusions = async (root: string, evidence: PanelProviderEvidence): Pr
 };
 
 const mapOriginals = async (root: string, evidence: PanelProviderEvidence): Promise<ReadonlyMap<string, ProductRecord> | null> => {
-  if (evidence.original.status !== "verified") return null;
-  const raw = await regularText(join(root, evidence.original.artifact.path));
-  if (digest(raw) !== evidence.original.artifact.sha256) {
-    throw new Error(`Original modificado durante lectura del explorador: ${evidence.providerId}`);
-  }
-  const catalog = await readPortableOriginal(root, evidence.providerId);
-  if (catalog.productCount !== evidence.metrics.originals || catalog.products.length !== evidence.metrics.originals) {
-    throw new Error(`Población original discordante: ${evidence.providerId}`);
-  }
+  const products = await readPanelOriginalProducts(root, evidence);
+  if (!products) return null;
   const result = new Map<string, ProductRecord>();
-  for (const item of catalog.products) {
+  for (const item of products) {
     const key = productIdentity(evidence.providerId, item.reference, item.url);
     if (result.has(key)) throw new Error(`Originales con identidad duplicada: ${evidence.providerId}: ${key}`);
     result.set(key, item);

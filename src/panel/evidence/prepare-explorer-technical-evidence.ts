@@ -3,7 +3,7 @@ import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js";
 import { readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
-import { readPortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPanelOriginalProducts } from "./publication-evidence.js";
 import { readPanelSnapshot } from "./read-panel-snapshot.js";
 import { readPublicationTechnicalProvenance } from "./read-technical-provenance.js";
 import { compareOriginalToPublished } from "../explorer/field-differences.js";
@@ -38,14 +38,10 @@ export const prepareExplorerTechnicalEvidence = async (workspace: string): Promi
     if (published.sha256 !== provider.publication.sha256 || published.providerId !== provider.providerId) {
       throw new Error(`Publicación distinta del corte acreditado: ${provider.providerId}`);
     }
-    const originals = provider.original.status === "verified" ?
-      await readPortableOriginal(root, provider.providerId) : null;
-    if (originals && originals.products.length !== provider.metrics.originals) {
-      throw new Error(`Población original incompatible: ${provider.providerId}`);
-    }
-    const source = new Map(originals?.products.map((item) =>
+    const originals = await readPanelOriginalProducts(root, provider);
+    const source = new Map(originals?.map((item) =>
       [productIdentity(provider.providerId, item.reference, item.url), item] as const) ?? []);
-    if (originals && source.size !== originals.products.length) {
+    if (originals && source.size !== originals.length) {
       throw new Error(`Identidades originales duplicadas: ${provider.providerId}`);
     }
     const emitted = await readPublicationTechnicalProvenance(
@@ -73,7 +69,7 @@ export const prepareExplorerTechnicalEvidence = async (workspace: string): Promi
       const changes = original ? compareOriginalToPublished(fromOriginal(original), fromPublication(item)) : [];
       const additions = changes.filter((difference) => difference.group === "technical" && difference.change === "added")
         .map((difference) => ({ field: difference.field, value: difference.after ?? "" }));
-      if (publishedTrace && publishedTrace.entries.some((entry) => !additions.some((addition) =>
+      if (original && publishedTrace && publishedTrace.entries.some((entry) => !additions.some((addition) =>
         addition.field === entry.field && addition.value === entry.value))) {
         throw new Error(`Traza técnica incompatible con publicación: ${identity}`);
       }

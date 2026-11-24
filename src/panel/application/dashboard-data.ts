@@ -23,7 +23,8 @@ export type PanelDashboardPayload = {
 const PANEL_NAMES: Readonly<Record<PanelProviderId, string>> = {
   gam: "GAM",
   gomariz: "Gomariz",
-  mercaeleva: "Mercaeleva"
+  mercaeleva: "Mercaeleva",
+  manain: "Manain"
 };
 
 const normalizationDictionary = (): readonly PanelNormalizationEntry[] => Object.entries(SPEC_KEY_NORMALIZATION)

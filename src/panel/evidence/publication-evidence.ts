@@ -1,9 +1,11 @@
 import { join, dirname, basename } from "node:path";
 import { readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
-import { readPortableOriginalArtifacts } from "../../infrastructure/filesystem/catalog/portable-original.js";
+import { readVerifiedManainRecordSource } from "../../infrastructure/filesystem/catalog/manain-record-source.js";
+import { readPortableOriginal, readPortableOriginalArtifacts } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import { resolvePublicationDirectory } from "../../infrastructure/filesystem/catalog/publication-identity.js";
 import { artifact, digest, isMissing, isRecord, isSha, recordFrom, regularText } from "./evidence-files.js";
-import type { PanelArtifact, PanelOriginalEvidence, PanelProviderId } from "./types.js";
+import type { ProductRecord } from "../../contracts/catalog.js";
+import type { PanelArtifact, PanelOriginalEvidence, PanelProviderId, PanelProviderEvidence } from "./types.js";
 
 export type PublicationSource = {
   readonly sha256: string;
@@ -52,6 +54,22 @@ export const readPublicationLineage = async (
 export const readPanelOriginalEvidence = async (
   root: string, providerId: PanelProviderId, source: PublicationSource
 ): Promise<PanelOriginalEvidence> => {
+  if (providerId === "manain" && source.prefix === "manain-record") {
+    let verified: Awaited<ReturnType<typeof readVerifiedManainRecordSource>>;
+    try { verified = await readVerifiedManainRecordSource(root); }
+    catch (error) {
+      if (isMissing(error)) return { status: "unavailable", expectedSha256: source.sha256,
+        reason: "Registro parcial acreditado no conservado" };
+      throw error;
+    }
+    if (verified.recordSha256 !== source.sha256 || verified.originalProducts.length !== source.productCount ||
+      source.scope !== verified.recordSha256.slice(0, 16)) {
+      return { status: "unavailable", expectedSha256: source.sha256,
+        reason: "El registro parcial vigente no corresponde al corte publicado" };
+    }
+    return { status: "verified", products: verified.originalProducts.length,
+      artifact: artifact(root, verified.recordFile, verified.recordSha256) };
+  }
   let portable: Awaited<ReturnType<typeof readPortableOriginalArtifacts>>;
   try { portable = await readPortableOriginalArtifacts(root, providerId); }
   catch (error) {
@@ -72,6 +90,23 @@ export const readPanelOriginalEvidence = async (
   }
   return { status: "verified", products: portable.catalog.productCount,
     artifact: artifact(root, join(root, "catalogs", "providers", providerId, "original", raw.name), sha256) };
+};
+
+export const readPanelOriginalProducts = async (
+  root: string, evidence: PanelProviderEvidence
+): Promise<readonly ProductRecord[] | null> => {
+  if (evidence.original.status !== "verified") return null;
+  const raw = await regularText(join(root, evidence.original.artifact.path));
+  if (digest(raw) !== evidence.original.artifact.sha256) {
+    throw new Error(`Original modificado durante lectura del explorador: ${evidence.providerId}`);
+  }
+  const products = evidence.providerId === "manain" && basename(evidence.original.artifact.path) === "manain-record.json" ?
+    (await readVerifiedManainRecordSource(root)).originalProducts :
+    (await readPortableOriginal(root, evidence.providerId)).products;
+  if (products.length !== evidence.metrics.originals) {
+    throw new Error(`Población original discordante: ${evidence.providerId}`);
+  }
+  return products;
 };
 
 export const readRetention = async (root: string, providerId: PanelProviderId, approvalSha256: string): Promise<string | null> => {

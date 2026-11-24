@@ -140,8 +140,11 @@ find("explorer-page-next").addEventListener("click", () => changePage(1));
 window.addEventListener("panel:scope", (event: Event) => {
   if (!(event instanceof CustomEvent)) return;
   const next: unknown = event.detail;
-  if (next !== "todos" && next !== "gam" && next !== "gomariz" && next !== "mercaeleva") return;
-  filters.updateScope(next);
+  if (next === "todos") filters.updateScope(next);
+  else {
+    const provider = data.snapshot.providers.find((item) => item.providerId === next);
+    if (provider) filters.updateScope(provider.providerId);
+  }
 });
 window.addEventListener("panel:request-case", (event: Event) => {
   if (!(event instanceof CustomEvent)) return;

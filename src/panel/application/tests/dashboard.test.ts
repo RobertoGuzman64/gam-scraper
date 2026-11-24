@@ -182,7 +182,8 @@ test("los títulos de las métricas son informativos y no abren diálogos de def
 test("las fuentes y métricas no se alteran al crear la vista", async () => {
   const { snapshot, dashboard, snapshotBeforeView } = await readStaticPanel();
   assert.equal(JSON.stringify(snapshot), snapshotBeforeView);
-  assert.deepEqual(dashboard.snapshot.providers.map((provider) => provider.providerId), ["gam", "gomariz", "mercaeleva"]);
+  assert.deepEqual(dashboard.snapshot.providers.map((provider) => provider.providerId),
+    snapshot.providers.map((provider) => provider.providerId));
 });
 
 

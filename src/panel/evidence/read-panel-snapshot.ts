@@ -1,8 +1,8 @@
 import { join, resolve } from "node:path";
 import { inspectCommercialPackage, assertCommercialPackageProviders } from "../../commercial/export/commercial-package-snapshot.js";
-import { LEGACY_CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
-import { parseTechnicalReport } from "./report-metrics.js";
+import { parseTechnicalReport, selectTechnicalReportProviders } from "./report-metrics.js";
 import type { TechnicalReportProvider } from "./report-metrics.js";
 import { artifact, digest, inspectReport, recordFrom, regularText } from "./evidence-files.js";
 import { assertCommercialLineage, readCommercialFiles, verifyCommercialReport } from "./commercial-evidence.js";
@@ -65,27 +65,28 @@ export const readPanelSnapshot = async (workspace: string): Promise<PanelSnapsho
     throw new Error("Selección comercial develop incompatible");
   }
   const date = verifyCommercialReport(commercialReport.content, snapshot.manifestSha256, snapshot.providers);
-  parseTechnicalReport(technicalReport.content);
+  const scope = CAMPAIGN_PROVIDERS.filter((id) => snapshot.providers.some((provider) => provider.providerId === id));
+  let report = selectTechnicalReportProviders(parseTechnicalReport(technicalReport.content), scope);
   let selectedTechnicalReport = technicalReport;
-  if (technicalReport.content.includes("| MANAIN |")) {
+  if (report === null) {
     if (technicalReport.previousSha256 === null) {
-      throw new Error("No hay informe técnico compatible con el paquete comercial de tres proveedores");
+      throw new Error("No hay informe técnico compatible con el paquete comercial");
     }
     const previousPath = join(root, "catalogs", "reports", "individual-finish", "versions", technicalReport.previousSha256, "INFORME.txt");
     const previousContent = await regularText(previousPath);
     if (digest(previousContent) !== technicalReport.previousSha256) {
       throw new Error("Informe técnico histórico sin huella válida");
     }
-    if (previousContent.includes("| MANAIN |")) {
-      throw new Error("No hay informe técnico compatible con el paquete comercial de tres proveedores");
+    report = selectTechnicalReportProviders(parseTechnicalReport(previousContent), scope);
+    if (report === null) {
+      throw new Error("No hay informe técnico compatible con el paquete comercial");
     }
     selectedTechnicalReport = {
       content: previousContent, evidence: artifact(root, previousPath, technicalReport.previousSha256), previousSha256: null
     };
   }
-  const report = parseTechnicalReport(selectedTechnicalReport.content);
   const providers: PanelProviderEvidence[] = [];
-  for (const providerId of LEGACY_CAMPAIGN_PROVIDERS) {
+  for (const providerId of scope) {
     const path = await resolveAccreditedPublication(root, providerId);
     if (!path) throw new Error(`Publicación vigente ausente: ${providerId}`);
     const published = await readAccreditedPublication(path);

@@ -5,7 +5,7 @@ import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { createZipArchive, readZipArchive } from "../../infrastructure/archive/zip.js";
 import type { CommercialExportFile } from "../../commercial/export/commercial-export.js";
 import { verifyCommercialExportArchive, verifyCommercialExportSources, verifyCommercialExportZip } from "../../commercial/export/commercial-export-verification.js";
-import { assertCommercialPackageProviders, inspectCommercialPackage } from "../../commercial/export/commercial-package-snapshot.js";
+import { assertCommercialPackageProviders, inspectCommercialPackage, validateStoredCommercialPackage } from "../../commercial/export/commercial-package-snapshot.js";
 import { renderCommercialIntegrationReport } from "./commercial-integration-report.js";
 import { retainRepositoryArtifact } from "../../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
 
@@ -157,7 +157,7 @@ export const deliverCommercialPackages = async (
     await verifyCommercialExportSources(root, files);
     if (snapshot.environment !== null) {
       await retainRepositoryArtifact(join(root, "catalogs", "commercial", snapshot.environment),
-        "commercial-manifest.json", files);
+        "commercial-manifest.json", files, validateStoredCommercialPackage);
       await retainRepositoryArtifact(join(root, "catalogs", "reports", "commercial", snapshot.environment),
         "INFORME.txt", [{ name: "INFORME.txt", content: reportMarkdown }]);
     }

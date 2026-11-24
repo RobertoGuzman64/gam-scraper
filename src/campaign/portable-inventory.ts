@@ -1,3 +1,4 @@
+import { validateStoredCommercialPackage } from "../commercial/export/commercial-package-snapshot.js";
 import { createHash } from "node:crypto";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
@@ -193,9 +194,7 @@ export const inspectPortableInventory = async (
         const exported = join(catalogRoot, "commercial", environment);
         const report = join(catalogRoot, "reports", "commercial", environment);
         try {
-          await inspectRepositoryArtifact(exported, "commercial-manifest.json", [
-            "gam-commercial.json", "gomariz-commercial.json", "mercaeleva-commercial.json", "commercial-manifest.json"
-          ]);
+          await inspectRepositoryArtifact(exported, "commercial-manifest.json", validateStoredCommercialPackage);
           await inspectRepositoryArtifact(report, "INFORME.txt", ["INFORME.txt"]);
         } catch (error) { issues.push(describe(error)); }
       }

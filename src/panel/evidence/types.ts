@@ -1,7 +1,7 @@
 import type { CommercialPackageProvider } from "../../commercial/export/commercial-package-snapshot.js";
-import type { LEGACY_CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import type { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 
-export type PanelProviderId = typeof LEGACY_CAMPAIGN_PROVIDERS[number];
+export type PanelProviderId = typeof CAMPAIGN_PROVIDERS[number];
 
 export type PanelArtifact = {
   readonly path: string;

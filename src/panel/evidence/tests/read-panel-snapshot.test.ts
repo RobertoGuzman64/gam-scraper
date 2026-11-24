@@ -3,10 +3,11 @@ import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { parseTechnicalReport } from "../report-metrics.js";
+import { parseTechnicalReport, selectTechnicalReportProviders } from "../report-metrics.js";
+import type { TechnicalReportProvider } from "../report-metrics.js";
 import { PANEL_METRIC_DEFINITIONS } from "../metric-definitions.js";
 import { assertCommercialLineage, readPanelOriginalEvidence, readPanelSnapshot } from "../read-panel-snapshot.js";
-import { LEGACY_CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
+import { isReferenceProviderSet } from "../../../contracts/campaign-providers.js";
 import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
 
 const workspace = async (task: (root: string) => Promise<void>): Promise<void> => {
@@ -23,6 +24,24 @@ const readStaticSnapshot = (): ReturnType<typeof readPanelSnapshot> =>
 
 const source = { identity: "gam:ref:123", reference: "123", sourceUrl: "https://example.com/123" };
 const published = [{ reference: "123", sourceUrl: "https://example.com/123" }];
+
+test("selecciona las filas del paquete comercial en un informe técnico de alcance mayor", () => {
+  const row = (providerId: TechnicalReportProvider["providerId"]): TechnicalReportProvider => ({
+    providerId, originalShaPrefix: "a".repeat(12), approvalShaPrefix: "b".repeat(12),
+    publicationShaPrefix: "c".repeat(12), originals: 2, published: 1, excludedEditorial: 1,
+    transformations: { changedProducts: 1, changedTitles: 0, createdDescriptions: 0, modifiedDescriptions: 1,
+      addedTechnicalKeys: 0, renamedTechnicalKeys: 0, formattedTechnicalValues: 0, changedTechnicalValues: 0 }
+  });
+  const rows = [row("gam"), row("gomariz"), row("mercaeleva"), row("manain")];
+  const previous = rows.slice(0, 3);
+  const scope = previous.map((item) => item.providerId);
+  const expandedScope = rows.map((item) => item.providerId);
+  assert.deepEqual(selectTechnicalReportProviders(rows, scope), previous);
+  assert.deepEqual(selectTechnicalReportProviders(previous, scope), previous);
+  assert.deepEqual(selectTechnicalReportProviders(rows, expandedScope), rows);
+  assert.equal(selectTechnicalReportProviders(previous, expandedScope), null);
+  assert.equal(selectTechnicalReportProviders(rows.filter((item) => item.providerId !== "gam"), scope), null);
+});
 
 test("rechaza fuentes comerciales desalineadas y duplicadas", () => {
   assert.doesNotThrow(() => assertCommercialLineage("gam", published, [{ reference: "123" }], [source], []));
@@ -52,14 +71,14 @@ test("rechaza informe técnico sin totales coherentes o trazabilidad completa", 
   const current = JSON.parse(await readFile(join(root, "catalogs", "reports", "individual-finish", "active.json"), "utf8"));
   assert.ok(current !== null && typeof current === "object" && "sha256" in current && typeof current.sha256 === "string");
   const report = await readFile(join(root, "catalogs", "reports", "individual-finish", "versions", current.sha256, "INFORME.txt"), "utf8");
-  assert.equal(parseTechnicalReport(report).length, LEGACY_CAMPAIGN_PROVIDERS.length);
+  assert.ok(isReferenceProviderSet(parseTechnicalReport(report).map((item) => item.providerId)));
   assert.throws(() => parseTechnicalReport(report.replace(/(\| TOTAL \| )\d+( \|)/, (_matched, before: string, after: string) => `${before}9999${after}`)), /Total discordante/);
   assert.throws(() => parseTechnicalReport(report.replace(/\| `[a-f0-9]{12}` \|/, "| `desconocido` |")), /Huellas técnicas inválidas/);
 });
 
 test("corte vigente enlaza publicaciones, informes y paquete comercial sin escrituras", async () => {
   const snapshot = await readStaticSnapshot();
-  assert.deepEqual(snapshot.providers.map((item) => item.providerId), [...LEGACY_CAMPAIGN_PROVIDERS]);
+  assert.ok(isReferenceProviderSet(snapshot.providers.map((item) => item.providerId)));
   assert.ok(!("backendIntegration" in snapshot));
   assert.equal(snapshot.environment, "develop");
   assert.match(snapshot.packageDateUtc, /^\d{4}-\d{2}-\d{2}$/);

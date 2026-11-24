@@ -82,7 +82,7 @@ export const parseTechnicalReport = (content: string): readonly TechnicalReportP
   if (lineage.size !== providers.length || providers.some((id) => !lineage.has(id.toUpperCase()))) {
     throw new Error("Trazabilidad técnica incompleta");
   }
-  return LEGACY_CAMPAIGN_PROVIDERS.map((providerId) => {
+  return providers.map((providerId) => {
     const fingerprints = lineage.get(providerId.toUpperCase());
     if (!fingerprints || fingerprints.slice(1).some((value) => !/^`[a-f0-9]{12}`$/.test(value))) {
       throw new Error(`Huellas técnicas inválidas: ${providerId}`);
@@ -109,4 +109,16 @@ export const parseTechnicalReport = (content: string): readonly TechnicalReportP
       }
     };
   });
+};
+
+export const selectTechnicalReportProviders = (
+  rows: readonly TechnicalReportProvider[], providers: readonly PanelProviderId[]
+): readonly TechnicalReportProvider[] | null => {
+  const selected: TechnicalReportProvider[] = [];
+  for (const providerId of providers) {
+    const row = rows.find((entry) => entry.providerId === providerId);
+    if (!row) return null;
+    selected.push(row);
+  }
+  return selected;
 };

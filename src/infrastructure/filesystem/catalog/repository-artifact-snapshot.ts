@@ -7,6 +7,8 @@ export type RepositoryArtifactFile = {
   readonly content: string;
 };
 
+type ArtifactLayout = readonly string[] | ((files: readonly RepositoryArtifactFile[]) => void);
+
 type SnapshotSelection = {
   readonly version: 1;
   readonly sha256: string;
@@ -43,21 +45,26 @@ const readSelection = async (path: string): Promise<SnapshotSelection | null> =>
 };
 
 const verifyVersion = async (
-  directory: string, identityName: string, fingerprint: string, names: readonly string[]
+  directory: string, identityName: string, fingerprint: string, layout: ArtifactLayout
 ): Promise<void> => {
   await regularDirectory(directory);
   const actual = (await readdir(directory)).sort();
-  if (JSON.stringify(actual) !== JSON.stringify([...names].sort())) {
+  if (!actual.includes(identityName) || actual.some((name) => !/^[a-zA-Z0-9_-]+\.(?:json|txt)$/.test(name)) ||
+    (typeof layout !== "function" && JSON.stringify(actual) !== JSON.stringify([...layout].sort()))) {
     throw new Error(`Archivos de artefacto incompletos o inesperados: ${directory}`);
   }
-  for (const name of names) await regularFile(join(directory, name));
+  for (const name of actual) await regularFile(join(directory, name));
   if (sha256(await readFile(join(directory, identityName), "utf8")) !== fingerprint) {
     throw new Error(`Huella del artefacto no coincide: ${directory}`);
+  }
+  if (typeof layout === "function") {
+    layout(await Promise.all(actual.map(async (name) => ({ name, content: await readFile(join(directory, name), "utf8") }))));
   }
 };
 
 export const retainRepositoryArtifact = async (
-  directory: string, identityName: string, files: readonly RepositoryArtifactFile[]
+  directory: string, identityName: string, files: readonly RepositoryArtifactFile[],
+  layout: ArtifactLayout = files.map(({ name }) => name)
 ): Promise<string> => {
   if (files.length === 0 || files.some(({ name }) => !/^[a-zA-Z0-9_-]+\.(?:json|txt)$/.test(name)) ||
     new Set(files.map(({ name }) => name)).size !== files.length) {
@@ -66,7 +73,7 @@ export const retainRepositoryArtifact = async (
   const identity = files.find(({ name }) => name === identityName);
   if (!identity) throw new Error("Falta el archivo de identidad del artefacto");
   const fingerprint = sha256(identity.content);
-  const names = files.map(({ name }) => name);
+  if (typeof layout === "function") layout(files);
   await mkdir(directory, { recursive: true });
   await regularDirectory(directory);
   const lockPath = join(directory, ".artifact.lock");
@@ -80,7 +87,7 @@ export const retainRepositoryArtifact = async (
       if (!entry.isDirectory() || entry.isSymbolicLink() || !validSha(entry.name)) {
         throw new Error(`Versión de artefacto desconocida: ${entry.name}`);
       }
-      await verifyVersion(join(versions, entry.name), identityName, entry.name, names);
+      await verifyVersion(join(versions, entry.name), identityName, entry.name, layout);
     }
     const indexPath = join(directory, "active.json");
     const selection = await readSelection(indexPath);
@@ -101,7 +108,7 @@ export const retainRepositoryArtifact = async (
       try {
         await mkdir(stage);
         for (const file of files) await writeFile(join(stage, file.name), file.content, { flag: "wx" });
-        await verifyVersion(stage, identityName, fingerprint, names);
+        await verifyVersion(stage, identityName, fingerprint, layout);
         await rename(stage, destination);
       } finally { await rm(stage, { recursive: true, force: true }); }
     }
@@ -125,7 +132,7 @@ export const retainRepositoryArtifact = async (
 };
 
 export const inspectRepositoryArtifact = async (
-  directory: string, identityName: string, names: readonly string[]
+  directory: string, identityName: string, layout: ArtifactLayout
 ): Promise<{ readonly sha256: string; readonly previousSha256: string | null } | null> => {
   try { await regularDirectory(directory); }
   catch (error) { if (missing(error)) return null; throw error; }
@@ -143,6 +150,6 @@ export const inspectRepositoryArtifact = async (
     versionEntries.some((entry) => !entry.isDirectory() || entry.isSymbolicLink() || !expected.includes(entry.name))) {
     throw new Error(`Retención de artefactos incoherente: ${directory}`);
   }
-  for (const fingerprint of expected) await verifyVersion(join(versions, fingerprint), identityName, fingerprint, names);
+  for (const fingerprint of expected) await verifyVersion(join(versions, fingerprint), identityName, fingerprint, layout);
   return { sha256: selected.sha256, previousSha256: selected.previousSha256 };
 };

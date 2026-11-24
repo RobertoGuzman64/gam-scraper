@@ -1,7 +1,8 @@
 import { buildProductIdentity } from "../../catalog/identity.js";
 import { join } from "node:path";
 import { inspectRepositoryArtifact } from "../../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
-import { LEGACY_CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import { readdir } from "node:fs/promises";
+import { validateStoredCommercialPackage } from "../../commercial/export/commercial-package-snapshot.js";
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 import type { CommercialExportFile } from "../../commercial/export/commercial-export.js";
 import type { CommercialPackageProvider } from "../../commercial/export/commercial-package-snapshot.js";
@@ -54,10 +55,10 @@ export const readCommercialFiles = async (root: string): Promise<{
   readonly files: readonly CommercialExportFile[];
 }> => {
   const directory = join(root, "catalogs", "commercial", "develop");
-  const names = ["commercial-manifest.json", ...LEGACY_CAMPAIGN_PROVIDERS.map((id) => `${id}-commercial.json`)];
-  const selection = await inspectRepositoryArtifact(directory, "commercial-manifest.json", names);
+  const selection = await inspectRepositoryArtifact(directory, "commercial-manifest.json", validateStoredCommercialPackage);
   if (!selection) throw new Error("Paquete comercial develop ausente");
   const files: CommercialExportFile[] = [];
+  const names = await readdir(join(directory, "versions", selection.sha256));
   for (const name of names) {
     const content = await regularText(join(directory, "versions", selection.sha256, name));
     files.push({ name, content, sha256: digest(content), bytes: Buffer.byteLength(content, "utf8") });

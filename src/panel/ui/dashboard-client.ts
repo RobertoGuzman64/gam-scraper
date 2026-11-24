@@ -192,7 +192,9 @@ const renderKpis = (scope: PanelScope): void => {
   container.replaceChildren();
   const metrics = metricsFor(scope);
   const cards: readonly { readonly key: PanelMetricKey; readonly overline: string; readonly accent: string; readonly note: string }[] = [
-    { key: "originals", overline: "01 / ENTRADA", accent: "neutral", note: "Catálogo original acreditado" },
+    { key: "originals", overline: "01 / ENTRADA", accent: "neutral", note: selectedProviders(scope).some((provider) => provider.providerId === "manain" &&
+      provider.original.status === "verified" && provider.original.artifact.path.endsWith("/manain-record.json")) ?
+      "Origen acreditado; Manain conserva un registro parcial" : "Catálogo original acreditado" },
     { key: "published", overline: "02 / FINISH", accent: "mint", note: "Publicación individual del corte" },
     { key: "exported", overline: "03 / COMERCIAL", accent: "cyan", note: "Productos en el paquete develop" },
     { key: "addedTechnicalKeys", overline: "04 / APORTACIÓN", accent: "blue", note: "Claves incorporadas según el informe técnico" }
