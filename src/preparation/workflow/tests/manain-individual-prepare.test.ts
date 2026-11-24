@@ -6,7 +6,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { parseIndividualCatalogProviders } from "../../../cli/options/individual-catalog.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
-import { validateManainRecordPreparation } from "../validation/offline.js";
+import { validateManainRecordPreparation } from "../offline.js";
 import { readVerifiedManainRecordSource } from "../../../infrastructure/filesystem/catalog/manain-record-source.js";
 import { runPrepareIndividual } from "../../../cli/commands/catalog/prepare-individual.js";
 

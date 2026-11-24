@@ -6,10 +6,10 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import type {
   EditorialConsensusMetric, EditorialFamilyGuidance, EditorialKnowledge, EditorialModelKnowledge,
   EditorialUnitKnowledge, EditorialVerifiedModelRule, EditorialTechnicalModelReference
-} from "../../../preparation/shared/editorial/domain/editorial-knowledge.js";
-import type { EditorialFamily } from "../../../preparation/shared/editorial/domain/editorial-families.js";
-import { isEditorialFamily } from "../../../preparation/shared/editorial/domain/editorial-families.js";
-import { editorialIdentityKey, editorialModelKey } from "../../../preparation/shared/editorial/domain/editorial-knowledge.js";
+} from "../../../preparation/editorial/core/editorial-knowledge.js";
+import type { EditorialFamily } from "../../../preparation/editorial/core/editorial-families.js";
+import { isEditorialFamily } from "../../../preparation/editorial/core/editorial-families.js";
+import { editorialIdentityKey, editorialModelKey } from "../../../preparation/editorial/core/editorial-knowledge.js";
 
 const recordOf = (value: unknown): Record<string, unknown> | null =>
   typeof value === "object" && value !== null && !Array.isArray(value) ? Object.fromEntries(Object.entries(value)) : null;

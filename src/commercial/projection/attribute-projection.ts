@@ -1,5 +1,5 @@
 import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.js";
-import { fold } from "../../preparation/shared/classification/mapping/attribute-utils.js";
+import { fold } from "../../preparation/classification/attribute-utils.js";
 import { decideCommercialAttributes } from "./attribute-decision.js";
 import type { CommercialAttributeDecision } from "./attribute-decision.js";
 

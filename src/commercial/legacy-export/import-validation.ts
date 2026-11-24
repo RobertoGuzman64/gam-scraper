@@ -1,4 +1,4 @@
-import { isLeafCategoryForCondition } from "../../preparation/shared/classification/mapping/category-mapping.js";
+import { isLeafCategoryForCondition } from "../../preparation/classification/category-mapping.js";
 import type { ImportCandidate, ImportCatalog } from "./contracts.js";
 import { commercialReference } from "./commercial-reference.js";
 

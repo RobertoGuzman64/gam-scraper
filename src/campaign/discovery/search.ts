@@ -6,7 +6,7 @@ import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/ca
 import { readPortableOriginalArtifacts } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import { readAppliedIntervention } from "../../infrastructure/filesystem/interventions/intervention-derived.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
-import type { OfflinePreparation } from "../../preparation/offline-document.js";
+import type { OfflinePreparation } from "../../preparation/documents/offline-document.js";
 import type { CanonicalCatalog } from "../../catalog/canonical-catalog.js";
 import type { BatchReport, ProviderRun } from "../../contracts/batch-report.js";
 

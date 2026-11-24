@@ -6,9 +6,9 @@ import type { ProductRecord, SpecsMap } from "../../../../../../contracts/catalo
 
 import { loadImportCatalog } from "../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 
-import { resolveAttribute, resolveAttributeValue } from "../../../../../../preparation/shared/classification/mapping/attribute-mapping.js";
+import { resolveAttribute, resolveAttributeValue } from "../../../../../../preparation/classification/attribute-mapping.js";
 
-import { productAttributes } from "../../../../../../preparation/product-attributes.js";
+import { productAttributes } from "../../../../../../preparation/product/product-attributes.js";
 
 import { prepareProduct } from "../../../../../../commercial/legacy-export/prepare-product.js";
 

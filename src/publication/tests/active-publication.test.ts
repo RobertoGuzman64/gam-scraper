@@ -1,6 +1,6 @@
 import { createPortableTestSymlink } from "../../testing/builders/portable-symlink-fixture.js";
 import { accreditedPublicationDirectory, accreditedPublicationSha } from "../../testing/builders/accredited-publication-fixture.js";
-import { isCandidate } from "../../preparation/preparation-document.js";
+import { isCandidate } from "../../preparation/documents/preparation-document.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { cp, lstat, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";

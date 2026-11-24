@@ -1,7 +1,7 @@
 import { buildProductIdentity } from "../identity.js";
 import { hasTechnicalLoadCapacityDisagreement, inspectTechnicalCoherence, inspectTechnicalSpecifications } from "../validation/technical-specifications.js";
-import { preparedTechnicalConsistencyIssues } from "../../preparation/shared/technical/source/technical-consistency.js";
-import { sourceSemanticQualityIssues } from "../../preparation/shared/quality/source/semantic-quality.js";
+import { preparedTechnicalConsistencyIssues } from "../../preparation/technical/technical-consistency.js";
+import { sourceSemanticQualityIssues } from "../../preparation/quality/semantic-quality.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 

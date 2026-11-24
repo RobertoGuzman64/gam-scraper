@@ -6,11 +6,11 @@ import { dirname, resolve, relative, sep } from "node:path";
 const root = process.cwd();
 const source = (name) => readFileSync(name, "utf8");
 const central = [
-  "src/preparation/shared/editorial/mapping/prepared-editorial.ts",
-  "src/preparation/shared/editorial/mapping/prepared-editorial-source.ts",
-  "src/preparation/shared/editorial/mapping/prepared-editorial-title.ts",
-  "src/preparation/shared/editorial/mapping/source-editorial-evidence.ts",
-  "src/preparation/shared/editorial/domain/editorial-composition.ts"
+  "src/preparation/editorial/core/prepared-editorial.ts",
+  "src/preparation/editorial/core/prepared-editorial-source.ts",
+  "src/preparation/editorial/writing/prepared-editorial-title.ts",
+  "src/preparation/editorial/claims/source-editorial-evidence.ts",
+  "src/preparation/editorial/core/editorial-composition.ts"
 ];
 for (const file of central) {
   const content = source(file);
@@ -51,9 +51,9 @@ const walk = (file) => {
 };
 walk(resolve(root, "src/preparation/prepare-product.ts"));
 const permitted = new Set([
-  "src/preparation/gam/editorial/source/domain-source.ts",
-  "src/preparation/gomariz/editorial/mapping/domain-source.ts",
-  "src/preparation/mercaeleva/editorial/mapping/domain-source.ts"
+  "src/preparation/gam/domain-source.ts",
+  "src/preparation/gomariz/domain-source.ts",
+  "src/preparation/mercaeleva/domain-source.ts"
 ]);
 const obsolete = [...imported].map((file) => relative(root, file).split(sep).join("/"))
   .filter((file) => /src\/preparation\/(?:gam|gomariz|mercaeleva)\/editorial\//u.test(file) && !permitted.has(file));

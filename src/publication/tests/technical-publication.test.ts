@@ -14,9 +14,9 @@ import { loadPreparationInputs } from "../../infrastructure/filesystem/preparati
 import { offlinePreparationManifest } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { readCanonicalCatalog, writeCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { buildProductIdentity } from "../../catalog/identity.js";
-import type { OfflinePreparation } from "../../preparation/offline-document.js";
+import type { OfflinePreparation } from "../../preparation/documents/offline-document.js";
 import { buildManainRecord } from "../../preparation/workflow/manain-record.js";
-import { discardedManainProductUrls } from "../../preparation/manain/identity/evidence/discarded-urls.js";
+import { discardedManainProductUrls } from "../../preparation/manain/discarded-urls.js";
 import { baseProductHeaders } from "../../scraping/output/csv-serializer.js";
 import { toCsv } from "../../shared/csv.js";
 import { inspectPortableInventory } from "../../campaign/portable-inventory.js";

@@ -2,4 +2,4 @@ export type { ImportCatalog, ImportCandidate } from "../commercial/legacy-export
 export type { PreparedProduct } from "./contracts.js";
 export { prepareProduct } from "../commercial/legacy-export/prepare-product.js";
 export { prepareSourceProduct } from "./prepare-product.js";
-export { prepareImportBatch } from "./batch-identity.js";
+export { prepareImportBatch } from "./product/batch-identity.js";

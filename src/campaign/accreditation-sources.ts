@@ -4,10 +4,10 @@ import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { buildProductIdentity } from "../catalog/identity.js";
 import { readCanonicalCatalog } from "../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { readAppliedIntervention } from "../infrastructure/filesystem/interventions/intervention-derived.js";
-import { validateOfflinePreparation } from "../preparation/workflow/validation/offline.js";
+import { validateOfflinePreparation } from "../preparation/workflow/offline.js";
 import { sha256 } from "../catalog/editorial/campaign-accreditation.js";
 import type { AccreditedSource } from "../catalog/editorial/campaign-accreditation.js";
-import type { OfflinePreparation } from "../preparation/offline-document.js";
+import type { OfflinePreparation } from "../preparation/documents/offline-document.js";
 import type { BatchReport } from "../contracts/batch-report.js";
 import { isReferenceProviderSet } from "../contracts/campaign-providers.js";
 

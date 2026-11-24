@@ -16,7 +16,7 @@ import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../
 import { isAccreditedMercaelevaMbCapacityProjection, projectPresentableSpecifications } from "../projection/spec-projection.js";
 import { commercialUnitTitleSuffixes, unresolvedCommercialTitleCollisions } from "../projection/unit-disambiguation.js";
 import { prepareCommercialEditorialInputs } from "../projection/editorial-inputs.js";
-import { normalizePreparedEditorialPresentation } from "../../preparation/shared/editorial/mapping/prepared-editorial-presentation.js";
+import { normalizePreparedEditorialPresentation } from "../../preparation/editorial/writing/prepared-editorial-presentation.js";
 import { assessCommercialHeight } from "../validation/height-consistency.js";
 import { assessCommercialYear } from "../validation/year-consistency.js";
 

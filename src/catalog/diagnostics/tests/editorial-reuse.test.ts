@@ -6,7 +6,7 @@ import {
   controlledGamForklift,
   controlledGomarizPlatform,
   controlledMercaelevaForklift
-} from "../../../preparation/shared/editorial/tests/editorial-contract-records.js";
+} from "../../../preparation/editorial/core/editorial-contract-records.js";
 import { analyzeEditorialReuse } from "../editorial-reuse.js";
 import type { GapInput } from "../content-gaps-types.js";
 

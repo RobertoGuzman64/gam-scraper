@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { prepareProduct } from "../../../preparation/prepare.js";
-import { parsePreparation } from "../../../preparation/preparation-document.js";
+import { parsePreparation } from "../../../preparation/documents/preparation-document.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { planProductImport, readReferenceInventory } from "../export-plan.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";

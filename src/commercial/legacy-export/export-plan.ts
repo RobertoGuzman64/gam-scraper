@@ -1,5 +1,5 @@
 import type { ImportCandidate, ImportCatalog } from "./contracts.js";
-import type { PreparationDocument } from "../../preparation/preparation-document.js";
+import type { PreparationDocument } from "../../preparation/documents/preparation-document.js";
 import type { CellValue } from "../../infrastructure/spreadsheet/xlsx.js";
 import type { ReferenceInventory } from "./reference-inventory.js";
 export { readReferenceInventory } from "./reference-inventory.js";

@@ -1,7 +1,7 @@
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
-import type { TechnicalRecoveryObservation } from "../../technical-recovery-observation.js";
-import type { Attribute, Candidate } from "../../shared/classification/mapping/attribute-types.js";
-import { fold } from "../../shared/classification/mapping/attribute-utils.js";
+import type { TechnicalRecoveryObservation } from "../../provenance/technical-recovery-observation.js";
+import type { Attribute, Candidate } from "../../classification/attribute-types.js";
+import { fold } from "../../classification/attribute-utils.js";
 
 const sourceFamily = (record: ProductRecord): string | null => {
   if (record.providerId !== "gam" || record.condition !== "Nuevo" || fold(record.brand ?? "") !== "yale") return null;

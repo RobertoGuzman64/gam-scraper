@@ -22,7 +22,7 @@ import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-exp
 import { renderCommercialCategoryTree } from "../../../commercial/diagnostics/commercial-category-tree.js";
 import { analyzePresentationConsistency } from "../../../commercial/diagnostics/presentation-consistency.js";
 import { originalSources } from "../../../infrastructure/filesystem/catalog/original-catalog-sources.js";
-import { prepareImportBatch } from "../../../preparation/batch-identity.js";
+import { prepareImportBatch } from "../../../preparation/product/batch-identity.js";
 import { assertCommercialPackageProviders, inspectCommercialPackage } from "../../../commercial/export/commercial-package-snapshot.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));

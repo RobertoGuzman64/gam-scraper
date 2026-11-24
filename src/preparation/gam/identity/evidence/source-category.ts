@@ -1,10 +1,10 @@
 import { createHash } from "node:crypto";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { fold } from "../../../shared/classification/mapping/category-utils.js";
-import { isGamVerifiedHysterSGlp } from "../../technical/models/hyster-s-glp-evidence.js";
-import { isGamVerifiedYaleGc40vxLpg } from "../../technical/models/yale-gc40vx-lpg-evidence.js";
-import { isGamVerifiedYaleGc45vxLpg } from "../../technical/models/yale-gc45vx-lpg-evidence.js";
-import { isGamVerifiedYaleGc55vxGlp } from "../../technical/models/yale-gc55vx-glp-evidence.js";
+import { fold } from "../../../classification/category-utils.js";
+import { isGamVerifiedHysterSGlp } from "../../models/evidence/hyster-s-glp-evidence.js";
+import { isGamVerifiedYaleGc40vxLpg } from "../../models/evidence/yale-gc40vx-lpg-evidence.js";
+import { isGamVerifiedYaleGc45vxLpg } from "../../models/evidence/yale-gc45vx-lpg-evidence.js";
+import { isGamVerifiedYaleGc55vxGlp } from "../../models/evidence/yale-gc55vx-glp-evidence.js";
 
 const normalize = (value: string | null | undefined): string => fold(value ?? "");
 

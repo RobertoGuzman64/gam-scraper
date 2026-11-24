@@ -1,6 +1,6 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import type { Attribute, Candidate } from "../../../shared/classification/mapping/attribute-types.js";
-import { fold } from "../../../shared/classification/mapping/attribute-utils.js";
+import type { Attribute, Candidate } from "../../../classification/attribute-types.js";
+import { fold } from "../../../classification/attribute-utils.js";
 
 const cteIdentity = (record: ProductRecord): { brand: string; model: string } | null => {
   if (record.categoryKey !== "elevacion-nueva" || !/\bplataformas?\b.*\bcami[oó]n\b/i.test(record.title ?? "")) return null;

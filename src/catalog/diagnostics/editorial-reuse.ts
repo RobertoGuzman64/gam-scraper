@@ -1,7 +1,7 @@
 import { buildProductIdentity } from "../identity.js";
-import { resolveEditorialFacts } from "../../preparation/shared/editorial/domain/editorial-facts.js";
-import { resolveEditorialSource } from "../../preparation/shared/editorial/domain/editorial-source.js";
-import { resolveReusableEditorial } from "../../preparation/shared/editorial/domain/editorial-composition.js";
+import { resolveEditorialFacts } from "../../preparation/editorial/core/editorial-facts.js";
+import { resolveEditorialSource } from "../../preparation/editorial/core/editorial-source.js";
+import { resolveReusableEditorial } from "../../preparation/editorial/core/editorial-composition.js";
 import type { GapInput } from "./content-gaps-types.js";
 
 type ReuseField = "description" | "description_general";

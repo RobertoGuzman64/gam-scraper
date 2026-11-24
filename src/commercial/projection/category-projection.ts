@@ -1,9 +1,9 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.js";
 import type { PreparedProduct } from "../../preparation/contracts.js";
-import { fold } from "../../preparation/shared/classification/mapping/category-utils.js";
-import { isLeafCategoryForCondition, resolveCategory } from "../../preparation/shared/classification/mapping/category-mapping.js";
-import { productAttributes } from "../../preparation/product-attributes.js";
+import { fold } from "../../preparation/classification/category-utils.js";
+import { isLeafCategoryForCondition, resolveCategory } from "../../preparation/classification/category-mapping.js";
+import { productAttributes } from "../../preparation/product/product-attributes.js";
 import { contradictsGamGlpCategory, documentedSourceCommercialSlug } from "./source-category-evidence.js";
 import { reconcileGamSourceForCommercialFallback, reconcileSourceForCommercialProjection } from "./gam-category-evidence.js";
 

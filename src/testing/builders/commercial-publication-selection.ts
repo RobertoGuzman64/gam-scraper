@@ -5,7 +5,7 @@ import { projectCommercialCategory } from "../../commercial/projection/category-
 import type { ImportCatalog } from "../../commercial/legacy-export/contracts.js";
 import { publicationOriginalSources } from "../../infrastructure/filesystem/catalog/accredited-publication-original.js";
 import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
-import { prepareImportBatch } from "../../preparation/batch-identity.js";
+import { prepareImportBatch } from "../../preparation/product/batch-identity.js";
 
 export const selectAccreditedCommercialInputs = async (
   root: string, catalog: ImportCatalog, selection: Readonly<Record<string, readonly string[]>>

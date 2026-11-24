@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { buildProductIdentity } from "../identity.js";
-import { fold } from "../../preparation/shared/classification/mapping/category-utils.js";
+import { fold } from "../../preparation/classification/category-utils.js";
 import { technicalPriorityFamily, publishedTechnicalKeys, hasEssentialTechnicalSpec, type PriorityTechnicalFamily, type TechnicalPriority } from "./specification-family-priorities.js";
 import { analyzeTechnicalDensity, isTechnicalSpecificationKey, type TechnicalDensity } from "./technical-density.js";
 import { normalizedSpecKey, specHasValue } from "./content-gaps-source.js";

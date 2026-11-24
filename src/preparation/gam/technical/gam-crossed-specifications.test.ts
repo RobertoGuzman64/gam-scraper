@@ -4,9 +4,9 @@ import test from "node:test";
 
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 
-import { resolveAttribute } from "../../shared/classification/mapping/attribute-mapping.js";
+import { resolveAttribute } from "../../classification/attribute-mapping.js";
 
-import { SOURCE_TECHNICAL_FIELDS } from "../../shared/technical/source/technical-fields.js";
+import { SOURCE_TECHNICAL_FIELDS } from "../../technical/technical-fields.js";
 
 import { prepareSourceProduct } from "../../prepare-product.js";
 

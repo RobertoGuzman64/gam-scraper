@@ -9,7 +9,7 @@ import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-
 import { projectCommercialCategory } from "../../commercial/projection/category-projection.js";
 import { planCommercialExport } from "../../commercial/projection/export-projection.js";
 import { accreditCommercialPlan } from "../../commercial/diagnostics/commercial-accreditation.js";
-import { prepareImportBatch } from "../batch-identity.js";
+import { prepareImportBatch } from "../product/batch-identity.js";
 
 const root = process.cwd();
 const catalog = await loadImportCatalog();

@@ -3,8 +3,8 @@ import { resolve } from "node:path";
 import { createAccreditationDraft, selectAccreditedPublishable, sha256 } from "../catalog/editorial/campaign-accreditation.js";
 import type { AccreditedSource, CampaignAccreditation } from "../catalog/editorial/campaign-accreditation.js";
 import type { PublishableSelection } from "../catalog/editorial/select-publishable.js";
-import type { OfflinePreparation } from "../preparation/offline-document.js";
-import { validateManainRecordSelection, validateOfflinePreparation } from "../preparation/workflow/validation/offline.js";
+import type { OfflinePreparation } from "../preparation/documents/offline-document.js";
+import { validateManainRecordSelection, validateOfflinePreparation } from "../preparation/workflow/offline.js";
 
 export type IndividualSelectionContext = {
   readonly providerId: string;

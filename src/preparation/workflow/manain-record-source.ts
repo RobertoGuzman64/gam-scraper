@@ -1,5 +1,5 @@
 import type { VerifiedManainRecordSource } from "../../infrastructure/filesystem/catalog/manain-record-source.js";
-import type { PreparationSource } from "../offline-document.js";
+import type { PreparationSource } from "../documents/offline-document.js";
 
 export const manainRecordPreparationSource = (verified: VerifiedManainRecordSource): PreparationSource => {
   const source = verified.snapshot.source;

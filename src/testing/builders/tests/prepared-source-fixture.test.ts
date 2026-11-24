@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { controlledGomarizForklift } from "../../../preparation/shared/editorial/tests/editorial-contract-records.js";
+import { controlledGomarizForklift } from "../../../preparation/editorial/core/editorial-contract-records.js";
 import { createPreparedSourceFixture } from "../prepared-source-fixture.js";
 
 test("reutiliza la preparación de una fuente inmutable dentro de la misma suite", () => {

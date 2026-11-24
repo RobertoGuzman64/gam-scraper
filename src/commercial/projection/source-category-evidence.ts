@@ -1,6 +1,6 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../legacy-export/contracts.js";
-import { fold } from "../../preparation/shared/classification/mapping/category-utils.js";
+import { fold } from "../../preparation/classification/category-utils.js";
 import { isGamVerifiedHysterSGlp, reconcileGamVerifiedHysterSGlp } from "./gam-category-evidence.js";
 import { documentedManainCommercialSlug } from "./manain-category-evidence.js";
 

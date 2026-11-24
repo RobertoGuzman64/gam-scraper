@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { readCanonicalCatalog } from "../../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 
-import { recoverGamBatteryMeasures } from "../../../../../../preparation/gam/technical/energy/battery-measures-evidence.js";
+import { recoverGamBatteryMeasures } from "../../../../../../preparation/gam/energy/battery-measures-evidence.js";
 
 const gomariz = await readCanonicalCatalog("catalogs/providers/gomariz/original/scrape-gomariz-catalog.json");
 

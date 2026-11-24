@@ -29,7 +29,7 @@ test("la lectura paralela conserva las mismas huellas que la lectura secuencial 
   ]);
   const files = [
     ...preparation.filter((file) => !file.name.startsWith("workflow/") &&
-      !["product-attributes.js", "shared/classification/mapping/category-mapping.js"].includes(file.name))
+      !["product/product-attributes.js", "classification/category-mapping.js"].includes(file.name))
       .map((file) => ({ name: `preparation/${file.name}`, content: file.content })),
     ...legacy.filter((file) => file.name === "contracts.js" || file.name === "prepare-product.js")
       .map((file) => ({ name: `preparation/legacy-export/${file.name}`, content: file.content })),

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { planProductImport, readReferenceInventory } from "../export-plan.js";
-import { parsePreparation } from "../../../preparation/preparation-document.js";
+import { parsePreparation } from "../../../preparation/documents/preparation-document.js";
 import { record, documentFor } from "./export-fixtures.js";
 
 test("el inventario exige companyID coherente e identifica referencias sin distinguir mayúsculas", () => {

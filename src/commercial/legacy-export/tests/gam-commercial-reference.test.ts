@@ -6,7 +6,7 @@ import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-exp
 
 import type { ProductRecord } from "../../../contracts/catalog.js";
 
-import { parsePreparation } from "../../../preparation/preparation-document.js";
+import { parsePreparation } from "../../../preparation/documents/preparation-document.js";
 
 import { prepareProduct } from "../prepare-product.js";
 

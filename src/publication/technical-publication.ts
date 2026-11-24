@@ -7,12 +7,12 @@ import { isCampaignProvider } from "../contracts/campaign-providers.js";
 import { readActiveTechnicalPublication, activateTechnicalPublication, readTechnicalVersion, technicalSnapshotSha256 } from "../infrastructure/filesystem/catalog/technical-publication.js";
 import { readPortableOriginalArtifacts } from "../infrastructure/filesystem/catalog/portable-original.js";
 import { offlinePreparationManifestPath } from "../infrastructure/filesystem/preparation/offline-preparation.js";
-import { validateOfflinePreparation } from "../preparation/workflow/validation/offline.js";
+import { validateOfflinePreparation } from "../preparation/workflow/offline.js";
 import { buildManainRecord } from "../preparation/workflow/manain-record.js";
 import { loadPreparationInputs } from "../infrastructure/filesystem/preparation/preparation-inputs.js";
 import { parseTechnicalSnapshot, compareTechnicalSnapshots } from "./technical-snapshot.js";
 import type { TechnicalDifference, TechnicalSnapshot } from "./technical-snapshot.js";
-import { discardedManainProductUrls } from "../preparation/manain/identity/evidence/discarded-urls.js";
+import { discardedManainProductUrls } from "../preparation/manain/discarded-urls.js";
 import { resolveAccreditedPublication, readAccreditedPublication } from "../infrastructure/filesystem/catalog/accredited-publication.js";
 
 const digest = (raw: string): string => createHash("sha256").update(raw).digest("hex");

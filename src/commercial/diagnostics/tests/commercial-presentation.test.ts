@@ -4,7 +4,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../legacy-export/contracts.js";
 import type { PreparedProduct } from "../../../preparation/contracts.js";
 import { projectCommercialPresentation } from "../../projection/presentation-projection.js";
-import { normalizePreparedEditorialPresentation } from "../../../preparation/shared/editorial/mapping/prepared-editorial-presentation.js";
+import { normalizePreparedEditorialPresentation } from "../../../preparation/editorial/writing/prepared-editorial-presentation.js";
 import { analyzeCommercialPresentation } from "../commercial-presentation.js";
 
 const source = (reference: string): ProductRecord => ({

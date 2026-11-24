@@ -1,7 +1,7 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../legacy-export/contracts.js";
-import { fold } from "../../preparation/shared/classification/mapping/category-utils.js";
-import { manainSourceFamily } from "../../preparation/manain/technical/evidence/source.js";
+import { fold } from "../../preparation/classification/category-utils.js";
+import { manainSourceFamily } from "../../preparation/manain/source.js";
 
 const singleOperatorModels: ReadonlyMap<string, string> = new Map([
   ["genie:gr-15", "227 kg"],

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { prepareSourceProduct } from "../../prepare-product.js";
-import { prepareImportBatch } from "../../batch-identity.js";
+import { prepareImportBatch } from "../../product/batch-identity.js";
 import { analyzeSourceContentGaps } from "../../../catalog/diagnostics/content-gaps-source.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 

@@ -5,7 +5,7 @@ import type { ProductRecord, SpecScalar, SpecsMap } from "../../contracts/catalo
 import type { PreparedProduct } from "../contracts.js";
 import { buildProductIdentity } from "../../catalog/identity.js";
 import { prepareImportBatch } from "../prepare.js";
-import { discardedManainProductUrls } from "../manain/identity/evidence/discarded-urls.js";
+import { discardedManainProductUrls } from "../manain/discarded-urls.js";
 import { baseProductHeaders } from "../../scraping/output/csv-serializer.js";
 import { parseCsv } from "../../shared/csv-parse.js";
 

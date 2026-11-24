@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readPortableOriginalArtifacts } from '../../dist/infrastructure/filesystem/catalog/portable-original.js';
 import { loadPreparationInputs } from '../../dist/infrastructure/filesystem/preparation/preparation-inputs.js';
-import { prepareImportBatch } from '../../dist/preparation/batch-identity.js';
+import { prepareImportBatch } from '../../dist/preparation/product/batch-identity.js';
 
 export const loadEditorialAuditPopulation = async (workspace, providerId, fingerprints) => {
   const { catalog, files } = await readPortableOriginalArtifacts(workspace, providerId);

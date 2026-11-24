@@ -6,7 +6,7 @@ import { planProductImport } from "../export-plan.js";
 import { readReferenceInventory } from "../reference-inventory.js";
 import { prepareProduct } from "../prepare-product.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import type { PreparationDocument } from "../../../preparation/preparation-document.js";
+import type { PreparationDocument } from "../../../preparation/documents/preparation-document.js";
 
 const record: ProductRecord = {
   providerId: "mercaeleva", categoryKey: "plataformas-articuladas-diesel-segunda-mano",

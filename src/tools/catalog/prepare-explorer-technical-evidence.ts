@@ -9,7 +9,7 @@ import { readPublicationTechnicalProvenance } from "../../panel/evidence/read-te
 import { compareOriginalToPublished } from "../../panel/explorer/field-differences.js";
 import { productIdentity } from "../../panel/explorer/explorer-identity.js";
 import { fromOriginal, fromPublication } from "../../panel/explorer/explorer-product-view.js";
-import { buildPublishedTechnicalEditorialCohort, classifyPublishedTechnicalAdditions } from "../../preparation/technical-spec-classification.js";
+import { buildPublishedTechnicalEditorialCohort, classifyPublishedTechnicalAdditions } from "../../preparation/provenance/technical-spec-classification.js";
 import { prepareSourceProduct } from "../../preparation/prepare-product.js";
 import { explorerTechnicalEvidenceCachePath } from "./explorer-technical-evidence-cache.js";
 import type { ExplorerTechnicalEvidenceCache } from "./explorer-technical-evidence-cache.js";

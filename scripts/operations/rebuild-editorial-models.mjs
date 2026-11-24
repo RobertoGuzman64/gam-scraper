@@ -2,7 +2,7 @@ import { formatScriptStatus } from "../terminal.mjs";
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { resolveEditorialFacts } from '../../dist/preparation/shared/editorial/domain/editorial-facts.js';
+import { resolveEditorialFacts } from '../../dist/preparation/editorial/core/editorial-facts.js';
 
 const root = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const read = (path) => JSON.parse(readFileSync(join(root, path), 'utf8'));

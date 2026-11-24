@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { prepareProduct } from "../prepare.js";
 import { loadImportCatalog } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
-import { resolveAttributeValue } from "../shared/classification/mapping/attribute-mapping.js";
+import { resolveAttributeValue } from "../classification/attribute-mapping.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
 
 export const catalog = await loadImportCatalog();

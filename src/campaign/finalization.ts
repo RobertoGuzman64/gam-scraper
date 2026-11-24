@@ -5,11 +5,11 @@ import { dirname, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { createAccreditationDraft, inspectAccreditationDraft, selectAccreditedPublishable, sha256 } from "../catalog/editorial/campaign-accreditation.js";
 import type { AccreditedSource, CampaignAccreditation } from "../catalog/editorial/campaign-accreditation.js";
-import type { OfflinePreparation } from "../preparation/offline-document.js";
+import type { OfflinePreparation } from "../preparation/documents/offline-document.js";
 import type { PublishableSelection } from "../catalog/editorial/select-publishable.js";
 import { readCampaignAccreditationSources } from "./accreditation-sources.js";
 import { readOfflinePreparation } from "../infrastructure/filesystem/preparation/offline-preparation.js";
-import { validateOfflinePreparation } from "../preparation/workflow/validation/offline.js";
+import { validateOfflinePreparation } from "../preparation/workflow/offline.js";
 import { CAMPAIGN_PROVIDERS } from "../contracts/campaign-providers.js";
 import { discoverCampaign, listCampaignRuns } from "./discovery/search.js";
 

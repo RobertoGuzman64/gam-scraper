@@ -1,5 +1,5 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
-import { fold } from "../../preparation/shared/classification/mapping/category-utils.js";
+import { fold } from "../../preparation/classification/category-utils.js";
 
 export const isVerifiedManainHandTool = (source: ProductRecord): boolean => {
   if (source.providerId !== "manain" || source.categoryKey !== "venta" || source.condition !== "Segunda mano") {

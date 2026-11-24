@@ -5,7 +5,7 @@ import { readAppliedIntervention } from "../infrastructure/filesystem/interventi
 import { measureAppliedIntervention, type InterventionWorkSummary } from "../catalog/diagnostics/intervention-work.js";
 import { readInterventionSource } from "../infrastructure/filesystem/interventions/intervention-source.js";
 import { persistAppliedIntervention } from "../infrastructure/filesystem/interventions/intervention-application.js";
-import { validateOfflinePreparation } from "../preparation/workflow/validation/offline.js";
+import { validateOfflinePreparation } from "../preparation/workflow/offline.js";
 import { prepareSavedCatalog } from "../preparation/workflow/prepare.js";
 import { readSelectedInterventionScripts } from "../infrastructure/filesystem/intervention-scripts/script-selection.js";
 import { compareInterventionScripts } from "../catalog/interventions/comparison.js";

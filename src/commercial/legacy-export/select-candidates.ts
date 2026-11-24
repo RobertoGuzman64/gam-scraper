@@ -1,6 +1,6 @@
 import type { ImportCandidate, ImportCatalog } from "./contracts.js";
 import { commercialCandidate, commercialReferenceKey } from "./commercial-reference.js";
-import type { PreparationDocument } from "../../preparation/preparation-document.js";
+import type { PreparationDocument } from "../../preparation/documents/preparation-document.js";
 import { validateCreateManyCandidate, validateImportCandidate } from "./import-validation.js";
 import { validText } from "./reference-inventory.js";
 import type { ReferenceInventory } from "./reference-inventory.js";

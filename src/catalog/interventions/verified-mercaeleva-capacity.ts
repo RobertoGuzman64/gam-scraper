@@ -2,8 +2,8 @@ import type { ProductRecord } from "../../contracts/catalog.js";
 import { buildProductIdentity } from "../identity.js";
 import type { ManualInterventionProposal } from "./contracts.js";
 import { readProposedField } from "./values.js";
-import { fold } from "../../preparation/shared/classification/mapping/attribute-utils.js";
-import { validMercaelevaTechnicalSource } from "../../preparation/mercaeleva/technical/mapping/technical.js";
+import { fold } from "../../preparation/classification/attribute-utils.js";
+import { validMercaelevaTechnicalSource } from "../../preparation/mercaeleva/technical/technical.js";
 
 export const mercaelevaMbManufacturerCapacityEvidence = {
   EFL303: { capacityKg: 3000, url: "https://ep-equipment.com/es/product/efl303/" },

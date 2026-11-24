@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import { buildProductIdentity } from "../catalog/identity.js";
 import { isCampaignProvider, type CAMPAIGN_PROVIDERS } from "../contracts/campaign-providers.js";
-import { candidateValidationIssue } from "../preparation/preparation-document.js";
+import { candidateValidationIssue } from "../preparation/documents/preparation-document.js";
 import type { PreparedProduct } from "../preparation/contracts.js";
 
 export type TechnicalProvider = typeof CAMPAIGN_PROVIDERS[number];

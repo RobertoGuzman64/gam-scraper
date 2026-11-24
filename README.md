@@ -182,7 +182,7 @@ FINISH realiza el preflight del conjunto, contrasta diferencias y pérdidas, cre
 Cuando una incidencia es nueva o ha cambiado, el flujo automático no puede acreditarla por analogía. La preparación completa de un proveedor puede verificarse y acreditarse por separado mediante `seleccionar:proveedor` y `acreditar:proveedor`. Debe aportarse el catálogo original y la preparación offline correspondiente; ambos se validan contra sus huellas actuales. Este recorrido no acepta catálogos intervenidos ni promueve extracciones parciales a una entrega.
 
 ```powershell
-$gam = ".\catalogs\providers\gam\original\scrape-gam-catalog.json"
+$gam = "./catalogs/providers/gam/original/scrape-gam-catalog.json"
 $preparacion = Read-Host "Ruta de la preparación GAM verificada para este origen y huella de reglas"
 npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion
 npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion --listar

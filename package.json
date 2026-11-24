@@ -60,7 +60,7 @@
     "test:guard": "node GUARDS/tests-performance-guard.mjs",
     "editorial:actualizar-conocimiento": "node scripts/run-build.mjs --quiet --if-needed && node scripts/operations/rebuild-editorial-knowledge.mjs && node scripts/operations/rebuild-editorial-models.mjs",
     "editorial:auditar-reutilizacion": "node scripts/run-build.mjs --quiet --if-needed && node scripts/operations/audit-editorial-knowledge.mjs",
-    "editorial:verificar-conocimiento": "node scripts/operations/rebuild-editorial-knowledge.mjs --check && node scripts/run-build.mjs --quiet --if-needed && node scripts/operations/rebuild-editorial-models.mjs --check && node --test dist/preparation/shared/editorial/tests/editorial-knowledge.test.js",
+    "editorial:verificar-conocimiento": "node scripts/operations/rebuild-editorial-knowledge.mjs --check && node scripts/run-build.mjs --quiet --if-needed && node scripts/operations/rebuild-editorial-models.mjs --check && node --test dist/preparation/editorial/core/reusable-editorial-architecture.test.js",
     "editorial:auditar-cobertura": "node scripts/run-build.mjs --quiet --if-needed && node scripts/operations/audit-editorial-coverage.mjs",
     "auditar:bateria": "node scripts/inspection/audit-battery.mjs",
     "diagnosticar:finish": "node scripts/inspection/finish-preflight.mjs"

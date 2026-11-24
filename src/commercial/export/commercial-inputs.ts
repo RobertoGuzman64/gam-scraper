@@ -3,7 +3,7 @@ import { collectAuditProviderResults } from "../../shared/audit-provider-results
 import { buildProductIdentity } from "../../catalog/identity.js";
 import type { ImportCatalog } from "../legacy-export/contracts.js";
 import type { CommercialBaselineInput } from "../diagnostics/commercial-baseline.js";
-import { prepareImportBatch } from "../../preparation/batch-identity.js";
+import { prepareImportBatch } from "../../preparation/product/batch-identity.js";
 import { projectCommercialCategory } from "../projection/category-projection.js";
 import { originalSources } from "../../infrastructure/filesystem/catalog/original-catalog-sources.js";
 import { publicationOriginalSources } from "../../infrastructure/filesystem/catalog/accredited-publication-original.js";

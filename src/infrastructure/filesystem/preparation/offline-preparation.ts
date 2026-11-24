@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { parseOfflinePreparation } from "../../../preparation/offline-document.js";
-import type { OfflinePreparation } from "../../../preparation/offline-document.js";
+import { parseOfflinePreparation } from "../../../preparation/documents/offline-document.js";
+import type { OfflinePreparation } from "../../../preparation/documents/offline-document.js";
 
 const sha256 = (raw: string): string => createHash("sha256").update(raw).digest("hex");
 

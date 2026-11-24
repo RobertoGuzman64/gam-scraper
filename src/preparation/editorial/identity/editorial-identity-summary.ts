@@ -1,0 +1,44 @@
+import { containsEditorialBrandModel } from "./editorial-identity-match.js";
+import type { ProductRecord } from "../../../contracts/catalog.js";
+import type { EditorialFamily } from "../core/editorial-families.js";
+import { editorialFamilyName, resolveConsistentEditorialFamily } from "../core/editorial-families.js";
+import { resolveEditorialSource } from "../core/editorial-source.js";
+import { verifiedEditorialIdentity } from "../core/editorial-source-contract.js";
+import { resolveVerifiedEditorialCondition } from "./editorial-condition.js";
+
+export const resolveEditorialIdentitySummary = (
+  record: ProductRecord,
+  familyOverride: EditorialFamily | null
+): string | null => {
+  if (!verifiedEditorialIdentity(record)) return null;
+  const source = resolveEditorialSource(record);
+  if (!source) return null;
+  const family = resolveConsistentEditorialFamily(source.familyClues, record.title,
+    typeof record.specs?.["Título adicional"] === "string" ? record.specs["Título adicional"] : null,
+    `${record.subcategory ?? ""} | ${record.categoryName}`, familyOverride);
+  if (!family) return null;
+  const noun = editorialFamilyName(family);
+  const verifiedCondition = resolveVerifiedEditorialCondition(record);
+  const condition = verifiedCondition === "Segunda mano" ? " de ocasión" : verifiedCondition === "Nuevo" ? " nueva" : "";
+  return `${noun[0]?.toLocaleUpperCase("es") ?? ""}${noun.slice(1)} ${source.brand} ${source.model}${condition}.`;
+};
+
+export const conciseVerifiedUnitGeneral = (record: ProductRecord, general: string): string | null => {
+  const first = general.trim().split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ])/u)[0] ?? "";
+  if (!record.brand || !record.model || first.length < 35 || first.length > 180 ||
+    !containsEditorialBrandModel(first, record.brand, record.model)) return null;
+  return first;
+};
+
+export const conciseSignedUnitGeneral = (general: string): string | null => {
+  const first = general.trim().split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ])/u)[0] ?? "";
+  if (first.length < 45 || first.length > 220 || !/[.!?]$/u.test(first) ||
+    /^(?:contamos|tenemos|ofrecemos|disponemos)\b/iu.test(first)) return null;
+  return first;
+};
+
+export const unresolvedEditorialModelVariantShort =
+  "La variante de esta unidad no coincide entre el anuncio y la ficha técnica; su identidad está pendiente de verificar.";
+
+export const unresolvedEditorialModelVariantGeneral =
+  "El título y la URL del anuncio identifican una variante diferente del modelo registrado en la ficha técnica. La identidad de esta unidad debe comprobarse antes de atribuir prestaciones a cualquiera de las variantes.";

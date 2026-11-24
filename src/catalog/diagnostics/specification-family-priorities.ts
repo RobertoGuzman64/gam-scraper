@@ -1,4 +1,4 @@
-import { fold } from "../../preparation/shared/classification/mapping/category-utils.js";
+import { fold } from "../../preparation/classification/category-utils.js";
 import { normalizedSpecKey, specHasValue } from "./content-gaps-source.js";
 import type { SpecValue } from "../../contracts/catalog.js";
 import type { DescriptionCoverageInput } from "./description-coverage.js";

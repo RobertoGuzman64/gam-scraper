@@ -1,1 +1,1 @@
-export { presentCommercialMotorization } from "../../preparation/shared/editorial/domain/editorial-motorization.js";
+export { presentCommercialMotorization } from "../../preparation/editorial/identity/editorial-motorization.js";

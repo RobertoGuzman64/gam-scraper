@@ -1,4 +1,4 @@
-import { issueCode } from "../../preparation/offline-diagnostics.js";
+import { issueCode } from "../../preparation/documents/offline-diagnostics.js";
 import { classifyImportIssue, importIssueCode } from "../../commercial/legacy-export/import-diagnostics.js";
 import type { PreparedProduct } from "../../preparation/contracts.js";
 

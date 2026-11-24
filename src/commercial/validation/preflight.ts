@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { getProvider } from "../../scraping/registry.js";
 import { parseCsv } from "../../shared/csv-parse.js";
-import { parsePreparation } from "../../preparation/preparation-document.js";
+import { parsePreparation } from "../../preparation/documents/preparation-document.js";
 import { loadImportCatalog } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { validateCreateManyCandidate } from "../legacy-export/import-validation.js";
 import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";

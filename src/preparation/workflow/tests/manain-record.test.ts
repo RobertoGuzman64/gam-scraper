@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
-import { discardedManainProductUrls } from "../../manain/identity/evidence/discarded-urls.js";
+import { discardedManainProductUrls } from "../../manain/discarded-urls.js";
 import { toCsv } from "../../../shared/csv.js";
 import { baseProductHeaders } from "../../../scraping/output/csv-serializer.js";
 import { buildManainRecord } from "../manain-record.js";

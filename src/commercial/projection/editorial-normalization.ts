@@ -1,5 +1,5 @@
-import { normalizeEditorialGeneral, normalizeEditorialSummary, normalizeEditorialTitle } from "../../preparation/shared/editorial/domain/editorial-normalization.js";
-import { removeSourceTitleBranding, removeSourceSummaryBranding } from "../../preparation/shared/editorial/mapping/source-editorial-branding.js";
+import { normalizeEditorialGeneral, normalizeEditorialSummary, normalizeEditorialTitle } from "../../preparation/editorial/core/editorial-normalization.js";
+import { removeSourceTitleBranding, removeSourceSummaryBranding } from "../../preparation/editorial/source/details/source-editorial-branding.js";
 
 export const normalizeCommercialTitle = (
   value: string | null, providerId: string, model: string | null

@@ -10,7 +10,7 @@ import type { CategoryConfig, CategoryScrapeResult } from "../../../contracts/sc
 import { writeOutputs } from "../../../scraping/output/publish.js";
 import { assertPreparationInputsCurrent, prepareSavedCatalog } from "../prepare.js";
 import { runPrepare } from "../../../cli/commands/catalog/prepare.js";
-import { compareOfflinePreparations } from "../../offline-diagnostics.js";
+import { compareOfflinePreparations } from "../../documents/offline-diagnostics.js";
 import { buildSourceTriage } from "../../../catalog/diagnostics/source-triage.js";
 import { measurePreparationWork } from "../../../catalog/diagnostics/preparation-work.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";

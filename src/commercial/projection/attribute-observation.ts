@@ -1,7 +1,7 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.js";
-import { resolveAttribute } from "../../preparation/shared/classification/mapping/attribute-mapping.js";
-import { validateCommercialAttributeValue } from "../../preparation/shared/classification/mapping/attribute-value-validation.js";
+import { resolveAttribute } from "../../preparation/classification/attribute-mapping.js";
+import { validateCommercialAttributeValue } from "../../preparation/classification/attribute-value-validation.js";
 
 export type CommercialAttributeObservation = {
   readonly attributeID: number;

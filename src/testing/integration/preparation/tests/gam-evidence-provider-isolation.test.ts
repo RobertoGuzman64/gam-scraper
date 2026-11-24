@@ -2,17 +2,17 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import { readCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { recoverGamVerifiedOperationalSafety } from "../../../../preparation/gam/technical/safety/verified-operational-safety-evidence.js";
-import { recoverGamClearanceAndPlatform } from "../../../../preparation/gam/technical/measurements/clearance-platform-evidence.js";
-import { recoverGamVerifiedUnitGeometrySpecs } from "../../../../preparation/gam/technical/measurements/verified-unit-geometry-specs.js";
-import { recoverGamVerifiedTractionBraking } from "../../../../preparation/gam/technical/mobility/verified-traction-braking-evidence.js";
-import { recoverGamVerifiedDrivetrainBrakes } from "../../../../preparation/gam/technical/mobility/verified-drivetrain-brakes-evidence.js";
-import { recoverGamCleaningTankSpecs } from "../../../../preparation/gam/technical/operations/cleaning-tank-evidence.js";
-import { recoverGamVerifiedUnitPerformanceSpecs } from "../../../../preparation/gam/technical/operations/verified-unit-performance-specs.js";
-import { recoverGamAcousticSpec } from "../../../../preparation/gam/technical/safety/acoustic-evidence.js";
-import { recoverGamVerifiedOperatorControls } from "../../../../preparation/gam/technical/safety/verified-operator-controls-evidence.js";
-import { recoverGamVerifiedTyreDimensions } from "../../../../preparation/gam/technical/mobility/verified-tyre-dimensions-evidence.js";
-import { recoverGamVerifiedConditionalAcoustics } from "../../../../preparation/gam/technical/safety/verified-conditional-acoustics-evidence.js";
+import { recoverGamVerifiedOperationalSafety } from "../../../../preparation/gam/safety/verified-operational-safety-evidence.js";
+import { recoverGamClearanceAndPlatform } from "../../../../preparation/gam/measurements/evidence/clearance-platform-evidence.js";
+import { recoverGamVerifiedUnitGeometrySpecs } from "../../../../preparation/gam/measurements/evidence/verified-unit-geometry-specs.js";
+import { recoverGamVerifiedTractionBraking } from "../../../../preparation/gam/mobility/verified-traction-braking-evidence.js";
+import { recoverGamVerifiedDrivetrainBrakes } from "../../../../preparation/gam/mobility/verified-drivetrain-brakes-evidence.js";
+import { recoverGamCleaningTankSpecs } from "../../../../preparation/gam/operations/cleaning-tank-evidence.js";
+import { recoverGamVerifiedUnitPerformanceSpecs } from "../../../../preparation/gam/operations/verified-unit-performance-specs.js";
+import { recoverGamAcousticSpec } from "../../../../preparation/gam/safety/acoustic-evidence.js";
+import { recoverGamVerifiedOperatorControls } from "../../../../preparation/gam/safety/verified-operator-controls-evidence.js";
+import { recoverGamVerifiedTyreDimensions } from "../../../../preparation/gam/mobility/verified-tyre-dimensions-evidence.js";
+import { recoverGamVerifiedConditionalAcoustics } from "../../../../preparation/gam/safety/verified-conditional-acoustics-evidence.js";
 
 type Recoverer = (record: ProductRecord) => SpecsMap;
 

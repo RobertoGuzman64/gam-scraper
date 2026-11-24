@@ -18,15 +18,15 @@ const fixture = (t) => {
     mkdirSync(dirname(full), { recursive: true });
     writeFileSync(full, text);
   };
-  write("src/preparation/shared/editorial/mapping/prepared-editorial.ts",
+  write("src/preparation/editorial/core/prepared-editorial.ts",
     "export const resolvePreparedEditorial = () => ({ short: 'genérico' });\n");
-  write("src/preparation/prepare-product.ts", "import { resolvePreparedEditorial } from './shared/editorial/mapping/prepared-editorial.js'; export const prepare = () => resolvePreparedEditorial();\n");
+  write("src/preparation/prepare-product.ts", "import { resolvePreparedEditorial } from './editorial/core/prepared-editorial.js'; export const prepare = () => resolvePreparedEditorial();\n");
   write("src/commercial/projection/presentation-projection.ts",
     "export const project = (published: { description: string; description_general: string }) => ({ description: published.description, description_general: published.description_general });\n");
-  write("src/preparation/shared/editorial/domain/editorial-composition.ts", "export const compose = (height: number) => `altura de ${height} m`;\n");
-  write("src/preparation/shared/editorial/domain/editorial-source.ts", "export const source = (x: unknown) => x;\n");
-  write("src/preparation/gam/editorial/source/domain-source.ts", "export const readSource = (record: { height: string }) => ({ workingHeight: record.height });\n");
-  write("src/preparation/shared/editorial/tests/contract.test.ts", "import assert from 'node:assert/strict'; assert.equal(2 + 2, 4);\n");
+  write("src/preparation/editorial/core/editorial-composition.ts", "export const compose = (height: number) => `altura de ${height} m`;\n");
+  write("src/preparation/editorial/core/editorial-source.ts", "export const source = (x: unknown) => x;\n");
+  write("src/preparation/gam/domain-source.ts", "export const readSource = (record: { height: string }) => ({ workingHeight: record.height });\n");
+  write("src/preparation/editorial/core/tests/contract.test.ts", "import assert from 'node:assert/strict'; assert.equal(2 + 2, 4);\n");
   write("src/publication/tests/accreditation.test.ts", "const path = 'catalogs/providers/gam/publications/active.json';\n");
   return { root, write };
 };
@@ -165,15 +165,15 @@ test("casos legítimos: el compositor compartido y los contratos controlados no 
 test("bloquea un nuevo narrador específico conectado al recorrido de preparación", (t) => {
   const { root, write } = fixture(t);
   write("src/preparation/gam/editorial/general/new-general.ts", "export const generalForGam = () => 'texto por ficha';\n");
-  write("src/preparation/prepare-product.ts", "import { resolvePreparedEditorial } from './shared/editorial/mapping/prepared-editorial.js'; import { generalForGam } from './gam/editorial/general/new-general.js'; export const prepare = () => [resolvePreparedEditorial(), generalForGam()];\n");
+  write("src/preparation/prepare-product.ts", "import { resolvePreparedEditorial } from './editorial/core/prepared-editorial.js'; import { generalForGam } from './gam/editorial/general/new-general.js'; export const prepare = () => [resolvePreparedEditorial(), generalForGam()];\n");
   assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-ACTIVE-PROVIDER-NARRATOR"));
 });
 
 test("bloquea bifurcación por proveedor, referencia y composición posterior a preparación", (t) => {
   const { root, write } = fixture(t);
-  write("src/preparation/shared/editorial/domain/editorial-composition.ts",
+  write("src/preparation/editorial/core/editorial-composition.ts",
     "export const compose = (record: { providerId: string }) => record.providerId === 'gam' ? 'texto GAM' : 'texto general';\n");
-  write("src/preparation/shared/editorial/mapping/additional.ts",
+  write("src/preparation/editorial/core/additional.ts",
     "export const special = (record: { reference: string }) => record.reference === '12345';\n");
   write("src/commercial/projection/presentation-projection.ts",
     "export const project = (published: { description: string; description_general: string }) => ({ description: published.description.trim(), description_general: published.description_general });\n");
@@ -187,20 +187,20 @@ test("bloquea bifurcación por proveedor, referencia y composición posterior a 
 
 test("el mapping no selecciona narraciones específicas por proveedor", (t) => {
   const { root, write } = fixture(t);
-  write("src/preparation/shared/editorial/mapping/proveedor.ts",
+  write("src/preparation/editorial/core/proveedor.ts",
     "export const compose = (record: { providerId: string }) => record.providerId === 'gam' ? 'Descripción inventada para GAM' : 'Descripción inventada para otros';\n");
   assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-MAPPING-PROVIDER-NARRATIVE"));
-  write("src/preparation/shared/editorial/mapping/proveedor.ts",
+  write("src/preparation/editorial/core/proveedor.ts",
     "export const compose = (record: { providerId: string }) => { if (record.providerId === 'gam') return 'Descripción creada exclusivamente para GAM'; return 'Descripción creada para otro proveedor'; };\n");
   assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-MAPPING-PROVIDER-NARRATIVE"));
-  write("src/preparation/shared/editorial/mapping/proveedor.ts",
+  write("src/preparation/editorial/core/proveedor.ts",
     "export const choose = (record: { providerId: string; title: string }) => record.providerId === 'gam' ? record.title : record.title.trim();\n");
   assert.deepEqual(inspectEditorialArchitecture(root).findings, []);
 });
 
 test("las referencias literales indirectas tampoco determinan narración", (t) => {
   const { root, write } = fixture(t);
-  const path = "src/preparation/shared/editorial/mapping/especial.ts";
+  const path = "src/preparation/editorial/core/especial.ts";
   for (const content of [
     "const reference = record.reference; return reference === 'GAM-123' ? 'especial' : null;",
     "const { reference: id } = record; return ['GAM-123'].includes(id) ? 'especial' : null;",
@@ -234,15 +234,15 @@ test("el guard detecta narradores de proveedores nuevos, pero admite adaptadores
   write(adaptor,
     "export const readSource = (record: { height: string }) => ({ workingHeight: record.height });\n");
   write("src/preparation/prepare-product.ts",
-    "import { resolvePreparedEditorial } from './shared/editorial/mapping/prepared-editorial.js'; import { readSource } from './nuevo/editorial/source/domain-source.js'; export const prepare = () => [resolvePreparedEditorial(), readSource];\n");
+    "import { resolvePreparedEditorial } from './editorial/core/prepared-editorial.js'; import { readSource } from './nuevo/editorial/source/domain-source.js'; export const prepare = () => [resolvePreparedEditorial(), readSource];\n");
   assert.deepEqual(inspectEditorialArchitecture(root).findings, []);
   write("src/preparation/nuevo/editorial/general/new-general.ts",
     "export const generalForNuevo = () => 'Un texto exclusivo del proveedor nuevo';\n");
   write("src/preparation/prepare-product.ts",
-    "import { resolvePreparedEditorial } from './shared/editorial/mapping/prepared-editorial.js'; import { generalForNuevo } from './nuevo/editorial/general/new-general.js'; export const prepare = () => [resolvePreparedEditorial(), generalForNuevo()];\n");
+    "import { resolvePreparedEditorial } from './editorial/core/prepared-editorial.js'; import { generalForNuevo } from './nuevo/editorial/general/new-general.js'; export const prepare = () => [resolvePreparedEditorial(), generalForNuevo()];\n");
   assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-ACTIVE-PROVIDER-NARRATOR"));
   write("src/preparation/prepare-product.ts",
-    "import { resolvePreparedEditorial } from './shared/editorial/mapping/prepared-editorial.js'; import { readSource } from './nuevo/editorial/source/domain-source.js'; export const prepare = () => [resolvePreparedEditorial(), readSource()];\n");
+    "import { resolvePreparedEditorial } from './editorial/core/prepared-editorial.js'; import { readSource } from './nuevo/editorial/source/domain-source.js'; export const prepare = () => [resolvePreparedEditorial(), readSource()];\n");
   write(adaptor,
     "export const readSource = () => ({ description: 'Descripción inventada para el proveedor nuevo' });\n");
   assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-PROVIDER-COMPOSITION"));
@@ -256,7 +256,7 @@ test("identifica un narrador histórico no conectado sin confundirlo con el comp
 
 test("detecta carga directa del JSON productivo en un test de dominio", (t) => {
   const { root, write } = fixture(t);
-  write("src/preparation/shared/editorial/tests/contract.test.ts",
+  write("src/preparation/editorial/core/tests/contract.test.ts",
     "import { readFileSync } from 'node:fs'; const catalog = JSON.parse(readFileSync('catalogs/providers/gam/original/scrape-gam-catalog.json', 'utf8'));\n");
   assert.ok(rules(inspectTestArchitecture(root).findings).has("T-PRODUCT-CATALOG"));
 });
@@ -265,28 +265,28 @@ test("detecta la lectura transitiva a través de un builder con join de segmento
   const { root, write } = fixture(t);
   write("src/testing/builders/source-fixture.ts",
     "import { join } from 'node:path'; export const load = () => join('catalogs', 'providers', 'mercaeleva', 'original');\n");
-  write("src/preparation/shared/editorial/tests/contract.test.ts",
+  write("src/preparation/editorial/core/tests/contract.test.ts",
     "import { load } from '../../../../testing/builders/source-fixture.js'; export const location = load();\n");
   assert.ok(rules(inspectTestArchitecture(root).findings).has("T-TRANSITIVE-CATALOG"));
 });
 
 test("los recuentos de fixtures controladas no se confunden con fotografías de catálogo", (t) => {
   const { root, write } = fixture(t);
-  write("src/preparation/shared/editorial/tests/contract.test.ts",
+  write("src/preparation/editorial/core/tests/contract.test.ts",
     "import assert from 'node:assert/strict'; const catalog = { products: [1, 2] }; assert.equal(catalog.products.length, 2);\n");
   assert.deepEqual(inspectTestArchitecture(root).findings, []);
 });
 
 test("detecta la cantidad fija cuando una suite depende del catálogo productivo", (t) => {
   const { root, write } = fixture(t);
-  write("src/preparation/shared/editorial/tests/contract.test.ts",
+  write("src/preparation/editorial/core/tests/contract.test.ts",
     "import assert from 'node:assert/strict'; import { readFileSync } from 'node:fs'; const catalog = JSON.parse(readFileSync('catalogs/providers/gam/original/scrape-gam-catalog.json', 'utf8')); assert.equal(catalog.products.length, 1234);\n");
   assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FIXED-COHORT"));
 });
 
 test("dos nuevas lecturas idénticas dentro de la misma suite se cuentan por separado", (t) => {
   const { root, write } = fixture(t);
-  write("src/preparation/shared/editorial/tests/contract.test.ts",
+  write("src/preparation/editorial/core/tests/contract.test.ts",
     "import { readFileSync } from 'node:fs'; const a = readFileSync('catalogs/providers/gam/original/scrape-gam-catalog.json', 'utf8'); const b = readFileSync('catalogs/providers/gam/original/scrape-gam-catalog.json', 'utf8');\n");
   const matches = inspectTestArchitecture(root).findings.filter((finding) => finding.rule === "T-PRODUCT-CATALOG");
   assert.equal(matches.length, 2);
@@ -295,7 +295,7 @@ test("dos nuevas lecturas idénticas dentro de la misma suite se cuentan por sep
 
 test("adaptadores que interpretan datos y curadores de imágenes no son narradores", (t) => {
   const { root, write } = fixture(t);
-  write("src/preparation/gam/editorial/source/domain-source.ts",
+  write("src/preparation/gam/domain-source.ts",
     "export const readSource = (record: { providerId: string; height: string }) => record.providerId === 'gam' ? { workingHeight: record.height } : null;\n");
   write("src/catalog/editorial/providers/gam/verified-gallery.ts",
     "export const curate = (product: { image: string }) => ({ ...product, image: product.image.trim() });\n");
@@ -342,14 +342,14 @@ test("las pruebas de integridad de publicaciones pueden utilizar históricos par
 
 test("una suite de dominio con fixture histórica importada no pasa por usar un alias", (t) => {
   const { root, write } = fixture(t);
-  write("src/preparation/shared/editorial/tests/contract.test.ts",
+  write("src/preparation/editorial/core/tests/contract.test.ts",
     "import { readFileSync } from 'node:fs'; const old = readFileSync('src/testing/fixtures/gomariz/regression-143/scrape-gomariz-catalog.json', 'utf8');\n");
   assert.ok(rules(inspectTestArchitecture(root).findings).has("T-PRODUCT-CATALOG"));
 });
 
 test("identifica hashes literales de salidas editoriales atadas a catálogo, pero no hashes de integridad aislados", (t) => {
   const { root, write } = fixture(t);
-  write("src/preparation/shared/editorial/tests/contract.test.ts",
+  write("src/preparation/editorial/core/tests/contract.test.ts",
     "import assert from 'node:assert/strict'; import { createHash } from 'node:crypto'; import { readFileSync } from 'node:fs'; const catalog = JSON.parse(readFileSync('catalogs/providers/gam/original/scrape-gam-catalog.json', 'utf8')); const hash = createHash('sha256').update(catalog.products[0].description_general).digest('hex'); assert.equal(hash, 'abc');\n");
   assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FROZEN-EDITORIAL-HASH"));
 });
@@ -379,7 +379,7 @@ test("la arquitectura impide reconstruir el antiguo almacén domain-cases", (t) 
 
 test("ni otro helper ni una suite pueden referenciar datasets históricos retirados", (t) => {
   const { root, write } = fixture(t);
-  const suite = "src/preparation/shared/editorial/tests/contract.test.ts";
+  const suite = "src/preparation/editorial/core/tests/contract.test.ts";
   write(suite, "import { readFileSync } from 'node:fs'; readFileSync('src/testing/domain-cases/data/gam-original.json', 'utf8');");
   assert.ok(rules(inspectTestArchitecture(root).findings).has("T-RETIRED-DATASET"));
   write(suite, "import assert from 'node:assert/strict'; assert.equal(2 + 2, 4);");
@@ -464,7 +464,7 @@ test("un test de integración de publicación no se penaliza por usar manifiesto
   const { root, write } = fixture(t);
   write("src/infrastructure/filesystem/catalog/tests/publication-verify.test.ts",
     "import { readFileSync } from 'node:fs'; const data = readFileSync('catalogs/providers/gam/publications/active.json', 'utf8');\n");
-  write("src/preparation/shared/editorial/tests/contract.test.ts",
+  write("src/preparation/editorial/core/tests/contract.test.ts",
     "import assert from 'node:assert/strict'; const controlled = { reference: 'prueba', height: 12 }; assert.equal(controlled.height, 12);\n");
   assert.deepEqual(inspectTestArchitecture(root).findings, []);
 });
@@ -496,9 +496,9 @@ test("la acreditación exacta se revoca ante cualquier cambio y no acepta nuevas
   write(path, original + "\nconst extra = 'catalogs/providers/gomariz/original/other.json';\n");
   assert.ok(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-PRODUCT-CATALOG").length >= 2);
   write(path, original);
-  write("src/preparation/shared/editorial/tests/new-catalog.test.ts", original);
+  write("src/preparation/editorial/core/tests/new-catalog.test.ts", original);
   assert.equal(inspectTestArchitecture(root).integrations.length, 2);
-  assert.ok(inspectTestArchitecture(root).findings.some((item) => item.path === "src/preparation/shared/editorial/tests/new-catalog.test.ts"));
+  assert.ok(inspectTestArchitecture(root).findings.some((item) => item.path === "src/preparation/editorial/core/tests/new-catalog.test.ts"));
 });
 
 const linkModules = (write, from, to) => {
@@ -511,7 +511,7 @@ const linkModules = (write, from, to) => {
 test("el guard productivo respeta dependencias normales e imports desde tests", (t) => {
   const { root, write } = fixture(t);
   linkModules(write, "src/cli/commands/catalog/entry.ts", "src/commercial/projection/read-model.ts");
-  linkModules(write, "src/preparation/gam/technical/source.ts", "src/preparation/shared/technical/domain/measurements.ts");
+  linkModules(write, "src/preparation/gam/technical/source.ts", "src/preparation/technical/measurements.ts");
   linkModules(write, "src/preparation/gam/technical/tests/support/fixture.ts", "src/testing/builders/shared-fixture.ts");
   assert.deepEqual(inspectModuleIntegrity(root).missing, []);
   assert.deepEqual(inspectModuleIntegrity(root).boundaries, []);
@@ -532,7 +532,7 @@ test("prohíbe que el dominio dependa de CLI, herramientas o fixtures de tests",
   const { root, write } = fixture(t);
   linkModules(write, "src/catalog/diagnostics/gaps.ts", "src/cli/reporting/output.ts");
   linkModules(write, "src/publication/finish.ts", "src/tools/catalog/report.ts");
-  linkModules(write, "src/preparation/shared/editorial/domain/title.ts", "src/testing/builders/fixture.ts");
+  linkModules(write, "src/preparation/editorial/core/title.ts", "src/testing/builders/fixture.ts");
   const { boundaries } = inspectModuleIntegrity(root);
   assert.equal(boundaries.length, 3);
   assert.ok(boundaries.every((entry) => entry.includes("no debe depender de CLI")));
@@ -556,7 +556,7 @@ test("los proveedores de preparación y scraping no pueden depender de otro prov
 
 test("bloquea lógica comercial dentro del motor técnico compartido y de extracción", (t) => {
   const { root, write } = fixture(t);
-  linkModules(write, "src/preparation/shared/technical/domain/source.ts", "src/commercial/validation/commercial-check.ts");
+  linkModules(write, "src/preparation/technical/source.ts", "src/commercial/validation/commercial-check.ts");
   linkModules(write, "src/commercial/projection/prepare.ts", "src/scraping/registry.ts");
   linkModules(write, "src/scraping/workflow/run.ts", "src/commercial/export/exporter.ts");
   const { boundaries } = inspectModuleIntegrity(root);
@@ -582,8 +582,8 @@ test("rechaza carpetas de arquitectura retirada y conserva la detección de impo
 test("inspecciona imports dinámicos, require y archivos MTS sin confundir texto literal", (t) => {
   const { root, write } = fixture(t);
   write("src/cli/reporting/colour.mts", "export const value = 1;\n");
-  write("src/preparation/shared/technical/loader.mts",
-    "export const load = () => import('../../../cli/reporting/colour.mjs');\n");
+  write("src/preparation/technical/loader.mts",
+    "export const load = () => import('../../cli/reporting/colour.mjs');\n");
   write("src/testing/builders/samples.ts", "export const value = 1;\n");
   write("src/catalog/normalization/clean.ts",
     "const fixture = require('../../testing/builders/samples.js'); const text = \"import '../../cli/missing.js'\"; export { fixture, text };\n");
@@ -640,11 +640,11 @@ test("no permite nuevos árboles testing paralelos ni ampliar los helpers histó
 
 test("impide reutilizar suites como helpers aunque los imports se resuelvan con extensiones JS", (t) => {
   const { root, write } = fixture(t);
-  write("src/preparation/shared/editorial/tests/other.test.ts", "export const sample = 1;\n");
-  write("src/preparation/shared/editorial/tests/contract.test.ts",
+  write("src/preparation/editorial/core/tests/other.test.ts", "export const sample = 1;\n");
+  write("src/preparation/editorial/core/tests/contract.test.ts",
     "import { sample } from './other.test.js'; export const other = sample;\n");
   write("src/testing/builders/reused.ts",
-    "export { sample } from '../../preparation/shared/editorial/tests/other.test.js';\n");
+    "export { sample } from '../../preparation/editorial/core/tests/other.test.js';\n");
   const findings = inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-TEST-AS-HELPER");
   assert.equal(findings.length, 2);
 });
@@ -661,7 +661,7 @@ test("bloquea un runner duplicado y la orquestación de procesos desde builders"
 test("rechaza nombres de suites que el runner no descubre en src", (t) => {
   const { root, write } = fixture(t);
   write("src/catalog/diagnostics/tests/not-discovered.spec.ts", "export const valid = true;\n");
-  write("src/preparation/shared/editorial/tests/not-discovered.test.mts", "export const valid = true;\n");
+  write("src/preparation/editorial/core/tests/not-discovered.test.mts", "export const valid = true;\n");
   assert.equal(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-TEST-DISCOVERY").length, 2);
 });
 
@@ -702,7 +702,7 @@ test("prohíbe congelar indicadores de procedencia y categorías en un corte viv
 
 test("admite poblaciones sintéticas pero rechaza el antiguo almacén histórico", (t) => {
   const { root, write } = fixture(t);
-  write("src/preparation/shared/editorial/tests/stable-cases.test.ts",
+  write("src/preparation/editorial/core/tests/stable-cases.test.ts",
     "import assert from 'node:assert/strict'; const products = [{reference:'A'}, {reference:'B'}]; assert.equal(products.length, 2);\n");
   write("src/testing/integration/catalog/tests/fixed-history.test.ts",
     "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../../infrastructure/filesystem/catalog/canonical-catalog.js'; const snapshot = await readCanonicalCatalog('src/testing/fixtures/gam/regression-2026/catalog.json'); assert.equal(snapshot.products.length, 143);\n");

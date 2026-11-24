@@ -4,7 +4,7 @@ import { isDeepStrictEqual } from "node:util";
 import { join, resolve } from "node:path";
 import { buildProductIdentity } from "../../../catalog/identity.js";
 import { parseCanonicalProductRecords } from "../../../catalog/canonical-catalog.js";
-import { discardedManainProductUrls } from "../../../preparation/manain/identity/evidence/discarded-urls.js";
+import { discardedManainProductUrls } from "../../../preparation/manain/discarded-urls.js";
 import { readActiveTechnicalPublication } from "./technical-publication.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { TechnicalSnapshot } from "../../../publication/technical-snapshot.js";

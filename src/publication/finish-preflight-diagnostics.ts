@@ -1,6 +1,6 @@
 import type { ProductRecord } from "../contracts/catalog.js";
 import type { ImportCandidate } from "../commercial/legacy-export/contracts.js";
-import type { OfflinePreparation } from "../preparation/offline-document.js";
+import type { OfflinePreparation } from "../preparation/documents/offline-document.js";
 import type { CampaignAccreditation } from "../catalog/editorial/campaign-accreditation.js";
 
 export type FinishAbsentReference = {

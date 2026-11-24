@@ -8,7 +8,7 @@ import { planCommercialExport } from "../export-projection.js";
 import { decideCommercialCategory } from "../category-decision.js";
 import { projectCommercialPresentation } from "../presentation-projection.js";
 import { isValidCommercialCategory } from "../category-projection.js";
-import { normalizePreparedEditorialPresentation } from "../../../preparation/shared/editorial/mapping/prepared-editorial-presentation.js";
+import { normalizePreparedEditorialPresentation } from "../../../preparation/editorial/writing/prepared-editorial-presentation.js";
 import { accreditCommercialPlan } from "../../diagnostics/commercial-accreditation.js";
 import { hasLoadCapacityDisagreement } from "../../validation/technical-specifications.js";
 import { selectAccreditedCommercialInputs } from "../../../testing/builders/commercial-publication-selection.js";

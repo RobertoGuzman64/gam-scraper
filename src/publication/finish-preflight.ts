@@ -8,7 +8,7 @@ import { requireIndividualPreparationContext } from "../preparation/workflow/ind
 import type { IndividualCatalogProvider } from "../preparation/workflow/individual-context.js";
 import type { ImportCandidate } from "../commercial/legacy-export/contracts.js";
 import type { ProductRecord } from "../contracts/catalog.js";
-import type { OfflinePreparation } from "../preparation/offline-document.js";
+import type { OfflinePreparation } from "../preparation/documents/offline-document.js";
 import type { CampaignAccreditation } from "../catalog/editorial/campaign-accreditation.js";
 import type { PublicationDifference } from "./publication-contracts.js";
 import { sha256 } from "../catalog/editorial/campaign-accreditation.js";

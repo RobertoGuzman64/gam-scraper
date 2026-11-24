@@ -1,5 +1,5 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { fold } from "../../../shared/classification/mapping/attribute-utils.js";
+import { fold } from "../../../classification/attribute-utils.js";
 
 const compact = (value: string): string => fold(value).replace(/[^a-z0-9]/g, "");
 

@@ -1,15 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { loadImportCatalog } from "../../../../../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
-import { resolveAttributeValue } from "../../../../../../../preparation/shared/classification/mapping/attribute-mapping.js";
+import { resolveAttributeValue } from "../../../../../../../preparation/classification/attribute-mapping.js";
 import { prepareCached } from "../../../../../../../preparation/testing/prepare-cached.js";
-import { recoverGomarizSourceYearSpec } from "../../../../../../../preparation/gomariz/technical/mapping/source-year-spec.js";
-import { reconcileGomarizDocumented1cxFuel } from "../../../../../../../preparation/gomariz/technical/evidence/verified-1cx-fuel.js";
-import { recoverBaseTechnicalSpecs } from "../../../../../../../preparation/shared/technical/recovery/base-technical-recovery.js";
-import { recoverGomarizDocumentedRenaultPremiumSpecs } from "../../../../../../../preparation/gomariz/technical/evidence/documented-renault-premium-specs.js";
-import { reconcileGomarizVerifiedPlatformHeight } from "../../../../../../../preparation/gomariz/technical/reconciliation/gomariz.js";
+import { recoverGomarizSourceYearSpec } from "../../../../../../../preparation/gomariz/technical/source-year-spec.js";
+import { reconcileGomarizDocumented1cxFuel } from "../../../../../../../preparation/gomariz/technical/verified-1cx-fuel.js";
+import { recoverBaseTechnicalSpecs } from "../../../../../../../preparation/technical/base-technical-recovery.js";
+import { recoverGomarizDocumentedRenaultPremiumSpecs } from "../../../../../../../preparation/gomariz/technical/documented-renault-premium-specs.js";
+import { reconcileGomarizVerifiedPlatformHeight } from "../../../../../../../preparation/gomariz/technical/gomariz.js";
 import { prepareSourceProduct } from "../../../../../../../preparation/prepare-product.js";
-import { recoverGomarizDocumentedScaniaP220Specs } from "../../../../../../../preparation/gomariz/technical/evidence/documented-scania-p220-specs.js";
+import { recoverGomarizDocumentedScaniaP220Specs } from "../../../../../../../preparation/gomariz/technical/documented-scania-p220-specs.js";
 import type { ProductRecord, SpecsMap } from "../../../../../../../contracts/catalog.js";
 
 const catalog = await loadImportCatalog();

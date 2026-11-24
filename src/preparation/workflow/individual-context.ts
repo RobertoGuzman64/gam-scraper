@@ -2,9 +2,9 @@ import { createHash } from "node:crypto";
 import { lstat, mkdir, readFile, readdir } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
-import type { OfflinePreparation, PreparationFingerprints, PreparationSource } from "../offline-document.js";
-import { buildOfflineDiagnostics } from "../offline-diagnostics.js";
-import type { OfflineDiagnostics } from "../offline-diagnostics.js";
+import type { OfflinePreparation, PreparationFingerprints, PreparationSource } from "../documents/offline-document.js";
+import { buildOfflineDiagnostics } from "../documents/offline-diagnostics.js";
+import type { OfflineDiagnostics } from "../documents/offline-diagnostics.js";
 import { buildSourceTriage } from "../../catalog/diagnostics/source-triage.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
@@ -13,10 +13,10 @@ import { resolveAccreditedPublication, readAccreditedPublication } from "../../i
 import { readPortableOriginalArtifacts } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import { readVerifiedManainRecordSource } from "../../infrastructure/filesystem/catalog/manain-record-source.js";
 import { manainRecordPreparationSource } from "./manain-record-source.js";
-import { validateCanonicalSource } from "./validation/offline.js";
+import { validateCanonicalSource } from "./offline.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation/preparation-inputs.js";
-import { validateManainRecordPreparation, validateOfflinePreparation } from "./validation/offline.js";
+import { validateManainRecordPreparation, validateOfflinePreparation } from "./offline.js";
 
 export type IndividualCatalogProvider = typeof CAMPAIGN_PROVIDERS[number];
 export type IndividualPreparationProvider = typeof CAMPAIGN_PROVIDERS[number];

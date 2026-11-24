@@ -62,7 +62,7 @@ const boundaryViolation = (source, target) => {
     providers.has(from[3]) && providers.has(to[3]) && from[3] !== to[3]) {
     return "Los adaptadores de extracción de proveedores no deben importarse entre sí";
   }
-  if (source.startsWith("src/preparation/shared/technical/") && to[1] === "commercial") {
+  if (source.startsWith("src/preparation/technical/") && to[1] === "commercial") {
     return "El motor técnico compartido no debe depender de la proyección comercial";
   }
   if (source.startsWith("src/commercial/projection/") && to[1] === "scraping") {

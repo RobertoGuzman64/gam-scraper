@@ -1,7 +1,7 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { editorialAuditFingerprints, loadEditorialAuditPopulation } from './editorial-audit-population.mjs';
-import { resolveKnowledgeEditorial } from '../../dist/preparation/shared/editorial/mapping/knowledge-editorial.js';
+import { resolveKnowledgeEditorial } from '../../dist/preparation/editorial/core/knowledge-editorial.js';
 import { loadEditorialKnowledge } from '../../dist/infrastructure/filesystem/editorial/knowledge.js';
 
 const root = process.cwd();

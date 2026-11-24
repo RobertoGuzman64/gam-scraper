@@ -1,5 +1,5 @@
 import type { CommercialBaselineInput } from "../diagnostics/commercial-baseline.js";
-import { normalizePreparedEditorialPresentation } from "../../preparation/shared/editorial/mapping/prepared-editorial-presentation.js";
+import { normalizePreparedEditorialPresentation } from "../../preparation/editorial/writing/prepared-editorial-presentation.js";
 
 export const prepareCommercialEditorialInputs = (
   inputs: readonly CommercialBaselineInput[]

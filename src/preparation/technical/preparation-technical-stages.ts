@@ -1,0 +1,70 @@
+import { reconcileGamForeignCategoryTitle } from "../gam/identity/gam-foreign-category-title.js";
+import { reconcileGamSourceIdentity } from "../gam/identity/gam-source-identity.js";
+import { reconcileGamVerifiedHysterSGlp } from "../gam/models/evidence/hyster-s-glp-evidence.js";
+import { reconcileGamVerifiedYaleGc40vxLpg } from "../gam/models/evidence/yale-gc40vx-lpg-evidence.js";
+import { reconcileGamVerifiedYaleGc45vxLpg } from "../gam/models/evidence/yale-gc45vx-lpg-evidence.js";
+import { reconcileGamVerifiedYaleGc55vxGlp } from "../gam/models/evidence/yale-gc55vx-glp-evidence.js";
+import { reconcileGamVerifiedManufacturerLoad } from "../gam/models/evidence/gam-verified-manufacturer-load.js";
+import { reconcileGamVerifiedReviewClaims } from "../gam/models/evidence/gam-verified-review-claims.js";
+import { reconcileGamVerifiedListing } from "../gam/models/evidence/gam-verified-listing-reconciliation.js";
+import { reconcileGamVerifiedSourceClaims } from "../gam/models/evidence/gam-verified-source-claims.js";
+import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
+import type { TechnicalRecoveryObservation } from "../provenance/technical-recovery-observation.js";
+import { reconcileGamInitialTechnicalEvidence, reconcileGamTechnicalIdentity, reconcileGamTechnicalBeforeEditorial, reconcileGamTechnicalCapacities, reconcileGamTechnicalMeasurements, normalizeGamTechnicalSpecs } from "../gam/reconciliation/preparation-technical-stages.js";
+import { reconcileMercaelevaInitialTechnicalEvidence, reconcileMercaelevaSourceFamily, reconcileMercaelevaSourceTechnicalSpecs, reconcileMercaelevaTechnicalBeforeEditorial, reconcileMercaelevaTechnicalCapacity, reconcileMercaelevaTechnicalCorroboratedCapacity, sanitizeMercaelevaTechnicalSpecs } from "../mercaeleva/technical/preparation-technical-stages.js";
+import { normalizeManainTechnicalSpecs } from "../manain/normalization.js";
+import { normalizeTechnicalPresentation, rejectImplausibleTechnicalWeight } from "./technical-presentation.js";
+import { reconcileGomarizDocumentedWeight } from "../gomariz/technical/documented-weight.js";
+import { reconcileGomarizDocumented1cxFuel } from "../gomariz/technical/verified-1cx-fuel.js";
+import { reconcileGomarizVerifiedElectricSemanticSource, reconcileGomarizVerifiedPlatformHeight, reconcileGomarizVerifiedTowerModel, reconcileGomarizVerifiedCompositeBrand } from "../gomariz/technical/gomariz.js";
+
+export const reconcileSourceCategoryTitle = (record: ProductRecord): ProductRecord =>
+  reconcileGamForeignCategoryTitle(record);
+
+export const reconcileVerifiedSourceIdentity = (record: ProductRecord): ProductRecord =>
+  reconcileGamSourceIdentity(record);
+
+export const reconcileVerifiedSourceReviewClaims = (record: ProductRecord): ProductRecord =>
+  reconcileGamVerifiedListing(reconcileGamVerifiedReviewClaims(record));
+
+export const reconcileVerifiedSourceFamily = (record: ProductRecord): ProductRecord =>
+  reconcileMercaelevaSourceFamily(record);
+
+export const reconcileVerifiedSourceFuel = (record: ProductRecord): ProductRecord => {
+  record = reconcileGamVerifiedHysterSGlp(record);
+  record = reconcileGamVerifiedYaleGc40vxLpg(record);
+  record = reconcileGamVerifiedYaleGc45vxLpg(record);
+  return reconcileGomarizDocumented1cxFuel(reconcileGamVerifiedYaleGc55vxGlp(record));
+};
+
+export const reconcileVerifiedManufacturerSourceLoad = (record: ProductRecord): ProductRecord =>
+  reconcileGamVerifiedSourceClaims(reconcileGamVerifiedManufacturerLoad(record));
+
+export const reconcileInitialTechnicalEvidence = (record: ProductRecord): ProductRecord =>
+  reconcileMercaelevaInitialTechnicalEvidence(reconcileGamInitialTechnicalEvidence(record));
+
+export const resolveSourceTechnicalSemanticRecord = (record: ProductRecord): ProductRecord =>
+  reconcileGomarizVerifiedElectricSemanticSource(reconcileMercaelevaSourceFamily(record));
+
+export const reconcileTechnicalSourceForRecovery = (record: ProductRecord, observe?: TechnicalRecoveryObservation): ProductRecord => {
+  record = reconcileMercaelevaSourceFamily(record);
+  record = reconcileGamTechnicalIdentity(record);
+  return reconcileGomarizDocumentedWeight(reconcileGomarizVerifiedCompositeBrand(reconcileGomarizVerifiedTowerModel(
+    reconcileMercaelevaSourceTechnicalSpecs(record, observe))));
+};
+
+export const reconcileTechnicalBeforeEditorial = (record: ProductRecord, observe?: TechnicalRecoveryObservation): ProductRecord =>
+  reconcileMercaelevaTechnicalBeforeEditorial(reconcileGamTechnicalBeforeEditorial(record, observe));
+
+export const reconcileTechnicalAfterEditorial = (record: ProductRecord): ProductRecord => {
+  record = reconcileMercaelevaTechnicalCapacity(record);
+  record = reconcileGamTechnicalCapacities(record);
+  record = reconcileGomarizVerifiedPlatformHeight(record);
+  record = reconcileMercaelevaTechnicalCorroboratedCapacity(record);
+  return reconcileGamTechnicalMeasurements(record);
+};
+
+export const normalizePreparedTechnicalSpecs = (
+  record: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation
+): SpecsMap => rejectImplausibleTechnicalWeight(record, normalizeTechnicalPresentation(normalizeManainTechnicalSpecs(record,
+  normalizeGamTechnicalSpecs(record, sanitizeMercaelevaTechnicalSpecs(record, specs), observe))));

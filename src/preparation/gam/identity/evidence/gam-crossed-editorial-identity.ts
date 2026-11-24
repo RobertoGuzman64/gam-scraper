@@ -1,6 +1,6 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
-import { containsEditorialBrandModel, containsEditorialIdentity } from "../../../shared/editorial/domain/editorial-identity-match.js";
-import { verifiedEditorialUrl } from "../../../shared/editorial/domain/editorial-source-url.js";
+import { containsEditorialBrandModel, containsEditorialIdentity } from "../../../editorial/identity/editorial-identity-match.js";
+import { verifiedEditorialUrl } from "../../../editorial/source/editorial-source-url.js";
 
 const compact = (value: string): string => value.normalize("NFD")
   .replace(/[\u0300-\u036f]/gu, "").toLocaleLowerCase("es").replace(/[^a-z0-9]/gu, "");

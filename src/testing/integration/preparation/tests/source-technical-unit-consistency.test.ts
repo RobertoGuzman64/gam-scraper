@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
-import { reconcileGamSourceTechnicalUnits, reconcileGamSpreadsheetLiftHeight } from "../../../../preparation/gam/technical/reconciliation/gam-source-technical-units.js";
-import { controlledGamForklift } from "../../../../preparation/shared/editorial/tests/editorial-contract-records.js";
+import { reconcileGamSourceTechnicalUnits, reconcileGamSpreadsheetLiftHeight } from "../../../../preparation/gam/reconciliation/gam-source-technical-units.js";
+import { controlledGamForklift } from "../../../../preparation/editorial/core/editorial-contract-records.js";
 
 const source = (specs: SpecsMap): ProductRecord => ({ ...controlledGamForklift(), specs });
 

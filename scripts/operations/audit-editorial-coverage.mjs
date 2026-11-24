@@ -1,11 +1,11 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { editorialAuditFingerprints, loadEditorialAuditPopulation } from './editorial-audit-population.mjs';
-import { resolveEditorialFacts } from '../../dist/preparation/shared/editorial/domain/editorial-facts.js';
-import { resolveReusableEditorial } from '../../dist/preparation/shared/editorial/domain/editorial-composition.js';
-import { resolveSourceEditorialClaims } from '../../dist/preparation/shared/editorial/domain/editorial-source-claims.js';
-import { resolveUnbrandedEditorial } from '../../dist/preparation/shared/editorial/domain/editorial-unbranded-equipment.js';
-import { resolveKnowledgeEditorial } from '../../dist/preparation/shared/editorial/mapping/knowledge-editorial.js';
+import { resolveEditorialFacts } from '../../dist/preparation/editorial/core/editorial-facts.js';
+import { resolveReusableEditorial } from '../../dist/preparation/editorial/core/editorial-composition.js';
+import { resolveSourceEditorialClaims } from '../../dist/preparation/editorial/claims/editorial-source-claims.js';
+import { resolveUnbrandedEditorial } from '../../dist/preparation/editorial/identity/editorial-unbranded-equipment.js';
+import { resolveKnowledgeEditorial } from '../../dist/preparation/editorial/core/knowledge-editorial.js';
 import { loadEditorialKnowledge } from '../../dist/infrastructure/filesystem/editorial/knowledge.js';
 
 const root = process.cwd();

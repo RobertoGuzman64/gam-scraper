@@ -1,6 +1,6 @@
 import type { CommercialBaselineInput } from "../diagnostics/commercial-baseline.js";
 import { gamSourceYear } from "../../catalog/normalization/gam/year.js";
-import { reconcileGamVerifiedUnitYear } from "../../preparation/gam/technical/reconciliation/gam-verified-unit-year.js";
+import { reconcileGamVerifiedUnitYear } from "../../preparation/gam/reconciliation/gam-verified-unit-year.js";
 import { decideCommercialCategory } from "./category-decision.js";
 import { commercialToken, projectCommercialPresentation } from "./presentation-projection.js";
 

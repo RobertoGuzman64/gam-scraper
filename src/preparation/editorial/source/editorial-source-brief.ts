@@ -1,0 +1,78 @@
+import { containsEditorialBrandModel } from "../identity/editorial-identity-match.js";
+import type { ProductRecord } from "../../../contracts/catalog.js";
+import { verifiedEditorialIdentity } from "../core/editorial-source-contract.js";
+import { normalizeEditorialSummary } from "../core/editorial-normalization.js";
+import { resolveEditorialSource } from "../core/editorial-source.js";
+import { editorialFamilyOf } from "../core/editorial-families.js";
+import { hasUnconditionalEditorialClaim } from "../claims/editorial-claim-evidence.js";
+
+const fold = (value: string): string => value.normalize("NFD")
+  .replace(/[\u0300-\u036f]/gu, "").toLocaleLowerCase("es").replace(/[^a-z0-9]/gu, "");
+
+const countWords = (value: string): number => value.trim().split(/\s+/u).filter(Boolean).length;
+
+const numbers = (value: string): ReadonlySet<string> =>
+  new Set(value.match(/\d+(?:[.,]\d+)*/gu) ?? []);
+
+const protectedWords = /\b(?:el[eé]ctric[oa]s?|di[eé]sel|glp|gasolina|h[ií]brid[oa]s?|litio|hepa|hidr[aá]ulic[oa]s?|regenerativ[oa]s?)\b/giu;
+
+export const compressVerifiedSourceShort = (
+  source: ProductRecord, proposedShort: string | null, general: string | null
+): string | null => {
+  const original = source.shortDescription?.trim();
+  const text = proposedShort?.trim();
+  const long = general?.trim();
+  if (!original || !text || !long || original !== text || countWords(original) <= 45 ||
+    !verifiedEditorialIdentity(source) || !resolveEditorialSource(source)) return null;
+
+  const sentences = original.split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÜÑ0-9])/u);
+  const first = sentences[0]?.trim();
+  if (!first || sentences.length < 2 || countWords(first) < 12 || countWords(first) > 45 ||
+    !source.brand || !source.model || !containsEditorialBrandModel(first, source.brand, source.model)) return null;
+
+  const remainder = original.slice(first.length);
+  const retained = `${first} ${long}`;
+  const retainedNumbers = numbers(retained);
+  if ([...numbers(remainder)].some((value) => !retainedNumbers.has(value))) return null;
+  const retainedWords = fold(retained);
+  if ([...remainder.matchAll(protectedWords)].some((match) => !retainedWords.includes(fold(match[0])))) return null;
+
+  return first;
+};
+
+export const expandVerifiedSourceShort = (source: ProductRecord, short: string | null): string | null => {
+  if (!short?.trim() || countWords(short) >= 10 || !verifiedEditorialIdentity(source) ||
+    !resolveEditorialSource(source) || !source.title || !source.brand || !source.model ||
+    !containsEditorialBrandModel(short, source.brand, source.model)) return null;
+  const description = source.longDescription ?? "";
+  const family = editorialFamilyOf(source.title);
+  if (family === "barredora" && /\bbater[ií]a\b/iu.test(source.title) &&
+    hasUnconditionalEditorialClaim(description, /\b(?:conductor|operari[oa])\s+sentad[oa]\b/giu)) {
+    return `${source.title}, con puesto de conducción sentado declarado en la descripción de origen.`;
+  }
+  if (family === "fregadora" &&
+    /\b(?:conductor\s+sentado|operari[oa]\s+a\s+bordo)\b/iu.test(`${short} ${description}`)) {
+    const levels = [...description.matchAll(/\b(?:funcionar?\s+a|funcionamiento\s+a)\s*(\d{2,3})\s*dB\s*A\b/giu)];
+    const level = levels.length === 1 ? Number(levels[0]?.[1]) : null;
+    if (level !== null && level >= 40 && level <= 100 &&
+      hasUnconditionalEditorialClaim(description, /\b(?:funcionar?\s+a|funcionamiento\s+a)\s*\d{2,3}\s*dB\s*A\b/giu)) {
+      return `${source.title}, de conductor sentado y nivel sonoro de ${level} dBA declarado en el anuncio.`;
+    }
+  }
+  return null;
+};
+
+export const removeSourcedSaleWording = (source: ProductRecord, proposedShort: string | null): string | null => {
+  const current = proposedShort?.trim();
+  const original = source.shortDescription?.trim();
+  if (!current || !original || !source.model ||
+    countWords(current) <= 20 || countWords(current) > 45 ||
+    current !== normalizeEditorialSummary(original, source.model) ||
+    !verifiedEditorialIdentity(source) || !resolveEditorialSource(source)) return null;
+  const stripped = current.replace(/(?<=\.\s)Venta de ([\p{L}])/iu, (_match, first: string) => first.toLocaleUpperCase("es"))
+    .replace(/\b(plataforma)\s+\1\b/giu, "$1");
+  if (stripped === current || countWords(stripped) < 10 ||
+    [...numbers(current)].some((number) => !numbers(stripped).has(number)) ||
+    [...current.matchAll(protectedWords)].some((match) => !fold(stripped).includes(fold(match[0])))) return null;
+  return stripped;
+};

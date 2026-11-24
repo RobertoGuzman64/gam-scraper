@@ -1,5 +1,5 @@
 import type { ImportCatalog, ImportCandidate } from "./contracts.js";
-import type { PreparationDocument } from "../../preparation/preparation-document.js";
+import type { PreparationDocument } from "../../preparation/documents/preparation-document.js";
 import type { ReferenceInventory } from "./reference-inventory.js";
 import { selectImportCandidates } from "./select-candidates.js";
 import type { ImportIssue } from "./select-candidates.js";

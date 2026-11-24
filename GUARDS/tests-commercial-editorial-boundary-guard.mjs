@@ -9,8 +9,8 @@ const adapter = read("src/commercial/projection/editorial-inputs.ts");
 const plan = read("src/commercial/projection/export-projection.ts");
 const accreditation = read("src/commercial/diagnostics/commercial-accreditation.ts");
 const audit = read("src/commercial/diagnostics/commercial-presentation.ts");
-const editorial = read("src/preparation/shared/editorial/mapping/prepared-editorial-presentation.ts");
-const genericCapacity = read("src/preparation/shared/editorial/domain/editorial-capacity-coherence.ts");
+const editorial = read("src/preparation/editorial/writing/prepared-editorial-presentation.ts");
+const genericCapacity = read("src/preparation/editorial/measurements/coherence/editorial-capacity-coherence.ts");
 
 for (const contract of [
   /description:\s*published\.description\s*,/u,

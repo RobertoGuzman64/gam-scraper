@@ -1,5 +1,5 @@
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
-import type { TechnicalRecoveryObservation } from "../../../technical-recovery-observation.js";
+import type { TechnicalRecoveryObservation } from "../../../provenance/technical-recovery-observation.js";
 
 type ClassicVehicleIdentity = {
   readonly url: string;

@@ -1,5 +1,5 @@
 import { buildProductIdentity } from "../identity.js";
-import { fold } from "../../preparation/shared/classification/mapping/category-utils.js";
+import { fold } from "../../preparation/classification/category-utils.js";
 import { normalizedSpecKey, specHasValue } from "./content-gaps-source.js";
 import { isTechnicalSpecificationKey, type TechnicalDensity } from "./technical-density.js";
 import { familyOf } from "./description-coverage.js";

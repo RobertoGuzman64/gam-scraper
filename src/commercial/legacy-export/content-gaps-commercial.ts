@@ -1,6 +1,6 @@
 import { buildProductIdentity } from "../../catalog/identity.js";
 import { SPEC_KEY_NORMALIZATION } from "../../catalog/normalization/spec-rules.js";
-import { fold } from "../../preparation/shared/classification/mapping/category-utils.js";
+import { fold } from "../../preparation/classification/category-utils.js";
 import type { CanonicalCatalog } from "../../catalog/canonical-catalog.js";
 import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
 import type { ImportCatalog } from "./contracts.js";

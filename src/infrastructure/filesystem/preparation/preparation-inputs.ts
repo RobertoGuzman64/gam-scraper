@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { PreparationFingerprints } from "../../../preparation/offline-document.js";
+import type { PreparationFingerprints } from "../../../preparation/documents/offline-document.js";
 
 const sha = (value: string): string => createHash("sha256").update(value).digest("hex");
 
@@ -30,7 +30,7 @@ export const loadPreparationInputs = async (): Promise<{ fingerprints: Preparati
   const root = fileURLToPath(new URL("../../../", import.meta.url));
   const [preparation, legacy, normalization, identity, conflicts] = await Promise.all([
     readRuleFiles(join(root, "preparation"),
-      (name) => !["product-attributes.js", "shared/classification/mapping/category-mapping.js"].includes(name),
+      (name) => !["product/product-attributes.js", "classification/category-mapping.js"].includes(name),
       "workflow"),
     readRuleFiles(join(root, "commercial", "legacy-export"),
       (name) => name === "contracts.js" || name === "prepare-product.js"),

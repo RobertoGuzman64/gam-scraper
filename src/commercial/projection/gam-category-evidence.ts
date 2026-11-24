@@ -1,8 +1,8 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
-import { isGamVerifiedHysterSGlp, reconcileGamVerifiedHysterSGlp } from "../../preparation/gam/technical/models/hyster-s-glp-evidence.js";
-import { reconcileGamForPreparation } from "../../preparation/gam/technical/reconciliation/gam.js";
-import { reconcileVerifiedSourceFuel, reconcileVerifiedSourceReviewClaims } from "../../preparation/shared/technical/reconciliation/preparation-technical-stages.js";
-import { reconcileGamForeignCategoryTitle } from "../../preparation/gam/identity/reconciliation/gam-foreign-category-title.js";
+import { isGamVerifiedHysterSGlp, reconcileGamVerifiedHysterSGlp } from "../../preparation/gam/models/evidence/hyster-s-glp-evidence.js";
+import { reconcileGamForPreparation } from "../../preparation/gam/reconciliation/gam.js";
+import { reconcileVerifiedSourceFuel, reconcileVerifiedSourceReviewClaims } from "../../preparation/technical/preparation-technical-stages.js";
+import { reconcileGamForeignCategoryTitle } from "../../preparation/gam/identity/gam-foreign-category-title.js";
 
 export { isGamVerifiedHysterSGlp, reconcileGamVerifiedHysterSGlp };
 

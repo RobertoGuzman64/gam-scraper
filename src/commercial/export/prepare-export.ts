@@ -5,10 +5,10 @@ import { getProvider } from "../../scraping/registry.js";
 import { loadImportCatalog } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { planProductImport, readReferenceInventory } from "../legacy-export/export-plan.js";
 import { planCreateMany } from "../legacy-export/create-many-plan.js";
-import { parsePreparation } from "../../preparation/preparation-document.js";
+import { parsePreparation } from "../../preparation/documents/preparation-document.js";
 import { offlinePreparationManifestPath } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { validateCatalogPublication } from "../validation/preflight.js";
-import { validateOfflinePreparation } from "../../preparation/workflow/validation/offline.js";
+import { validateOfflinePreparation } from "../../preparation/workflow/offline.js";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);

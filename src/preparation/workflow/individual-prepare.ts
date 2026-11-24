@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
-import { buildOfflineDiagnostics } from "../offline-diagnostics.js";
-import type { OfflinePreparation } from "../offline-document.js";
+import { buildOfflineDiagnostics } from "../documents/offline-diagnostics.js";
+import type { OfflinePreparation } from "../documents/offline-document.js";
 import { prepareSavedCatalog, prepareVerifiedManainRecord } from "./prepare.js";
 import { differenceBetween } from "../../publication/active-publication.js";
 import { reconcileRemovedSpecifications } from "../../publication/specification-reconciliations.js";

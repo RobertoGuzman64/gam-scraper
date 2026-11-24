@@ -6,11 +6,11 @@ import {
 } from "./guards-architecture-core.mjs";
 
 const providerEditorial = /^src\/preparation\/(?!shared\/)[^/]+\/editorial\//u;
-const sharedEditorial = /^src\/preparation\/shared\/editorial\//u;
-const sharedDomain = /^src\/preparation\/shared\/editorial\/domain\//u;
-const sharedMapping = /^src\/preparation\/shared\/editorial\/mapping\//u;
+const sharedEditorial = /^src\/preparation\/editorial\//u;
+const sharedDomain = /^src\/preparation\/editorial\/core\/editorial-[^/]+\.ts$/u;
+const sharedMapping = /^src\/preparation\/editorial\//u;
 const trustedSourceAdapter = /^src\/preparation\/[^/]+\/editorial\/(?:source|mapping)\/domain-source\.ts$/u;
-const dispatch = "src/preparation/shared/editorial/domain/editorial-source.ts";
+const dispatch = "src/preparation/editorial/core/editorial-source.ts";
 const textualFields = new Set(["description", "description_general", "short", "general"]);
 const narrativeNames = /(?:description|general|short|summary|title|editorial)/iu;
 const editorialFields = new Set(["description", "description_general", "shortDescription", "longDescription", "title"]);
@@ -110,7 +110,7 @@ export const inspectEditorialArchitecture = (root) => {
   if (!preparation) throw new Error(`Falta el punto de entrada: ${entry}`);
   const code = preparation.text;
   if (!/\bresolvePreparedEditorial\s*\(/u.test(code) || ![...project.dependencies.get(entry) ?? []]
-    .includes("src/preparation/shared/editorial/mapping/prepared-editorial.ts")) {
+    .includes("src/preparation/editorial/core/prepared-editorial.ts")) {
     push("E-ENTRYPOINT", entry, undefined, "La preparación debe invocar al propietario editorial compartido");
   }
 

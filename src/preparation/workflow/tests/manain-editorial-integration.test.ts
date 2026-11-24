@@ -4,11 +4,11 @@ import { join } from "node:path";
 import test from "node:test";
 import { buildProductIdentity } from "../../../catalog/identity.js";
 import { readVerifiedManainRecordSource } from "../../../infrastructure/filesystem/catalog/manain-record-source.js";
-import { prepareImportBatch } from "../../batch-identity.js";
+import { prepareImportBatch } from "../../product/batch-identity.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
-import { normalizePreparedTechnicalSpecs } from "../../shared/technical/reconciliation/preparation-technical-stages.js";
-import { captureSourceEditorialEvidence } from "../../shared/editorial/mapping/source-editorial-evidence.js";
-import { resolveEditorialSource } from "../../shared/editorial/domain/editorial-source.js";
+import { normalizePreparedTechnicalSpecs } from "../../technical/preparation-technical-stages.js";
+import { captureSourceEditorialEvidence } from "../../editorial/claims/source-editorial-evidence.js";
+import { resolveEditorialSource } from "../../editorial/core/editorial-source.js";
 import { prepareVerifiedManainRecord } from "../prepare.js";
 import { manainRecordPreparationSource } from "../manain-record-source.js";
 

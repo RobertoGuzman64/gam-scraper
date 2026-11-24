@@ -1,6 +1,6 @@
 import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.js";
-import { validateCommercialAttributeValue } from "../../preparation/shared/classification/mapping/attribute-value-validation.js";
-export { validateCommercialAttributeValue } from "../../preparation/shared/classification/mapping/attribute-value-validation.js";
+import { validateCommercialAttributeValue } from "../../preparation/classification/attribute-value-validation.js";
+export { validateCommercialAttributeValue } from "../../preparation/classification/attribute-value-validation.js";
 
 type Attribute = ImportCatalog["attributes"][number];
 type Assignment = ImportCandidate["attributes"][number];

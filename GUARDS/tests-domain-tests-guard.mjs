@@ -36,7 +36,7 @@ const testSuiteLocation = (path) => {
   if (path.startsWith("src/testing/")) {
     return path.startsWith("src/testing/integration/") || path.startsWith("src/testing/builders/tests/");
   }
-  return path.includes("/tests/") || /^src\/preparation\/gam\/technical\/.+\.(?:test|spec)\.(?:ts|tsx|mts|js|mjs|cjs)$/u.test(path);
+  return path.includes("/tests/") || /^src\/preparation\/.+\.test\.ts$/u.test(path);
 };
 
 const checkTestLayout = (project, visit) => {
@@ -279,7 +279,7 @@ const liveSourceEvidence = (source) => {
 
 const accreditedCatalogIntegrations = new Map([
   ["src/preparation/tests/catalog-publication-consistency.test.ts", {
-    sha256: "8d99dbc75d6c711d3bffeea31a3077b97e32b82cfa264e10205b57123c623411",
+    sha256: "cb1371989fae497c6e9804c0b6ba0a617500f5e5083222dc5f9d1ef35cb7f487",
     reads: 2,
     responsibility: "Integridad, procedencia y proyección de publicaciones acreditadas"
   }]
