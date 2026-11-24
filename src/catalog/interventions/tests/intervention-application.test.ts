@@ -49,7 +49,7 @@ const makeFixture = async () => {
   const campaignDir = mkdtempSync(join(interventions, "intervention-application-test-"));
   mkdirSync(join(campaignDir, "scripts"));
   const script = join(campaignDir, "scripts", "cambio.ts");
-  writeFileSync(script, `import type { ManualInterventionProposal } from "../contracts.js";
+  writeFileSync(script, `import type { ManualInterventionProposal } from "../../../../src/catalog/interventions/contracts.js";
 export const proposals = [{
   providerId: "gam", identity: "${proposal.identity}", field: "shortDescription",
   expected: "Texto anterior", next: "Texto revisado",

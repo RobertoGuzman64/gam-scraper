@@ -58,7 +58,7 @@ const makeScript = (providerId = "gam", productIdentity = identity): { path: str
   const dir = mkdtempSync(join("storage", "interventions", "intervention-simulation-test-"));
   mkdirSync(join(dir, "scripts"));
   const path = join(dir, "scripts", "cambio.ts");
-  writeFileSync(path, `import type { ManualInterventionProposal } from "../contracts.js";
+  writeFileSync(path, `import type { ManualInterventionProposal } from "../../../../src/catalog/interventions/contracts.js";
 export const proposals = [{
   providerId: "${providerId}", identity: "${productIdentity}", field: "shortDescription",
   expected: "Texto anterior", next: "Texto revisado",

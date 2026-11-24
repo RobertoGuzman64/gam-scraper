@@ -12,7 +12,7 @@
           {
             "field": "Año",
             "value": "2022",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2022"
@@ -29,7 +29,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -46,7 +46,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -63,7 +63,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -80,7 +80,7 @@
           {
             "field": "Año",
             "value": "2022",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2022"
@@ -97,7 +97,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -114,7 +114,7 @@
           {
             "field": "Año",
             "value": "2018",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2018"
@@ -131,7 +131,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -148,7 +148,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -173,7 +173,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -190,7 +190,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -207,7 +207,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -224,7 +224,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -241,7 +241,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -258,7 +258,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -275,7 +275,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -292,7 +292,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -309,7 +309,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -326,7 +326,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -351,7 +351,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -376,7 +376,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -401,7 +401,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -418,7 +418,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -435,7 +435,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -452,7 +452,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -469,7 +469,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -486,7 +486,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -503,7 +503,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -520,7 +520,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -537,7 +537,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -554,7 +554,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -571,7 +571,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -588,7 +588,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -605,7 +605,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -622,7 +622,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -639,7 +639,7 @@
           {
             "field": "Año",
             "value": "2018",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2018"
@@ -656,7 +656,7 @@
           {
             "field": "Año",
             "value": "2018",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2018"
@@ -673,7 +673,7 @@
           {
             "field": "Año",
             "value": "2019",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2019"
@@ -690,7 +690,7 @@
           {
             "field": "Año",
             "value": "2017",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2017"
@@ -707,7 +707,7 @@
           {
             "field": "Año",
             "value": "2015",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2015"
@@ -724,7 +724,7 @@
           {
             "field": "Año",
             "value": "2016",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2016"
@@ -741,7 +741,7 @@
           {
             "field": "Año",
             "value": "2017",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2017"
@@ -758,7 +758,7 @@
           {
             "field": "Año",
             "value": "2016",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2016"
@@ -775,7 +775,7 @@
           {
             "field": "Año",
             "value": "2006",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2006"
@@ -808,7 +808,7 @@
           {
             "field": "Año",
             "value": "2011",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2011"
@@ -825,7 +825,7 @@
           {
             "field": "Año",
             "value": "2006",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2006"
@@ -842,7 +842,7 @@
           {
             "field": "Año",
             "value": "2012",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2012"
@@ -859,7 +859,7 @@
           {
             "field": "Año",
             "value": "2007",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2007"
@@ -876,7 +876,7 @@
           {
             "field": "Año",
             "value": "2013",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2013"
@@ -893,7 +893,7 @@
           {
             "field": "Año",
             "value": "1998",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "1998"
@@ -910,7 +910,7 @@
           {
             "field": "Año",
             "value": "2014",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2014"
@@ -927,7 +927,7 @@
           {
             "field": "Año",
             "value": "2014",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2014"
@@ -944,7 +944,7 @@
           {
             "field": "Año",
             "value": "2014",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2014"
@@ -961,7 +961,7 @@
           {
             "field": "Año",
             "value": "2011",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2011"
@@ -978,7 +978,7 @@
           {
             "field": "Año",
             "value": "2014",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2014"
@@ -995,7 +995,7 @@
           {
             "field": "Año",
             "value": "2008",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2008"
@@ -1012,7 +1012,7 @@
           {
             "field": "Año",
             "value": "2008",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2008"
@@ -1029,7 +1029,7 @@
           {
             "field": "Año",
             "value": "2006",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2006"
@@ -1046,7 +1046,7 @@
           {
             "field": "Año",
             "value": "2005",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2005"
@@ -1063,7 +1063,7 @@
           {
             "field": "Año",
             "value": "2008",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2008"
@@ -1080,7 +1080,7 @@
           {
             "field": "Año",
             "value": "2003",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2003"
@@ -1105,7 +1105,7 @@
           {
             "field": "Año",
             "value": "2008",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2008"
@@ -1122,7 +1122,7 @@
           {
             "field": "Año",
             "value": "2007",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2007"
@@ -1139,7 +1139,7 @@
           {
             "field": "Año",
             "value": "2006",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2006"
@@ -1156,7 +1156,7 @@
           {
             "field": "Año",
             "value": "2005",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2005"
@@ -1173,7 +1173,7 @@
           {
             "field": "Año",
             "value": "2016",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2016"
@@ -1190,7 +1190,7 @@
           {
             "field": "Año",
             "value": "2016",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2016"
@@ -1207,7 +1207,7 @@
           {
             "field": "Año",
             "value": "2007",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2007"
@@ -1224,7 +1224,7 @@
           {
             "field": "Año",
             "value": "2015",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2015"
@@ -1249,7 +1249,7 @@
           {
             "field": "Año",
             "value": "2016",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2016"
@@ -1362,7 +1362,7 @@
           {
             "field": "Año",
             "value": "2007",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2007"
@@ -1419,7 +1419,7 @@
           {
             "field": "Año",
             "value": "2019",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2019"
@@ -1444,7 +1444,7 @@
           {
             "field": "Año",
             "value": "2014",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2014"
@@ -1477,7 +1477,7 @@
           {
             "field": "Año",
             "value": "2007",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2007"
@@ -1502,7 +1502,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -1519,7 +1519,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -1544,7 +1544,7 @@
           {
             "field": "Año",
             "value": "2022",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2022"
@@ -1569,7 +1569,7 @@
           {
             "field": "Año",
             "value": "2016",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2016"
@@ -1594,7 +1594,7 @@
           {
             "field": "Año",
             "value": "2008",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2008"
@@ -1739,7 +1739,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -1764,7 +1764,7 @@
           {
             "field": "Año",
             "value": "2021",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2021"
@@ -1781,7 +1781,7 @@
           {
             "field": "Año",
             "value": "2021",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2021"
@@ -1798,7 +1798,7 @@
           {
             "field": "Año",
             "value": "2021",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2021"
@@ -1823,7 +1823,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -1840,7 +1840,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -1857,7 +1857,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -1962,7 +1962,7 @@
           {
             "field": "Año",
             "value": "2015",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2015"
@@ -2139,7 +2139,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -2156,7 +2156,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -2173,7 +2173,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -2206,7 +2206,7 @@
           {
             "field": "Año",
             "value": "2019",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2019"
@@ -2255,7 +2255,7 @@
           {
             "field": "Año",
             "value": "2015",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2015"
@@ -2344,7 +2344,7 @@
           {
             "field": "Año",
             "value": "2022",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2022"
@@ -2361,7 +2361,7 @@
           {
             "field": "Año",
             "value": "2021",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2021"
@@ -2378,7 +2378,7 @@
           {
             "field": "Año",
             "value": "2021",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2021"
@@ -2395,7 +2395,7 @@
           {
             "field": "Año",
             "value": "2022",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2022"
@@ -2412,7 +2412,7 @@
           {
             "field": "Año",
             "value": "2020",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2020"
@@ -2429,7 +2429,7 @@
           {
             "field": "Año",
             "value": "2021",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2021"
@@ -2462,7 +2462,7 @@
           {
             "field": "Año",
             "value": "2021",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2021"
@@ -2479,7 +2479,7 @@
           {
             "field": "Año",
             "value": "2022",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2022"
@@ -2512,7 +2512,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -2529,7 +2529,7 @@
           {
             "field": "Año",
             "value": "2022",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2022"
@@ -2650,7 +2650,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -2675,7 +2675,7 @@
           {
             "field": "Año",
             "value": "2013",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2013"
@@ -2692,7 +2692,7 @@
           {
             "field": "Año",
             "value": "2011",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2011"
@@ -2741,7 +2741,7 @@
           {
             "field": "Año",
             "value": "2021",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2021"
@@ -2758,7 +2758,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -2775,7 +2775,7 @@
           {
             "field": "Año",
             "value": "2012",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2012"
@@ -2792,7 +2792,7 @@
           {
             "field": "Año",
             "value": "2014",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2014"
@@ -2825,7 +2825,7 @@
           {
             "field": "Año",
             "value": "2016",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2016"
@@ -2954,7 +2954,7 @@
           {
             "field": "Año",
             "value": "2021",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2021"
@@ -2979,7 +2979,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -2996,7 +2996,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -3013,7 +3013,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -3030,7 +3030,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -3047,7 +3047,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -3064,7 +3064,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -3081,7 +3081,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -3098,7 +3098,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -3115,7 +3115,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -3132,7 +3132,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -3149,7 +3149,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -3166,7 +3166,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -3183,7 +3183,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -3200,7 +3200,7 @@
           {
             "field": "Año",
             "value": "2025",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2025"
@@ -3217,7 +3217,7 @@
           {
             "field": "Año",
             "value": "2023",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2023"
@@ -3234,7 +3234,7 @@
           {
             "field": "Año",
             "value": "2024",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2024"
@@ -3259,7 +3259,7 @@
           {
             "field": "Año",
             "value": "2017",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2017"
@@ -3284,7 +3284,7 @@
           {
             "field": "Año",
             "value": "2017",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2017"
@@ -3749,7 +3749,7 @@
           {
             "field": "Año",
             "value": "2022",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2022"
@@ -3766,7 +3766,7 @@
           {
             "field": "Año",
             "value": "2022",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2022"
@@ -3783,7 +3783,7 @@
           {
             "field": "Año",
             "value": "2012",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2012"
@@ -3800,7 +3800,7 @@
           {
             "field": "Año",
             "value": "2007",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2007"
@@ -3817,7 +3817,7 @@
           {
             "field": "Año",
             "value": "2007",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2007"
@@ -3834,7 +3834,7 @@
           {
             "field": "Año",
             "value": "2003",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2003"
@@ -3859,7 +3859,7 @@
           {
             "field": "Año",
             "value": "2014",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2014"
@@ -3876,7 +3876,7 @@
           {
             "field": "Año",
             "value": "2018",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2018"
@@ -3997,7 +3997,7 @@
           {
             "field": "Año",
             "value": "2018",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2018"
@@ -4014,7 +4014,7 @@
           {
             "field": "Año",
             "value": "2018",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2018"
@@ -4639,7 +4639,7 @@
           {
             "field": "Año",
             "value": "2015",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2015"
@@ -4688,7 +4688,7 @@
           {
             "field": "Año",
             "value": "2005",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2005"
@@ -4705,7 +4705,7 @@
           {
             "field": "Año",
             "value": "2002",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2002"
@@ -4842,7 +4842,7 @@
           {
             "field": "Año",
             "value": "2008",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2008"
@@ -4859,7 +4859,7 @@
           {
             "field": "Año",
             "value": "2008",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2008"
@@ -4876,7 +4876,7 @@
           {
             "field": "Año",
             "value": "2005",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2005"
@@ -4893,7 +4893,7 @@
           {
             "field": "Año",
             "value": "2006",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2006"
@@ -4910,7 +4910,7 @@
           {
             "field": "Año",
             "value": "2006",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2006"
@@ -4927,7 +4927,7 @@
           {
             "field": "Año",
             "value": "2013",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2013"
@@ -4944,7 +4944,7 @@
           {
             "field": "Año",
             "value": "2006",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2006"
@@ -4961,7 +4961,7 @@
           {
             "field": "Año",
             "value": "2006",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2006"
@@ -4978,7 +4978,7 @@
           {
             "field": "Año",
             "value": "2007",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2007"
@@ -4995,7 +4995,7 @@
           {
             "field": "Año",
             "value": "2008",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2008"
@@ -5012,7 +5012,7 @@
           {
             "field": "Año",
             "value": "2005",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2005"
@@ -5029,7 +5029,7 @@
           {
             "field": "Año",
             "value": "2005",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2005"
@@ -5046,7 +5046,7 @@
           {
             "field": "Año",
             "value": "2008",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2008"
@@ -5063,7 +5063,7 @@
           {
             "field": "Año",
             "value": "2006",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2006"
@@ -5080,7 +5080,7 @@
           {
             "field": "Año",
             "value": "2004",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2004"
@@ -5097,7 +5097,7 @@
           {
             "field": "Año",
             "value": "2008",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2008"
@@ -5114,7 +5114,7 @@
           {
             "field": "Año",
             "value": "2008",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2008"
@@ -5131,7 +5131,7 @@
           {
             "field": "Año",
             "value": "2005",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2005"
@@ -5212,7 +5212,7 @@
           {
             "field": "Año",
             "value": "2000",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2000"
@@ -5229,7 +5229,7 @@
           {
             "field": "Año",
             "value": "2000",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2000"
@@ -5254,7 +5254,7 @@
           {
             "field": "Año",
             "value": "2014",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2014"
@@ -5271,7 +5271,7 @@
           {
             "field": "Año",
             "value": "2014",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2014"
@@ -5288,7 +5288,7 @@
           {
             "field": "Año",
             "value": "2014",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2014"
@@ -5305,7 +5305,7 @@
           {
             "field": "Año",
             "value": "2014",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2014"
@@ -5762,7 +5762,7 @@
           {
             "field": "Año",
             "value": "2011",
-            "mechanism": "src/preparation/gomariz/technical/source-year-spec.ts",
+            "mechanism": "src/preparation/gomariz/technical/mapping/source-year-spec.ts",
             "scope": "unit",
             "sourceField": "year",
             "sourceValue": "2011"
