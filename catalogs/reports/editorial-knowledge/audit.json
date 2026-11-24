@@ -1,0 +1,813 @@
+{
+  "version": 1,
+  "kind": "diagnostico_sin_publicacion",
+  "providers": {
+    "gam": {
+      "records": 983,
+      "ready": 977,
+      "review": 6,
+      "exceptions": 0,
+      "verifiedUnitGeneralApplied": 254,
+      "verifiedUnitShortApplied": 208,
+      "verifiedUnitTitlesApplied": 9,
+      "modelReferencesApplied": 20,
+      "familyGuidanceApplied": 409,
+      "emptyShort": 1,
+      "emptyGeneral": 0,
+      "signedUnits": 308,
+      "signedUnitsWithoutExactMatch": 24,
+      "signedFields": 495,
+      "signedFieldsWithoutExactMatch": 24
+    },
+    "gomariz": {
+      "records": 547,
+      "ready": 546,
+      "review": 1,
+      "exceptions": 0,
+      "verifiedUnitGeneralApplied": 4,
+      "verifiedUnitShortApplied": 1,
+      "verifiedUnitTitlesApplied": 9,
+      "modelReferencesApplied": 48,
+      "familyGuidanceApplied": 488,
+      "emptyShort": 0,
+      "emptyGeneral": 0,
+      "signedUnits": 31,
+      "signedUnitsWithoutExactMatch": 17,
+      "signedFields": 37,
+      "signedFieldsWithoutExactMatch": 19
+    },
+    "mercaeleva": {
+      "records": 221,
+      "ready": 221,
+      "review": 0,
+      "exceptions": 0,
+      "verifiedUnitGeneralApplied": 66,
+      "verifiedUnitShortApplied": 19,
+      "verifiedUnitTitlesApplied": 0,
+      "modelReferencesApplied": 143,
+      "familyGuidanceApplied": 148,
+      "emptyShort": 0,
+      "emptyGeneral": 0,
+      "signedUnits": 89,
+      "signedUnitsWithoutExactMatch": 14,
+      "signedFields": 106,
+      "signedFieldsWithoutExactMatch": 18
+    }
+  },
+  "total": {
+    "records": 1751,
+    "ready": 1744,
+    "review": 7,
+    "exceptions": 0,
+    "verifiedUnitGeneralApplied": 324,
+    "verifiedUnitShortApplied": 228,
+    "verifiedUnitTitlesApplied": 18,
+    "modelReferencesApplied": 211,
+    "familyGuidanceApplied": 1045,
+    "emptyShort": 1,
+    "emptyGeneral": 0,
+    "signedUnits": 428,
+    "signedUnitsWithoutExactMatch": 55,
+    "signedFields": 638,
+    "signedFieldsWithoutExactMatch": 61
+  },
+  "problems": [],
+  "signedDifferences": [
+    {
+      "provider": "gam",
+      "reference": "6196",
+      "field": "general",
+      "status": "ready",
+      "signed": "La unidad de ocasión JLG 1930 ES, anunciada como «Plataforma Tijera Eléctrica 8M JLG 1930ES», figura como fabricada en 2015, con número de serie B200021461. Ubicación declarada: ALICANTE, ESPAÑA. Horómetro declarado: 675 horas. Prestaciones registradas en la ficha: capacidad de carga (kg): 230 KG; altura de elevación (m): 8 metros; pendiente superable: 25%. Dimensiones y peso publicados: longitud: 1870 mm; anchura: 760 mm; altura: 1520 mm; peso: 1560 KG.\n\nLa tijera JLG 1930ES ofrece acceso vertical mediante una plataforma eléctrica estrecha; los 8 m comerciales indican altura de trabajo aproximada y no altura de suelo de plataforma. El fabricante describe para ciertas generaciones la extensión deslizante de la cesta con un límite de carga específico, que debe contrastarse con el equipo real. En este anuncio el campo «Dimensiones Cesta» aparece malformado, de modo que no se puede dar por acreditada una extensión concreta. Los 675 h y 1.560 kg publicados pertenecen a la unidad con serie B200021461, distinta de otras 1930ES. Deben revisarse batería, barandillas y condiciones de uso interior o exterior.",
+      "prepared": "La unidad de ocasión JLG 1930 ES, anunciada como «Plataforma Tijera Eléctrica 8M JLG 1930ES», figura como fabricada en 2015, con número de serie B200021461. Ubicación declarada: ALICANTE, ESPAÑA. Horómetro declarado: 675 horas. Prestaciones registradas en la ficha: capacidad de carga (kg): 230 kg; altura de elevación (m): 8 metros; pendiente superable: 25%. Dimensiones y peso publicados: longitud: 1870 mm; anchura: 760 mm; altura: 1520 mm; peso: 1560 kg.\n\nLa tijera JLG 1930ES ofrece acceso vertical mediante una plataforma eléctrica estrecha; los 8 m comerciales indican altura de trabajo aproximada y no altura de suelo de plataforma. El fabricante describe para ciertas generaciones la extensión deslizante de la cesta con un límite de carga específico, que debe contrastarse con el equipo real. En este anuncio el campo «Dimensiones Cesta» aparece malformado, de modo que no se puede dar por acreditada una extensión concreta. Los 675 h y 1.560 kg publicados pertenecen a la unidad con serie B200021461, distinta de otras 1930ES. Deben revisarse batería, barandillas y condiciones de uso interior o exterior.",
+      "sources": [
+        "https://csapps.jlg.com/OnlineManuals/Manuals/JLG/JLG%20Scissor%20Lifts/ES%20Scissors/1930ES_2030ES_2032ES_2630ES_2632ES_2646ES_3246ES/Service%20Manuals/Prior%20to%20SN-0200239382%20and%20B200020297/Service_3121166_11-27-13_Global_English.pdf"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "6195",
+      "field": "general",
+      "status": "ready",
+      "signed": "La unidad de ocasión JLG 1930 ES, anunciada como «Plataforma Tijera Eléctrica 8M JLG 1930ES», figura como fabricada en 2016, con número de serie B200029131. Ubicación declarada: ALICANTE, ESPAÑA. Horómetro declarado: 676 horas. Prestaciones registradas en la ficha: capacidad de carga (kg): 230 KG; altura de elevación (m): 8 metros; pendiente superable: 25%. Dimensiones y peso publicados: longitud: 1870 mm; anchura: 760 mm; altura: 1520 mm; peso: 1564 KG.\n\nLa documentación JLG de la 1930ES separa la altura de trabajo comercial próxima a 8 m de la altura real del suelo de plataforma cercana a 5,7 m, importante para decidir si alcanza una instalación. La cesta estándar de la gama mide aproximadamente 1,87 × 0,76 m; la especificación de cesta en este anuncio está transcrita de forma ilegible, por lo que su dimensión debe comprobarse físicamente. La extensión deslizante, si existe, tiene límites de carga propios. Esta unidad de 2016 declara 676 horas y 1.564 kg, cifras que ayudan a planificar inspección y transporte; el 25 % anunciado corresponde a desplazamiento, no a trabajo elevado.",
+      "prepared": "La unidad de ocasión JLG 1930 ES, anunciada como «Plataforma Tijera Eléctrica 8M JLG 1930ES», figura como fabricada en 2016, con número de serie B200029131. Ubicación declarada: ALICANTE, ESPAÑA. Horómetro declarado: 676 horas. Prestaciones registradas en la ficha: capacidad de carga (kg): 230 kg; altura de elevación (m): 8 metros; pendiente superable: 25%. Dimensiones y peso publicados: longitud: 1870 mm; anchura: 760 mm; altura: 1520 mm; peso: 1564 kg.\n\nLa documentación JLG de la 1930ES separa la altura de trabajo comercial próxima a 8 m de la altura real del suelo de plataforma cercana a 5,7 m, importante para decidir si alcanza una instalación. La cesta estándar de la gama mide aproximadamente 1,87 × 0,76 m; la especificación de cesta en este anuncio está transcrita de forma ilegible, por lo que su dimensión debe comprobarse físicamente. La extensión deslizante, si existe, tiene límites de carga propios. Esta unidad de 2016 declara 676 horas y 1.564 kg, cifras que ayudan a planificar inspección y transporte; el 25 % anunciado corresponde a desplazamiento, no a trabajo elevado.",
+      "sources": [
+        "https://csapps.jlg.com/OnlineManuals/Manuals/JLG/JLG%20Scissor%20Lifts/ES%20Scissors/1930ES_2030ES_2032ES_2630ES_2632ES_2646ES_3246ES/Service%20Manuals/Prior%20to%20SN-0200239382%20and%20B200020297/Service_3121166_11-27-13_Global_English.pdf"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "6486",
+      "field": "general",
+      "status": "ready",
+      "signed": "La plataforma de tijera eléctrica JLG 1930 ES se anuncia como unidad de ocasión del año 2006. La ficha técnica declara altura de elevación de 8 metros y capacidad de carga de 230 KG. La unidad está situada en Alicante (España) y se identifica con el número de serie 1200010109. El horómetro registra 765 horas. Dimensiones y peso publicados: longitud 1870 mm, anchura 760 mm, altura 1520 mm, peso 1700 KG. Datos adicionales consignados: pendiente superable: 25%.\n\nPara la familia JLG 1930ES la documentación técnica diferencia altura de trabajo redondeada a 8 m y altura efectiva de plataforma del orden de 5,7 m; no deben utilizarse como medidas equivalentes. El manual del fabricante prevé límites de carga y ocupación distintos según normativa y uso interior o exterior, por lo que los 230 kg de la ficha no autorizan cualquier condición de trabajo. El ancho de 760 mm facilita comparar los pasos de acceso, pero el peso declarado de 1.700 kg exige comprobar capacidad del forjado y medios de transporte. La capacidad de la extensión, si se equipa, se verifica por separado.",
+      "prepared": "La plataforma de tijera eléctrica JLG 1930 ES se anuncia como unidad de ocasión del año 2006. La ficha técnica declara altura de elevación de 8 metros y capacidad de carga de 230 kg. La unidad está situada en Alicante (España) y se identifica con el número de serie 1200010109. El horómetro registra 765 horas. Dimensiones y peso publicados: longitud 1870 mm, anchura 760 mm, altura 1520 mm, peso 1700 kg. Datos adicionales consignados: pendiente superable: 25%.\n\nPara la familia JLG 1930ES la documentación técnica diferencia altura de trabajo redondeada a 8 m y altura efectiva de plataforma del orden de 5,7 m; no deben utilizarse como medidas equivalentes. El manual del fabricante prevé límites de carga y ocupación distintos según normativa y uso interior o exterior, por lo que los 230 kg de la ficha no autorizan cualquier condición de trabajo. El ancho de 760 mm facilita comparar los pasos de acceso, pero el peso declarado de 1.700 kg exige comprobar capacidad del forjado y medios de transporte. La capacidad de la extensión, si se equipa, se verifica por separado.",
+      "sources": [
+        "https://csapps.jlg.com/OnlineManuals/Manuals/JLG/JLG%20Scissor%20Lifts/ES%20Scissors/1930ES_2030ES_2032ES_2630ES_2632ES_2646ES_3246ES/Service%20Manuals/Prior%20to%20SN-0200239382%20and%20B200020297/Service_3121166_11-27-13_Global_English.pdf"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "6116",
+      "field": "general",
+      "status": "ready",
+      "signed": "La plataforma de tijera eléctrica Snorkel S4732E se anuncia como unidad de ocasión del año 2018. La ficha técnica declara altura de elevación de 12 metros y capacidad de carga de 350 KG. La unidad está situada en Barcelona (España) y se identifica con el número de serie S4732E-01-180300380. La ficha no acredita una lectura válida del horómetro. Dimensiones y peso publicados: longitud 2300 mm, anchura 1190 mm, altura 2390 mm, peso 2740 KG. Datos adicionales consignados: pendiente superable: 25%; dimensiones de la cesta: 2,14X1,09 metros.\n\nLa ficha de Snorkel distingue una altura de trabajo próxima a 11,8 m de una plataforma situada aproximadamente a 9,8 m: no se debe interpretar la publicidad «12 metros» como altura del suelo de la cesta. Para el S4732E el fabricante documenta una superficie de plataforma nominal de 2,14 × 1,09 m y una extensión de plataforma en el catálogo; la disponibilidad y estado de esta última en el ejemplar se deben confirmar. Sus 1,19 m de anchura declarada son especialmente relevantes para puertas y pasillos. El dato de pendiente del 25 % corresponde a desplazamiento, no al permiso para trabajar elevado en una rampa.",
+      "prepared": "La plataforma de tijera eléctrica Snorkel S4732E se anuncia como unidad de ocasión del año 2018. La ficha técnica declara altura de elevación de 12 metros y capacidad de carga de 350 kg. La unidad está situada en Barcelona (España) y se identifica con el número de serie S4732E-01-180300380. La ficha no acredita una lectura válida del horómetro. Dimensiones y peso publicados: longitud 2300 mm, anchura 1190 mm, altura 2390 mm, peso 2740 kg. Datos adicionales consignados: pendiente superable: 25%; dimensiones de la cesta: 2,14X1,09 metros.\n\nLa ficha de Snorkel distingue una altura de trabajo próxima a 11,8 m de una plataforma situada aproximadamente a 9,8 m: no se debe interpretar la publicidad «12 metros» como altura del suelo de la cesta. Para el S4732E el fabricante documenta una superficie de plataforma nominal de 2,14 × 1,09 m y una extensión de plataforma en el catálogo; la disponibilidad y estado de esta última en el ejemplar se deben confirmar. Sus 1,19 m de anchura declarada son especialmente relevantes para puertas y pasillos. El dato de pendiente del 25 % corresponde a desplazamiento, no al permiso para trabajar elevado en una rampa.",
+      "sources": [
+        "https://www.snorkellifts.com/sites/default/files/pdf/english-ce-met/S4732E.pdf"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "6980",
+      "field": "general",
+      "status": "ready",
+      "signed": "La plataforma de tijera eléctrica JLG 1930ES se anuncia como unidad de ocasión del año 2014. La ficha técnica declara capacidad de carga de 230 KG. La unidad está situada en Burgos (España) y se identifica con el número de serie 0200232676. El horómetro registra 655 horas. Dimensiones y peso publicados: longitud 1870 mm, anchura 760 mm, altura 1590 mm, peso 1565 KG. Datos adicionales consignados: dimensiones de la cesta: 1,87X0,76 metros.\n\nLa JLG 1930ES es una plataforma compacta de tijera para trabajar sobre instalaciones verticales, con accionamiento eléctrico y unos 760 mm de anchura de chasis publicados. Aunque el resumen comercial presenta 8 m de altura, el valor orientativo de trabajo del modelo no equivale a la altura de plataforma; la ficha estructurada de este registro no informa una altura numérica independiente. Su cesta principal de 1,87 × 0,76 m permite estimar espacio para herramientas y ocupantes, pero los 230 kg declarados deben contrastarse con el límite correspondiente al uso interior o exterior. La altura de transporte de 1.590 mm y las 655 horas son características de este ejemplar, no de toda la serie.",
+      "prepared": "La plataforma de tijera eléctrica JLG 1930ES se anuncia como unidad de ocasión del año 2014. La ficha técnica declara capacidad de carga de 230 kg. La unidad está situada en Burgos (España) y se identifica con el número de serie 0200232676. El horómetro registra 655 horas. Dimensiones y peso publicados: longitud 1870 mm, anchura 760 mm, altura 1590 mm, peso 1565 kg. Datos adicionales consignados: dimensiones de la cesta: 1,87X0,76 metros.\n\nLa JLG 1930ES es una plataforma compacta de tijera para trabajar sobre instalaciones verticales, con accionamiento eléctrico y unos 760 mm de anchura de chasis publicados. Aunque el resumen comercial presenta 8 m de altura, el valor orientativo de trabajo del modelo no equivale a la altura de plataforma; la ficha estructurada de este registro no informa una altura numérica independiente. Su cesta principal de 1,87 × 0,76 m permite estimar espacio para herramientas y ocupantes, pero los 230 kg declarados deben contrastarse con el límite correspondiente al uso interior o exterior. La altura de transporte de 1.590 mm y las 655 horas son características de este ejemplar, no de toda la serie.",
+      "sources": [
+        "https://csapps.jlg.com/OnlineManuals/Manuals/JLG/JLG%20Scissor%20Lifts/ES%20Scissors/1930ES_2030ES_2032ES_2630ES_2632ES_2646ES_3246ES/Service%20Manuals/Prior%20to%20SN-0200239382%20and%20B200020297/Service_3121166_11-27-13_Global_English.pdf"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "6863",
+      "field": "short",
+      "status": "ready",
+      "signed": "Carretilla eléctrica Yale usada, 1.600 kg y 5.500 mm de elevación. El modelo difiere entre título y ficha técnica.",
+      "prepared": "Carretilla elevadora YALE ERP16VT MWB, con altura de elevación de 5,5 m y capacidad de carga de 1.600 kg.",
+      "sources": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/6863-2016-yale-erp16vt-mwb"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "6103",
+      "field": "short",
+      "status": "ready",
+      "signed": "Transpaleta eléctrica P2.5S de ocasión, 2.500 kg; marca pendiente de confirmar por discrepancia entre título y ficha.",
+      "prepared": "HYSTER P2.5S Segunda Mano. Venta de Transpaleta eléctrica conductor montado 2500 kg de ocasión. Año 2022",
+      "sources": [
+        "https://online.gamrentals.com/es/transpaletas-elevadoras-electricas-segunda-mano/6103-20022-hyster-p25s"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "6852",
+      "field": "short",
+      "status": "ready",
+      "signed": "Apilador eléctrico S1.2 usado, con 1.200 kg y 3.690 mm de elevación; marca contradictoria entre título y ficha técnica.",
+      "prepared": "Apilador YALE S1.2, con altura de elevación de 3,69 m y capacidad de carga de 1.200 kg; año de fabricación 2021 y lectura de horómetro declarada de 5.400 horas.",
+      "sources": [
+        "https://online.gamrentals.com/es/apiladoras-elevadoras-electricas-segunda-mano/6852-2021-yale-s12"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "4737",
+      "field": "general",
+      "status": "ready",
+      "signed": "La XCMG anunciada como XG0810C es una plataforma elevadora de tijera sobre orugas y accionamiento eléctrico, destinada a trabajos de acceso vertical. El campo Modelo, sin embargo, indica XG0807ACW-LI y el origen menciona una batería de litio; no debe equipararse la versión de ruedas de esa denominación con la de orugas del título sin verificar la identidad. La ficha publica 8 m de altura de elevación, 250 kg de capacidad, 2.138 mm de longitud, 990 mm de anchura y 1.700 kg de peso. También indica plataforma de 1,93 × 0,91 m y pendiente superable del 30 %, pero el texto comercial habla del 25 %. Estas lecturas deben comprobarse para determinar la máquina y su rango operativo, evitando dar por confirmado el tipo de tracción.",
+      "prepared": "La ficha técnica de plataforma de tijera eléctrica XCMG XG0810C indica altura de elevación de 8 m, capacidad de 250 kg, peso declarado de 1.700 kg, longitud de 2,138 m, anchura de 0,99 m, altura del equipo de 2,235 m, pendiente superable declarada de 30 % y cesta de 1,93 × 0,91 m. El proveedor menciona descenso manual y protección contra sobrecarga en su descripción; su presencia y configuración deben comprobarse para esta unidad. El trabajo de elevación depende de la altura operativa y de la superficie de apoyo. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta. La descripción del proveedor menciona freno automático y alarma de inclinación para este modelo. Son características documentadas en el anuncio, cuya disponibilidad y configuración deben comprobarse en la unidad ofrecida.",
+      "sources": [
+        "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/4737-xcmg-xg0810c"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "4802",
+      "field": "general",
+      "status": "ready",
+      "signed": "La plataforma XCMG anunciada como XG1523ERT es una tijera eléctrica 4×4 orientada a trabajos con base elevada sobre superficies que requieren tracción. La ficha estructurada, sin embargo, identifica el modelo XG1418ERT; esa divergencia debe verificarse antes de atribuir prestaciones a una variante. El origen declara 15 m de altura, 700 kg de capacidad de carga, tracción 4×4 y pendiente superable del 40 % como prestaciones de catálogo. También registra 4.877 mm de longitud, 2.288 mm de anchura, 7.640 kg de peso y batería de plomo. La plataforma descrita mide 3,91 × 1,81 m. La altura de trabajo no debe confundirse con la altura de plataforma, y la pendiente superable durante desplazamiento no autoriza a elevar sobre una superficie inclinada.",
+      "prepared": "La ficha técnica de plataforma de tijera eléctrica XCMG XG1523ERT indica altura de elevación de 15 m, capacidad de 700 kg, peso declarado de 7.640 kg, longitud de 4,877 m, anchura de 2,288 m, altura del equipo de 2,29 m, pendiente superable declarada de 40 % y cesta de 3,91 × 1,81 m. El proveedor menciona tracción a las cuatro ruedas, descenso manual y protección contra sobrecarga en su descripción; su presencia y configuración deben comprobarse para esta unidad. El trabajo de elevación depende de la altura operativa y de la superficie de apoyo. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta. La descripción del proveedor menciona freno automático y alarma de inclinación para este modelo. Son características documentadas en el anuncio, cuya disponibilidad y configuración deben comprobarse en la unidad ofrecida.",
+      "sources": [
+        "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/4802-plataforma-de-tijera-electrica-4x4-xcmg-xg1523ert"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "4792",
+      "field": "general",
+      "status": "ready",
+      "signed": "El anuncio presenta una plataforma telescópica diésel XCMG XGS58E, mientras el campo técnico «Modelo» y la URL del proveedor identifican XGS58E1. Esa diferencia exige comprobar la variante y no permite atribuir sin más las especificaciones de una a la otra. La descripción comercial anuncia 58,6 metros de altura máxima de trabajo y 24,8 metros de alcance horizontal. Distingue una capacidad estándar de 230 kg de la carga de 450 kg con restricciones, sin convertirlas en una única capacidad nominal. También menciona un motor Cummins F3.8 de 75 kW y tracción 4x4; estas características deben contrastarse con la documentación de la configuración realmente ofertada.",
+      "prepared": "La ficha técnica de plataforma telescópica diésel XCMG XGS58E1 indica altura de elevación de 58 m, capacidad de 450 kg, peso declarado de 27.900 kg, longitud de 19,45 m, anchura de 2,49 m, altura del equipo de 3,07 m, pendiente superable declarada de 45 % y cesta de 2,44 × 0,9 m. El proveedor menciona tracción a las cuatro ruedas en su descripción; su presencia y configuración deben comprobarse para esta unidad. El brazo telescópico facilita el acceso en altura con desplazamiento horizontal. La altura máxima y el alcance horizontal son magnitudes distintas; confirmar el diagrama de trabajo.",
+      "sources": [
+        "https://online.gamrentals.com/es/plataforma-telescopica-diesel-xcmg/4792-plataforma-telescopica-diesel-xcmg-xgs58e1"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "6171",
+      "field": "general",
+      "status": "ready",
+      "signed": "La CTE TRACCESS 210E es una plataforma articulada eléctrica sobre orugas, identificada como TRCS 210E en las especificaciones del proveedor. GAM la anuncia comercialmente como equipo de 21 m, mientras que su ficha registra 20,46 m en el campo de elevación. La capacidad de cesta es de 230 kg, coincidente en la ficha técnica de GAM y en la documentación del fabricante para el modelo TRCS 210E. El alcance lateral indicado por ambas fuentes es de 11,30 m. El anuncio consigna 5.300 mm de longitud y 2.650 kg de peso. La carga y el alcance efectivos requieren verificar el diagrama de trabajo y la configuración suministrada.",
+      "prepared": "La ficha técnica de plataforma sobre orugas CTE TRCS 210E indica alcance lateral de 11,3 m, altura de elevación de 20,46 m, capacidad de 230 kg, peso declarado de 2.650 kg, longitud de 5,3 m, anchura de 3,15 m y altura del equipo de 2,05 m. La descripción de origen declara mandos proporcionales. El proveedor menciona nivelación automática y estabilizadores en su descripción; su presencia y configuración deben comprobarse para esta unidad. La base sobre orugas condiciona el acceso y la implantación del equipo. Comprobar terreno, estabilización y diagrama de alcance antes de su utilización.",
+      "sources": [
+        "https://online.gamrentals.com/es/cte/6171-plataforma-sobre-orugas-electrica-cte-traccess-210e"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "4650",
+      "field": "general",
+      "status": "ready",
+      "signed": "La CTE B-LIFT 18HD es una plataforma telescópica sobre camión anunciada para intervenir en fachadas, alumbrado e instalaciones. El título y el resumen mencionan B-LIFT 18HD, pero la especificación «Modelo» registra B-LIFT 18HV; esta diferencia de variante requiere comprobación. La altura de trabajo figura como 18 m, con alcance lateral de 12,5 m en la descripción original. El resumen original del anuncio indicaba 360 kg de carga de cesta, mientras el texto largo y la ficha técnica señalan 300 kg; la preparación ha corregido el resumen comercial a 300 kg sin resolver por ello la diferencia de variante. El brazo telescópico facilita el acceso a puntos alejados del camión, siempre sujeto al diagrama de alcance y a la estabilización disponible. No se atribuye una capacidad definitiva hasta contrastar documentación y placa de la unidad ofertada.",
+      "prepared": "La CTE B-LIFT 18 es una plataforma aérea sobre camión telescópica diseñada para ofrecer elevación en altura eficiente y segura con un rendimiento profesional. Con una altura de trabajo de 18 metros, alcance lateral de 12,5 metros y una capacidad de carga en cesta de hasta 300 kg, esta solución es ideal para tareas de mantenimiento urbano, instalación, limpieza en altura y trabajos técnicos de difícil acceso. Gracias a su estructura compacta, su brazo telescópico de tres secciones y sus sistemas de control avanzados, la CTE B-LIFT 18 es la herramienta perfecta para empresas que buscan productividad, versatilidad y tecnología en sus operaciones de elevación. Esta plataforma montada sobre camión incorpora el sistema S3 Smart Stability System EVO, que garantiza una óptima estabilidad dinámica durante las operaciones, ajustando automáticamente los parámetros de trabajo según la posición de la plataforma y el peso cargado. Su torreta giratoria ±320°, junto con la rotación de cesta de 90° a izquierda y derecha, permite acceder a zonas de trabajo complejas sin necesidad de recolocar el vehículo constantemente. Además, su diseño ligero permite su montaje sobre camiones con un PTT mínimo de 3.500 kg, facilitando la movilidad urbana y el acceso a áreas restringidas. La plataforma sobre camión telescópica CTE B-LIFT 18 está diseñada para facilitar el trabajo en todo momento. Gracias al sistema S3 EVO, los estabilizadores hidráulicos con sensores de contacto y la nivelación automática de la cesta, la estabilidad está controlada electrónicamente en todo momento.",
+      "sources": [
+        "https://online.gamrentals.com/es/cte/4650-cte-b-lift-18hv"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "2311",
+      "field": "general",
+      "status": "ready",
+      "signed": "La carretilla Yale GC40VX se identifica en la ficha publicada como equipo de combustión interna de la serie Veracitor. Las especificaciones señalan 4.500 kg de capacidad, 3.630 mm de longitud, 1.270 mm de anchura y 6.977 kg de peso, con motor Kubota 3.8L LPG y centro de carga de 500 mm. El texto comercial original menciona alternativamente GLC40VX, una capacidad de 4 toneladas y la marca Hyster; esas expresiones no se adoptan como identidad o capacidad de la unidad. La motorización queda descrita como GLP conforme a la evidencia de motor que ya utiliza la preparación. Antes de cerrar su configuración deben contrastarse la placa y los equipos opcionales.",
+      "prepared": "La carretilla elevadora de combustión interna GC40VX es una herramienta fundamental en el sector industrial para el transporte de cargas pesadas. El modelo GLC40VX, de la serie Veracitor®, se presenta como una solución de alto rendimiento y bajo coste de explotación para aplicaciones de trabajo medio a intensivo, con una capacidad de carga de 4 toneladas. Esta carretilla elevadora Yale es personalizable de acuerdo con las necesidades de cada aplicación. Además, cuenta con un equipamiento y funcionalidades",
+      "sources": [
+        "https://online.gamrentals.com/es/yale/2311-apilador-electrico-a-pie-yale-gc40vx"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "2313",
+      "field": "general",
+      "status": "ready",
+      "signed": "La Yale GC55VX es una carretilla elevadora contrapesada anunciada con 5.500 kg de capacidad y centro de carga de 500 mm. La ficha estructurada proporciona 4.061 mm de longitud, 1.420 mm de anchura, 2.135 mm de altura, 7.618 kg de peso y radio de giro de 2.375 mm; son medidas útiles para valorar accesos y superficie de maniobra. La motorización requiere una verificación específica: el título comercial menciona GLP, el campo de motor señala Kubota de GLP, el texto largo la describe como diésel y la casilla «Motorización» indica eléctrico. No se debe elegir uno de esos combustibles por descarte ni atribuir equipamiento opcional de cabina. La capacidad de trabajo efectiva depende además del mástil, tablero y centro de carga de la unidad.",
+      "prepared": "La Carretilla Elevadora GLP Yale GC55VX es una máquina robusta y poderosa diseñada para hacer frente a las tareas más desafiantes de manejo de materiales en entornos industriales y de almacén. Con una capacidad de carga impresionante de hasta 5,500 kg (5.5 toneladas), esta carretilla elevadora es un aliado confiable para el manejo de cargas pesadas y voluminosas. El motor GLP de alto rendimiento de la GC55VX proporciona la potencia necesaria para elevar y transportar cargas con facilidad y eficiencia. Este motor GLP de Yale es conocido por su durabilidad y eficiencia en el consumo de combustible, lo que contribuye a mantener los costos operativos bajos a lo largo del tiempo. Además, su capacidad de respuesta y su capacidad para abordar terrenos irregulares hacen que sea ideal para aplicaciones en exteriores. La cabina espaciosa y ergonómica está diseñada para minimizar la fatiga del operador durante largas jornadas de trabajo. Un asiento ajustable y un panel de control intuitivo permiten al operador encontrar la posición más cómoda y controlar la carretilla con facilidad. La capacidad de carga excepcional de la GC55VX, combinada con su chasis resistente, le permite abordar una amplia variedad de tareas de manejo de materiales con facilidad y eficiencia. Su motor GLP de alto rendimiento, su comodidad para el operador y su durabilidad excepcional la convierten en una elección sólida para empresas que buscan mejorar la eficiencia y la productividad en sus operaciones logísticas.",
+      "sources": [
+        "https://online.gamrentals.com/es/carretillas-elevadora-diesel-yale/2313-apilador-electrico-a-pie-yale-gc55vx"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "2314",
+      "field": "general",
+      "status": "ready",
+      "signed": "La Yale GC60VX es una carretilla contrapesada anunciada con capacidad de 6.000 kg a centro de carga de 600 mm y elevación indicada de 5.600 mm. El registro publica 8.667 kg de peso, anchura de 1.438 mm y radio de giro de 2.585 mm, magnitudes importantes para planificar maniobras y resistencia del suelo. El anuncio presenta la unidad como diésel y el campo «Motorización» concuerda con esa declaración. «Tipo motor» enumera opciones diésel y GLP de la familia, por lo que no permite confirmar la configuración concreta del motor sin comprobar la placa de esta unidad. No se atribuye al ejemplar equipamiento de otras variantes. Su capacidad residual en altura deberá validarse con la placa, el mástil y el implemento realmente instalados.",
+      "prepared": "La Carretilla Elevadora Diésel Yale GC60VX es una herramienta versátil y eficiente diseñada para aplicaciones de manejo de materiales en almacenes, fábricas y espacios de trabajo donde se requiere una máquina compacta y maniobrable. Con una capacidad de carga de hasta 6,000 kg (6 toneladas), esta carretilla elevadora proporciona un equilibrio óptimo entre potencia y agilidad para una amplia variedad de tareas de manejo de materiales. El motor diésel de alto rendimiento de la GC60VX brinda la potencia necesaria para elevar y transportar cargas con facilidad y eficiencia. A pesar de su tamaño compacto, esta carretilla elevadora ofrece un rendimiento confiable y una excelente capacidad de maniobra, lo que la hace ideal para entornos de trabajo con espacio limitado y requerimientos de carga y descarga frecuentes. La comodidad del operador es una prioridad en el diseño de la GC60VX. La cabina está diseñada ergonómicamente para minimizar la fatiga del operador durante jornadas de trabajo prolongadas. El asiento ajustable y el panel de control intuitivo permiten al operador encontrar la posición más cómoda y controlar la carretilla con facilidad. La capacidad de carga de la GC60VX, combinada con su chasis resistente, le permite abordar una amplia gama de tareas de manejo de materiales con facilidad y eficiencia. Su motor diésel confiable, su comodidad para el operador y su durabilidad excepcional la convierten en una opción sólida para empresas que buscan mejorar la eficiencia y la productividad en sus operaciones logísticas.",
+      "sources": [
+        "https://online.gamrentals.com/es/carretillas-elevadora-diesel-yale/2314-apilador-electrico-a-pie-yale-gc60vx"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "6274",
+      "field": "general",
+      "status": "ready",
+      "signed": "La Hyster H14XD-12 es una carretilla elevadora diésel de gran tonelaje. El título comercial cita H12XD-12, pero el resumen de origen y el campo Modelo indican H14XD-12; debe comprobarse la identificación exacta antes de asignar capacidades. La ficha técnica publica 14.500 kg de capacidad nominal con centro de carga de 1.200 mm y hasta 6.255 mm de altura de elevación. Declara asimismo 22.353 kg de peso, 7.806 mm de longitud y 2.541 mm de anchura. Estos datos son relevantes para cargas voluminosas, planificación de suelo y circulación en campa, pero la capacidad real depende del mástil, implemento y centro de gravedad de la carga. No debe transferirse sin comprobación el equipamiento de otras variantes de la serie.",
+      "prepared": "La ficha técnica de carretilla elevadora diésel HYSTER H14XD-12 indica altura de elevación de 6,255 m, capacidad de carga de 14.500 kg, peso declarado de 22.353 kg, longitud de 7,806 m, anchura de 2,541 m, altura del equipo de 4,008 m y centro de carga declarado de 1.200 mm. El proveedor menciona cabina cerrada en su descripción; su presencia y configuración deben comprobarse para esta unidad. La selección de la carretilla depende del peso de la carga y del entorno de maniobra. La capacidad nominal debe comprobarse con el centro de carga y los implementos reales.",
+      "sources": [
+        "https://online.gamrentals.com/es/hyster/6274-carretilla-elevadora-diesel-hyster-h14xd-12"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "6422",
+      "field": "general",
+      "status": "ready",
+      "signed": "La ficha identifica una Hyster J2.5UTL eléctrica de nueva oferta, con batería de litio y 2.500 kg de capacidad nominal a un centro de carga de 500 mm. Aunque el título dice J2.0UTL, tanto el modelo estructurado como el resumen de origen indican J2.5UTL; es necesario confirmar esa variante en la documentación comercial. Su altura de elevación anunciada es de 3.000 mm y el mástil replegado mide 2.015 mm. Las dimensiones registradas son 3.387 mm de longitud por 1.285 mm de anchura; constan un radio de giro de 2.155 mm y un peso de 4.226 kg. La gama contempla baterías de litio de 51,2 V con varias capacidades, cuya instalación concreta no queda acreditada. El equipo se orienta a manutención y apilado de cargas en almacenes.",
+      "prepared": "La ficha técnica de carretilla elevadora eléctrica HYSTER J2.5UTL indica altura de elevación de 3 m, capacidad de carga de 2.500 kg, peso declarado de 4.226 kg, longitud de 3,387 m, anchura de 1,285 m, altura del equipo de 2,16 m, centro de carga declarado de 500 mm, radio de giro declarado de 2,155 m y altura de mástil replegado declarada de 2.015 mm. La selección de la carretilla depende del peso de la carga y del entorno de maniobra. La capacidad nominal debe comprobarse con el centro de carga y los implementos reales.",
+      "sources": [
+        "https://online.gamrentals.com/es/hyster/6422-carretilla-elevadora-electrica-hyster-j25utl"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "2118",
+      "field": "general",
+      "status": "ready",
+      "signed": "El anuncio identifica una carretilla retráctil Hyster R1.6N para el apilado de mercancía en almacenes, con capacidad de carga declarada de 1.600 kg. El texto de origen describe un mástil móvil con visibilidad mejorada y opciones de mástil estándar y para trabajo intensivo. Sin embargo, el campo técnico «Modelo» indica R1.6HD, que es otra variante de la familia según la documentación de Hyster. No se deben atribuir a una de esas variantes las medidas, el tipo de mástil ni las prestaciones de la otra sin confirmar la placa y la configuración real de la unidad.",
+      "prepared": "La ficha técnica de carretilla retráctil HYSTER R1.6N indica altura de elevación de 9 m, capacidad de carga de 1.600 kg, peso declarado de 6.859 kg, longitud de 2,629 m, anchura de 1,125 m y altura del equipo de 2,195 m. La descripción de origen declara frenado automático. La carretilla retráctil está destinada a operaciones de elevación y apilado en almacén. La altura del mástil y la capacidad residual deben verificarse para cada operación.",
+      "sources": [
+        "https://online.gamrentals.com/es/carretillas-retractiles-hyster/2118-carretilla-retractil-hyster-r16n"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "2237",
+      "field": "general",
+      "status": "ready",
+      "signed": "El Yale MO10L es un preparapedidos eléctrico nuevo para circulación y preparación de mercancía en almacenes. La ficha técnica declara capacidad de carga de 1.000 kg con centro de carga de 600 mm; el texto comercial original menciona 2.000 kg, pero esa cifra contradice el campo técnico y no debe tomarse como capacidad acreditada. Las dimensiones publicadas son 2.619 mm de longitud, 796 mm de anchura y 1.360 mm de altura. También se indica una batería de 24 V y 465 Ah y dos cifras alternativas de peso, 1.045 y 1.190 kg, sin identificar la variante concreta. La altura de plataforma llega en el origen con una unidad mal formada y requiere verificación antes de utilizarla.",
+      "prepared": "La ficha técnica de recogepedidos YALE MO10L indica capacidad de carga de 1.000 kg, longitud de 2,619 m, anchura de 0,796 m y altura del equipo de 1,36 m. La descripción de origen declara dirección asistida. El proveedor menciona el trabajo en espacios reducidos como ámbito de aplicación; corresponde contrastar las dimensiones y maniobras con la configuración concreta de la unidad. El proveedor incluye centros de distribución y gestión de almacén entre sus ámbitos de trabajo, sujetos a las condiciones de uso de cada instalación. El recogepedidos facilita operaciones de preparación de pedidos en almacén. La capacidad de la carga no equivale a la autorización para elevar personas.",
+      "sources": [
+        "https://online.gamrentals.com/es/recogepedidos-yale/2237-preparapedidos-2000-k-yale-mo10l"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "6745",
+      "field": "general",
+      "status": "ready",
+      "signed": "El Yale MO30X es un preparador de pedidos horizontal eléctrico con conductor a bordo. La ficha técnica identifica el modelo MO30X y 3.000 kg de capacidad, aunque el título del anuncio utiliza MO20X; no son denominaciones equivalentes, y la identificación correcta debe verificarse. El origen declara 2.550 mm de longitud, 750 mm de anchura y 1.285 mm de altura. Para la serie MO20–30X, Yale documenta plataforma de conducción de pie, centro de carga nominal de 600 mm y versiones con batería de 24 V. Su aplicación principal es el traslado interno de palés y la preparación de expediciones; las condiciones reales de pasillo, batería y configuración deben cotejarse con la placa de la unidad antes de contratarla.",
+      "prepared": "El preparapedidos Yale MO30X es una transpaleta eléctrica de conductor a bordo diseñada para el transporte interno de palets pesados, abastecimiento de líneas y preparación de pedidos en operaciones logísticas de alta intensidad. Con una capacidad nominal de 3.000 kg, ofrece una alternativa eficiente para almacenes, centros de distribución, áreas de producción y expediciones que necesitan mover cargas elevadas con rapidez y control. La serie alcanza hasta 13 km/h sin carga y dispone de reducción de velocidad en curvas, ayudando a mantener una conducción más controlada durante los desplazamientos con mercancía. El Yale MO30X cuenta con una capacidad de carga de 3.000 kg a un centro de carga de 600 mm. Sus horquillas tienen unas dimensiones de 55 × 170 × 1.180 mm y pueden elevarse hasta 120 mm, lo que permite manipular palets de forma ágil en tareas de transporte, reposición y preparación de expediciones. La máquina incorpora un motor de tracción de 3 kW y un motor de elevación de 2,2 kW, controlados mediante tecnología de corriente alterna. Dispone de una batería de 24 V / 375 Ah, con un peso aproximado de 288 kg, adecuada para jornadas de trabajo exigentes. La gama también permite seleccionar diferentes opciones de batería, cargador y sistemas de extracción lateral, según las necesidades de autonomía y organización de cada operación. Su anchura total es de 750 mm, mientras que la longitud total en configuración de conductor a bordo es de 2.549 mm. El radio de giro es de 2.374 mm y el pasillo de trabajo necesario con palets de 800 × 1.200 mm en sentido longitudinal es de aproximadamente 2.985 mm. El Yale MO30X dispone de freno electromagnético para mejorar el control durante la conducción y las detenciones. También hay disponibles opciones como luces de trabajo, iluminación de plataforma, luces de aviso a peatones, alarmas acústicas de marcha adelante o atrás, ruedas de carga sencillas o en tándem y diferentes tipos de ruedas de tracción. Además, la gama incluye opciones para almacenamiento en frío, elevación inteligente Smart Lift, descenso suave y rejillas de soporte de carga, adaptándose a distintos tipos de mercancía y condiciones de trabajo. El MO30X puede superar pendientes de hasta 7,4% con carga y 20% sin carga a 1,6 km/h, siempre dentro de las condiciones de uso recomendadas por el fabricante. Puede alcanzar hasta 13 km/h sin carga. La velocidad con carga depende de la configuración y de las condiciones de operación.",
+      "sources": [
+        "https://www.yale.com/es-es/emea/recogedoras-de-pedidos/mo20-30x/"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "2145",
+      "field": "general",
+      "status": "ready",
+      "signed": "La transpaleta Hyster P2.5 se anuncia como equipo nuevo para transporte horizontal de palés en almacenes y zonas de carga. El título y el texto comercial publican una capacidad de 2.500 kg; la ficha estructurada conserva esa capacidad, pero identifica el modelo como P2.0UTS en lugar de P2.5. Es una discrepancia de denominación que debe resolverse con la placa de la máquina, no con una inferencia de la familia. También se declaran 633 kg de peso y una elevación de horquillas de 0,12 m. El original contiene promesas de autonomía, telemetría y equipamiento no acreditado para esta unidad; se omiten para no confundir características opcionales o publicitarias con la configuración ofertada.",
+      "prepared": "Transpaleta Hyster P2.5: Potencia y Eficiencia para Optimizar su Almacén En el universo de la logística y la gestión de almacenes, la elección del equipo adecuado desempeña un papel crucial para impulsar la eficiencia y la productividad. Este equipo ha sido meticulosamente diseñado para ofrecer un rendimiento excepcional, una maniobrabilidad sin parangón y una durabilidad que perdura en el tiempo, lo que la convierte en una inversión fundamental para cualquier empresa. Potencia y Eficiencia Energética En el corazón de la Hyster P2.5 late un motor eléctrico de alto rendimiento, con la capacidad de manejar cargas de hasta 2.5 toneladas con facilidad. Al optar por la Hyster P2.5, está tomando una decisión a favor de la potencia sin concesiones y de una operación respetuosa con el medio ambiente. Gracias a su diseño compacto y su capacidad de giro, la Hyster P2.5 permite una navegación sin esfuerzo en espacios reducidos y pasillos estrechos. Tecnología Avanzada para una Operación Libre de Preocupaciones La Hyster P2.5 está equipada con tecnología de punta que garantiza una operación sin problemas. Características como el freno regenerativo, la detección de obstáculos y el sistema de control de tracción mejoran la seguridad del operador y protegen la carga. Con un asiento ajustable y controles intuitivos, los operadores pueden trabajar durante largas jornadas sin fatiga, lo que se traduce en una mayor productividad y en la reducción del riesgo de lesiones.",
+      "sources": [
+        "https://online.gamrentals.com/es/transpaletas-hyster/2145-transpaleta-hyster-p25"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "2180",
+      "field": "general",
+      "status": "ready",
+      "signed": "La descripción comercial identifica una apiladora eléctrica HYSTER S1.6 SL de patas abiertas, mientras el campo técnico «Modelo» y la referencia original indican S1.6SSL. Ambas denominaciones no deben considerarse equivalentes sin confirmar la configuración ofrecida. La ficha anuncia una capacidad de carga de 1.600 kg, altura de elevación de 3,2 m y batería de 24 V con capacidad indicada de 315 a 375 Ah. El proveedor la presenta como adecuada para palés cerrados o especiales por la disposición de sus patas laterales; la geometría real y la compatibilidad con cada palé deben verificarse para la unidad suministrada.",
+      "prepared": "La ficha técnica de apilador HYSTER S1.6 SL indica altura de elevación de 3,2 m, capacidad de carga de 1.600 kg, peso declarado de 1.523 kg, longitud de 2,161 m, anchura de 1,49 m y altura del equipo de 2,1 m. El proveedor menciona el trabajo en espacios reducidos como ámbito de aplicación; corresponde contrastar las dimensiones y maniobras con la configuración concreta de la unidad. El apilador permite el posicionamiento vertical de cargas paletizadas. La altura y capacidad de elevación varían según mástil y configuración.",
+      "sources": [
+        "https://online.gamrentals.com/es/apiladores-hyster/2180-hyster-s16ssl"
+      ]
+    },
+    {
+      "provider": "gam",
+      "reference": "2160",
+      "field": "general",
+      "status": "ready",
+      "signed": "El anuncio ofrece un manipulador de contenedores Hyster denominado H10XD-ECD8. La ficha técnica asociada identifica, en cambio, el modelo H9XD-EC8: son denominaciones distintas que no deben considerarse intercambiables. El registro declara motor diésel MTU de 7,7 l, capacidad de carga de 9.000 kg a 1.220 mm de centro de carga y elevación de 18,76 m. Estos datos sirven para evaluar la oferta, pero la variante concreta y el equipo de manipulación instalado deben comprobarse en la placa y la documentación de la máquina antes de contratarla.",
+      "prepared": "Equipada con un motor diésel de alta potencia y un sistema hidráulico avanzado, la Hyster H10XD-ECD8 ofrece una excelente tracción y un control preciso de la carga en todo momento. Además, cuenta con una cabina ergonómica y cómoda para el operador, con una excelente visibilidad y un fácil acceso a todos los controles, lo que ayuda a reducir la fatiga del operador y aumentar la productividad en el trabajo. En resumen, la Hyster H10XD-ECD8 es una máquina altamente eficiente y confiable que puede manejar incluso las cargas más pesadas con facilidad.",
+      "sources": [
+        "https://online.gamrentals.com/es/manipuladores-de-contenedores-vacios-hyster/2160-hyster-h10xd-ecd8"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "TE1858",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La plataforma de tijera eléctrica LGMG SS0507E anunciada de ocasión registra 230 kg de capacidad, 6,3 m de altura de trabajo y un peso declarado de 985 kg. Sus medidas son 1,53 m de longitud, 0,81 m de anchura y 2,15 m en posición de almacenaje, según la ficha técnica. El anuncio contiene además un valor de 14,30 m para la altura de plataforma, contradictorio con la altura de trabajo; esa cifra queda expresamente sin atribuir a la máquina.",
+      "prepared": "La ficha técnica de plataforma de tijera eléctrica LGMG SS0507E indica altura de trabajo de 6,3 m, altura de plataforma de 4,3 m, capacidad de 230 kg, peso declarado de 985 kg, longitud de 1,53 m, anchura de 0,81 m y altura de almacenaje de 2,15 m; esta unidad consta con año de fabricación 2022. El trabajo de elevación depende de la altura operativa y de la superficie de apoyo. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta. El proveedor sitúa esta familia en trabajos de interior y menciona ruedas antihuellas y plataforma extensible. Su presencia en el equipo anunciado debe comprobarse por unidad.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-ss0507etijera-electrica-electric-scissor/",
+        "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-ss0507etijera-electrica-electric-scissor/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "TE1621",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La plataforma de tijera eléctrica LGMG SS0507E de ocasión está identificada en su ficha con 6,3 m de altura de trabajo y 230 kg de capacidad. Sus dimensiones publicadas son 1,53 m de longitud y 0,81 m de anchura, con un peso de 985 kg y 2,15 m de altura de almacenaje. El campo de altura de plataforma del anuncio indica 14,30 m, un valor incompatible con la altura de trabajo publicada; por prudencia no se utiliza para describir la elevación real.",
+      "prepared": "La ficha técnica de plataforma de tijera eléctrica LGMG SS0507E indica altura de trabajo de 6,3 m, altura de plataforma de 4,3 m, capacidad de 230 kg, peso declarado de 985 kg, longitud de 1,53 m, anchura de 0,81 m y altura de almacenaje de 2,15 m; esta unidad consta con año de fabricación 2022. El trabajo de elevación depende de la altura operativa y de la superficie de apoyo. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta. El proveedor sitúa esta familia en trabajos de interior y menciona ruedas antihuellas y plataforma extensible. Su presencia en el equipo anunciado debe comprobarse por unidad.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-ss0507e-tijera-electrica-scissor-lift/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "TE1622",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La LGMG SS0507E de segunda mano corresponde a una plataforma de tijera eléctrica con 6,3 m de altura de trabajo y capacidad declarada de 230 kg. La ficha recoge 1,53 m de largo, 0,81 m de ancho y 985 kg de peso. Figura una altura de almacenaje de 2,15 m. La altura de plataforma consignada como 14,30 m no concuerda con los 6,3 m de trabajo; por esa contradicción no se presenta como una prestación acreditada.",
+      "prepared": "La ficha técnica de plataforma de tijera eléctrica LGMG SS0507E indica altura de trabajo de 6,3 m, altura de plataforma de 4,3 m, capacidad de 230 kg, peso declarado de 985 kg, longitud de 1,53 m, anchura de 0,81 m y altura de almacenaje de 2,15 m; esta unidad consta con año de fabricación 2023. El trabajo de elevación depende de la altura operativa y de la superficie de apoyo. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta. El proveedor sitúa esta familia en trabajos de interior y menciona ruedas antihuellas y plataforma extensible. Su presencia en el equipo anunciado debe comprobarse por unidad.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-ss0507e-tijera-electrica-scissor-lift-2/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "MT1661",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La unidad JCB 540-140 de referencia MT1661 aparece como manipulador telescópico de ocasión, con año indicado 2018. El proveedor consigna motor diésel, 4.000 kg de capacidad, 13,8 m de altura de trabajo y 9,25 m de alcance lateral. La ficha también recoge 6,25 m de longitud, 2,35 m de anchura, 2,59 m de altura de almacenaje y 11.090 kg de peso. Son especificaciones de esta referencia, no de todo el intervalo de máquinas que menciona la descripción de familia.",
+      "prepared": "La ficha técnica de manipulador telescópico diésel Jcb 540-140 indica altura de trabajo de 13,8 m, alcance lateral de 9,25 m, capacidad de carga de 4.000 kg, peso declarado de 11.090 kg, longitud de 6,25 m, anchura de 2,35 m y altura de almacenaje de 2,59 m; esta unidad consta con año de fabricación 2018. El manipulador realiza elevación y desplazamiento de cargas mediante brazo telescópico. La carga nominal no garantiza la misma capacidad a todas las alturas y alcances.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/manipulacion-de-materiales/manipulador-telescopico/jcb-540-140-2-manipulador-telescopico-telescopic-manlift/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "MT1659",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "El manipulador telescópico JCB 540-140 figura como unidad de ocasión con año indicado 2018 y motor diésel. Según la ficha, su capacidad es de 4.000 kg y la altura de trabajo es de 13,8 m, con 9,25 m de alcance lateral. Las dimensiones publicadas son 6,25 m de longitud, 2,35 m de anchura y 2,59 m de altura de almacenaje; el peso declarado es 11.090 kg. Estos datos individualizan la referencia frente al texto genérico de manipuladores telescópicos.",
+      "prepared": "La ficha técnica de manipulador telescópico diésel Jcb 540-140 indica altura de trabajo de 13,8 m, alcance lateral de 9,25 m, capacidad de carga de 4.000 kg, peso declarado de 11.090 kg, longitud de 6,25 m, anchura de 2,35 m y altura de almacenaje de 2,59 m; esta unidad consta con año de fabricación 2018. El manipulador realiza elevación y desplazamiento de cargas mediante brazo telescópico. La carga nominal no garantiza la misma capacidad a todas las alturas y alcances.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/manipulacion-de-materiales/manipulador-telescopico/jcb-540-140-manipulador-telescopico-telescopic-manlift/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "FR1077",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La Nilfisk BR850-S es una fregadora industrial de segunda mano destinada a la limpieza de suelos. La ficha técnica del proveedor recoge 0,81 m de anchura de limpieza y motorización eléctrica. El equipo mide 1,55 m de longitud y 0,88 m de anchura, con un peso declarado de 705 kg. Estas medidas describen la unidad anunciada y resultan útiles para evaluar el paso por accesos y el espacio de operación; el anuncio no especifica el año.",
+      "prepared": "La ficha técnica de fregadora eléctrica Nilfisk BR850-S indica peso declarado de 705 kg, longitud de 1,55 m, anchura de 0,88 m y anchura de trabajo de limpieza de 0,81 m. La fregadora realiza operaciones de lavado y recogida de agua en superficies. La anchura de trabajo y la autonomía dependen del equipamiento y condiciones de uso. La ficha técnica de esta misma referencia añade altura exterior de 1,35 m, una cota útil para comprobar las dimensiones y condiciones de acceso del equipo anunciado.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/limpieza/fregadora/nilfisk-br850-s-fregadora/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "BA1522",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La unidad JLG 340AJ con referencia BA1522 es una plataforma articulada de ocasión y año indicado 2012. Según la ficha del proveedor, alcanza 12,33 m de altura de trabajo, con 6,71 m de alcance lateral y 230 kg de capacidad. Tiene 5,52 m de longitud, 1,93 m de anchura y 4.450 kg de peso declarados. La descripción de origen habla de articuladas diésel como familia; el dato de motor no está individualizado en las especificaciones de esta referencia.",
+      "prepared": "La ficha técnica de plataforma articulada JLG 340AJ indica altura de trabajo de 12,33 m, alcance lateral de 6,71 m, capacidad de 230 kg, peso declarado de 4.450 kg, longitud de 5,52 m, anchura de 1,93 m y altura de almacenaje de 2 m; esta unidad consta con año de fabricación 2012. La articulación permite gestionar accesos donde existen obstáculos en altura. El alcance lateral depende de carga y configuración; no se deduce de la altura de trabajo.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/jlg-340aj-brazo-articulado-articulated-boom-lift-4wd-5/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "RE454",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La JCB 1CX está anunciada como retroexcavadora de ocasión del año 1998. El proveedor consigna 3,31 m de longitud, 1,58 m de anchura y 3.158 kg de peso, y señala 660 kg en el campo de capacidad. También registra 2,25 m de altura y 2,51 m en el campo de altura de trabajo, sin justificar su interpretación como alcance de excavación. La ficha asigna un motor eléctrico, dato que no se traslada a esta descripción por no estar corroborado frente a la identidad de la retroexcavadora.",
+      "prepared": "La ficha técnica de excavadora diésel Jcb 1CX indica peso declarado de 3.158 kg, longitud de 3,31 m y anchura de 1,58 m; esta unidad consta con año de fabricación 1998. La excavadora realiza movimientos de tierra mediante su implemento de trabajo. El alcance y la profundidad de excavación dependen de la configuración del brazo. La ficha técnica de esta misma referencia declara altura de trabajo indicada de 2,51 m, capacidad declarada de 660 kg. Estas medidas corresponden al equipo anunciado y deben contrastarse con la unidad ofrecida.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/movimiento-de-tierras-demolicion-y-compactacion/retroexcavadora/jcb-1cx-retroexcavadora-backhoe-gomariz-1/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "TO1241",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La torre de iluminación Generac VB9 se anuncia como unidad de ocasión con año indicado 2015. Su ficha técnica declara 8,50 m de altura de trabajo, un motor diésel y una potencia indicada como 4 × 120 W. El conjunto mide 2,40 m de longitud y 1,43 m de anchura, con un peso de 945 kg. La descripción original habla de distintas torres y alimentaciones posibles; los datos aquí recogidos corresponden exclusivamente a esta referencia.",
+      "prepared": "La ficha técnica de torre de iluminación diésel Generac VB9 indica altura de trabajo declarada de 8,5 m, configuración de luminarias declarada de 4 × 120 W, peso declarado de 945 kg, longitud de 2,4 m y anchura de 1,43 m; esta unidad consta con año de fabricación 2015. La torre de iluminación permite alumbrar zonas de trabajo. La cobertura lumínica depende de la altura, orientación y tipo de luminarias.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/energia-electrica-e-iluminacion/torre-de-luz/generac-vb9-torre-de-luz-light-tower-1/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "DU473",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "El dúmper Ausa D201RS se ofrece como unidad de ocasión con año indicado 2007. La ficha del proveedor le asigna un motor diésel y una capacidad de 2.000 kg; además, declara 3,98 m de longitud y 1.600 kg de peso. Se trata de datos de la máquina anunciada, más precisos que la descripción genérica del tipo de vehículo. Conviene comprobar las condiciones de trabajo y el espacio disponible a partir de las medidas publicadas, sin atribuirle otras configuraciones.",
+      "prepared": "La ficha técnica de dúmper diésel Ausa D201RS indica capacidad de carga de 2.000 kg, peso declarado de 1.600 kg y longitud de 3,98 m; esta unidad consta con año de fabricación 2007. El dúmper se utiliza para el transporte y descarga de materiales a granel. La capacidad de carga y el volumen de la tolva son magnitudes distintas. La ficha técnica de esta referencia consigna dos valores de anchura, 1,75 m y 1,59 m, sin aclarar a qué configuración corresponde cada uno. Se debe comprobar la anchura real de la unidad antes de planificar accesos y transporte.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/movimiento-de-tierras-demolicion-y-compactacion/dumper/ausa-d201rs/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "CAE1207",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La carretilla industrial Nissan Q02L25CU de ocasión figura con año indicado 2007. La ficha técnica consigna una capacidad de 2.500 kg y motorización eléctrica. Sus dimensiones publicadas son 2,37 m de longitud, 1,18 m de anchura y 2,23 m de altura de almacenaje. Son medidas concretas para verificar accesos y condiciones de uso, en lugar de atribuir a este modelo todas las características de una descripción genérica de carretillas para interiores. El peso declarado debe interpretarse según la ficha de origen.",
+      "prepared": "La ficha técnica de carretilla elevadora eléctrica Nissan Q02L25CU indica capacidad de carga de 2.500 kg, peso declarado de 7.205 kg, longitud de 2,37 m, anchura de 1,18 m y altura de almacenaje de 2,23 m; esta unidad consta con año de fabricación 2007. La selección de la carretilla depende del peso de la carga y del entorno de maniobra. La capacidad nominal debe comprobarse con el centro de carga y los implementos reales.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/manipulacion-de-materiales/carretilla-industrial/nissan-q02l25cu-carretilla-industrial/",
+        "https://www.gomarizrent.com/venta/manipulacion-de-materiales/carretilla-industrial/nissan-q02l25cu-carretilla-industrial/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "CAE1525",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La carretilla industrial Heli CPD 35 figura como máquina de ocasión con año indicado 2024. Su ficha consigna motorización eléctrica, 3.500 kg de capacidad y 4,80 m de altura de trabajo. Las dimensiones publicadas son 3,64 m de longitud, 1,26 m de anchura y 2,18 m de altura de almacenaje, junto a 4.860 kg de peso. Se trata de magnitudes de la unidad anunciada que permiten contrastar necesidades de carga y espacio, sin recurrir a datos de otras variantes.",
+      "prepared": "La ficha técnica de carretilla elevadora eléctrica HELI CPD 35 indica capacidad de carga de 3.500 kg, peso declarado de 4.860 kg, longitud de 3,64 m, anchura de 1,26 m y altura de almacenaje de 2,18 m; esta unidad consta con año de fabricación 2024. La selección de la carretilla depende del peso de la carga y del entorno de maniobra. La capacidad nominal debe comprobarse con el centro de carga y los implementos reales.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/manipulacion-de-materiales/carretilla-industrial/heli-cpd-35-carretilla-elevadora/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "MT1314",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "El manipulador telescópico JCB 535-140 se ofrece de ocasión con año indicado 2016. La ficha recoge un motor diésel, una capacidad de 3.500 kg y 13,78 m de altura de trabajo. El alcance lateral publicado es de 9,60 m, con 2,35 m de anchura, 2,59 m de altura de almacenaje y 10.880 kg de peso. Estos valores corresponden a la unidad identificada y permiten evaluar su capacidad y dimensiones sin extrapolar los rangos genéricos anunciados para la familia.",
+      "prepared": "La ficha técnica de manipulador telescópico diésel Jcb 535-140 indica altura de trabajo de 13,78 m, alcance lateral de 9,6 m, capacidad de carga de 3.500 kg, peso declarado de 10.880 kg, anchura de 2,35 m y altura de almacenaje de 2,59 m; esta unidad consta con año de fabricación 2016. El manipulador realiza elevación y desplazamiento de cargas mediante brazo telescópico. La carga nominal no garantiza la misma capacidad a todas las alturas y alcances.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/manipulacion-de-materiales/manipulador-telescopico/jcb-535-140/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "CA1436",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La carretilla industrial Maximal FD40T figura como unidad de ocasión con año indicado 2015 y motorización diésel. La ficha técnica recoge 4.000 kg de capacidad y 4,30 m en el campo de altura de trabajo. También publica 2,91 m de longitud, 1,41 m de anchura y 2,18 m de altura de almacenaje. El peso consignado es de 5.100 kg. Los valores permiten evaluar dimensiones y carga declarada de este equipo, sin asumir prestaciones de otras versiones.",
+      "prepared": "La ficha técnica de carretilla elevadora diésel Maximal FD40T indica capacidad de carga de 4.000 kg, peso declarado de 5.100 kg, longitud de 2,91 m, anchura de 1,41 m y altura de almacenaje de 2,18 m; esta unidad consta con año de fabricación 2015. La selección de la carretilla depende del peso de la carga y del entorno de maniobra. La capacidad nominal debe comprobarse con el centro de carga y los implementos reales.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/manipulacion-de-materiales/carretilla-industrial/maximal-fd40t/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "CA1041",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La carretilla industrial Toyota 8FD20, anunciada como equipo de ocasión del año 2013, dispone de un motor diésel según la ficha. La capacidad declarada es de 2.000 kg y la altura consignada en el campo de trabajo es de 3,50 m. El proveedor también indica 2,56 m de longitud, 1,15 m de anchura, 2,11 m de altura de almacenaje y 3.310 kg de peso. Estos datos describen esta unidad, sin extrapolar capacidades de otras carretillas de la gama.",
+      "prepared": "La ficha técnica de carretilla elevadora diésel Toyota 8FD20 indica capacidad de carga de 2.000 kg, peso declarado de 3.310 kg, longitud de 2,56 m, anchura de 1,15 m y altura de almacenaje de 2,11 m; esta unidad consta con año de fabricación 2013. La selección de la carretilla depende del peso de la carga y del entorno de maniobra. La capacidad nominal debe comprobarse con el centro de carga y los implementos reales.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/manipulacion-de-materiales/carretilla-industrial/toyota-8fd20-2/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "BA1575",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La plataforma articulada JLG 340AJ de referencia BA1575 figura como unidad de ocasión con año indicado 2011. La ficha técnica consigna motorización diésel, 12,33 m de altura de trabajo y 6,71 m de alcance lateral, además de 230 kg de capacidad. Se publican 5,52 m de longitud, 1,93 m de anchura, 2 m de altura de almacenaje y 4.450 kg de peso. Estos valores permiten valorar el espacio y alcance de esta máquina concreta, frente a los rangos genéricos de la familia.",
+      "prepared": "La ficha técnica de plataforma articulada diésel JLG 340AJ indica altura de trabajo de 12,33 m, alcance lateral de 6,71 m, capacidad de 230 kg, peso declarado de 4.450 kg, longitud de 5,52 m, anchura de 1,93 m y altura de almacenaje de 2 m; esta unidad consta con año de fabricación 2011. La articulación permite gestionar accesos donde existen obstáculos en altura. El alcance lateral depende de carga y configuración; no se deduce de la altura de trabajo. El proveedor describe esta familia para trabajos exteriores y desplazamientos sobre terrenos de distinta regularidad. La pendiente admisible y la aptitud de desplazamiento requieren comprobar las especificaciones de esta unidad.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/jlg-340aj-brazo-articulado-articulated-boom-lift/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "TE1814",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La unidad LGMG AS0607WE con referencia TE1814 figura como plataforma de tijera de ocasión del año 2021. La ficha técnica indica 7,8 m de altura de trabajo, 5,8 m de altura de plataforma y 230 kg de capacidad. También declara 1,86 m de longitud, 0,81 m de anchura, 2,14 m de altura de almacenaje y 1.620 kg de peso. El texto de familia menciona equipos eléctricos, pero no consta motorización individual en los campos técnicos de esta máquina.",
+      "prepared": "La ficha técnica de plataforma de tijera LGMG AS0607WE indica altura de trabajo de 7,8 m, altura de plataforma de 5,8 m, capacidad de 230 kg, peso declarado de 1.620 kg, longitud de 1,86 m, anchura de 0,81 m y altura de almacenaje de 2,14 m; esta unidad consta con año de fabricación 2021. El proveedor menciona plataforma extensible y ruedas antihuellas en su descripción; su presencia y configuración deben comprobarse para esta unidad. El trabajo de elevación depende de la altura operativa y de la superficie de apoyo. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-as0607we-tijera-electrica-electric-scissor-2/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "TE1772",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La plataforma de tijera LGMG AS0607WE de ocasión lleva indicado el año 2023. Su ficha registra 7,8 m de altura de trabajo, 5,8 m de altura de plataforma y 230 kg de capacidad. Las dimensiones facilitadas son 1,86 m de longitud, 0,81 m de anchura y 2,14 m de altura de almacenaje, con 1.620 kg de peso. La descripción general del vendedor alude a tijeras eléctricas, pero el tipo de motor no aparece individualizado en las especificaciones de esta referencia.",
+      "prepared": "La ficha técnica de plataforma de tijera LGMG AS0607WE indica altura de trabajo de 7,8 m, altura de plataforma de 5,8 m, capacidad de 230 kg, peso declarado de 1.620 kg, longitud de 1,86 m, anchura de 0,81 m y altura de almacenaje de 2,14 m; esta unidad consta con año de fabricación 2023. El proveedor menciona plataforma extensible y ruedas antihuellas en su descripción; su presencia y configuración deben comprobarse para esta unidad. El trabajo de elevación depende de la altura operativa y de la superficie de apoyo. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-as0607we-tijera-electrica-scissor-lift/"
+      ]
+    },
+    {
+      "provider": "gomariz",
+      "reference": "BA1358",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La plataforma articulada JLG 340AJ, anunciada con año 2012, registra en la ficha 12,33 m de altura de trabajo y 6,71 m de alcance lateral. La capacidad indicada es de 230 kg. Sus dimensiones publicadas son 5,52 m de longitud, 1,93 m de anchura y 2 m de altura de almacenaje, con un peso de 4.450 kg. La descripción del proveedor menciona la familia de articuladas diésel, pero la motorización individual no consta en el campo técnico de esta unidad.",
+      "prepared": "La ficha técnica de plataforma articulada JLG 340AJ indica altura de trabajo de 12,33 m, alcance lateral de 6,71 m, capacidad de 230 kg, peso declarado de 4.450 kg, longitud de 5,52 m, anchura de 1,93 m y altura de almacenaje de 2 m; esta unidad consta con año de fabricación 2012. La articulación permite gestionar accesos donde existen obstáculos en altura. El alcance lateral depende de carga y configuración; no se deduce de la altura de trabajo.",
+      "sources": [
+        "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/brazo-articulado/jlg-340aj/"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M887-9469",
+      "field": "general",
+      "status": "ready",
+      "signed": "La LGMG A14JE es una plataforma articulada eléctrica de ocasión, fabricada en 2023, con 298 horas publicadas y referencia de vendedor 1332. La ficha técnica indica altura de trabajo de 16 m, mientras que el título comercial la describe como máquina de 15 m; esta diferencia debe verificarse antes de preparar un plan de acceso. Su brazo articulado permite aproximar la cesta a zonas elevadas cuando existen obstáculos, pero el anuncio no identifica carga máxima de cesta ni alcance lateral de esta unidad. No se deben extrapolar estos límites a partir del nombre del modelo sin comprobar la versión concreta.",
+      "prepared": "La ficha técnica de plataforma articulada eléctrica LGMG A14JE indica altura de trabajo de 15,8 m y anchura de 1,8 m; esta unidad consta con año de fabricación 2023 y 298 horas registradas. La articulación permite gestionar accesos donde existen obstáculos en altura. El alcance lateral depende de carga y configuración; no se deduce de la altura de trabajo. Como referencia, otras fichas del catálogo del modelo LGMG A14JE publican altura de plataforma de 13,8 m y alcance lateral de 7,81 m; estos datos no acreditan por sí solos la configuración de esta unidad.",
+      "sources": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-A14JE-M887-9469"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M572-8190",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La Manitou 180ATJ es una plataforma articulada diésel para trabajos de elevación de personas en obra y mantenimiento exterior. Su brazo articulado permite acercar la cesta a posiciones elevadas y salvar obstáculos, con un alcance de trabajo documentado por el fabricante para este modelo. El anuncio de esta unidad usada indica 18 m de altura de trabajo, fabricación en 2017 y 3018 horas registradas. La referencia comercial 774 identifica esta máquina entre las unidades 180ATJ disponibles.",
+      "prepared": "La ficha técnica de plataforma articulada diésel Manitou 180ATJ indica altura de trabajo de 18 m, longitud de 7,77 m y anchura de 2,3 m; esta unidad consta con año de fabricación 2017 y 3.018 horas registradas. La articulación permite gestionar accesos donde existen obstáculos en altura. El alcance lateral depende de carga y configuración; no se deduce de la altura de trabajo. La documentación técnica de referencia del modelo Manitou 180ATJ recoge altura de trabajo anunciada de 18 m y altura de referencia de 18,15 m, altura de plataforma de 16,15 m, capacidad nominal de 230 kg, 10,62 m de alcance horizontal documentado por el fabricante. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.\n\nReferencia comercial declarada por el vendedor: 774.",
+      "sources": [
+        "https://www.manitou.com/es-ES/nuestras-maquinas/plataformas-elevadoras"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M131-5855",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La Haulotte Optimum 8 es una plataforma de tijera eléctrica de segunda mano. Según el anuncio, dispone de 8 m de altura de trabajo y corresponde al año 2018. La unidad registra 464 horas y tiene la referencia comercial 623. El texto de origen identifica la variante Optimum 8 AC.",
+      "prepared": "La ficha técnica de plataforma de tijera eléctrica Haulotte Optimum 8 indica altura de trabajo de 8 m y anchura de 0,79 m; esta unidad consta con año de fabricación 2018 y 464 horas registradas. El trabajo de elevación depende de la altura operativa y de la superficie de apoyo. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta. Como referencia, otras fichas del catálogo del modelo Haulotte Optimum 8 publican altura de elevación de 8 m y capacidad de carga de 230 kg; estos datos no acreditan por sí solos la configuración de esta unidad.\n\nEl anuncio denomina esta unidad «Haulotte Optimum 8 AC»; esa denominación no acredita por sí sola equipamiento ni prestaciones diferentes. Referencia comercial declarada por el vendedor: 623.",
+      "sources": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/Haulotte-Optimum-8-M131-5855"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M318-0509",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La LGMG S1012E-2 es una plataforma de tijera eléctrica anunciada como nueva. La ficha indica una altura de trabajo de 12 m y año de fabricación 2026. La motorización publicada es eléctrica y el anuncio incluye certificación CE.",
+      "prepared": "La ficha técnica de plataforma de tijera eléctrica LGMG S1012E-2 indica altura de trabajo de 12 m; esta unidad consta con año de fabricación 2026. El trabajo de elevación depende de la altura operativa y de la superficie de apoyo. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta. La documentación técnica de referencia del modelo LGMG S1012E-2 recoge altura de trabajo de 12 m, altura de plataforma de 10 m, capacidad nominal de 320 kg, 0,9 m de extensión de plataforma y 1,19 m de anchura de equipo. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.\n\nLa ficha del proveedor declara certificación CE para esta unidad; el certificado no se ha verificado documentalmente.",
+      "sources": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-S1012E-2-M318-0509"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M205-2951",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La Manitou 180ATJ es una plataforma articulada diésel para trabajos de elevación de personas en obra y mantenimiento exterior. Su brazo articulado permite acercar la cesta a posiciones elevadas y salvar obstáculos, con un alcance de trabajo documentado por el fabricante para este modelo. El anuncio de esta unidad usada indica 18 m de altura de trabajo, fabricación en 2017 y 3355 horas registradas. La referencia comercial 786 identifica esta máquina entre las unidades 180ATJ disponibles.",
+      "prepared": "La ficha técnica de plataforma articulada diésel Manitou 180ATJ indica altura de trabajo de 18 m, longitud de 7,77 m y anchura de 2,3 m; esta unidad consta con año de fabricación 2017 y 3.355 horas registradas. La articulación permite gestionar accesos donde existen obstáculos en altura. El alcance lateral depende de carga y configuración; no se deduce de la altura de trabajo. La documentación técnica de referencia del modelo Manitou 180ATJ recoge altura de trabajo anunciada de 18 m y altura de referencia de 18,15 m, altura de plataforma de 16,15 m, capacidad nominal de 230 kg, 10,62 m de alcance horizontal documentado por el fabricante. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.\n\nReferencia comercial declarada por el vendedor: 786.",
+      "sources": [
+        "https://www.manitou.com/es-ES/nuestras-maquinas/plataformas-elevadoras"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M178-6194",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La Manitou 180ATJ es una plataforma articulada diésel para trabajos de elevación de personas en obra y mantenimiento exterior. Su brazo articulado permite acercar la cesta a posiciones elevadas y salvar obstáculos, con un alcance de trabajo documentado por el fabricante para este modelo. El anuncio de esta unidad usada indica 18 m de altura de trabajo, fabricación en 2017 y 3233 horas registradas. La referencia comercial 784 identifica esta máquina entre las unidades 180ATJ disponibles.",
+      "prepared": "La ficha técnica de plataforma articulada diésel Manitou 180ATJ indica altura de trabajo de 18 m, longitud de 7,77 m y anchura de 2,3 m; esta unidad consta con año de fabricación 2017 y 3.233 horas registradas. La articulación permite gestionar accesos donde existen obstáculos en altura. El alcance lateral depende de carga y configuración; no se deduce de la altura de trabajo. La documentación técnica de referencia del modelo Manitou 180ATJ recoge altura de trabajo anunciada de 18 m y altura de referencia de 18,15 m, altura de plataforma de 16,15 m, capacidad nominal de 230 kg, 10,62 m de alcance horizontal documentado por el fabricante. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.\n\nReferencia comercial declarada por el vendedor: 784.",
+      "sources": [
+        "https://www.manitou.com/es-ES/nuestras-maquinas/plataformas-elevadoras"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M095-5362",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La Haulotte STAR-10 anunciada es una plataforma vertical autopropulsada eléctrica con altura de trabajo indicada de 10 m. El mástil con plumín permite acercar la cesta a puntos de mantenimiento o instalación en zonas de acceso limitado. Haulotte describe para el modelo un alcance horizontal de hasta 3 m y un diseño que evita el voladizo trasero durante el giro. Esta unidad usada fue fabricada en 2013, registra 617 horas y corresponde a la referencia 740 del vendedor.",
+      "prepared": "La ficha técnica de equipo de mástil vertical eléctrico Haulotte STAR-10 indica altura de trabajo de 10 m; esta unidad consta con año de fabricación 2013 y 617 horas registradas. El mástil vertical permite elevar una plataforma con huella de equipo contenida. Comprobar altura de trabajo, ocupantes y carga autorizada para la versión concreta. La documentación técnica de referencia del modelo Haulotte STAR-10 recoge altura de trabajo de 10 m, altura de plataforma de 8 m, capacidad nominal de 200 kg, 3 m de alcance horizontal con plumín y diseño sin voladizo trasero según la documentación del fabricante. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.\n\nReferencia comercial declarada por el vendedor: 740.",
+      "sources": [
+        "https://www.haulotte.com.es/es_ES/productos/star-10"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M200-9533",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "El manipulador telescópico diésel JLG 4014PS se utiliza para elevar y posicionar cargas en trabajos de construcción y suministro de materiales. La ficha del vendedor declara 4.000 kg de capacidad máxima y 14 m de altura máxima de elevación, valores que deben evaluarse junto con el alcance y la configuración de trabajo. Esta unidad está anunciada como usada, se fabricó en 2014 y presenta 5.324 horas registradas. La referencia comercial 721 permite diferenciarla de otras unidades del modelo.",
+      "prepared": "La ficha técnica de manipulador telescópico diésel JLG 4014PS indica altura de elevación de 14 m y capacidad de carga de 4.000 kg; esta unidad consta con año de fabricación 2014 y 5.324 horas registradas. El manipulador realiza elevación y desplazamiento de cargas mediante brazo telescópico. La carga nominal no garantiza la misma capacidad a todas las alturas y alcances.\n\nReferencia comercial declarada por el vendedor: 721. La ficha del proveedor declara certificación CE para esta unidad; el certificado no se ha verificado documentalmente.",
+      "sources": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/JLG-4014PS-M200-9533",
+        "https://sales.mercaeleva.com/es/for-sale/machine/JLG-4014PS-M200-9533"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M294-4678",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "Módulo de caseta diáfana con aire acondicionado, de 6 × 2,35 m según el anuncio. El vendedor indica que la puerta de acceso está situada en un lateral corto del módulo. La denominación de origen es CBOX - CASETA6.",
+      "prepared": "Este módulo prefabricado CBOX-CASETA6 se anuncia como caseta diáfana de 6 m de longitud por 2,35 m de anchura, con aire acondicionado y puerta situada en uno de los lados cortos. La disposición diáfana permite organizar el interior en función del uso previsto, por ejemplo como puesto auxiliar o espacio de apoyo a una instalación, sin que el anuncio acredite mobiliario ni particiones adicionales. La superficie calculada a partir de las medidas exteriores anunciadas es de unos 14,1 m², no una superficie útil interior certificada. No constan potencia del equipo de climatización, instalaciones eléctricas, aislamiento, altura libre ni conexiones; esos aspectos requieren comprobación antes del traslado y la implantación.",
+      "sources": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/M294-4678",
+        "https://sales.mercaeleva.com/es/for-sale/machine/M294-4678"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M005-4474",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La LGMG S0808EII es una plataforma de tijera eléctrica para elevar personal y herramientas en trabajos de mantenimiento, montaje e instalaciones. El sistema de elevación vertical facilita tareas sobre una misma zona de trabajo; la documentación del fabricante describe la versión S0808EII con uso previsto en interiores y exteriores, según sus límites de operación. Esta unidad se anuncia como nueva, de fabricación 2026, con altura de trabajo comercial indicada de 10 m. Su referencia de vendedor es S0808EII; no se atribuye a la unidad una batería opcional.",
+      "prepared": "La ficha técnica de plataforma de tijera eléctrica LGMG S0808EII indica altura de trabajo de 10 m; esta unidad consta con año de fabricación 2026. El trabajo de elevación depende de la altura operativa y de la superficie de apoyo. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta. La documentación técnica de referencia del modelo LGMG S0808EII recoge altura de trabajo anunciada de 10 m y altura de referencia de 9,8 m en interiores y 8 m en exteriores, altura de plataforma de 7,8 m en interiores y 6 m en exteriores, capacidad nominal de 230 kg, uso previsto en interiores y exteriores según los límites de operación y batería de litio opcional para la gama. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.\n\nEl anuncio de origen declara «0 horas», sin una lectura de horómetro estructurada para esta unidad.",
+      "sources": [
+        "https://www.lgmglifts.com/es/product/pro-detail-2066.htm"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M159-0669",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La LGMG S0808EII es una plataforma de tijera eléctrica anunciada como nueva, con altura de trabajo de 10 m y año de fabricación 2024. La referencia comercial publicada por el vendedor es S0808EII. El texto original también anuncia cero horas, sin indicar un horómetro estructurado.",
+      "prepared": "La ficha técnica de plataforma de tijera eléctrica LGMG S0808EII indica altura de trabajo de 10 m; esta unidad consta con año de fabricación 2024. El trabajo de elevación depende de la altura operativa y de la superficie de apoyo. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta. La documentación técnica de referencia del modelo LGMG S0808EII recoge altura de trabajo anunciada de 10 m y altura de referencia de 9,8 m en interiores y 8 m en exteriores, altura de plataforma de 7,8 m en interiores y 6 m en exteriores, capacidad nominal de 230 kg, uso previsto en interiores y exteriores según los límites de operación y batería de litio opcional para la gama. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.\n\nEl anuncio de origen declara «0 horas», sin una lectura de horómetro estructurada para esta unidad.",
+      "sources": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/LGMG-S0808EII-M159-0669"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M476-1722",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La Caterpillar EP16NT es una carretilla elevadora eléctrica de segunda mano con capacidad declarada de 1.600 kg y mástil tríplex. La ficha técnica indica 4.750 mm de altura máxima de elevación, batería de plomo-ácido y año de fabricación 2007. La referencia del vendedor es MER0742.",
+      "prepared": "La Caterpillar EP16NT es una carretilla elevadora eléctrica de segunda mano anunciada con capacidad máxima de 1.600 kg. Según los campos técnicos de esta referencia, dispone de mástil tríplex y alcanza 4.750 mm de altura máxima de elevación. Se declaran batería de plomo-ácido, tres ruedas y protección superior para el operador; esta configuración importa para maniobrar entre pasillos y verificar las condiciones del pavimento. El proveedor indica fabricación en 2007 y referencia MER0742. La capacidad nominal no acredita por sí sola cuánto peso puede elevarse a 4.750 mm: corresponde comprobar el diagrama de cargas del equipo.",
+      "sources": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/Caterpillar-EP16NT-M476-1722",
+        "https://sales.mercaeleva.com/es/for-sale/machine/Caterpillar-EP16NT-M476-1722"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M171-6370",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "Esta Haulotte STAR-10 es una plataforma vertical autopropulsada para elevar personal a puntos de trabajo en espacios limitados. Dispone de motorización eléctrica y la ficha del vendedor indica 10 m de altura de trabajo. El fabricante describe un plumín que aporta alcance horizontal al mástil, facilitando tareas sobre instalaciones u obstáculos. La unidad se publica como usada, fabricada en 2013 y con 1.126 horas de utilización registradas. Su referencia de vendedor es 454, distinta de otras máquinas del mismo modelo.",
+      "prepared": "La ficha técnica de equipo de mástil vertical eléctrico Haulotte STAR-10 indica altura de trabajo de 10 m; esta unidad consta con año de fabricación 2013 y 1.126 horas registradas. El mástil vertical permite elevar una plataforma con huella de equipo contenida. Comprobar altura de trabajo, ocupantes y carga autorizada para la versión concreta. La documentación técnica de referencia del modelo Haulotte STAR-10 recoge altura de trabajo de 10 m, altura de plataforma de 8 m, capacidad nominal de 200 kg, 3 m de alcance horizontal con plumín y diseño sin voladizo trasero según la documentación del fabricante. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.\n\nReferencia comercial declarada por el vendedor: 454.",
+      "sources": [
+        "https://www.haulotte.com.es/es_ES/productos/star-10"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M144-5512",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La plataforma eléctrica Haulotte STAR-10 está orientada a intervenciones de mantenimiento, montaje e instalaciones en altura. El vendedor declara 10 m de altura de trabajo para esta unidad; la documentación de gama señala un mástil vertical con plumín y hasta 3 m de alcance horizontal, útil para aproximarse a puntos de difícil acceso. El anuncio la identifica como equipo usado de 2013, con 377 horas registradas y referencia comercial 448. Son los datos que distinguen esta unidad de otras STAR-10 anunciadas.",
+      "prepared": "La ficha técnica de equipo de mástil vertical eléctrico Haulotte STAR-10 indica altura de trabajo de 10 m; esta unidad consta con año de fabricación 2013 y 377 horas registradas. El mástil vertical permite elevar una plataforma con huella de equipo contenida. Comprobar altura de trabajo, ocupantes y carga autorizada para la versión concreta. La documentación técnica de referencia del modelo Haulotte STAR-10 recoge altura de trabajo de 10 m, altura de plataforma de 8 m, capacidad nominal de 200 kg, 3 m de alcance horizontal con plumín y diseño sin voladizo trasero según la documentación del fabricante. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.\n\nReferencia comercial declarada por el vendedor: 448.",
+      "sources": [
+        "https://www.haulotte.com.es/es_ES/productos/star-10"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M315-5925",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La JLG 153-12 es una plataforma elevadora de tijera eléctrica de segunda mano. La ficha declara 17 m de altura de trabajo, año de fabricación 2006 y 1.347 horas registradas. El vendedor identifica esta unidad con la referencia 228.",
+      "prepared": "La ficha técnica de plataforma de tijera eléctrica JLG 153-12 indica altura de trabajo de 17 m; esta unidad consta con año de fabricación 2006 y 1.347 horas registradas. El trabajo de elevación depende de la altura operativa y de la superficie de apoyo. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta. La documentación técnica de referencia del modelo JLG 153-12 recoge altura de trabajo anunciada de 17 m y altura de referencia de 17,3 m, altura de plataforma de 15,3 m, capacidad nominal de 500 kg, plataforma principal y extensión documentadas para 500 kg de carga máxima. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.\n\nReferencia comercial declarada por el vendedor: 228.",
+      "sources": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/JLG-153-12-M315-5925"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M805-9451",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La Genie S-65 es una plataforma telescópica diésel de segunda mano. La ficha indica 22 m de altura de trabajo, año de fabricación 2011 y 421 horas registradas. El anuncio identifica esta unidad mediante la referencia comercial 534.",
+      "prepared": "La ficha técnica de plataforma telescópica diésel Genie S-65 indica altura de trabajo de 22 m y anchura de 2,49 m; esta unidad consta con año de fabricación 2011 y 421 horas registradas. El brazo telescópico facilita el acceso en altura con desplazamiento horizontal. La altura máxima y el alcance horizontal son magnitudes distintas; confirmar el diagrama de trabajo. La documentación técnica de referencia del modelo Genie S-65 recoge altura de trabajo anunciada de 22 m y altura de referencia de 21,6 m, altura de plataforma de 19,8 m, capacidad nominal de 227 kg, 17,2 m de alcance horizontal en la versión histórica documentada. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.\n\nReferencia comercial declarada por el vendedor: 534.",
+      "sources": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/Genie-S-65-M805-9451"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M310-8756",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La Manitou 170AETJL es una plataforma articulada eléctrica de segunda mano. El anuncio indica 17 m de altura de trabajo y año de fabricación 2016. El vendedor identifica la unidad mediante la referencia 1795 y declara que está pintada.",
+      "prepared": "La ficha técnica de plataforma articulada eléctrica Manitou 170AETJL indica altura de trabajo de 17 m y anchura de 1,75 m; esta unidad consta con año de fabricación 2016. La articulación permite gestionar accesos donde existen obstáculos en altura. El alcance lateral depende de carga y configuración; no se deduce de la altura de trabajo. La documentación técnica de referencia del modelo Manitou 170AETJL recoge altura de trabajo anunciada de 17 m y altura de referencia de 16,90 m, altura de plataforma de 14,90 m, capacidad nominal de 200 kg. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.\n\nReferencia comercial declarada por el vendedor: 1795. El anuncio indica «PINTADA», lo que no acredita una revisión mecánica.",
+      "sources": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/Manitou-170AETJL-M310-8756"
+      ]
+    },
+    {
+      "provider": "mercaeleva",
+      "reference": "M030-7485",
+      "field": "fallbackGeneral",
+      "status": "ready",
+      "signed": "La JLG E300AJP es una plataforma elevadora articulada eléctrica destinada a intervenciones en altura, instalaciones y mantenimiento. El fabricante describe un brazo articulado con plumín que ayuda a acceder a zonas difíciles de alcanzar directamente desde el suelo. En esta unidad usada, el vendedor anuncia 11 m de altura de trabajo, año de fabricación 2006 y 2.412 horas registradas. La motorización eléctrica la diferencia de las plataformas articuladas diésel para trabajos de exterior. Está identificada mediante la referencia comercial 429.",
+      "prepared": "La ficha técnica de plataforma articulada eléctrica JLG E300AJP indica altura de trabajo de 11 m y anchura de 1,22 m; esta unidad consta con año de fabricación 2006 y 2.412 horas registradas. La articulación permite gestionar accesos donde existen obstáculos en altura. El alcance lateral depende de carga y configuración; no se deduce de la altura de trabajo. Como referencia, otras fichas del catálogo del modelo JLG E300AJP publican altura de plataforma de 9,14 m y alcance lateral de 6,25 m; estos datos no acreditan por sí solos la configuración de esta unidad. La documentación técnica de referencia del modelo JLG E300AJP recoge altura de trabajo anunciada de 11 m y altura de referencia de 10,97 m, altura de plataforma de 8,97 m, capacidad nominal de 230 kg, 6,12 m de alcance horizontal y plumín opcional descrito en la documentación del fabricante. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.\n\nReferencia comercial declarada por el vendedor: 429.",
+      "sources": [
+        "https://sales.mercaeleva.com/es/for-sale/machine/JLG-E300AJP-M030-7485",
+        "https://www.jlg.com/en/equipment/boom-lifts/articulating/electric-hybrid/e300-series/e300ajp"
+      ]
+    }
+  ],
+  "provenance": {
+    "stage": "preparacion_offline",
+    "universe": "originales_canonicos",
+    "analyzedAt": "2026-11-24T15:49:49.178Z",
+    "sources": {
+      "gam": {
+        "source": {
+          "providerId": "gam",
+          "prefix": "scrape-gam-marzo-2026",
+          "scope": "10907b02e73059d7",
+          "catalogSha256": "855865e4a99f709cd9b10b68e77d594841b8cbd8c64b4fc9eb851cb397162483",
+          "productCount": 983
+        },
+        "fingerprints": {
+          "rulesVersion": 2,
+          "rulesSha256": "31e71855b1f154cce9858c070c620ef975e96623645fa4f598c11e853666b51b"
+        },
+        "startedAt": "2026-10-29T17:25:59.177Z",
+        "endedAt": "2026-10-29T17:30:38.677Z"
+      },
+      "gomariz": {
+        "source": {
+          "providerId": "gomariz",
+          "prefix": "scrape-gomariz",
+          "scope": "f226a9fd77182657",
+          "catalogSha256": "87e2fc58e39f9f00d7226e623ead5a154f933c3880b8503de2dc1a2375c3901b",
+          "productCount": 547
+        },
+        "fingerprints": {
+          "rulesVersion": 2,
+          "rulesSha256": "31e71855b1f154cce9858c070c620ef975e96623645fa4f598c11e853666b51b"
+        },
+        "startedAt": "2026-11-11T17:01:50.069Z",
+        "endedAt": "2026-11-11T17:02:43.325Z"
+      },
+      "mercaeleva": {
+        "source": {
+          "providerId": "mercaeleva",
+          "prefix": "mercaeleva-completa-20261029-234332",
+          "scope": "f42abbe29471bb2c",
+          "catalogSha256": "83e0265743ba1ec0b6ebb1c1bc8bbb9cd3b26eba77d208d659d35e7a62bba792",
+          "productCount": 221
+        },
+        "fingerprints": {
+          "rulesVersion": 2,
+          "rulesSha256": "31e71855b1f154cce9858c070c620ef975e96623645fa4f598c11e853666b51b"
+        },
+        "startedAt": "2026-10-29T22:43:36.778Z",
+        "endedAt": "2026-10-29T22:44:15.165Z"
+      }
+    },
+    "complete": true
+  },
+  "evidence": {
+    "verifiedUnits": 428,
+    "consensusModels": 144,
+    "familyProfiles": 26,
+    "verifiedManufacturerRules": 1
+  }
+}

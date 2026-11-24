@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "runId": "individual-gam-7172ee41d9742c05cdf04f3ac34255a5",
+  "approved": true,
+  "approvalReason": "Acreditación automática de exclusiones históricas coincidentes, con evidencia y preparación verificadas",
+  "sources": [
+    {
+      "providerId": "gam",
+      "catalogSha256": "855865e4a99f709cd9b10b68e77d594841b8cbd8c64b4fc9eb851cb397162483",
+      "preparationSha256": "6db4d01b43bf515bc4a3a71ae6be30cb2086034152683028b3257b191ec2819d",
+      "productCount": 983
+    }
+  ],
+  "exclusions": [
+    {
+      "providerId": "gam",
+      "reference": "6934",
+      "sourceUrl": "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-electricas-segunda-mano/6934-2007-jlg-e300ajp",
+      "status": "review",
+      "issues": [
+        "Identidad GAM contradictoria entre título y modelo técnico"
+      ],
+      "decision": "excluir",
+      "reason": "Identidad contradictoria entre titulo y modelo tecnico, sin corroboracion suficiente para publicar.",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/plataformas-elevadoras-articuladas-electricas-segunda-mano/6934-2007-jlg-e300ajp"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6682",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6682-2020-hyster-h35ft",
+      "status": "review",
+      "issues": [
+        "Número de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen",
+        "Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión propuesta por incidencias documentadas en la preparación: Número de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen; Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6682-2020-hyster-h35ft"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6703",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6703-2020-hyster-h35ft",
+      "status": "review",
+      "issues": [
+        "Número de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen",
+        "Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión propuesta por incidencias documentadas en la preparación: Número de serie P177B10585U compartido por referencias 6682, 6703; revisar identidad de origen; Stock GAM diferenciado: GAM-11596 (6682, 22192 horas) y GAM-11594 (6703, 22498 horas) publican el mismo número de serie; verificar la placa de cada equipo antes de asignarlo o considerar una republicación",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-glp-segunda-mano/6703-2020-hyster-h35ft"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "4736",
+      "sourceUrl": "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/4736-xg0807acw-li",
+      "status": "review",
+      "issues": [
+        "Identidad GAM contradictoria entre título y modelo técnico",
+        "Atributo rechazado por seguridad: Altura de trabajo",
+        "Atributo rechazado por seguridad: Altura de plataforma",
+        "Atributo rechazado por seguridad: Alcance horizontal",
+        "Atributo rechazado por seguridad: Dimensiones de la cesta",
+        "Atributo rechazado por seguridad: Pendiente superable",
+        "Atributo rechazado por seguridad: Altura de elevación",
+        "Atributo rechazado por seguridad: Modelo",
+        "Modelo contradictorio: título y especificación identifican variantes diferentes"
+      ],
+      "decision": "excluir",
+      "reason": "Variantes de modelo contradictorias y atributos tecnicos rechazados por seguridad.",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/4736-xg0807acw-li"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "4739",
+      "sourceUrl": "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/4739-xcmg-xg1008ac-li",
+      "status": "review",
+      "issues": [
+        "Descripción comercial contradictoria: capacidad de carga"
+      ],
+      "decision": "excluir",
+      "reason": "Capacidad de carga contradictoria entre descripcion comercial y especificaciones tecnicas.",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/plataformas-de-tijera-electricas-xcmg/4739-xcmg-xg1008ac-li"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "2328",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadora-diesel-yale/2328-carretilla-frontal-diesel-yale-gp80svx",
+      "status": "review",
+      "issues": [
+        "Identidad GAM contradictoria entre título, resumen y ficha técnica",
+        "Cobertura editorial insuficiente: descripción corta"
+      ],
+      "decision": "excluir",
+      "reason": "Identidad de modelo contradictoria entre titulo, descripcion y ficha tecnica; cobertura editorial insuficiente.",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadora-diesel-yale/2328-carretilla-frontal-diesel-yale-gp80svx"
+      ]
+    },
+    {
+      "providerId": "gam",
+      "reference": "6004",
+      "sourceUrl": "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6",
+      "status": "identity",
+      "issues": [
+        "Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha técnica",
+        "Identidad GAM contradictoria: modelo anunciado distinto de J7.0XTG6 en ficha técnica"
+      ],
+      "decision": "excluir",
+      "reason": "Exclusión propuesta por incidencias documentadas en la preparación: Identidad GAM contradictoria: marca HYSTER en anuncio y YALE en ficha técnica; Identidad GAM contradictoria: modelo anunciado distinto de J7.0XTG6 en ficha técnica",
+      "evidenceUrls": [
+        "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-hyster/6004-carretilla-elevadora-electrica-hyster-j70xtg6"
+      ]
+    }
+  ]
+}

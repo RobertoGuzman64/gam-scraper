@@ -125,3 +125,44 @@ test("la omisión del peso inverosímil es aplicable a otros proveedores y no ad
   const after = { ...before, spec: Object.fromEntries(Object.entries(before.spec).filter(([key]) => key !== "Peso")) };
   assert.equal(evaluateIndividualPublicationDifference(source.providerId, differenceBetween("before", "after", [before], [after]), [before], [after], null, [valid]).accepted, false);
 });
+
+test("reconcilia medidas sin magnitud solo cuando su retirada es reproducible desde la misma unidad", () => {
+  for (const [field, value] of [["Peso", "kg"], ["Peso maquina", "kg"], ["Bateria", "ah"], ["Longitud extensión", "n/a m"]] as const) {
+    const source: ProductRecord = { ...platform, specs: { ...platform.specs, Peso: "1200 kg", [field]: value } };
+    const prepared = prepareSourceProduct(source);
+    assert.equal(prepared.status, "ready");
+    const updated = prepared.product;
+    assert.equal(Object.hasOwn(updated.spec, field), false);
+    const old = { ...updated, spec: { ...updated.spec, [field]: value } };
+    const evaluate = (originals: readonly ProductRecord[], before = old, after = updated) => {
+      const diff = differenceBetween("before", "after", [before], [after]);
+      return evaluateIndividualPublicationDifference(source.providerId, diff, [before], [after], null, originals);
+    };
+    assert.equal(evaluate([source]).accepted, true, field);
+    assert.equal(evaluate([]).accepted, false, field);
+    assert.equal(evaluate([source, source]).accepted, false, field);
+    assert.equal(evaluate([{ ...source, url: "https://example.com/otra-unidad" }]).accepted, false, field);
+    assert.equal(evaluate([{ ...source, specs: { ...source.specs, [field]: "12" } }]).accepted, false, field);
+    assert.equal(evaluate([source], { ...old, spec: { ...old.spec, [field]: "12" } }).accepted, false, field);
+    assert.equal(evaluate([source], old, { ...updated, description_general: "Descripción alterada" }).accepted, false, field);
+  }
+});
+
+test("las retiradas de medidas válidas siguen bloqueadas y las medidas vacías se reconcilian en otros proveedores", () => {
+  const source: ProductRecord = { ...platform, providerId: "gomariz", title: "EQUIPTEST TX1 Plataforma articulada",
+    url: "https://www.gomarizrent.com/elevacion-y-trabajos-en-altura/brazo-articulado/equiptest-tx1/",
+    image: "https://www.gomarizrent.com/imagen-tx1.jpg",
+    specs: { Marca: "EQUIPTEST", Modelo: "TX1", Motor: "Diésel", "Altura de trabajo": "15 m", Capacidad: "230 kg", Peso: "1200 kg", "Longitud extensión": "n/a m" } };
+  const prepared = prepareSourceProduct(source);
+  assert.equal(prepared.status, "ready");
+  const updated = prepared.product;
+  const field = "Longitud extensión";
+  assert.equal(Object.hasOwn(updated.spec, field), false);
+  const old = { ...updated, spec: { ...updated.spec, [field]: "n/a m" } };
+  assert.equal(evaluateIndividualPublicationDifference(source.providerId, differenceBetween("before", "after", [old], [updated]), [old], [updated], null, [source]).accepted, true);
+  const valid = { ...source, specs: { ...source.specs, [field]: "1 m" } };
+  const before = prepareSourceProduct(valid).product;
+  assert.equal(before.spec[field], "1 m");
+  const after = { ...before, spec: Object.fromEntries(Object.entries(before.spec).filter(([key]) => key !== field)) };
+  assert.equal(evaluateIndividualPublicationDifference(source.providerId, differenceBetween("before", "after", [before], [after]), [before], [after], null, [valid]).accepted, false);
+});

@@ -49,7 +49,7 @@ const normalizeValue = (key: string, value: SpecValue): SpecValue => {
   return value;
 };
 
-const isEmptyTechnicalMeasure = (key: string, value: SpecValue): boolean => {
+export const isEmptyTechnicalMeasure = (key: string, value: SpecValue | undefined): boolean => {
   if (typeof value !== "string") return false;
   const name = fold(key);
   const text = fold(value);

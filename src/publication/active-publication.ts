@@ -10,6 +10,7 @@ import { readAccreditedPublication, resolveAccreditedPublication } from "../infr
 import { publicationApprovalSha, resolvePublicationDirectory } from "../infrastructure/filesystem/catalog/publication-identity.js";
 import { evaluateIndividualPublicationDifference, PublicationAcceptanceError } from "./publication-acceptance.js";
 import type { PublicationAcceptance } from "./publication-acceptance.js";
+import { isEmptyTechnicalMeasure } from "../preparation/technical/technical-presentation.js";
 
 import type { PublicationDifference } from "./publication-contracts.js";
 export type { PublicationDifference } from "./publication-contracts.js";
@@ -126,7 +127,10 @@ const describe = async (root: string, providerId: string, sha: string): Promise<
   const old = current ? (await readAccreditedPublication(current)).products : [];
   const difference = differenceBetween(previous, sha, old, candidate.products);
   const approval: unknown = JSON.parse(await readFile(join(dirname(candidate.path), "accreditation.json"), "utf8"));
-  const needsOriginal = difference.removedSpecifications.some((key) => key.endsWith(":Peso"));
+  const removedSpecifications = new Set(difference.removedSpecifications);
+  const needsOriginal = difference.removedSpecifications.some((key) => key.endsWith(":Peso")) ||
+    old.some((product) => Object.entries(product.spec).some(([field, value]) =>
+      removedSpecifications.has(`${productIdentity(product)}:${field}`) && isEmptyTechnicalMeasure(field, value)));
   const originalDirectory = join(root, "catalogs", "providers", providerId, "original");
   const originalAvailable = needsOriginal && await lstat(originalDirectory).then(() => true, (error: unknown) => {
     if (missing(error)) return false;

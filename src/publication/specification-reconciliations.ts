@@ -2,6 +2,7 @@ import { isDeepStrictEqual } from "node:util";
 import type { ProductRecord } from "../contracts/catalog.js";
 import { prepareSourceProduct } from "../preparation/prepare-product.js";
 import { editorialHasImplausibleWeight } from "../preparation/editorial/core/editorial-facts.js";
+import { isEmptyTechnicalMeasure } from "../preparation/technical/technical-presentation.js";
 import { normalizeManainTechnicalSpecs } from "../preparation/manain/normalization.js";
 import type { ImportCandidate } from "../commercial/legacy-export/contracts.js";
 import { withdrawnTechnicalSpecIdentities } from "../catalog/withdrawn-technical-specs.js";
@@ -73,7 +74,7 @@ const verifiedMercaelevaRemovals: typeof verifiedCorrections = {
   "ref:m119-9334:Horas laborales": { model: "EPL185", previous: "−1 h", replacement: {} }
 };
 
-const reconcilesPreparedWeight = (
+const reconcilesPreparedTechnicalRemoval = (
   providerId: string, field: string, old: ImportCandidate, updated: ImportCandidate,
   source: ProductRecord
 ): boolean => {
@@ -83,13 +84,15 @@ const reconcilesPreparedWeight = (
     source.url !== old.sourceUrl || source.url !== updated.sourceUrl ||
     old.externalReference !== updated.externalReference || !Object.hasOwn(specs, field) ||
     !isDeepStrictEqual(old.spec[field], specs[field]) || Object.hasOwn(updated.spec, field)) return false;
-  if (field === "Peso") {
-    if (!editorialHasImplausibleWeight(source)) return false;
-  } else {
-    const normalized = normalizeManainTechnicalSpecs(source, specs);
-    if (Object.hasOwn(normalized, field) || normalized.Peso === undefined ||
-      !isDeepStrictEqual(normalized.Peso, updated.spec.Peso) ||
-      !isDeepStrictEqual(old.spec.Peso, updated.spec.Peso)) return false;
+  if (!isEmptyTechnicalMeasure(field, specs[field])) {
+    if (field === "Peso") {
+      if (!editorialHasImplausibleWeight(source)) return false;
+    } else {
+      const normalized = normalizeManainTechnicalSpecs(source, specs);
+      if (Object.hasOwn(normalized, field) || normalized.Peso === undefined ||
+        !isDeepStrictEqual(normalized.Peso, updated.spec.Peso) ||
+        !isDeepStrictEqual(old.spec.Peso, updated.spec.Peso)) return false;
+    }
   }
   const prepared = prepareSourceProduct(source);
   return prepared.status === "ready" && isDeepStrictEqual(prepared.product, updated);
@@ -121,7 +124,7 @@ export const reconcileRemovedSpecifications = (
     const old = previous.get(identity);
     const updated = next.get(identity);
     const source = originals.get(identity);
-    if (source && old && updated && reconcilesPreparedWeight(providerId, removedKey, old, updated, source)) {
+    if (source && old && updated && reconcilesPreparedTechnicalRemoval(providerId, removedKey, old, updated, source)) {
       resolved.push(key);
       continue;
     }

@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "mode": "lectura_sin_publicacion",
+  "providers": {
+    "gam": {
+      "records": 983,
+      "ready": 977,
+      "review": 6,
+      "exceptions": 0,
+      "facts": 575,
+      "loadCenters": 116,
+      "turningRadii": 58,
+      "cleaningWidths": 21,
+      "baskets": 98,
+      "drawbarPulls": 0,
+      "verifiedUnbranded": 2,
+      "sourceClaimEligible": 328,
+      "sourceClaimApplied": 235,
+      "signedShortApplied": 208,
+      "signedGeneralApplied": 254,
+      "signedTitlesApplied": 9,
+      "signedIdentityExceptionsApplied": 27,
+      "unitContextApplied": 201,
+      "modelReferencesApplied": 20,
+      "emptyShort": 1,
+      "emptyGeneral": 0
+    },
+    "gomariz": {
+      "records": 547,
+      "ready": 546,
+      "review": 1,
+      "exceptions": 0,
+      "facts": 491,
+      "loadCenters": 0,
+      "turningRadii": 0,
+      "cleaningWidths": 3,
+      "baskets": 0,
+      "drawbarPulls": 0,
+      "verifiedUnbranded": 0,
+      "sourceClaimEligible": 241,
+      "sourceClaimApplied": 240,
+      "signedShortApplied": 1,
+      "signedGeneralApplied": 4,
+      "signedTitlesApplied": 9,
+      "signedIdentityExceptionsApplied": 0,
+      "unitContextApplied": 0,
+      "modelReferencesApplied": 48,
+      "emptyShort": 0,
+      "emptyGeneral": 0
+    },
+    "mercaeleva": {
+      "records": 221,
+      "ready": 221,
+      "review": 0,
+      "exceptions": 0,
+      "facts": 203,
+      "loadCenters": 0,
+      "turningRadii": 0,
+      "cleaningWidths": 0,
+      "baskets": 0,
+      "drawbarPulls": 0,
+      "verifiedUnbranded": 0,
+      "sourceClaimEligible": 1,
+      "sourceClaimApplied": 1,
+      "signedShortApplied": 19,
+      "signedGeneralApplied": 66,
+      "signedTitlesApplied": 0,
+      "signedIdentityExceptionsApplied": 0,
+      "unitContextApplied": 0,
+      "modelReferencesApplied": 143,
+      "emptyShort": 0,
+      "emptyGeneral": 0
+    }
+  },
+  "total": {
+    "records": 1751,
+    "ready": 1744,
+    "review": 7,
+    "exceptions": 0,
+    "facts": 1269,
+    "loadCenters": 116,
+    "turningRadii": 58,
+    "cleaningWidths": 24,
+    "baskets": 98,
+    "drawbarPulls": 0,
+    "verifiedUnbranded": 2,
+    "sourceClaimEligible": 570,
+    "sourceClaimApplied": 476,
+    "signedShortApplied": 228,
+    "signedGeneralApplied": 324,
+    "signedTitlesApplied": 18,
+    "signedIdentityExceptionsApplied": 27,
+    "unitContextApplied": 201,
+    "modelReferencesApplied": 211,
+    "emptyShort": 1,
+    "emptyGeneral": 0
+  },
+  "errors": [],
+  "provenance": {
+    "stage": "preparacion_offline",
+    "universe": "originales_canonicos",
+    "analyzedAt": "2026-11-24T15:49:41.210Z",
+    "sources": {
+      "gam": {
+        "source": {
+          "providerId": "gam",
+          "prefix": "scrape-gam-marzo-2026",
+          "scope": "10907b02e73059d7",
+          "catalogSha256": "855865e4a99f709cd9b10b68e77d594841b8cbd8c64b4fc9eb851cb397162483",
+          "productCount": 983
+        },
+        "fingerprints": {
+          "rulesVersion": 2,
+          "rulesSha256": "31e71855b1f154cce9858c070c620ef975e96623645fa4f598c11e853666b51b"
+        },
+        "startedAt": "2026-10-29T17:25:59.177Z",
+        "endedAt": "2026-10-29T17:30:38.677Z"
+      },
+      "gomariz": {
+        "source": {
+          "providerId": "gomariz",
+          "prefix": "scrape-gomariz",
+          "scope": "f226a9fd77182657",
+          "catalogSha256": "87e2fc58e39f9f00d7226e623ead5a154f933c3880b8503de2dc1a2375c3901b",
+          "productCount": 547
+        },
+        "fingerprints": {
+          "rulesVersion": 2,
+          "rulesSha256": "31e71855b1f154cce9858c070c620ef975e96623645fa4f598c11e853666b51b"
+        },
+        "startedAt": "2026-11-11T17:01:50.069Z",
+        "endedAt": "2026-11-11T17:02:43.325Z"
+      },
+      "mercaeleva": {
+        "source": {
+          "providerId": "mercaeleva",
+          "prefix": "mercaeleva-completa-20261029-234332",
+          "scope": "f42abbe29471bb2c",
+          "catalogSha256": "83e0265743ba1ec0b6ebb1c1bc8bbb9cd3b26eba77d208d659d35e7a62bba792",
+          "productCount": 221
+        },
+        "fingerprints": {
+          "rulesVersion": 2,
+          "rulesSha256": "31e71855b1f154cce9858c070c620ef975e96623645fa4f598c11e853666b51b"
+        },
+        "startedAt": "2026-10-29T22:43:36.778Z",
+        "endedAt": "2026-10-29T22:44:15.165Z"
+      }
+    },
+    "complete": true
+  },
+  "evidence": {
+    "signedUnits": 428,
+    "modelConsensus": 144,
+    "familyProfiles": 26,
+    "declaredManufacturerModels": 1
+  }
+}
