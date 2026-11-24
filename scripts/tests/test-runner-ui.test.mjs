@@ -58,7 +58,7 @@ test("terminales pequeñas, colores y espacios disponibles no producen saltos de
     assert.ok(colored.some((line) => /\u001b\[/.test(line)));
   }
   assert.doesNotMatch(formatRunnerLog(state()), /\u001b\[/);
-  assert.match(formatRunnerLog(state()), /399\/416 con informe/);
+  assert.equal(formatRunnerLog(state()), "TESTS | 399/416 | 1715 OK | 0 fallidos | 1 omitidos | caché 285 suites | 01:21");
   assert.equal(formatRunnerTime(109573), "01:49");
   assert.equal(formatRunnerTime(3661000), "1:01:01");
 });

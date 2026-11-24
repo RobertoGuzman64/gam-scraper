@@ -140,7 +140,7 @@ export default async function* compactGuardTestReporter(events) {
 
 export const formatRunnerLog = ({ progress, counts, lanes, elapsed_ms }) => {
   const closing = progress.remaining === 0 && lanes.some((lane) => lane.finished_ms === null);
-  return `TESTS | ${progress.reported}/${progress.total} con informe | ${progress.without_report} sin informe | ${progress.not_started} sin iniciar | ${counts.passed} correctos | ${counts.failed} fallidos | ${counts.skipped} omitidos | caché ${progress.reused} suites | ${formatRunnerTime(elapsed_ms)}${closing ? " | cerrando ejecutores" : ""}`;
+  return `TESTS | ${progress.reported}/${progress.total} | ${counts.passed} OK | ${counts.failed} fallidos | ${counts.skipped} omitidos | caché ${progress.reused} suites | ${formatRunnerTime(elapsed_ms)}${closing ? " | cerrando ejecutores" : ""}`;
 };
 
 export const formatRunnerOmission = ({ name, file, line, reason }, platform = process.platform) => {

@@ -365,6 +365,9 @@ test("E2 presenta tres etapas compactas, con ampliación individual y sin duplic
   assert.ok(cards.includes("Etapa no disponible en este expediente"));
   assert.ok(cards.includes("Sin fotografía disponible"));
   assert.ok(cards.includes("Imagen externa no disponible"));
+  assert.ok(cards.includes("Abrir imagen en otra pestaña"));
+  assert.ok(cards.includes("show(index + 1)"));
+  assert.ok(cards.includes("unavailablePhoto(\"equipzilla-gallery-empty\", url)"));
   assert.ok(!cards.includes("window.fetch("));
 });
 

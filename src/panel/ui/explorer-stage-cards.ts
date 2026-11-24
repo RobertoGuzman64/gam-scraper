@@ -1,5 +1,5 @@
 import type { PanelExplorerProduct, PanelProductView } from "../explorer/types.js";
-import { create as element } from "./dom.js";
+import { create as element, linkTo, verifiedUrl } from "./dom.js";
 import { additionLabels } from "./explorer-labels.js";
 import { stageSpecAddition } from "../explorer/stage-spec-additions.js";
 
@@ -11,34 +11,46 @@ const stageLabels: Readonly<Record<RecordStage, string>> = {
   commercial: "03 · COMERCIAL"
 };
 
-const safeImageUrl = (value: string): boolean => {
-  try { return ["https:", "http:"].includes(new URL(value).protocol); }
-  catch { return false; }
-};
-
 const display = (value: string | number | boolean | null): string =>
   value === null || value === "" ? "No consta" : String(value);
 
 const imageUrls = (record: PanelProductView): readonly string[] =>
   [...new Set([record.image, ...record.images].filter((url): url is string =>
-    typeof url === "string" && safeImageUrl(url)))];
+    typeof url === "string" && verifiedUrl(url)))];
+
+const unavailablePhoto = (className: string, url: string): HTMLElement => {
+  const message = element("div", className);
+  const details = element("div");
+  details.append(element("span", "", "Imagen externa no disponible"), linkTo(url, "Abrir imagen en otra pestaña"));
+  message.append(details);
+  return message;
+};
 
 const photograph = (record: PanelProductView): HTMLElement => {
   const frame = element("div", "stage-record-image");
-  const url = imageUrls(record)[0];
-  if (!url) {
+  const sources = imageUrls(record);
+  const first = sources[0];
+  if (!first) {
     frame.append(element("span", "record-photo-empty", "Sin fotografía disponible"));
     return frame;
   }
-  const image = element("img");
-  image.src = url;
-  image.alt = `Fotografía declarada de ${record.title ?? "la máquina"}`;
-  image.loading = "lazy";
-  image.referrerPolicy = "no-referrer";
-  image.addEventListener("error", () => {
-    frame.replaceChildren(element("span", "record-photo-empty", "Imagen externa no disponible"));
-  });
-  frame.append(image);
+  const show = (index: number): void => {
+    const url = sources[index];
+    if (!url) {
+      frame.replaceChildren(unavailablePhoto("record-photo-empty", first));
+      return;
+    }
+    const image = element("img");
+    image.alt = `Fotografía declarada de ${record.title ?? "la máquina"}`;
+    image.loading = "lazy";
+    image.referrerPolicy = "no-referrer";
+    image.addEventListener("error", () => {
+      if (frame.contains(image)) show(index + 1);
+    }, { once: true });
+    frame.replaceChildren(image);
+    image.src = url;
+  };
+  show(0);
   return frame;
 };
 
@@ -79,10 +91,12 @@ const gallery = (record: PanelProductView, stage: RecordStage): HTMLElement => {
     photo.addEventListener("load", () => {
       if (frame.contains(placeholder)) frame.replaceChildren(photo);
     });
+    const url = sources[currentIndex];
+    if (!url) return;
     photo.addEventListener("error", () => {
-      if (frame.contains(placeholder)) placeholder.textContent = "Imagen externa no disponible";
-    });
-    photo.src = sources[currentIndex] ?? "";
+      if (frame.contains(placeholder)) frame.replaceChildren(unavailablePhoto("equipzilla-gallery-empty", url));
+    }, { once: true });
+    photo.src = url;
     counter.textContent = `${currentIndex + 1} / ${sources.length}`;
     selectors.forEach((selector, position) => {
       selector.setAttribute("aria-pressed", String(position === currentIndex));
@@ -101,7 +115,6 @@ const gallery = (record: PanelProductView, stage: RecordStage): HTMLElement => {
       const selectPhoto = button("", "equipzilla-gallery-thumbnail", () => show(index));
       selectPhoto.setAttribute("aria-label", `Mostrar fotografía ${index + 1}`);
       const image = element("img");
-      image.src = url;
       image.alt = "";
       image.loading = "lazy";
       image.referrerPolicy = "no-referrer";
@@ -109,6 +122,7 @@ const gallery = (record: PanelProductView, stage: RecordStage): HTMLElement => {
         selectPhoto.replaceChildren(element("span", "", String(index + 1)));
       });
       selectPhoto.append(image);
+      image.src = url;
       selectors.push(selectPhoto);
       thumbnails.append(selectPhoto);
     }

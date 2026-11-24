@@ -5,6 +5,8 @@
 .stage-record-image,.stage-record-placeholder {display:grid;place-items:center;position:relative;min-width:0;aspect-ratio:4/3;border-radius:8px;background:#fff;overflow:hidden}
 .stage-record-image img {display:block;width:100%;height:100%;object-fit:contain}
 .record-photo-empty,.stage-record-placeholder {padding:12px;color:#617384;text-align:center;font-size:var(--type-secondary);line-height:1.4}
+.stage-record-image .explorer-link,.equipzilla-product-view .equipzilla-gallery-empty .explorer-link {display:block;margin:8px auto 0;color:#235e74;text-decoration:underline}
+.stage-record-image .explorer-link:hover,.equipzilla-product-view .equipzilla-gallery-empty .explorer-link:hover {color:#123b50}
 .stage-record-title {font-size:15px;line-height:1.4;font-weight:750;color:#edf6fc;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.8em}
 .stage-record-stats {display:grid;gap:7px;margin:1px 0 4px}
 .stage-record-stat {display:flex;flex-direction:column;align-items:flex-start;gap:3px;font-size:var(--type-secondary);line-height:1.4;min-width:0}
