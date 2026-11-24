@@ -73,3 +73,37 @@ test("rechaza datos de otras unidades, fuentes y variantes", () => {
   assert.equal(resolveSourcedOperationalSpecs({ ...source, longDescription: "Equipo sin datos verificables." },
     source, source.longDescription, true), null);
 });
+
+test("atribuye el historial de transporte a una identidad corroborada sin certificar su vigencia", () => {
+  const source: ProductRecord = {
+    ...controlledGamForklift(),
+    title: "Semiremolque MARCA MODELO10",
+    shortDescription: "Semiremolque MARCA MODELO10",
+    longDescription: "· Equipo matriculado, ITV indicada por el vendedor",
+    year: "2015",
+    specs: { "Matrícula": "CONTROL-TEST", "Año de fabricación": "2015" }
+  };
+  const result = resolveSourcedOperationalSpecs(source, source, source.longDescription, true) ?? "";
+  assert.match(result, /El anuncio de MARCA MODELO10 registra matrícula/u);
+  assert.match(result, /comprobar su vigencia/u);
+  const uncertain: ProductRecord = { ...source, model: "MODELO11" };
+  const unverified = resolveSourcedOperationalSpecs(uncertain, uncertain, uncertain.longDescription, true) ?? "";
+  assert.match(unverified, /El anuncio registra matrícula/u);
+  assert.doesNotMatch(unverified, /MODELO11/u);
+});
+
+
+test("conserva la configuración de ejes declarada sin atribuir carga útil ni vigencia documental", () => {
+  const source: ProductRecord = {
+    ...controlledGamForklift(),
+    title: "Plataforma 4 ejes MARCA MODELO10", shortDescription: "Plataforma 4 ejes MARCA MODELO10",
+    longDescription: "· Equipo matriculado, ITV indicada por el vendedor", year: "2015",
+    specs: { Longitud: "12000 mm", Anchura: "2500 mm", Peso: "8000 kg", "Matrícula": "CONTROL-TEST", "Año de fabricación": "2015" }
+  };
+  const result = resolveSourcedOperationalSpecs(source, source, source.longDescription, true) ?? "";
+  assert.match(result, /El título del vendedor identifica una plataforma de cuatro ejes/u);
+  assert.doesNotMatch(result, /carga útil/u);
+  const mentioned = resolveSourcedOperationalSpecs(source, source, `${source.longDescription} Plataforma de cuatro ejes.`, true) ?? "";
+  assert.doesNotMatch(mentioned, /El título del vendedor identifica/u);
+  assert.equal(resolveSourcedOperationalSpecs(source, { ...source, reference: "OTRA" }, source.longDescription, true), null);
+});

@@ -1,7 +1,10 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { editorialMetricOf, editorialQuantityOf, formatEditorialQuantity } from "../editorial-measurements.js";
-import { sameEditorialUnit } from "../../core/editorial-source-contract.js";
-import { resolvedEditorialUnitFamilies } from "../../identity/editorial-unit-provenance.js";
+import { resolveMissingEditorialUnitName, sameEditorialUnit } from "../../core/editorial-source-contract.js";
+import { resolvedEditorialUnitFamilies, verifiedEditorialLiteralUnitPair } from "../../identity/editorial-unit-provenance.js";
+
+import { editorialFamilyFromSourceGeneral } from "../../core/editorial-families.js";
+import { resolveEditorialLiteralTitleSource } from "../../core/editorial-source.js";
 
 type TechnicalDetail = Readonly<{
   key: string;
@@ -31,6 +34,9 @@ const measureOf = (record: ProductRecord, detail: TechnicalDetail): number | nul
 };
 
 const sourcingIsSafe = (source: ProductRecord, prepared: ProductRecord): boolean => {
+  if (verifiedEditorialLiteralUnitPair(source, prepared) &&
+    editorialFamilyFromSourceGeneral(source.longDescription) === "torre-iluminacion" &&
+    resolveEditorialLiteralTitleSource(source) === "torre de iluminación") return true;
   if (!sameEditorialUnit(source, prepared) ||
     !source.title?.trim() || !prepared.title?.trim() ||
     source.specs?.Marca !== prepared.specs?.Marca || source.specs?.Modelo !== prepared.specs?.Modelo) return false;
@@ -86,11 +92,13 @@ export const resolveSourcedTechnicalContext = (
   const short = shortSourceContext(source, general);
   if (short !== null) additions.push(short);
   const measures = sourcedMeasures(source, prepared, `${general} ${short ?? ""}`);
+  const identity = resolveMissingEditorialUnitName(source, prepared, `${general} ${short ?? ""}`, authenticatedOrigin);
+  const attribution = identity ? `, identificada como ${identity},` : "";
   if (measures.length >= 2) {
-    additions.push(`En la ficha técnica de esta misma referencia constan además ${measures.join(", ")}. Estas magnitudes describen el equipo anunciado y son útiles para comprobar dimensiones, capacidades y condiciones de utilización.`);
+    additions.push(`En la ficha técnica de esta misma referencia${attribution} constan además ${measures.join(", ")}. Estas magnitudes describen el equipo anunciado y son útiles para comprobar dimensiones, capacidades y condiciones de utilización.`);
   } else if (measures.length === 1 && /^altura (?:de|exterior)/u.test(measures[0] ?? "") &&
     general.trim().split(/\s+/u).length >= 45) {
-    additions.push(`La ficha técnica de esta misma referencia añade ${measures[0]}, una cota útil para comprobar las dimensiones y condiciones de acceso del equipo anunciado.`);
+    additions.push(`La ficha técnica de esta misma referencia${attribution} añade ${measures[0]}, una cota útil para comprobar las dimensiones y condiciones de acceso del equipo anunciado.`);
   }
   if (additions.length === 0) return null;
   return `${general.trim()}${/[.!?]$/u.test(general.trim()) ? "" : "."} ${additions.join(" ")}`;

@@ -73,15 +73,18 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
       ? excludeGomarizForeignCover(sourceImages, record.reference) : sourceImages;
   const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;
-  const editorial = resolvePreparedEditorial(editorialRecord, restoredFamily ? originalRecord : sourceUnitRecord, sourceEditorial, originalRecord);
   const attributeResult = catalog ? productAttributes(qualityRecord, category, catalog) : null;
-  const descriptions = { short: editorial.preparedShort, general: editorial.preparedLong };
   const normalizedSpecs = normalizePreparedTechnicalSpecs(record, reconciledSpecs, technicalProvenance.observe);
   const limitedSpecs = presentGamVerifiedRestrictedCapacity(record, normalizedSpecs);
   const handledSpecs = reconcileHandlingFamilySpecs(editorialRecord, limitedSpecs);
   technicalProvenance.observe(limitedSpecs, handledSpecs,
     "src/preparation/shared/technical/reconciliation/handling-family-specifications.ts",
     { spec: "Capacidad de carga (kg)" });
+  const presentedSpecs = normalizeOriginalEnergyPresentation(normalizeOriginalLengthPresentation(
+    normalizeOriginalMassPresentation(handledSpecs, originalRecord.specs ?? {}), originalRecord.specs ?? {}), originalRecord.specs ?? {});
+  const editorialProvenance = technicalProvenance.finalize(presentedSpecs, recoverySource);
+  const editorial = resolvePreparedEditorial(editorialRecord, restoredFamily ? originalRecord : sourceUnitRecord, sourceEditorial, originalRecord, editorialProvenance);
+  const descriptions = { short: editorial.preparedShort, general: editorial.preparedLong };
   const product: ImportCandidate = {
     providerId: record.providerId,
     sourceUrl: record.url,
@@ -97,8 +100,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     description_general: descriptions.general,
     image: images[0] ?? null,
     images,
-    spec: normalizeOriginalEnergyPresentation(normalizeOriginalLengthPresentation(
-      normalizeOriginalMassPresentation(handledSpecs, originalRecord.specs ?? {}), originalRecord.specs ?? {}), originalRecord.specs ?? {}),
+    spec: presentedSpecs,
     attributes: attributeResult?.attributes ?? []
   };
   const presented = normalizePreparedEditorialPresentation(sourceUnitRecord, product);
@@ -135,7 +137,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
       createMany: validateCreateManyCandidate(presented, catalog)
     } }),
     product: presented,
-    technicalProvenance: technicalProvenance.finalize(presented.spec, recoverySource)
+    technicalProvenance: presented.spec === presentedSpecs ? editorialProvenance : technicalProvenance.finalize(presented.spec, recoverySource)
   };
 };
 

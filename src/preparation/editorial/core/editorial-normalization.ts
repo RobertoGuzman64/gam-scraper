@@ -86,7 +86,7 @@ export const normalizeEditorialTitle = (
 ): string | null => {
   const trimmed = value?.replace(/\s+/gu, " ").trim();
   if (!trimmed) return null;
-  return editorialText(removePurchasePrefix(trimmed), model) || trimmed;
+  return editorialText(removePurchasePrefix(trimmed).replace(/^platafora(?=\s+\d+\s+ejes?\b)/iu, "Plataforma"), model) || trimmed;
 };
 
 export const normalizeEditorialSummary = (

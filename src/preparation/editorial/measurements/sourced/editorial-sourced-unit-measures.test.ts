@@ -22,7 +22,7 @@ test("la ficha breve recupera medidas propias corroboradas, sin alterar el orige
   assert.match(result, /longitud de 2,4 m/u);
   assert.match(result, /anchura de 1,2 m/u);
   assert.match(result, /peso declarado de 3\.880 kg/u);
-  assert.match(result, /esta misma referencia/u);
+  assert.match(result, /esta misma referencia, identificada como MARCA MODELO10, declara/u);
   assert.equal(JSON.stringify(source), before);
   assert.match(prepareSourceProduct(source).product.description_general ?? "", /3\.880 kg/u);
 });
@@ -34,6 +34,7 @@ test("la regla se aplica a otro proveedor compatible y no depende de referencias
     specs: { Longitud: "2400 mm", Anchura: "1200 mm", Peso: "3880 kg" }
   };
   const description = resolveSourcedUnitMeasuresGeneral(source, source, source.longDescription, true) ?? "";
+  assert.match(description, /identificada como MARCA MODELO10/u);
   assert.match(description, /longitud de 2,4 m/u);
   assert.match(description, /peso declarado de 3\.880 kg/u);
 });
@@ -65,4 +66,16 @@ test("las medidas ambiguas, sin unidad o insuficientes no se completan por analo
   for (const candidate of invalid) assert.equal(
     resolveSourcedUnitMeasuresGeneral(candidate, candidate, candidate.longDescription, true), null);
   assert.equal(resolveSourcedUnitMeasuresGeneral({ ...source, longDescription: null }, source, source.longDescription, true), null);
+});
+
+test("no repite la identidad presente ni atribuye una variante distinta", () => {
+  const source = original();
+  const named = "La carretilla MARCA MODELO10 se destina a tareas de almacén.";
+  const result = resolveSourcedUnitMeasuresGeneral(source, source, named, true) ?? "";
+  assert.match(result, /capacidad declarada de 2\.500 kg/u);
+  assert.doesNotMatch(result, /identificada como/u);
+  assert.equal(resolveSourcedUnitMeasuresGeneral(source, { ...source, title: "Carretilla MARCA MODELO11" },
+    source.longDescription, true), null);
+  const conflict = "La carretilla MARCA MODELO11 se destina a tareas de almacén.";
+  assert.doesNotMatch(resolveSourcedUnitMeasuresGeneral(source, source, conflict, true) ?? "", /identificada como/u);
 });

@@ -5,6 +5,7 @@ import { editorialQuantity, formatEditorialQuantity } from "../measurements/edit
 import { hasUnconditionalEditorialClaim } from "../claims/editorial-claim-evidence.js";
 import type { EditorialFacts } from "./editorial-facts.js";
 import { sameEditorialUnit } from "./editorial-source-contract.js";
+import { verifiedEditorialUnitPair } from "../identity/editorial-unit-provenance.js";
 import { containsEditorialBrandModel } from "../identity/editorial-identity-match.js";
 import { resolveDocumentedBatteryConfiguration } from "../claims/editorial-battery-claims.js";
 import { corroboratedAnnouncedUnitSummary } from "../source/context/editorial-source-announced-unit.js";
@@ -142,6 +143,14 @@ export const resolveReusableEditorial = (
       facts.energy === "GLP" ? " de GLP" : facts.energy === "gasolina" ? " de gasolina" : "";
   const identity = `${family[0]?.toLocaleUpperCase("es") ?? ""}${family.slice(1)}${fuel} ${name}`;
   const main = measures.length ? join(measures) : join(extras.slice(0, 2));
+  const compactHandling = facts.family === "apilador" || facts.family === "transpaleta" || facts.family === "recogepedidos";
+  const widthSource = compactHandling && measures.length === 1 && facts.loadCapacityKg !== null &&
+    facts.widthM !== null && facts.widthM >= 0.3 && facts.widthM <= 1.5 &&
+    verifiedEditorialUnitPair(sourceUnitRecord, record) ?
+    source ?? resolveEditorialFacts(sourceUnitRecord, familyOverride) : null;
+  const shortWidth = widthSource?.family === facts.family && widthSource.widthM === facts.widthM ?
+    quantity(facts.widthM, "m", "anchura del equipo") : null;
+  const shortMain = shortWidth ? join([main, shortWidth]) : main;
   const unit = [facts.year !== null ? `año de fabricación ${facts.year}` : null,
     facts.hours !== null ? `${formatEditorialQuantity(facts.hours)} ${facts.hours === 1 ? "hora registrada" : "horas registradas"}` : null]
     .filter((value): value is string => value !== null);
@@ -153,7 +162,7 @@ export const resolveReusableEditorial = (
   const sourceYear = differentiatedSourceYear(record, sourceUnitRecord, facts);
   const unitSummary = corroboratedAnnouncedUnitSummary(record, sourceUnitRecord, facts);
   return {
-    short: `${identity}, con ${main}${unitSummary || sourceYear ? `; ${unitSummary ?? sourceYear}` : ""}.`,
+    short: `${identity}, con ${shortMain}${unitSummary || sourceYear ? `; ${unitSummary ?? sourceYear}` : ""}.`,
     general: `La ficha técnica de ${family}${fuel} ${name} indica ${generalDetails}${unit.length ? `; esta unidad consta con ${join(unit)}` : ""}.`
   };
 };

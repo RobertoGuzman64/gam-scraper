@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { resolveEditorialFacts } from "./editorial-facts.js";
+import { resolveUnbrandedEditorial } from "../identity/editorial-unbranded-equipment.js";
 import { resolveReusableEditorial } from "./editorial-composition.js";
 import { controlledGamForklift, controlledGomarizPlatform } from "./editorial-contract-records.js";
 
@@ -58,4 +59,24 @@ test("la reutilización aplica magnitudes propias y no promociona fichas sin evi
   assert.equal(prepareSourceProduct(insufficient).status, "review");
   assert.equal(prepareSourceProduct(insufficient).product.description_general, null);
   assert.equal(JSON.stringify([original, compatible, changed, insufficient]), before);
+});
+
+
+test("el módulo sanitario conserva la configuración corroborada sin atribuirla a otras unidades", () => {
+  const unit = {
+    ...controlledGamForklift(),
+    brand: null,
+    model: null,
+    title: "Módulo sanitario unitario",
+    shortDescription: "Módulo sanitario unitario",
+    longDescription: "Módulo sanitario unitario",
+    specs: { Longitud: "2 m", Anchura: "1 m" }
+  };
+  const double = { ...unit, title: "Módulo baño doble WC", shortDescription: "Módulo baño doble WC", longDescription: "Módulo baño doble WC" };
+  assert.match(resolveUnbrandedEditorial(unit)?.general ?? "", /módulo sanitario unitario/u);
+  assert.match(resolveUnbrandedEditorial(double)?.general ?? "", /módulo sanitario de doble WC/u);
+  assert.equal(resolveUnbrandedEditorial(unit)?.short, resolveUnbrandedEditorial(double)?.short);
+  assert.doesNotMatch(resolveUnbrandedEditorial({ ...unit, longDescription: double.longDescription })?.general ?? "", /unitario|doble WC/u);
+  assert.doesNotMatch(resolveUnbrandedEditorial({ ...unit, shortDescription: null, longDescription: null })?.general ?? "", /unitario/u);
+  assert.equal(resolveUnbrandedEditorial({ ...unit, brand: "MARCA" }), null);
 });

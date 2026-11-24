@@ -1,3 +1,5 @@
+import type { ProductTechnicalProvenance } from "../../../contracts/technical-provenance.js";
+import { resolveReviewedModelGeneral } from "../claims/editorial-sourced-long-evidence.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { SourceEditorialEvidence } from "../claims/source-editorial-evidence.js";
 import { verifiedMercaelevaMbCapacityProposal } from "../../../catalog/interventions/verified-mercaeleva-capacity.js";
@@ -9,6 +11,7 @@ import { hasEditorialMillimetreUnit } from "../measurements/editorial-measuremen
 import { resolveSourceEditorialClaims } from "../claims/editorial-source-claims.js";
 import { resolveSourcedConciseShort } from "../writing/editorial-sourced-concise-short.js";
 import { resolveSourcedShortSummary } from "../source/context/editorial-source-short-summary.js";
+import { resolveSourcedCombinedBatteryGeneral } from "../source/details/editorial-sourced-operational-specs.js";
 import { structureSourcedLongGeneral } from "../writing/editorial-sourced-long-structure.js";
 import { resolveSourcedAmbiguousWidth } from "../measurements/sourced/editorial-sourced-ambiguous-dimension.js";
 import { resolveSourcedShortDiscrepancy } from "../claims/editorial-sourced-short-discrepancy.js";
@@ -22,7 +25,7 @@ import { conciseVerifiedUnitGeneral, conciseSignedUnitGeneral, resolveEditorialI
 import { compressVerifiedSourceShort, expandVerifiedSourceShort } from "../source/editorial-source-brief.js";
 import { corroboratedSourceUnitBrief } from "../source/editorial-source-unit-brief.js";
 import { editorialFamilyFromSourceGeneral } from "./editorial-families.js";
-import { resolveVerifiedTechnicalBrief } from "../measurements/editorial-technical-brief.js";
+import { enrichVerifiedTechnicalBrief, resolveVerifiedTechnicalBrief } from "../measurements/editorial-technical-brief.js";
 import { resolveVerifiedSourceEditorialExcerpt } from "../source/editorial-source-excerpt.js";
 import { resolveMissingTechnicalEditorialGeneral } from "../source/context/editorial-missing-technical-general.js";
 import { resolveDocumentedAccessoryEditorial } from "../source/details/documented-accessory.js";
@@ -33,7 +36,9 @@ import { hasCrossedGamEditorialIdentity, hasGamCorroboratedModelVariantConflict,
 export const resolvePreparedEditorialSource = (
   record: ProductRecord,
   evidence: SourceEditorialEvidence,
-  sourceUnitRecord: ProductRecord = record
+  sourceUnitRecord: ProductRecord = record,
+  originalSource: ProductRecord = sourceUnitRecord,
+  technicalProvenance?: ProductTechnicalProvenance
 ) => {
   const heightConflict = hasEditorialSourceWorkHeightConflict(record, hasCorroboratedEditorialDistinctWorkHeights(record));
   const editorialRecord = withoutContradictoryFamilyGeneral(record);
@@ -122,6 +127,8 @@ export const resolvePreparedEditorialSource = (
   const finalShort = shortSummary ?? conciseShort ?? expanded ?? compact ?? sourceClean.short;
   const reconciledShort = verified && !knowledge?.short && !signedGeneral && !crossedIdentity && !sourceModelConflict && !variantConflict ?
     resolveSourcedShortDiscrepancy(editorialSourceUnit, editorialRecord, finalShort, authenticatedOrigin) : null;
+  const enrichedShort = verified && !knowledge?.short && !crossedIdentity && !sourceModelConflict && !variantConflict && !reconciledShort ?
+    enrichVerifiedTechnicalBrief(editorialSourceUnit, editorialRecord, finalShort) : null;
   const widthGeneral = authenticatedOrigin && !signedGeneral && !crossedIdentity && !variantConflict &&
     !sourceModelConflict ? resolveSourcedAmbiguousWidth(editorialSourceUnit, editorialRecord, sourceClean.general, authenticatedOrigin) : null;
   const structuredGeneral = authenticatedOrigin && !signedGeneral && !crossedIdentity &&
@@ -130,9 +137,15 @@ export const resolvePreparedEditorialSource = (
   const finalGeneral = structuredGeneral ?? widthGeneral ?? sourceClean.general;
   const variantGeneral = !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict && !heightConflict && !modelDimensions ?
     resolveCorroboratedEditorialVariantGeneral(sourceUnitRecord, record, finalGeneral, authenticatedOrigin) : null;
+  const reviewedGeneral = verified && !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict && !modelDimensions &&
+    !sourceMotorConflict && authenticatedOrigin && technicalProvenance ?
+    resolveReviewedModelGeneral(originalSource, record, variantGeneral ?? finalGeneral, technicalProvenance) : null;
+  const completeGeneral = reviewedGeneral ?? variantGeneral ?? finalGeneral;
+  const batteryGeneral = verified && !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict && !modelDimensions &&
+    !sourceMotorConflict && authenticatedOrigin ? resolveSourcedCombinedBatteryGeneral(originalSource, editorialRecord, completeGeneral) : null;
   return {
     verifiedTitle: knowledge?.title ?? null,
-    descriptions: distinguishDescriptions(reconciledShort ?? finalShort, variantGeneral ?? finalGeneral),
+    descriptions: distinguishDescriptions(reconciledShort ?? enrichedShort ?? finalShort, batteryGeneral ?? completeGeneral),
     sourceModelConflict,
     sourceMotorConflict,
     heightConflict

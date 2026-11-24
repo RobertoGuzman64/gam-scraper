@@ -1,10 +1,12 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
+import { resolveEditorialFacts } from "../../core/editorial-facts.js";
 import { editorialFamilyOf } from "../../core/editorial-families.js";
 import { resolveSourcedEquipmentDetails } from "./editorial-sourced-equipment-details.js";
 import { editorialMetricOf, editorialQuantity, editorialQuantityOf, formatEditorialQuantity } from "../../measurements/editorial-measurements.js";
-import { sameEditorialUnit, verifiedEditorialIdentity } from "../../core/editorial-source-contract.js";
+import { resolveMissingEditorialUnitName, sameEditorialUnit, verifiedEditorialIdentity } from "../../core/editorial-source-contract.js";
 import { containsEditorialBrandModel, containsEditorialIdentity } from "../../identity/editorial-identity-match.js";
 import { verifiedEditorialUnitPair } from "../../identity/editorial-unit-provenance.js";
+import { hasUnconditionalEditorialClaim } from "../../claims/editorial-claim-evidence.js";
 import { containsEditorialSourceSlugModel } from "../editorial-source-url.js";
 
 const matchingSpecs = (source: ProductRecord, prepared: ProductRecord, key: string): string | null => {
@@ -34,6 +36,85 @@ const batteryContext = (source: ProductRecord, prepared: ProductRecord, general:
   return null;
 };
 
+const batteryRange = (value: unknown): readonly [number, number, number] | null => {
+  const match = typeof value === "string" ? /^(\d{2,3})\s*V\s*\/\s*(\d{2,4})\s*[-–]\s*(\d{2,4})\s*Ah(?:\s*\(V\/Ah\))?$/iu.exec(value.trim()) : null;
+  if (!match?.[1] || !match[2] || !match[3]) return null;
+  const [voltage, minimum, maximum] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  return voltage >= 12 && voltage <= 120 && minimum >= 50 && maximum <= 2000 && minimum < maximum ?
+    [voltage, minimum, maximum] : null;
+};
+
+const batteryRangeContext = (source: ProductRecord, prepared: ProductRecord, general: string): string | null => {
+  if (source.condition !== "Nuevo" || prepared.condition !== "Nuevo" ||
+    /\bbater[ií]as?\b|\bacumuladores?\b|\b\d+\s*(?:V|Ah)\b/iu.test(general)) return null;
+  const original = batteryRange(source.specs?.["Capacidad de la batería"]);
+  const reconciled = batteryRange(prepared.specs?.["Capacidad de la batería"]);
+  if (!original || !reconciled || original.some((value, index) => value !== reconciled[index])) return null;
+  const [voltage, minimum, maximum] = original;
+  const texts = [source.title, source.shortDescription, source.longDescription, prepared.title, prepared.shortDescription, prepared.longDescription];
+  if (texts.some((text) => /\b(?:MWB|LWB|batalla\s+(?:media|larga)|sin\s+bater[ií]as?|di[eé]sel|gasoil|gasolina|GLP|h[ií]brid[ao]s?)\b/iu.test(text ?? "") ||
+    [...(text ?? "").matchAll(/\b(\d+)\s*(V|Ah)\b/giu)].some((entry) =>
+      entry[2]?.toLowerCase() === "v" ? Number(entry[1]) !== voltage : ![minimum, maximum].includes(Number(entry[1]))))) return null;
+  if ([source, prepared].some((record) => ["Voltaje de la batería", "Voltaje batería (V)", "Voltaje"].some((key) =>
+    record.specs?.[key] !== undefined && editorialQuantity(record.specs[key], "V") !== voltage) ||
+    ["Tipo de Batería", "Tipo de batería", "Capacidad de la batería (Ah)"].some((key) => record.specs?.[key] !== undefined))) return null;
+  return `${general.trim()} La tabla técnica declara un intervalo de capacidad de batería de ${formatEditorialQuantity(minimum)} a ${formatEditorialQuantity(maximum)} Ah a ${voltage} V. No identifica cuál de esas capacidades corresponde a la configuración ofertada.`;
+};
+
+const batteryVoltageContext = (source: ProductRecord, prepared: ProductRecord, general: string): string | null => {
+  if (source.condition !== "Nuevo" || prepared.condition !== "Nuevo" ||
+    /\bbater[ií]as?\b|\bacumuladores?\b|\b\d+\s*(?:V|Ah)\b/iu.test(general)) return null;
+  const declared = source.specs?.["Capacidad de la batería"];
+  const match = typeof declared === "string" ? /^(\d{2,3})\s*V\s*\/\s*\d{2,4}\s*h\s*\(V\/Ah\)$/iu.exec(declared.trim()) : null;
+  if (!match?.[1] || declared !== prepared.specs?.["Capacidad de la batería"]) return null;
+  const voltage = Number(match[1]);
+  if (voltage < 12 || voltage > 120) return null;
+  const texts = [source.title, source.shortDescription, source.longDescription, prepared.title, prepared.shortDescription, prepared.longDescription];
+  if (texts.some((text) => /\b(?:MWB|LWB|sin\s+bater[ií]as?|di[eé]sel|gasoil|gasolina|GLP|h[ií]brid[ao]s?)\b/iu.test(text ?? "") ||
+    [...(text ?? "").matchAll(/\b(\d+)\s*V\b/giu)].some((entry) => Number(entry[1]) !== voltage))) return null;
+  if ([source, prepared].some((record) => ["Voltaje de la batería", "Voltaje batería (V)", "Voltaje"].some((key) =>
+    record.specs?.[key] !== undefined && editorialQuantity(record.specs[key], "V") !== voltage))) return null;
+  return `${general.trim()} La tabla técnica indica un voltaje de batería de ${voltage} V; el dato de capacidad presenta una unidad incompleta y no permite confirmar los amperios-hora.`;
+};
+
+export const resolveSourcedCombinedBatteryGeneral = (source: ProductRecord, prepared: ProductRecord, general: string | null): string | null => {
+  if (!general || source.providerId !== prepared.providerId) return null;
+  if (!source.brand || !source.model || !verifiedEditorialUnitPair(source, prepared) ||
+    !verifiedEditorialIdentity(source) || !verifiedEditorialIdentity(prepared) ||
+    !/^La ficha técnica de\b/u.test(general) || !containsEditorialBrandModel(general, source.brand, source.model) ||
+    general.trim().split(/\s+/u).length > 180) return null;
+  const original = resolveEditorialFacts(source);
+  const reconciled = resolveEditorialFacts(prepared);
+  if (!original || !reconciled || original.family !== reconciled.family ||
+    !["carretilla-elevadora", "carretilla-retractil", "apilador", "transpaleta", "recogepedidos"].includes(original.family) ||
+    editorialFamilyOf(general) !== original.family) return null;
+  const compatibleRangeEnergy = [original.energy, reconciled.energy].every((energy) => energy === null || energy === "eléctrica");
+  const range = compatibleRangeEnergy ? batteryRangeContext(source, prepared, general) : null;
+  if (range !== null) return range;
+  if (original.energy !== "eléctrica" || reconciled.energy !== "eléctrica") return null;
+  const voltageContext = batteryVoltageContext(source, prepared, general);
+  if (voltageContext !== null) return voltageContext;
+  const value = matchingSpecs(source, prepared, "Capacidad de la batería");
+  const match = value && /^(\d{2,3})\s*V\s*\/\s*(\d{2,4})\s*Ah\s*\(V\/Ah\)$/iu.exec(value);
+  if (!match?.[1] || !match[2]) return null;
+  const voltage = Number(match[1]);
+  const capacity = Number(match[2]);
+  if (voltage < 12 || voltage > 120 || capacity < 50 || capacity > 2000) return null;
+  if (/\bbater[ií]as?\b|\bacumuladores?\b|\b\d+\s*(?:V|Ah)\b/iu.test(general)) return null;
+  const originalLong = source.longDescription ?? "";
+  if (!containsEditorialBrandModel(originalLong, source.brand, source.model)) return null;
+  const texts = [source.shortDescription, originalLong, prepared.shortDescription, prepared.longDescription];
+  const pair = new RegExp(`\\b${voltage}\\s*V\\s*(?:/|y)\\s*${capacity}\\s*Ah\\b`, "giu");
+  if (!hasUnconditionalEditorialClaim(originalLong, pair)) return null;
+  if (texts.some((text) => /\b(?:MWB|LWB|batalla\s+(?:media|larga)|hasta\s+\d+\s*Ah|sin\s+bater[ií]as?)\b/iu.test(text ?? "") ||
+    [...(text ?? "").matchAll(/\b(\d+)\s*(V|Ah)\b/giu)].some((entry) =>
+      Number(entry[1]) !== (entry[2]?.toLocaleLowerCase("es") === "v" ? voltage : capacity)))) return null;
+  const electricalKeys = ["Voltaje de la batería", "Voltaje batería (V)", "Voltaje"];
+  if ([source, prepared].some((record) => electricalKeys.some((key) =>
+    record.specs?.[key] !== undefined && editorialQuantity(record.specs[key], "V") !== voltage))) return null;
+  return `${general.trim()} El campo de batería de esta referencia consigna ${voltage} V y ${formatEditorialQuantity(capacity)} Ah. Es un dato del catálogo técnico, no una comprobación del estado ni de la configuración de la batería de la unidad entregada.`;
+};
+
 const towerContext = (source: ProductRecord, prepared: ProductRecord, general: string): string | null => {
   if (editorialFamilyOf(general) !== "torre-iluminacion" ||
     !source.brand || !source.title || !prepared.title ||
@@ -52,7 +133,7 @@ const towerContext = (source: ProductRecord, prepared: ProductRecord, general: s
   return `En la tabla técnica de esta misma referencia figuran altura de trabajo de ${formatEditorialQuantity(height)} m y potencia de las luminarias indicada como ${Number(power[1])} × ${Number(power[2])} W. Son magnitudes declaradas, no una estimación del área iluminada ni una certificación de los accesorios entregados.`;
 };
 
-const transportContext = (source: ProductRecord, prepared: ProductRecord, general: string): string | null => {
+const transportContext = (source: ProductRecord, prepared: ProductRecord, general: string, authenticatedOrigin: boolean): string | null => {
   if (!/\b(?:semir?remolque|platafora\s+4\s+ejes|plataforma\s+4\s+ejes)\b/iu.test(source.title ?? "") ||
     !source.longDescription?.trim().startsWith("·") || !general.includes(source.longDescription.trim()) ||
     source.shortDescription?.trim() !== source.title?.trim() ||
@@ -74,12 +155,15 @@ const transportContext = (source: ProductRecord, prepared: ProductRecord, genera
     /^(?:19[5-9]\d|20[0-2]\d|2030)$/u.test(source.year) ? source.year : null;
   if (dimensions.length < 2 && year === null) return null;
   const measured = [...dimensions, ...(mass !== null ? [`peso declarado de ${formatEditorialQuantity(mass)} kg`] : [])];
+  const axleDescription = /\bplatafor(?:ma|a)\s+4\s+ejes\b/iu.test(source.title ?? "") &&
+    !/\b(?:4|cuatro)\s+ejes\b/iu.test(general) ? "El título del vendedor identifica una plataforma de cuatro ejes. " : "";
   const technical = measured.length ? `La tabla técnica de la misma unidad indica ${measured.join(", ")}. ` : "";
-  const registration = `El anuncio registra matrícula ${source.specs.Matrícula}${year !== null ? ` y fabricación en ${year}` : ""}. `;
+  const identity = resolveMissingEditorialUnitName(source, prepared, general, authenticatedOrigin);
+  const registration = `El anuncio${identity ? ` de ${identity}` : ""} registra matrícula ${source.specs.Matrícula}${year !== null ? ` y fabricación en ${year}` : ""}. `;
   const inspection = /\bITV\b/iu.test(source.longDescription) ?
     "La referencia del vendedor a la ITV requiere comprobar su vigencia con la documentación actual del vehículo." :
     "Los trabajos indicados en el anuncio corresponden al historial declarado por el vendedor, pendiente de comprobación documental.";
-  return `${technical}${registration}${inspection}`;
+  return `${axleDescription}${technical}${registration}${inspection}`;
 };
 
 const reachStackerContext = (source: ProductRecord, prepared: ProductRecord, general: string): string | null => {
@@ -126,14 +210,48 @@ const reachStackerContext = (source: ProductRecord, prepared: ProductRecord, gen
     `Descripción de gama aportada por el proveedor, sin acreditar el equipamiento específico de esta referencia: ${general.trim()}`;
 };
 
+const conflictingPalletTruckGeneral = (source: ProductRecord, prepared: ProductRecord, general: string): string | null => {
+  const brand = source.brand?.trim();
+  const model = source.model?.trim();
+  const original = source.longDescription?.trim();
+  const summary = source.shortDescription?.trim();
+  if (!brand || !model || !original || !summary || general.trim() !== original ||
+    source.providerId !== prepared.providerId || !verifiedEditorialUnitPair(source, prepared) ||
+    !verifiedEditorialIdentity(source) || !verifiedEditorialIdentity(prepared) ||
+    source.specs?.Marca !== brand || source.specs?.Modelo !== model ||
+    prepared.specs?.Marca !== brand || prepared.specs?.Modelo !== model ||
+    source.shortDescription !== prepared.shortDescription || source.longDescription !== prepared.longDescription ||
+    !containsEditorialBrandModel(summary, brand, model) ||
+    [source.title, prepared.title, summary].some((text) => editorialFamilyOf(text ?? "") !== "transpaleta") ||
+    !containsEditorialSourceSlugModel(new URL(source.url).pathname.split("/").filter(Boolean).at(-1) ?? "", model, undefined)) return null;
+  const escapedBrand = brand.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  const otherModel = new RegExp(`^Transpaleta\\s+${escapedBrand}\\s+([\\p{L}\\d./-]*\\d[\\p{L}\\d./-]*):`, "iu").exec(original)?.[1];
+  if (!otherModel || containsEditorialIdentity(otherModel, model) || containsEditorialIdentity(model, otherModel) ||
+    containsEditorialIdentity(original, model) || [source.title, prepared.title, summary].some((text) => containsEditorialIdentity(text ?? "", otherModel))) return null;
+  const capacity = editorialQuantity(matchingSpecs(source, prepared, "Capacidad de carga (kg)") ?? undefined, "kg");
+  const capacityDeclared = (text: string): boolean => {
+    const values = [...text.matchAll(/\b(\d{3,5})\s*kg\b/giu)];
+    return values.length === 1 && Number(values[0]?.[1]) === capacity;
+  };
+  if (capacity === null || capacity < 100 || capacity > 10000 ||
+    ![source.title ?? "", prepared.title ?? "", summary].every(capacityDeclared)) return null;
+  const weight = editorialQuantity(matchingSpecs(source, prepared, "Peso") ?? undefined, "kg");
+  const lift = editorialMetricOf(source.specs, ["Altura de elevación (m)"]);
+  if (weight === null || weight < 50 || weight > 10000 || lift === null || lift < 0.05 || lift > 0.5 ||
+    lift !== editorialMetricOf(prepared.specs, ["Altura de elevación (m)"])) return null;
+  return `El título, el resumen y la tabla técnica identifican la transpaleta ${brand} ${model}, con capacidad de carga declarada de ${formatEditorialQuantity(capacity)} kg. La tabla de esta referencia indica peso de ${formatEditorialQuantity(weight)} kg y altura de elevación de ${formatEditorialQuantity(lift)} m. La descripción extensa del vendedor menciona otro modelo, ${brand} ${otherModel}; sus prestaciones y equipamiento no se trasladan a esta referencia. La configuración efectiva debe contrastarse con la documentación de la unidad.`;
+};
+
 export const resolveSourcedOperationalSpecs = (
   source: ProductRecord, prepared: ProductRecord, general: string | null, authenticatedOrigin: boolean
 ): string | null => {
   if (!authenticatedOrigin || !general?.trim() || !sameEditorialUnit(source, prepared)) return null;
+  const conflictingPalletTruck = conflictingPalletTruckGeneral(source, prepared, general);
+  if (conflictingPalletTruck !== null) return conflictingPalletTruck;
   const containerHandler = reachStackerContext(source, prepared, general);
   if (containerHandler !== null) return containerHandler;
-  if (general.trim().split(/\s+/u).length >= 60) return null;
-  const addition = batteryContext(source, prepared, general) ?? towerContext(source, prepared, general) ?? transportContext(source, prepared, general) ??
-    resolveSourcedEquipmentDetails(source, prepared, general, authenticatedOrigin);
+  const addition = general.trim().split(/\s+/u).length < 60 ?
+    batteryContext(source, prepared, general) ?? towerContext(source, prepared, general) ?? transportContext(source, prepared, general, authenticatedOrigin) ??
+      resolveSourcedEquipmentDetails(source, prepared, general, authenticatedOrigin) : null;
   return addition ? `${general.trim()} ${addition}` : null;
 };

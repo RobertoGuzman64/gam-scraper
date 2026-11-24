@@ -47,6 +47,18 @@ export const sameEditorialUnit = (source: ProductRecord, prepared: ProductRecord
   source.brand === prepared.brand && source.model === prepared.model &&
   source.condition === prepared.condition;
 
+export const resolveMissingEditorialUnitName = (
+  source: ProductRecord, prepared: ProductRecord, general: string, authenticatedOrigin: boolean
+): string | null => {
+  const brand = source.brand?.trim();
+  const model = source.model?.trim();
+  if (!authenticatedOrigin || !brand || !model ||
+    !sameEditorialUnit(source, prepared) || !verifiedEditorialIdentity(source) ||
+    !verifiedEditorialIdentity(prepared) || containsEditorialIdentity(general, model) ||
+    containsEditorialIdentity(general, brand)) return null;
+  return `${brand} ${model}`;
+};
+
 const singleCapacity = (value: string): RegExpMatchArray | null => {
   const matches = [...value.matchAll(/\b(\d{3,5})\s*kg\b/giu)];
   return matches.length === 1 ? matches[0] ?? null : null;

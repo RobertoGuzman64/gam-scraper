@@ -1,6 +1,6 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { editorialMetricOf, editorialQuantityOf, formatEditorialQuantity } from "../editorial-measurements.js";
-import { sameEditorialUnit, verifiedEditorialIdentity } from "../../core/editorial-source-contract.js";
+import { resolveMissingEditorialUnitName, sameEditorialUnit, verifiedEditorialIdentity } from "../../core/editorial-source-contract.js";
 
 type UnitMeasure = Readonly<{
   key: string;
@@ -50,6 +50,8 @@ export const resolveSourcedUnitMeasuresGeneral = (
     return [`${measure.label} de ${formatted}`];
   });
   if (details.length < 2) return null;
-  return `${general.trim()} La ficha técnica de esta misma referencia declara ${details.join(", ")}. ` +
+  const identity = resolveMissingEditorialUnitName(source, prepared, general, authenticatedOrigin);
+  const attribution = identity ? `, identificada como ${identity},` : "";
+  return `${general.trim()} La ficha técnica de esta misma referencia${attribution} declara ${details.join(", ")}. ` +
     "Estas medidas corresponden al equipo anunciado y deben contrastarse con la unidad ofrecida.";
 };

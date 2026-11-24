@@ -243,7 +243,7 @@ export const resolveHandlingOperationalDetails = (
   source: ProductRecord, prepared: ProductRecord, family: EditorialFamily
 ): readonly string[] => {
   const mastFamily = ["carretilla-elevadora", "carretilla-retractil", "apilador"].includes(family);
-  if (!mastFamily && family !== "transpaleta") return [];
+  if (!mastFamily && family !== "transpaleta" && family !== "manipulador-telescopico") return [];
   const families = resolvedEditorialUnitFamilies(source, prepared);
   if (families?.[0] !== family || families[1] !== family) return [];
   const text = [source.title, source.shortDescription, source.longDescription,
@@ -322,6 +322,15 @@ export const resolveTransportOperationalDetails = (
       details.push(`altura exterior declarada de ${formatEditorialQuantity(height)} m`);
     }
   }
+  if (family === "manipulador-telescopico" && !heightAlreadyIncluded &&
+    !/\b(?:altura\s+(?:total|exterior|del equipo|de transporte|de almacenaje|replegada)|alto)\b/iu.test(text)) {
+    const competing = ["Altura", "Alto", "Altura exterior", "Altura almacenaje", "Altura replegada", "Altura transporte", "Altura de transporte"];
+    const height = matchingMetric(source, prepared, ["Altura total"]);
+    if (height !== null && height >= 1 && height <= 5 &&
+      !competing.some((key) => source.specs?.[key] !== undefined || prepared.specs?.[key] !== undefined)) {
+      details.push(`altura total declarada de ${formatEditorialQuantity(height)} m`);
+    }
+  }
   if (handling && !/\b(?:longitud|largo)\b/iu.test(text)) {
     const forkKeys = ["Longitud sin horquillas", "Largo sin horquillas"];
     const boardKeys = ["Longitud al tablero", "Largo al tablero"];
@@ -343,13 +352,25 @@ export const resolveTransportOperationalDetails = (
 export const resolveEquipmentConfigurationDetails = (
   source: ProductRecord, prepared: ProductRecord, family: EditorialFamily
 ): readonly string[] => {
-  if (!["grupo-electrogeno", "excavadora", "miniexcavadora"].includes(family)) return [];
+  if (!["grupo-electrogeno", "excavadora", "miniexcavadora", "dumper"].includes(family)) return [];
   const families = resolvedEditorialUnitFamilies(source, prepared);
   if (families?.[0] !== family || families[1] !== family) return [];
   const text = [source.title, source.shortDescription, source.longDescription,
     prepared.title, prepared.shortDescription, prepared.longDescription].join(" ");
   const details: string[] = [];
-  if (family === "grupo-electrogeno") {
+  if (family === "dumper") {
+    const configurations = [
+      { key: "Giratorio", label: "tolva giratoria declarada", mention: /\b(?:giratori[oa]s?|giro\s+de\s+(?:la\s+)?tolva|tolva\s+(?:es\s+)?fija)\b/iu },
+      { key: "Autocargable", label: "configuración autocargable declarada", mention: /\b(?:autocarg\p{L}*|auto[ -]carg\p{L}*|carga\s+autom[aá]tica|carga\s+manual)\b/iu },
+      { key: "Descarga altura", label: "descarga en altura declarada", mention: /\b(?:descarga\s+(?:en\s+)?altura|descarga\s+elevada|altura\s+de\s+descarga|descarga\s+a\s+nivel\s+del\s+suelo)\b/iu }
+    ] as const;
+    for (const configuration of configurations) {
+      if (declaredBoolean(source.specs?.[configuration.key]) === true &&
+        declaredBoolean(prepared.specs?.[configuration.key]) === true && !configuration.mention.test(text)) {
+        details.push(configuration.label);
+      }
+    }
+  } else if (family === "grupo-electrogeno") {
     const competingVoltageKeys = ["Voltaje", "Voltaje de la batería"];
     if (!/\b(?:voltios?|voltaje|tensi[oó]n|bater[ií]as?)\b|\b\d+\s*v\b/iu.test(text) &&
       competingVoltageKeys.every((key) => source.specs?.[key] === undefined && prepared.specs?.[key] === undefined)) {

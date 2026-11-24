@@ -6,7 +6,7 @@ import { resolveEditorialSource } from "../core/editorial-source.js";
 import { sameEditorialUnit, verifiedEditorialIdentity } from "../core/editorial-source-contract.js";
 import { resolveVerifiedEditorialCondition } from "./editorial-condition.js";
 import { containsEditorialSourceSlugModel } from "../source/editorial-source-url.js";
-import { editorialQuantity, editorialQuantityOf, formatEditorialQuantity } from "../measurements/editorial-measurements.js";
+import { editorialMetricOf, editorialQuantity, editorialQuantityOf, formatEditorialQuantity } from "../measurements/editorial-measurements.js";
 
 export const resolveEditorialIdentitySummary = (
   record: ProductRecord,
@@ -61,11 +61,12 @@ const corroboratedLithiumVariantGeneral = (
   const battery = source.specs?.["Tipo de batería"];
   if (typeof battery !== "string" || !/^bater[ií]a de litio$/iu.test(battery.trim()) ||
     battery !== prepared.specs?.["Tipo de batería"]) return null;
-  const family = editorialFamilyOf(source.title ?? "");
+  const platformFamilyOf = (text: string): EditorialFamily | null => editorialFamilyOf(text.replace(/\bplataformas?\s+elevadoras?\s+/giu, "plataforma "));
+  const family = platformFamilyOf(source.title ?? "");
   if (family !== "plataforma-tijera" && family !== "plataforma-articulada" && family !== "plataforma-telescopica") return null;
   const texts = [source.title ?? "", prepared.title ?? "", original, current];
-  if (texts.some((text) => !containsEditorialBrandModel(text, brand, base) || editorialFamilyOf(text) !== family) ||
-    !containsEditorialBrandModel(summary, brand, model) || editorialFamilyOf(summary) !== family ||
+  if (texts.some((text) => !containsEditorialBrandModel(text, brand, base) || platformFamilyOf(text) !== family) ||
+    (!containsEditorialBrandModel(summary, brand, model) && !containsEditorialBrandModel(summary, brand, `${model[0] ?? ""}${model}`)) || platformFamilyOf(summary) !== family ||
     [original, current].some((text) => !/\bcon bater[ií]a de litio\b/iu.test(text))) return null;
   const baseIdentity = (record: ProductRecord): ProductRecord => ({ ...record, model: base, specs: { ...record.specs, Modelo: base } });
   if (!resolveEditorialSource(baseIdentity(source)) || !resolveEditorialSource(baseIdentity(prepared))) return null;
@@ -76,18 +77,91 @@ const corroboratedLithiumVariantGeneral = (
   const escapedBrand = brand.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
   const brandModels = new RegExp(`\\b${escapedBrand}\\s+([\\p{L}\\d./-]*\\d[\\p{L}\\d./-]*)`, "giu");
   if ([...texts, summary].some((text) => [...text.matchAll(brandModels)].some((match) =>
-    !match[1] || ![compact(base), compact(model)].includes(compact(match[1]))))) return null;
+    !match[1] || ![compact(base), compact(model), ...(text === summary ? [compact(`${model[0] ?? ""}${model}`)] : [])].includes(compact(match[1]))))) return null;
   const capacityKeys = ["Capacidad de carga (kg)", "Capacidad de carga", "Capacidad"];
   const capacity = editorialQuantityOf(source.specs, capacityKeys, "kg");
   const announced = [...summary.matchAll(/\bcapacidad\s+de\s+(?:la\s+cesta|carga)(?:\s+de)?\s+(\d[\d., ]*)\s*kg\b/giu)];
   if (capacity === null || capacity < 50 || capacity > 20000 || capacity !== editorialQuantityOf(prepared.specs, capacityKeys, "kg") ||
     announced.length !== 1 || editorialQuantity(`${announced[0]?.[1] ?? ""} kg`, "kg") !== capacity ||
-    [original, current].some((text) => /\b\d+\s*(?:V|Ah)\b/iu.test(text) ||
-      /\b(?:equipad[ao]|provist[ao]|dotad[ao])\s+con\s+bater[ií]a\s+de\s+plomo\b/iu.test(text))) return null;
+    [original, current].some((text) => /\b(?:equipad[ao]|provist[ao]|dotad[ao])\s+con\s+bater[ií]a\s+de\s+plomo\b/iu.test(text))) return null;
+  const batteryMentions = (text: string): RegExpMatchArray[] => [...text.matchAll(/\b(\d+)\s*(V|Ah)\b/giu)];
+  if ([original, current].flatMap(batteryMentions).some((match) => {
+    const unit = match[2]?.toLowerCase() === "v" ? "V" : "Ah";
+    const key = unit === "V" ? "Voltaje batería (V)" : "Capacidad de la batería (Ah)";
+    const quantity = (value: unknown): number | null => typeof value === "string" && new RegExp(`^\\d+\\s*${unit}$`, "iu").test(value.trim()) ? Number.parseInt(value, 10) : null;
+    const declared = quantity(prepared.specs?.[key]);
+    return declared !== Number(match[1]) || !batteryMentions(original).some((entry) =>
+      entry[1] === match[1] && entry[2]?.toLowerCase() === match[2]?.toLowerCase()) ||
+      (source.specs?.[key] !== undefined && quantity(source.specs?.[key]) !== declared);
+  })) return null;
   const capacities = [original, current].flatMap((text) => [...text.matchAll(/\bcapacidad\s+de\s+(?:la\s+cesta|carga)(?:\s+m[aá]xima)?(?:\s+es)?(?:\s+de)?(?:\s+hasta)?\s+(\d[\d., ]*)\s*kg\b/giu)]);
   if (capacities.some((match) => editorialQuantity(`${match[1] ?? ""} kg`, "kg") !== capacity) ||
     [original, current].some((text) => /\b(?:sin bater[ií]a de litio|no (?:lleva|incorpora|dispone de|cuenta con) bater[ií]a de litio|bater[ií]a de litio opcional)\b/iu.test(text))) return null;
   return `La tabla técnica identifica esta referencia como ${brand} ${model}, con batería de litio declarada.\n\n${current}`;
+};
+
+const corroboratedLiteralModelGeneral = (source: ProductRecord, prepared: ProductRecord, current: string): string | null => {
+  const brand = source.brand?.trim();
+  const model = source.model?.trim();
+  const original = source.longDescription?.trim() ?? "";
+  if (!brand || !model || !original || containsEditorialIdentity(current, model) ||
+    source.specs?.Marca !== brand || prepared.specs?.Marca !== brand ||
+    source.specs?.Modelo !== model || prepared.specs?.Modelo !== model ||
+    source.shortDescription !== prepared.shortDescription || source.longDescription !== prepared.longDescription ||
+    !resolveEditorialSource(source) || !resolveEditorialSource(prepared) ||
+    ![source.title ?? "", prepared.title ?? "", source.shortDescription ?? ""].every((text) => containsEditorialBrandModel(text, brand, model))) return null;
+  const slug = new URL(source.url).pathname.split("/").filter(Boolean).at(-1) ?? "";
+  if (!containsEditorialSourceSlugModel(slug, model, undefined)) return null;
+  const escape = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  const battery = /^(.+\d)\s+bater[ií]a$/iu.exec(model)?.[1];
+  if (battery) {
+    const prefix = new RegExp(`(${escape(brand)}\\s+${escape(battery)})\\s+a\\s+bater[ií]a\\b`, "iu");
+    if (prefix.test(original.slice(0, 180)) && prefix.test(current.slice(0, 180))) return current.replace(prefix, `$1 Batería`);
+  }
+  const range = /^([\p{L}]+\s+\d+)\/(\d+)$/iu.exec(model);
+  if (range?.[1] && range[2] && containsEditorialIdentity(original, range[1]) && containsEditorialIdentity(current, range[1]) &&
+    typeof source.specs?.["Capacidad de carga (kg)"] === "string" &&
+    source.specs["Capacidad de carga (kg)"] === prepared.specs?.["Capacidad de carga (kg)"] &&
+    source.specs["Capacidad de carga (kg)"].replace(/\s*kg$/iu, "") === `${range[1].split(/\s+/u).at(-1)}/${range[2]}` &&
+    containsEditorialIdentity(slug, brand)) return `La ficha identifica esta referencia como ${brand} ${model}; el texto de origen describe la denominación ${range[1]}.\n\n${current}`;
+  if (/^[\p{L}]+\s+\d+$/u.test(model) && containsEditorialIdentity(slug, brand)) {
+    const prefix = new RegExp(`^(El elevador de bobinas ${escape(brand)})(?=\\s+es\\b)`, "iu");
+    if (prefix.test(original) && prefix.test(current) && ![original, current].some((text) => /\bmodelo\s+[\p{L}]+\s*\d|\b[A-Z]{2,}\s*\d{2,}\b/u.test(text))) return current.replace(prefix, `$1 ${model}`);
+  }
+  return null;
+};
+
+const corroboratedCommercialWidthDesignation = (
+  source: ProductRecord, prepared: ProductRecord, current: string
+): string | null => {
+  const brand = source.brand?.trim();
+  const model = source.model?.trim();
+  const base = /^([\p{L}\d./-]*\d[\p{L}\d./-]*)\s+ANCHO\s+[\p{L}]+$/iu.exec(model ?? "")?.[1];
+  const original = source.longDescription?.trim();
+  if (!brand || !model || !base || !original || containsEditorialIdentity(current, model) ||
+    source.externalReference !== model || source.externalReference !== prepared.externalReference ||
+    source.specs?.Marca !== brand || prepared.specs?.Marca !== brand ||
+    source.specs?.Modelo !== model || prepared.specs?.Modelo !== model ||
+    source.shortDescription !== prepared.shortDescription || source.longDescription !== prepared.longDescription) return null;
+  const baseIdentity = (record: ProductRecord): ProductRecord => ({ ...record, model: base, specs: { ...record.specs, Modelo: base } });
+  if (!resolveEditorialSource(baseIdentity(source)) || !resolveEditorialSource(baseIdentity(prepared))) return null;
+  const texts = [source.title ?? "", prepared.title ?? "", source.shortDescription ?? "", original, current];
+  if (texts.some((text) => !containsEditorialBrandModel(text, brand, base) || editorialFamilyOf(text.slice(0, 300)) !== "transpaleta")) return null;
+  const slug = new URL(source.url).pathname.split("/").filter(Boolean).at(-1) ?? "";
+  if (!containsEditorialSourceSlugModel(slug, model, undefined) || !containsEditorialIdentity(slug, brand)) return null;
+  const literalBrand = brand.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  const normalize = (value: string): string => value.normalize("NFKD").replace(/[^a-z0-9]/giu, "").toLowerCase();
+  const mentions = new RegExp(`\\b${literalBrand}\\s+([\\p{L}\\d./-]*\\d[\\p{L}\\d./-]*)`, "giu");
+  if (texts.some((text) => [...text.matchAll(mentions)].some((entry) => !entry[1] || normalize(entry[1]) !== normalize(base)))) return null;
+  const alternative = new RegExp(`\\b${literalBrand}\\s+${base.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")}\\s+ancho\\s+([\\p{L}]+)`, "giu");
+  if (texts.some((text) => [...text.matchAll(alternative)].some((entry) =>
+    !entry[1] || normalize(`${base} ANCHO ${entry[1]}`) !== normalize(model)))) return null;
+  const width = editorialMetricOf(source.specs, ["Anchura"]);
+  const length = editorialMetricOf(source.specs, ["Longitud"]);
+  if (width === null || width < 0.3 || width > 1.5 || width !== editorialMetricOf(prepared.specs, ["Anchura"]) ||
+    length === null || length < 0.5 || length > 4 || length !== editorialMetricOf(prepared.specs, ["Longitud"]) ||
+    /\b(?:anchura|ancho)\s+(?:total|exterior|del\s+equipo)\b[^.!?;]{0,30}\d/iu.test(current)) return null;
+  return `La denominación comercial registrada en la tabla y la URL es ${brand} ${model}. La ficha declara ${formatEditorialQuantity(width)} m de anchura y ${formatEditorialQuantity(length)} m de longitud del equipo; el texto de gama utiliza la denominación base ${brand} ${base} y no acredita por sí solo la configuración de esta referencia.\n\n${current}`;
 };
 
 export const resolveCorroboratedEditorialVariantGeneral = (
@@ -100,6 +174,11 @@ export const resolveCorroboratedEditorialVariantGeneral = (
   const current = general?.trim();
   if (authenticatedOrigin && sameEditorialUnit(source, prepared) && current && /-LI$/iu.test(model ?? "")) {
     return corroboratedLithiumVariantGeneral(source, prepared, current);
+  }
+  if (authenticatedOrigin && sameEditorialUnit(source, prepared) && current) {
+    const literal = corroboratedLiteralModelGeneral(source, prepared, current) ??
+      corroboratedCommercialWidthDesignation(source, prepared, current);
+    if (literal) return literal;
   }
   const variant = /^([\p{L}\d./-]+)\s+\((MWB|LWB|pedestrian)\)$/iu.exec(model ?? "");
   const base = variant?.[1];

@@ -229,3 +229,54 @@ test("la variante de litio no se deduce del sufijo ni de un anuncio contradictor
   assert.equal(resolveCorroboratedEditorialVariantGeneral(source, source, source.longDescription, false), null);
   assert.equal(resolveCorroboratedEditorialVariantGeneral(source, { ...source, reference: "OTRA" }, source.longDescription, true), null);
 });
+
+test("la variante de litio admite una inicial duplicada solo con identidad corroborada y magnitudes reconciliadas", () => {
+  const basis = lithiumVariantSource(controlledGamForklift());
+  const source = { ...basis, shortDescription: basis.shortDescription?.replace("MODELO10-LI", "MMODELO10-LI") ?? "" };
+  assert.ok(resolveCorroboratedEditorialVariantGeneral(source, source, source.longDescription, true));
+  const battery = { ...source, longDescription: `${source.longDescription} Batería de 48 V/420 Ah.` };
+  const prepared = { ...battery, specs: { ...battery.specs, "Voltaje batería (V)": "48 V", "Capacidad de la batería (Ah)": "420 Ah" } };
+  assert.ok(resolveCorroboratedEditorialVariantGeneral(battery, prepared, battery.longDescription, true));
+  assert.equal(resolveCorroboratedEditorialVariantGeneral(battery, battery, battery.longDescription, true), null);
+  assert.equal(resolveCorroboratedEditorialVariantGeneral(battery, { ...prepared, specs: { ...prepared.specs, "Capacidad de la batería (Ah)": "400 Ah" } }, battery.longDescription, true), null);
+  assert.equal(resolveCorroboratedEditorialVariantGeneral(source, source, source.longDescription, false), null);
+});
+
+test("la denominación completa de la ficha se recupera en el texto de bobinas sin reemplazar un modelo contradictorio", () => {
+  for (const factory of [controlledGamForklift, controlledGomarizForklift]) {
+    const basis = factory();
+    const source: ProductRecord = { ...basis, model: "ABC 500", title: "Elevador de bobinas MARCA ABC 500",
+      url: basis.providerId === "gam" ? `https://online.gamrentals.com/es/elevadores/${basis.reference}-marca-abc-500` : "https://www.gomarizrent.com/producto/marca-abc-500/",
+      shortDescription: "Elevador de bobinas MARCA ABC 500", longDescription: "El elevador de bobinas MARCA es compacto.",
+      specs: { Marca: "MARCA", Modelo: "ABC 500" } };
+    const result = resolveCorroboratedEditorialVariantGeneral(source, source, source.longDescription, true);
+    assert.equal(result, "El elevador de bobinas MARCA ABC 500 es compacto.");
+    assert.equal(resolveCorroboratedEditorialVariantGeneral(source, source, result, true), null);
+    const conflict = { ...source, longDescription: `${source.longDescription} Modelo ABC 600.` };
+    assert.equal(resolveCorroboratedEditorialVariantGeneral(conflict, conflict, conflict.longDescription, true), null);
+    assert.equal(resolveCorroboratedEditorialVariantGeneral(source, { ...source, reference: "OTRA" }, source.longDescription, true), null);
+  }
+});
+
+test("distingue la denominación comercial de anchura del texto de gama con identidad y medidas corroboradas", () => {
+  for (const factory of [controlledGamForklift, controlledGomarizForklift]) {
+    const basis = factory();
+    const source: ProductRecord = { ...basis, model: "MODELO10 ANCHO ESPECIAL", externalReference: "MODELO10 ANCHO ESPECIAL",
+      title: "Transpaleta eléctrica MARCA MODELO10", shortDescription: "Transpaleta eléctrica MARCA MODELO10 de 1500 kg.",
+      longDescription: "La transpaleta eléctrica MARCA MODELO10 se emplea para el transporte de cargas paletizadas.",
+      url: basis.providerId === "gam" ? `https://online.gamrentals.com/es/transpaletas/${basis.reference}-marca-modelo10-ancho-especial` : "https://www.gomarizrent.com/producto/marca-modelo10-ancho-especial/",
+      specs: { Marca: "MARCA", Modelo: "MODELO10 ANCHO ESPECIAL", Anchura: "550 mm", Longitud: "1600 mm" } };
+    const result = resolveCorroboratedEditorialVariantGeneral(source, source, source.longDescription, true);
+    assert.match(result ?? "", /denominación comercial registrada.*MARCA MODELO10 ANCHO ESPECIAL/u);
+    assert.match(result ?? "", /0,55 m de anchura y 1,6 m de longitud/u);
+    assert.match(result ?? "", /no acredita por sí solo la configuración/u);
+    assert.equal(resolveCorroboratedEditorialVariantGeneral(source, source, result, true), null);
+    assert.equal(resolveCorroboratedEditorialVariantGeneral(source, { ...source, reference: "OTRA" }, source.longDescription, true), null);
+    assert.equal(resolveCorroboratedEditorialVariantGeneral(source, { ...source, specs: { ...source.specs, Anchura: "650 mm" } }, source.longDescription, true), null);
+    assert.equal(resolveCorroboratedEditorialVariantGeneral(source, source, source.longDescription, false), null);
+    const missing = { ...source, externalReference: "MODELO10" };
+    assert.equal(resolveCorroboratedEditorialVariantGeneral(missing, missing, missing.longDescription, true), null);
+    const conflicting = { ...source, longDescription: "Transpaleta eléctrica MARCA MODELO10 ANCHO NORMAL." };
+    assert.equal(resolveCorroboratedEditorialVariantGeneral(conflicting, conflicting, conflicting.longDescription, true), null);
+  }
+});

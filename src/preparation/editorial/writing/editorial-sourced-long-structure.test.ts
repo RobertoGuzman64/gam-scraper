@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { controlledGomarizPlatform } from "../core/editorial-contract-records.js";
+import { controlledGomarizPlatform, controlledMercaelevaForklift } from "../core/editorial-contract-records.js";
 import { structureSourcedLongGeneral } from "./editorial-sourced-long-structure.js";
 
 const sentences = [
@@ -57,4 +57,27 @@ test("no estructura textos ajenos, fuentes no acreditadas ni contenido ya transf
   assert.equal(structureSourcedLongGeneral(original, original, before.replace(". ", ".\n\n"), true), null);
   assert.equal(structureSourcedLongGeneral({ ...original, longDescription: null }, original, before, true), null);
   assert.equal(structureSourcedLongGeneral(original, original, before.slice(0, 90), true), null);
+});
+
+
+test("estructura el anuncio telegráfico de una retráctil sin atribuir prestaciones no declaradas", () => {
+  const base = controlledMercaelevaForklift();
+  const text = "Ref. CONTROL CARRETILLA RETRACTIL ELECTRICA 2500 kg ALTURA DE ELEVACION 4.500 mm MARCA MODELO10 HORAS 1200 AÑO DE FABRICACION 2018";
+  const record: ProductRecord = { ...base, title: "MARCA MODELO10 Carretilla elevadora retráctil 2500 kg", longDescription: text,
+    year: "2018", horometer: "1 200", specs: { "Título adicional": "CARRETILLA ELEVADORA RETRACTIL 2500 KG",
+      "Año de fabricación": "2018", "Artículo No.": "CONTROL", "Horas laborales": "1 200 h" } };
+  const result = structureSourcedLongGeneral(record, record, text, true);
+  assert.ok(result);
+  assert.match(result, /2\.500 kg y una altura de elevación de 4,5 m/u);
+  assert.match(result, /1\.200 horas declaradas/u);
+  assert.match(result, /diagrama de cargas/u);
+  assert.equal(structureSourcedLongGeneral(record, record, result, true), null);
+  assert.equal(structureSourcedLongGeneral(record, record, text, false), null);
+  for (const variant of [{ ...record, year: "2019" }, { ...record, horometer: "2 000" },
+    { ...record, specs: { ...record.specs, "Artículo No.": "OTRA" } },
+    { ...record, specs: { ...record.specs, "Altura de elevación": "5 m" } },
+    { ...record, specs: { ...record.specs, "Título adicional": "CARRETILLA RETRACTIL 2000 KG" } },
+    { ...record, model: "OTRO" }, { ...record, longDescription: text.replace("RETRACTIL", "FRONTAL") }]) {
+    assert.equal(structureSourcedLongGeneral(record, variant, text, true), null);
+  }
 });

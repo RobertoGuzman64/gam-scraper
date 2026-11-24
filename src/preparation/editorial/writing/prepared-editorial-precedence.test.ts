@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { prepareSourceProduct } from "../../prepare-product.js";
+import type { ProductRecord } from "../../../contracts/catalog.js";
+import { enrichVerifiedTechnicalBrief } from "../measurements/editorial-technical-brief.js";
 import { resolveEditorialFacts } from "../core/editorial-facts.js";
 import { resolveReusableEditorial } from "../core/editorial-composition.js";
 import { resolvePreparedEditorial } from "../core/prepared-editorial.js";
@@ -90,4 +92,57 @@ test("la composición compartida no publica identidades ajenas ni variantes cont
       assert.equal(result.product.description_general, null, `${source.providerId}:${index}`);
     }
   }
+});
+
+const compactHandlingSource = (base: ProductRecord): ProductRecord => ({
+  ...base, title: "Transpaleta eléctrica MARCA MODELO10",
+  url: base.providerId === "gam" ? "https://online.gamrentals.com/es/transpaletas/CONTROL-03-marca-modelo10" : base.url,
+  specs: { "Capacidad de carga (kg)": "1500 kg", Anchura: "800 mm" }
+});
+
+test("el resumen de manutención añade la anchura corroborada sin reescribir la descripción general", () => {
+  for (const base of [controlledGamForklift(), controlledGomarizForklift()]) {
+    const record = compactHandlingSource(base);
+    const original = structuredClone(record);
+    const result = resolveReusableEditorial(record);
+    assert.match(result.short ?? "", /capacidad de carga de 1\.500 kg y anchura del equipo de 0,8 m/u);
+    assert.match(result.general ?? "", /anchura de 0,8 m/u);
+    assert.equal(resolveReusableEditorial(record).short, result.short);
+    assert.deepEqual(record, original);
+    const second = { ...record, specs: { ...record.specs, Anchura: "900 mm" } };
+    assert.match(resolveReusableEditorial(second).short ?? "", /anchura del equipo de 0,9 m/u);
+    assert.doesNotMatch(resolveReusableEditorial(second, null, record).short ?? "", /anchura del equipo/u);
+    assert.doesNotMatch(resolveReusableEditorial(record, null, { ...record, reference: "OTRA-UNIDAD" }).short ?? "", /anchura del equipo/u);
+    assert.doesNotMatch(resolveReusableEditorial(record, null, { ...record, specs: { ...record.specs, "Anchura total": "900 mm" } }).short ?? "", /anchura del equipo/u);
+  }
+});
+
+test("una síntesis de identidad recupera la altura declarada sin divulgar una carga contradictoria", () => {
+  for (const base of [controlledGamForklift(), controlledMercaelevaForklift()]) {
+    const source: ProductRecord = { ...base, specs: { "Altura máxima de elevación": "3300 mm" } };
+    const short = "Carretilla elevadora MARCA MODELO10 de ocasión.";
+    const enriched = enrichVerifiedTechnicalBrief(source, source, short);
+    assert.equal(enriched, "Carretilla elevadora MARCA MODELO10 de ocasión, con altura de elevación declarada de 3,3 m.");
+    assert.equal(enrichVerifiedTechnicalBrief(source, source, enriched), null);
+    assert.equal(enrichVerifiedTechnicalBrief(source, { ...source, model: "MODELO11" }, short), null);
+    assert.equal(enrichVerifiedTechnicalBrief(source, { ...source, providerId: "otro" }, short), null);
+    assert.equal(enrichVerifiedTechnicalBrief(source, { ...source, specs: { "Altura máxima de elevación": "4000 mm" } }, short), null);
+    assert.equal(enrichVerifiedTechnicalBrief({ ...source, shortDescription: short }, source, short), null);
+    const conflicting = { ...source, longDescription: "La altura de elevación es de 4 m." };
+    assert.equal(enrichVerifiedTechnicalBrief(conflicting, conflicting, short), null);
+  }
+});
+
+test("la capacidad nominal recuperada exige anuncio explícito, identidad y magnitud concordante", () => {
+  const source: ProductRecord = {
+    ...controlledMercaelevaForklift(), title: "MARCA MODELO10 APILADOR ELECTRICO 1600 KG",
+    longDescription: "APILADOR ELECTRICO 1600 KG MARCA MODELO10", specs: { Marca: "MARCA", Modelo: "MODELO10" }
+  };
+  const prepared = { ...source, specs: { ...source.specs, "Capacidad nominal de carga": "1600 kg" } };
+  const short = "Apilador MARCA MODELO10, con anchura de 0,8 m.";
+  assert.match(enrichVerifiedTechnicalBrief(source, prepared, short) ?? "", /anchura de 0,8 m y capacidad nominal declarada de 1\.600 kg/u);
+  assert.equal(enrichVerifiedTechnicalBrief(source, { ...prepared, specs: { ...prepared.specs, "Capacidad nominal de carga": "1800 kg" } }, short), null);
+  assert.equal(enrichVerifiedTechnicalBrief(source, { ...prepared, specs: { ...prepared.specs, "Capacidad de carga": "1800 kg" } }, short), null);
+  assert.equal(enrichVerifiedTechnicalBrief({ ...source, longDescription: "Apilador eléctrico MARCA MODELO10, peso 1600 kg" }, prepared, short), null);
+  assert.equal(enrichVerifiedTechnicalBrief({ ...source, longDescription: "APILADOR ELECTRICO 1600 KG MARCA MODELO10, según versión" }, prepared, short), null);
 });

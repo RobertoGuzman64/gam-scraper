@@ -5,11 +5,34 @@ import type { EditorialFacts } from "../editorial/core/editorial-facts.js";
 
 type ReviewedModelCompatibility = (Pick<EditorialFacts, "energy" | "workingHeightM" | "lengthM" | "widthM" | "loadCapacityKg"> & {
   readonly family: "plataforma-tijera" | "plataforma-articulada";
+  readonly firstYear?: number;
+  readonly lastYear?: number;
+  readonly advertisedHeightClassM?: number;
+}) | (Pick<EditorialFacts, "energy" | "workingHeightM"> & {
+  readonly family: "plataforma-articulada";
+  readonly invariantGeometry: true;
+  readonly firstYear: number;
+  readonly lastYear: number;
 }) | (Pick<EditorialFacts, "energy" | "loadCapacityKg"> & {
   readonly family: "carretilla-elevadora";
   readonly marketCountry: string;
   readonly firstYear: number;
   readonly lastYear?: number;
+  readonly lengthM?: number;
+  readonly widthM?: number;
+}) | (Pick<EditorialFacts, "energy" | "loadCapacityKg" | "lengthM"> & {
+  readonly family: "carretilla-elevadora";
+  readonly catalogOffer: true;
+  readonly marketCountry: string;
+  readonly widthsM: readonly number[];
+}) | (Pick<EditorialFacts, "energy" | "loadCapacityKg"> & {
+  readonly family: "carretilla-elevadora";
+  readonly catalogOffer: true;
+  readonly invariantLoadCenter: true;
+  readonly marketCountry: string;
+  readonly identityWeightKg?: number;
+  readonly lengthM?: number;
+  readonly voltageV?: number;
 });
 
 type ReviewedModelReuse = {
@@ -33,6 +56,327 @@ type ReviewedModelDocument = {
 };
 
 const documents: readonly ReviewedModelDocument[] = [
+  {
+    url: "https://snorkellifts.com/german-debut-for-new-snorkel-electric-scissor-lifts-at-platformers-days/", brand: "SNORKEL", model: "S3219E", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 7.79, advertisedHeightClassM: 8,
+      lengthM: 1.78, widthM: 0.81, loadCapacityKg: 250, firstYear: 2016, lastYear: 2018 }, fields: ["Altura de plataforma"] },
+    facts: [
+      { field: "Altura de plataforma", value: "5,79 m", support: "Snorkel, presentación europea del 2015: S3219E, altura de plataforma 5,79 m, chasis 0,81 m y carga 250 kg. Presentación APEX Asia 2017 confirma longitud 1,78 m, anchura 0,81 m y altura de trabajo 7,79 m (clase comercial 8 m). Ficha CE del fabricante S3219E confirma la misma altura de plataforma. No atribuye dimensiones de cesta ni peso de la unidad." }
+    ]
+  },
+  {
+    url: "https://documentacionqr.com/sat/objects/2793/HAULOTTE_COMPACT12_MANUAL_OPERARIO_ES.pdf", brand: "HAULOTTE", model: "COMPACT 12", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 12, advertisedHeightClassM: 12,
+      lengthM: 2.48, widthM: 1.2, loadCapacityKg: 300, firstYear: 2013, lastYear: 2013 }, fields: ["Altura de plataforma", "Extensión de plataforma"] },
+    facts: [
+      { field: "Altura de plataforma", value: "10 m", support: "Haulotte, manual de conducción y mantenimiento COMPACT, p. 16, §2.5.3: altura de piso 10 m, altura de trabajo 12 m, largo con peldaños 2,48 m, ancho 1,20 m y carga nominal 300 kg. Corroborado por el manual de reparación posterior a mayo de 2005, §2.1.3. Excluye la configuración de 320 kg y 9,75 m de altura de plataforma." },
+      { field: "Extensión de plataforma", value: "0,92 m", support: "Haulotte, manual de conducción y mantenimiento COMPACT, p. 16, §2.5.3: longitud de extensión 0,92 m; corroborada por el manual de reparación posterior a mayo de 2005, §2.1.3. No atribuye capacidad ni dimensiones de cesta distintas de las declaradas por el vendedor." }
+    ]
+  },
+  {
+    url: "https://www.interempresas.net/FeriaVirtual/Catalogos_y_documentos/332358/C1.0-1.5.pdf", brand: "HYSTER", model: "C1.3 48V", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1300,
+      catalogOffer: true, invariantLoadCenter: true, marketCountry: "España", identityWeightKg: 6701, voltageV: 48 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "Hyster C1.0-1.5, ficha técnica española, p. 2, filas 1.5 y 1.6: C1.3, 600 mm, 48 V; peso 6701 kg. Capacidad 1300 kg corroborada en tabla EMEA del fabricante (errata de capacidad en ficha española). Valor nominal, no capacidad residual ni configuración de mástil o batería instalada." }
+    ]
+  },
+  {
+    url: "https://www.interempresas.net/FeriaVirtual/Catalogos_y_documentos/332358/C1.0-1.5.pdf", brand: "HYSTER", model: "C1.3 80V", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1300,
+      catalogOffer: true, invariantLoadCenter: true, marketCountry: "España", identityWeightKg: 6702, voltageV: 80 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "Hyster C1.0-1.5, ficha técnica española, p. 2, filas 1.5 y 1.6: C1.3 80, 1300 kg a 600 mm, 80 V; peso 6702 kg en la tabla EMEA vigente. Valor nominal, no capacidad residual ni configuración de mástil o batería instalada." }
+    ]
+  },
+  {
+    url: "https://www.interempresas.net/FeriaVirtual/Catalogos_y_documentos/332358/C1.0-1.5.pdf", brand: "HYSTER", model: "C1.5", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1500,
+      catalogOffer: true, invariantLoadCenter: true, marketCountry: "España", voltageV: 80 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "Hyster C1.0-1.5, ficha técnica española, p. 3, filas 1.5 y 1.6: C1.5 S, M y L, todas 1500 kg a 600 mm. Valor nominal, no capacidad residual ni configuración de mástil o batería instalada." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/very-narrow-aisle-trucks/mtc-series-spec-sheet-rev04-en.pdf", brand: "YALE", model: "MTC10", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1000,
+      catalogOffer: true, invariantLoadCenter: true, marketCountry: "España", lengthM: 3.538, voltageV: 48 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "Yale MTC, VDI 2198 rev. 04, p. 2, filas 1.5 y 1.6: MTC10, 1000 kg a 600 mm; longitud 3538 mm, 48 V. Valor nominal, no capacidad residual ni configuración de mástil o batería instalada." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/very-narrow-aisle-trucks/mtc-series-spec-sheet-rev04-en.pdf", brand: "YALE", model: "MTC13-48V", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1300,
+      catalogOffer: true, invariantLoadCenter: true, marketCountry: "España", lengthM: 3.698, voltageV: 48 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "Yale MTC, VDI 2198 rev. 04, p. 2, filas 1.5 y 1.6: MTC13, 1300 kg a 600 mm; longitud 3698 mm, 48 V. Valor nominal, no capacidad residual ni configuración de mástil o batería instalada." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/very-narrow-aisle-trucks/mtc-series-spec-sheet-rev04-en.pdf", brand: "YALE", model: "MTC13-80V", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1300,
+      catalogOffer: true, invariantLoadCenter: true, marketCountry: "España", voltageV: 80 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "Yale MTC, VDI 2198 rev. 04, p. 2, filas 1.5 y 1.6: MTC13 80, 1300 kg a 600 mm, 80 V. Valor nominal, no capacidad residual ni configuración de mástil o batería instalada." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/very-narrow-aisle-trucks/mtc-series-spec-sheet-rev04-en.pdf", brand: "YALE", model: "MTC15", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1500,
+      catalogOffer: true, invariantLoadCenter: true, marketCountry: "España" }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "Yale MTC, VDI 2198 rev. 04, p. 3, filas 1.5 y 1.6: MTC15 SWB, MWB y LWB, todas 1500 kg a 600 mm. Valor nominal, no capacidad residual ni configuración de mástil o batería instalada." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/very-narrow-aisle-trucks/mtc-series-spec-sheet-rev04-en.pdf", brand: "YALE", model: "MTC15L", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1500,
+      catalogOffer: true, invariantLoadCenter: true, marketCountry: "España", voltageV: 80 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "Yale MTC, VDI 2198 rev. 04, p. 3, filas 1.5 y 1.6: MTC15 LWB, 1500 kg a 600 mm; 80 V entre configuraciones de batería; denominación MTC15 L en tabla EMEA vigente. Valor nominal, no capacidad residual ni configuración de mástil o batería instalada." }
+    ]
+  },
+  {
+    url: "https://grosa.es/wp-content/uploads/2015/11/catalogo_tecnico_DCE.pdf", brand: "KALMAR", model: "DCE120-6", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "diésel", loadCapacityKg: 12000,
+      marketCountry: "España", firstYear: 2011, lastYear: 2011 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "Kalmar DCE 9-18 t, catálogo técnico en español, p. 2, tabla Dimensiones: DCE120-6, 12000 kg a 600 mm; la designación distingue el centro de carga en decímetros. No aplicable a DCE120-12. Valor nominal, no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://cdn.forkliftcenter.com/media/productattachments/files/Kalmar_DCD200-500_technical_information.pdf", brand: "KALMAR", model: "DCD200-12LB", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "diésel", loadCapacityKg: 20000,
+      marketCountry: "España", firstYear: 2008, lastYear: 2008, widthM: 3.05 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "1200 mm", support: "Kalmar DCD200-500, Technical Information, pp. 2-3, columna DCD200-12LB: 20000 kg a 1200 mm, anchura 3050 mm. Designación LB de chasis bajo. No aplicable a variantes de centro de carga diferente ni como capacidad residual." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/high-capacity-internal-combustion-trucks/gdp80-160dfef/220991386-gdp80-160df-ef-series-spec-sheet-eu-rev02-en-lowres-.pdf", brand: "YALE", model: "GDP80DF", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "diésel", loadCapacityKg: 8500,
+      catalogOffer: true, marketCountry: "España", lengthM: 5.524, widthsM: [2.49] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "Yale DF/EF 220991386 rev. 02, p. 2, columna GDP80DF, filas 1.5 y 1.6: 8500 kg a 600 mm; 4.19 y 4.21: 5524 y 2490 mm. Valor nominal, no capacidad residual ni capacidad a la altura anunciada." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/high-capacity-internal-combustion-trucks/gdp80-160dfef/220991386-gdp80-160df-ef-series-spec-sheet-eu-rev02-en-lowres-.pdf", brand: "YALE", model: "GDP100DF", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "diésel", loadCapacityKg: 10500,
+      catalogOffer: true, marketCountry: "España", lengthM: 5.724, widthsM: [2.49] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "Yale DF/EF 220991386 rev. 02, p. 3, columna GDP100DF, filas 1.5 y 1.6: 10500 kg a 600 mm; 4.19 y 4.21: 5724 y 2490 mm. Valor nominal, no capacidad residual ni capacidad a la altura anunciada." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/high-capacity-internal-combustion-trucks/gdp80-160dfef/220991386-gdp80-160df-ef-series-spec-sheet-eu-rev02-en-lowres-.pdf", brand: "YALE", model: "GDP120DF", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "diésel", loadCapacityKg: 12500,
+      catalogOffer: true, marketCountry: "España", lengthM: 5.724, widthsM: [2.49] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "Yale DF/EF 220991386 rev. 02, p. 3, columna GDP120DF, filas 1.5 y 1.6: 12500 kg a 600 mm; 4.19 y 4.21: 5724 y 2490 mm. Valor nominal, no capacidad residual ni capacidad a la altura anunciada." }
+    ]
+  },
+  {
+    url: "https://www.manitou.com/en-SI/our-machines/forklift-trucks/mi-50-d-st5", brand: "MANITOU", model: "MI50D", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "diésel", loadCapacityKg: 5000,
+      marketCountry: "España", firstYear: 2026, lastYear: 2026, lengthM: 3.25, widthM: 1.49 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Manitou MI 50 D ST5, Technical characteristics: 5000 kg y centro de gravedad 500 mm; Dimensions: longitud hasta cara de horquillas 3250 mm, anchura 1490 mm. Identidad MI50D corroborada por ambas cotas, diferenciada de MI 50 LD ST5 (3499 x 1990 mm y 600 mm). Valor nominal del modelo, no capacidad residual ni presencia de horquillas." }
+    ]
+  },
+  {
+    url: "https://xn----8sbhqfaif6agbcp7adg3e.xn--p1ai/pdf/Toyota%208FD25_8FDF25.pdf", brand: "TOYOTA", model: "02 – 8FGF25", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "GLP", loadCapacityKg: 2500,
+      marketCountry: "España", firstYear: 2019, lastYear: 2019 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Toyota Tonero 8FGF/FDF25, abril 2019, p. 344, columna 02-8FGF25, filas 1.3, 1.5 y 1.6: GLP, 2500 kg a 500 mm. Valor nominal, no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://yaletargonca.hu/wp-content/uploads/2021/02/ERP15-20VT-spec-sheet.pdf", brand: "YALE", model: "ERP16VT MWB", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1600,
+      marketCountry: "España", firstYear: 2017, lastYear: 2017 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Yale VT, VDI 2198, p. 2, columna ERP16VT (MWB), filas 1.5 y 1.6: 1600 kg a 500 mm. Corroborado en ficha Yale rev. 10. Valor nominal independiente de la configuración de mástil." }
+    ]
+  },
+  {
+    url: "https://yaletargonca.hu/wp-content/uploads/2021/02/ERP15-20VT-spec-sheet.pdf", brand: "YALE", model: "ERP18VTMWB", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1800,
+      marketCountry: "España", firstYear: 2018, lastYear: 2018 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Yale VT, VDI 2198, p. 3, columna ERP18VT (MWB), filas 1.5 y 1.6: 1800 kg a 500 mm. Corroborado en ficha Yale rev. 10. Valor nominal independiente de la configuración de mástil." }
+    ]
+  },
+  {
+    url: "https://www.manualslib.es/manual/389622/Unicarriers-1Q2-Serie.html?page=88", brand: "UNICARRIERS", model: "G1Q2L30Q", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 3000,
+      marketCountry: "España", firstYear: 2018, lastYear: 2018 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "UniCarriers 1Q2, manual de instrucciones OM15ES-01Q2Q0, página 88 del visor, especificaciones, columna G1Q2L30Q: 3000 kg y centro de carga 500 mm. Valor nominal, no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/internal-combustion-trucks-pneumatic-tyre/gp20-35ux/220991932-yale-gp20-35ux-a7s1-sps-rev01-en-online", brand: "YALE", model: "GP20UX", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "diésel", loadCapacityKg: 2000,
+      catalogOffer: true, marketCountry: "España", lengthM: 3.63, widthsM: [1.15] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Yale GP20-35UX 220991932 rev. 01, p. 4, columna GDP20UX, filas 1.5 y 1.6: 2000 kg a 500 mm en Stage IIIA y V; 4.19 y 4.21: 3630 y 1150 mm. Denominación GP de gama contrastada con motor diésel y cotas GDP. Valor nominal, no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/internal-combustion-trucks-pneumatic-tyre/gp20-35ux/220991932-yale-gp20-35ux-a7s1-sps-rev01-en-online", brand: "YALE", model: "GP25UX", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "diésel", loadCapacityKg: 2500,
+      catalogOffer: true, marketCountry: "España", lengthM: 3.69, widthsM: [1.15] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Yale GP20-35UX 220991932 rev. 01, p. 4, columna GDP25UX, filas 1.5 y 1.6: 2500 kg a 500 mm en Stage IIIA y V; 4.19 y 4.21: 3690 y 1150 mm. Denominación GP de gama contrastada con motor diésel y cotas GDP. Valor nominal, no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/internal-combustion-trucks-pneumatic-tyre/gp20-35ux/220991932-yale-gp20-35ux-a7s1-sps-rev01-en-online", brand: "YALE", model: "GP30UX", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "diésel", loadCapacityKg: 3000,
+      catalogOffer: true, marketCountry: "España", lengthM: 3.765, widthsM: [1.21] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Yale GP20-35UX 220991932 rev. 01, p. 5, columna GDP30UX, filas 1.5 y 1.6: 3000 kg a 500 mm en Stage IIIA y V; 4.19 y 4.21: 3765 y 1210 mm. Denominación GP de gama contrastada con motor diésel y cotas GDP. Valor nominal, no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/internal-combustion-trucks-pneumatic-tyre/gp20-35ux/220991932-yale-gp20-35ux-a7s1-sps-rev01-en-online", brand: "YALE", model: "GP35UX", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "diésel", loadCapacityKg: 3500,
+      catalogOffer: true, marketCountry: "España", lengthM: 3.85, widthsM: [1.21] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Yale GP20-35UX 220991932 rev. 01, p. 6, columna GDP35UX, filas 1.5 y 1.6: 3500 kg a 500 mm en Stage IIIA y V; 4.19 y 4.21: 3850 y 1210 mm. Denominación GP de gama contrastada con motor diésel y cotas GDP. Valor nominal, no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://www.hyster.com/globalassets/coms/hyster/emea/documents/trucks-literature/internal-combustion-trucks-pneumatic-tyre/h2.0-3.5ft/h2.0-3.5ft-p177-td-06-2019-lpg-eu-rev04-es.pdf", brand: "HYSTER", model: "H2.0FT", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "GLP", loadCapacityKg: 2000,
+      marketCountry: "España", firstYear: 2019, lastYear: 2021 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Hyster P177 GLP EU rev. 04 (06/2019), p. 4, filas 1-5 y 1-6: 2000 kg a 500 mm en las cuatro configuraciones Fortens, incluidos motores Fase V; valor nominal, no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://www.hyster.com/globalassets/coms/hyster/emea/documents/trucks-literature/internal-combustion-trucks-pneumatic-tyre/h2.0-3.5ft/h2.0-3.5ft-p177-td-06-2019-lpg-eu-rev04-es.pdf", brand: "HYSTER", model: "H3.0FT", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "GLP", loadCapacityKg: 3000,
+      marketCountry: "España", firstYear: 2019, lastYear: 2021 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Hyster P177 GLP EU rev. 04 (06/2019), p. 6, filas 1-5 y 1-6: 3000 kg a 500 mm en las cuatro configuraciones Fortens, incluidos motores Fase V; valor nominal, no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://www.hyster.com/globalassets/coms/hyster/emea/documents/trucks-literature/internal-combustion-trucks-pneumatic-tyre/h4.0-5.5ft/h4.0-5.5ft-u005-lpg-tg-01-2019-eu-rev02-es.pdf", brand: "HYSTER", model: "H5.5FT", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "GLP", loadCapacityKg: 5500,
+      marketCountry: "España", firstYear: 2019, lastYear: 2021 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "600 mm", support: "Hyster U005 GLP EU rev. 02 (01/2019), p. 8, filas 1-5 y 1-6: H5.5FT 5,5 t a 600 mm en ambas transmisiones; corroborado en tabla EMEA H4.0-5.5FT vigente del fabricante. Valor nominal, no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://media.prod.shop.jungheinrichcloud.com/PCMSS/en/b0665b4430e512b561a265204b572fbe4f58c3d0.pdf", brand: "JUNGHEINRICH", model: "DFG320S", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "diésel", loadCapacityKg: 2000,
+      marketCountry: "España", firstYear: 2013, lastYear: 2020 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Jungheinrich DFG 316s-320s, Technical data VDI 2198, filas 1.5 y 1.6: DFG 320s 2000 kg a 500 mm. Corroborado en ficha del fabricante 09/2013 DFG/TFG 316s/320s, diagrama p. 2 y tabla de datos. Valor nominal, no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/3-wheel-electric-forklift-trucks/erp15-20vt/220991848-erp15-20vt-g807-sps-rev01-es-online-1.pdf", brand: "YALE", model: "ERP16VT", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1600,
+      catalogOffer: true, marketCountry: "España", lengthM: 2.903, widthsM: [1.05, 1.116] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Yale serie VT 220991848 rev. 01, p. 3, filas 1-5 y 1-6: 1600 kg a 500 mm en SWB, MWB y LWB; 4-19: 2903 mm en MWB, 4-21: 1050 mm (1116 con neumáticos alternativos). Valor nominal del modelo, no capacidad residual de una unidad." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/3-wheel-electric-forklift-trucks/erp15-20vt/220991848-erp15-20vt-g807-sps-rev01-es-online-1.pdf", brand: "YALE", model: "ERP18VT", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1800,
+      catalogOffer: true, marketCountry: "España", lengthM: 2.898, widthsM: [1.116] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Yale serie VT 220991848 rev. 01, p. 4, filas 1-5 y 1-6: 1800 kg a 500 mm en MWB y LWB; 4-19 y 4-21: 2898 y 1116 mm en MWB. Valor nominal del modelo, no capacidad residual de una unidad." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/3-wheel-electric-forklift-trucks/erp15-20vt/220991848-erp15-20vt-g807-sps-rev01-es-online-1.pdf", brand: "YALE", model: "ERP20VT", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 2000,
+      catalogOffer: true, marketCountry: "España", lengthM: 2.898, widthsM: [1.116] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Yale serie VT 220991848 rev. 01, p. 4, filas 1-5 y 1-6: 2000 kg a 500 mm en MWB y LWB; 4-19 y 4-21: 2898 y 1116 mm en MWB. Valor nominal del modelo, no capacidad residual de una unidad." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/4-wheel-electric-forklift-trucks/erp22-35vl/220990062-vl-series-spec-sheet-rev07-es-lowres-zmag.pdf", brand: "YALE", model: "ERP22VL", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 2200,
+      catalogOffer: true, marketCountry: "España", lengthM: 3.336, widthsM: [1.173, 1.289] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Yale serie VL 220990062 rev. 07, p. 2, filas 1.5 y 1.6: 2200 kg a 500 mm en Value y Productivity MWB; 4.19 y 4.21: 3336 y 1173/1289 mm. Valor nominal del modelo, no capacidad residual de una unidad." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/4-wheel-electric-forklift-trucks/erp22-35vl/220990062-vl-series-spec-sheet-rev07-es-lowres-zmag.pdf", brand: "YALE", model: "ERP25VL", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 2500,
+      catalogOffer: true, marketCountry: "España", lengthM: 3.48, widthsM: [1.173, 1.289] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Yale serie VL 220990062 rev. 07, pp. 2-3, filas 1.5 y 1.6: 2500 kg a 500 mm en Value y Productivity, MWB y LWB; 4.19 y 4.21: 3480 y 1173/1289 mm en LWB. Valor nominal del modelo, no capacidad residual de una unidad." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/4-wheel-electric-forklift-trucks/erp22-35vl/220990062-vl-series-spec-sheet-rev07-es-lowres-zmag.pdf", brand: "YALE", model: "ERP30VL", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 3000,
+      catalogOffer: true, marketCountry: "España", lengthM: 3.492, widthsM: [1.173, 1.289] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Yale serie VL 220990062 rev. 07, p. 3, filas 1.5 y 1.6: 3000 kg a 500 mm en Value y Productivity LWB; 4.19 y 4.21: 3492 y 1173/1289 mm. Valor nominal del modelo, no capacidad residual de una unidad." }
+    ]
+  },
+  {
+    url: "https://www.hyster.com/globalassets/coms/hyster/emea/documents/trucks-literature/3-wheel-electric-forklift-trucks/j1.6-2.0utt/3991623-j1.6-2.0utt-a3c5-tg-rev01-es-online.pdf", brand: "HYSTER", model: "J1.6UTTL", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1600,
+      catalogOffer: true, marketCountry: "España", lengthM: 2.894, widthsM: [1.084] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Hyster 3991623 rev. 01, p. 4, filas 1-5 y 1-6: J1.6UTT(L) 1600 kg a 500 mm; 4-19 y 4-21: 2894 y 1084 mm. Valor nominal del modelo, no capacidad residual de una unidad." }
+    ]
+  },
+  {
+    url: "https://www.hyster.com/globalassets/coms/hyster/emea/documents/trucks-literature/3-wheel-electric-forklift-trucks/j1.6-2.0utt/3991623-j1.6-2.0utt-a3c5-tg-rev01-es-online.pdf", brand: "HYSTER", model: "J1.8UTTL", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1800,
+      catalogOffer: true, marketCountry: "España", lengthM: 2.894, widthsM: [1.084] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Hyster 3991623 rev. 01, p. 4, filas 1-5 y 1-6: J1.8UTT(L) 1800 kg a 500 mm; 4-19 y 4-21: 2894 y 1084 mm. Valor nominal del modelo, no capacidad residual de una unidad." }
+    ]
+  },
+  {
+    url: "https://www.hyster.com/globalassets/coms/hyster/emea/documents/trucks-literature/3-wheel-electric-forklift-trucks/j1.6-2.0utt/3991623-j1.6-2.0utt-a3c5-tg-rev01-es-online.pdf", brand: "HYSTER", model: "J2.0UTTL", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 2000,
+      catalogOffer: true, marketCountry: "España", lengthM: 3.153, widthsM: [1.14] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Hyster 3991623 rev. 01, p. 4, filas 1-5 y 1-6: J2.0UTT(L) 2000 kg a 500 mm; 4-19 y 4-21: 3153 y 1140 mm. Valor nominal del modelo, no capacidad residual de una unidad." }
+    ]
+  },
+  {
+    url: "https://www.hyster.com/globalassets/coms/hyster/emea/documents/trucks-literature/3-wheel-electric-forklift-trucks/a1.3-1.5xnt/a1.3-1.5xnt-d203-ss-03-2014-emea-rev03-es.pdf", brand: "HYSTER", model: "A1.3XNT", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1300,
+      catalogOffer: true, marketCountry: "España", lengthM: 2.724, widthsM: [0.996, 1.056] }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Hyster D203 rev. 03 (03/2014), p. 2, filas 1.5 y 1.6: A1.3XNT 1300 kg a 500 mm; 4.19 y 4.21: 2724 y 996/1056 mm según eje. Valor nominal del modelo, no capacidad residual de una unidad." }
+    ]
+  },
+  {
+    url: "https://www.geeritsverhuur.be/sites/default/files/2025-09/1_FICHE_JLG_450AJ.pdf", brand: "Jlg", model: "450AJ", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 15.72,
+      lengthM: 6.53, widthM: 1.98, loadCapacityKg: 230 }, fields: ["Anchura de plataforma", "Longitud de plumín"] }, facts: [
+      { field: "Anchura de plataforma", value: "0,76 m", support: "JLG Europe SL002-ENGLISH, 2003, página 2, columna 450AJ: plataforma 0,76 x 1,83 m; anchura común con la configuración corta de la ficha JLG 3131117 R061208. No atribuye longitud de cesta." },
+      { field: "Longitud de plumín", value: "1,24 m", support: "JLG Europe SL002-ENGLISH, 2003, página 2, columna 450AJ: Jib – Overall Length 1.24 m; capacidad 230 kg, longitud 6,53 m, anchura 1,98 m y peso 7100 kg. Altura de plataforma 13,72 m." }
+    ]
+  },
+  {
+    url: "https://high-lift.com/wp-content/uploads/2023/09/450A-450AJ-Specs-2012.pdf", brand: "Jlg", model: "450AJ Serie II", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 15.72,
+      lengthM: 6.71, widthM: 2.34, loadCapacityKg: 227 }, fields: ["Anchura de plataforma", "Longitud de plumín"] }, facts: [
+      { field: "Anchura de plataforma", value: "0,76 m", support: "JLG 450 SERIES II, 3131117 R061208, páginas 1-2: plataforma 0,76 x 1,83 m y opción 0,76 x 1,52 m; anchura común. Corroborada por ficha JLG 450AJ Series II CE https://www.cc-equipment.be/fileadmin/pdf/technical%20sheets/technical%20sheets%20hoogwerkers/Knikhoogwerkers/CC_Heftrucks_fiche_hoogwerker_knikarm_450AJ.pdf" },
+      { field: "Longitud de plumín", value: "1,24 m", support: "JLG 450 SERIES II, 3131117 R061208, página 2: Jib (450AJ Only) 1.24 m; capacidad 227 kg, anchura 2,34 m, longitud 6,71 m y peso 6010 kg. Altura de plataforma 13,72 m; misma cota de plumín en la edición CE." }
+    ]
+  },
   {
     url: "https://logitrans.com/rotator-with-adjustable-box-holders/", brand: "LOGITRANS", model: "ELFRA/SELFRA",
     reviewedOn: "2026-11-21", facts: [
@@ -999,6 +1343,15 @@ const documents: readonly ReviewedModelDocument[] = [
     ]
   },
   {
+    url: "https://shuttle-storage.s3.amazonaws.com/deblocknew/technische%20fiches/4302%20TF%20450-Series-II-Spec-Sheet.pdf?1591088111=&h=0&w=0",
+    brand: "JLG", model: "450 AJ", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 16,
+      invariantGeometry: true, firstYear: 2015, lastYear: 2015 }, fields: ["Anchura de plataforma", "Longitud de plumín"] }, facts: [
+      { field: "Anchura de plataforma", value: "0,76 m", support: "JLG 450AJ, páginas 1-2: plataforma de serie 0,76 x 1,83 m; opciones 0,76 x 1,22 y 0,76 x 1,52 m. Anchura común a las tres configuraciones, corroborada en la ficha 450AJ posterior https://sitecore.jlg.com/dfsmedia/e4042b10c9ce4595b4cc059f1299f079/141151-source" },
+      { field: "Longitud de plumín", value: "1,24 m", support: "JLG 450AJ, página 2: Jib – Overall Length 1.24 m; misma longitud en la ficha posterior https://sitecore.jlg.com/dfsmedia/e4042b10c9ce4595b4cc059f1299f079/141151-source" }
+    ]
+  },
+  {
     url: "https://www.coalci.es/wp-content/uploads/2021/07/haulotte-ha15ip.pdf",
     brand: "Haulotte", model: "HA15IP", reviewedOn: "2026-11-21", facts: [
       { field: "Alcance horizontal (m)", value: "8,45 m", support: "HA15 IP, página 2: Alcance máximo 8.45 m" },
@@ -1051,6 +1404,15 @@ const documents: readonly ReviewedModelDocument[] = [
       { field: "Capacidad máxima de plataforma", value: "300 kg", support: "Compact 12, página 2, columna COMPACT 12: Lift capacity inside/outside 300 kg" },
       { field: "Distancia entre ejes (mm)", value: "1,86 m", support: "Compact 12, página 2, columna COMPACT 12: H Wheelbase 1.86 m" },
       { field: "Extensión de plataforma", value: "0,92 m", support: "Compact 12, página 2, columna COMPACT 12: Length - extension 0.92 m" }
+    ]
+  },
+  {
+    url: "https://en.lgmg.com.cn/product/629.htm", brand: "LGMG", model: "AS0607WE", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 7.8,
+      lengthM: 1.86, widthM: 0.81, loadCapacityKg: 230 }, fields: ["Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "1,63 m", support: "LGMG AS0607WE, Specifications, Measurements: C-Platform Length 1.63m" },
+      { field: "Anchura de plataforma", value: "0,74 m", support: "LGMG AS0607WE, Specifications, Measurements: D-Platform Width 0.74m" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "LGMG AS0607WE, Specifications, Measurements: H-Extension Deck 0.9m" }
     ]
   },
   {
@@ -1249,7 +1611,7 @@ const documents: readonly ReviewedModelDocument[] = [
     url: "https://www.hyster.com/globalassets/coms/hyster/emea/documents/trucks-literature/internal-combustion-trucks-pneumatic-tyre/h2.0-3.5ft/h2.0-3.5ft-p177-td-06-2019-lpg-eu-rev04-es.pdf",
     brand: "HYSTER", model: "H2.5FT", reviewedOn: "2026-11-24",
     reuse: { compatibility: { family: "carretilla-elevadora", energy: "GLP", loadCapacityKg: 2500,
-      marketCountry: "España", firstYear: 2015, lastYear: 2019 }, fields: ["Centro de carga nominal del modelo"] },
+      marketCountry: "España", firstYear: 2015, lastYear: 2021 }, fields: ["Centro de carga nominal del modelo"] },
     facts: [
       { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Hyster H2.5FT GLP EU, rev. 04 (06/2019), p. 5, filas 1-5 y 1-6: 2,5 t nominales a 500 mm en las cuatro configuraciones; p. 3 distingue las capacidades por mástil, neumáticos y accesorios. Coincide con Hyster Europe 901891/01 (10/2015), pp. 2 y 4." }
     ]
@@ -1267,7 +1629,7 @@ const documents: readonly ReviewedModelDocument[] = [
     url: "https://www.hyster.com/globalassets/coms/hyster/emea/documents/trucks-literature/internal-combustion-trucks-pneumatic-tyre/h2.0-3.5ft/h2.0-3.5ft-p177-td-06-2019-lpg-eu-rev04-es.pdf",
     brand: "HYSTER", model: "H3.5FT", reviewedOn: "2026-11-24",
     reuse: { compatibility: { family: "carretilla-elevadora", energy: "GLP", loadCapacityKg: 3500,
-      marketCountry: "España", firstYear: 2019, lastYear: 2019 }, fields: ["Centro de carga nominal del modelo"] },
+      marketCountry: "España", firstYear: 2019, lastYear: 2021 }, fields: ["Centro de carga nominal del modelo"] },
     facts: [
       { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Hyster Europe, P177 rev. 04 (06/2019), p. 7, H3.5FT GLP, filas 1-5 y 1-6: 3,5 t a 500 mm en Fortens, Advance y Advance Plus; p. 3 distingue capacidades por mástil, ruedas y accesorios." }
     ]

@@ -5,10 +5,13 @@ import type { TechnicalRecoveryObservation } from "../provenance/technical-recov
 import { reviewedCatalogModelIdentity, matchesDocumentedTechnicalIdentity } from "./reviewed-catalog-model-identity.js";
 import { reusableReviewedModelClaims, reviewedModelDocumentVerification } from "./reviewed-model-claims.js";
 
+import { editorialFamilyFromSourceGeneral, editorialFamilyOf } from "../editorial/core/editorial-families.js";
+import { resolveEditorialLiteralTitleSource, resolveEditorialSource } from "../editorial/core/editorial-source.js";
 import { resolveEditorialFacts } from "../editorial/core/editorial-facts.js";
 import type { EditorialEnergy } from "../editorial/core/editorial-facts.js";
-import { editorialMetricOf, editorialQuantityOf } from "../editorial/measurements/editorial-measurements.js";
+import { editorialMetricOf, editorialQuantityOf, editorialQuantity } from "../editorial/measurements/editorial-measurements.js";
 import { fold } from "../classification/category-utils.js";
+import { containsEditorialBrandModel } from "../editorial/identity/editorial-identity-match.js";
 
 export type DocumentedTechnicalUnit = {
   readonly fingerprint: string;
@@ -171,6 +174,7 @@ const geometryAliases: Readonly<Record<string, RegExp>> = {
   "Altura de plataforma": /^altura (?:maxima )?(?:de (?:la )?)?plataforma(?: (?:maxima|max\.?))?(?: \(m[m]?\))?$/u,
   "Longitud de plataforma": /^(?:longitud|largo) (?:de (?:la )?)?(?:plataforma|cesta)(?: principal)?(?: \(m[m]?\))?$/u,
   "Anchura de plataforma": /^(?:anchura|ancho) (?:de (?:la )?)?(?:plataforma|cesta)(?: principal)?(?: \(m[m]?\))?$/u,
+  "Longitud de plumín": /^(?:longitud|largo) (?:de(?:l)? )?(?:plumin|jib|brazo auxiliar)(?: \(m[m]?\))?$/u,
   "Extensión de plataforma": /^(?:extension(?: de (?:la )?plataforma)?|longitud (?:de )?extension|plataforma extensible)(?: \(m[m]?\))?$/u
 };
 
@@ -193,24 +197,65 @@ export const recoverReviewedModelTechnicalSpecs = (
   if (claims.length !== 1) return specs;
   const claim = claims[0];
   if (!claim) return specs;
-  const facts = resolveEditorialFacts(original);
   const expected = claim.compatibility;
+  const source = resolveEditorialSource(original);
+  const generalFamily = editorialFamilyFromSourceGeneral(original.longDescription);
+  const shortFamily = editorialFamilyOf(original.shortDescription ?? "");
+  const categoryFamily = editorialFamilyOf(`${original.subcategory ?? ""} ${original.categoryName}`);
+  const genericPlatformSource = expected.family.startsWith("plataforma-") && source &&
+    !editorialFamilyOf(source.familyClues) && resolveEditorialLiteralTitleSource(original) === "producto" &&
+    generalFamily === expected.family && (!shortFamily || shortFamily === expected.family) &&
+    (!categoryFamily || categoryFamily === expected.family);
+  const facts = resolveEditorialFacts(original) ?? (genericPlatformSource ? resolveEditorialFacts(original, expected.family) : null);
   if (!facts || facts.brand !== original.brand || facts.model !== original.model ||
     facts.family !== expected.family) return specs;
   const sourceText = fold([original.title, original.shortDescription, original.longDescription].filter(Boolean).join(" "));
   const escapedModel = fold(original.model).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
   if (new RegExp(`\\b${escapedModel}[-/][a-z0-9]+`, "u").test(sourceText)) return specs;
   if (expected.family === "carretilla-elevadora") {
-    if (facts.loadCapacityKg !== expected.loadCapacityKg || !original.country ||
-      fold(original.country) !== fold(expected.marketCountry) || !original.year || !/^\d{4}$/u.test(original.year) ||
-      Number(original.year) < expected.firstYear || expected.lastYear !== undefined && Number(original.year) > expected.lastYear ||
+    if (facts.loadCapacityKg !== expected.loadCapacityKg ||
       facts.energy !== null && facts.energy !== expected.energy || nominalLoadCenter.test(sourceText)) return specs;
+    const battery = original.specs["Capacidad de la batería"];
+    const batteryVoltage = typeof battery === "string" ? Number(/^\s*(\d+)\s*V\b/iu.exec(battery)?.[1]) : null;
+    if ("catalogOffer" in expected) {
+      if (!source || original.condition !== "Nuevo" || original.year !== null || original.serialNumber || original.horometer ||
+        (original.country ? fold(original.country) !== fold(expected.marketCountry) : !new URL(original.url).pathname.startsWith("/es/")) ||
+        !containsEditorialBrandModel(new URL(original.url).pathname, original.brand, original.model) ||
+        !containsEditorialBrandModel(original.title ?? "", original.brand, original.model) ||
+        !containsEditorialBrandModel(original.shortDescription ?? "", original.brand, original.model) ||
+        !containsEditorialBrandModel(original.longDescription ?? "", original.brand, original.model) ||
+        typeof original.specs.Marca !== "string" || fold(original.specs.Marca) !== fold(original.brand) ||
+        typeof original.specs.Modelo !== "string" || fold(original.specs.Modelo) !== fold(original.model) ||
+        Object.keys(original.specs).some((key) => /^(?:ano|ano de fabricacion|ano del modelo)$/u.test(fold(key))) ||
+        /\b(?:segunda mano|usad[oa]|reacondicionad[oa]|reconvertid[oa])\b/u.test(sourceText)) return specs;
+      if ("invariantLoadCenter" in expected) {
+        if (expected.lengthM !== undefined && facts.lengthM !== expected.lengthM ||
+          expected.identityWeightKg !== undefined && facts.weightKg !== expected.identityWeightKg) return specs;
+        if (expected.voltageV !== undefined && (facts.voltageV !== null && facts.voltageV !== expected.voltageV ||
+          battery !== undefined && batteryVoltage !== expected.voltageV)) return specs;
+      } else {
+        const width = original.specs.Anchura;
+        const hasOtherWidth = Object.keys(original.specs).some((key) => ["Ancho total", "Anchura total", "Ancho"].includes(key));
+        const widths = facts.widthM !== null ? [facts.widthM] : !hasOtherWidth && typeof width === "string" && /^\d+(?:\s*\/\s*\d+)+\s*mm$/iu.test(width)
+          ? width.replace(/\s*mm$/iu, "").split("/").map((value) => editorialQuantity(`${value.trim()} mm`, "mm"))
+            .map((value) => value === null ? null : value / 1000) : [];
+        if (facts.lengthM === null || expected.lengthM === null || Math.abs(facts.lengthM - expected.lengthM) > 0.005 ||
+          widths.length === 0 || widths.some((value) => value === null || !expected.widthsM.includes(value))) return specs;
+      }
+    } else if (!original.country || fold(original.country) !== fold(expected.marketCountry) ||
+      !original.year || !/^\d{4}$/u.test(original.year) || Number(original.year) < expected.firstYear ||
+      expected.lastYear !== undefined && Number(original.year) > expected.lastYear ||
+      expected.lengthM !== undefined && facts.lengthM !== expected.lengthM ||
+      expected.widthM !== undefined && facts.widthM !== expected.widthM) return specs;
     const energyEvidence = fold([original.title, original.shortDescription, original.longDescription,
       ...Object.entries(original.specs).filter(([key]) => /^(?:motor|tipo (?:de )?motor|motorizacion|energia|combustible)$/u.test(fold(key)))
         .map(([, value]) => String(value))].filter(Boolean).join(" "));
     if (/\b(?:sin|no (?:es|usa|utiliza|funciona con)|convertid[oa] a)\s+(?:motor (?:de )?)?(?:glp|lpg|diesel|gasoil|gasolina|electric[oa]s?|bateria)\b/u.test(energyEvidence)) return specs;
     const energies = new Set([...energyEvidence.matchAll(energyPattern)].map((match) => energyIdentifier(match[0])));
-    if (energies.size !== 1 || !expected.energy || !energies.has(expected.energy)) return specs;
+    const corroboratedOfferEnergy = "invariantLoadCenter" in expected && expected.energy === "eléctrica" &&
+      energies.size === 0 && expected.identityWeightKg !== undefined && facts.weightKg === expected.identityWeightKg &&
+      expected.voltageV !== undefined && (facts.voltageV === expected.voltageV || batteryVoltage === expected.voltageV);
+    if (!expected.energy || !corroboratedOfferEnergy && (energies.size !== 1 || !energies.has(expected.energy))) return specs;
     if ([original.specs, specs].some((source) => Object.entries(source).some(([key, value]) =>
       nominalLoadCenter.test(fold(key)) || handlingCapacityKeys.test(fold(key)) &&
         editorialQuantityOf(source, [key], "kg") !== expected.loadCapacityKg ||
@@ -223,11 +268,72 @@ export const recoverReviewedModelTechnicalSpecs = (
       "src/preparation/technical/documented-technical-evidence.ts", observe);
     return result;
   }
-  if (facts.energy !== expected.energy || facts.workingHeightM !== expected.workingHeightM ||
-    facts.lengthM !== expected.lengthM || facts.widthM !== expected.widthM) return specs;
-  const capacity = editorialQuantityOf(original.specs, ["Capacidad", "Capacidad carga", "Capacidad de carga",
-    "Capacidad de carga (kg)", "Capacidad de plataforma", "Capacidad máxima de plataforma", "Capacidad de la cesta"], "kg");
-  if (capacity !== expected.loadCapacityKg || facts.loadCapacityKg !== null && facts.loadCapacityKg !== capacity) return specs;
+  const headingEnergy = /^\s*(?:las?\s+|los?\s+)?(?:tijeras?|articuladas?|telescopicos?)\s+(electric[oa]s?|diesel)\b/u
+    .exec(fold(original.longDescription ?? ""))?.[1];
+  const hasStructuredEnergy = Object.keys(original.specs).some((key) =>
+    /^(?:motor|tipo (?:de )?motor|motorizacion|energia|combustible)$/u.test(fold(key)));
+  const energyText = fold([original.title, original.shortDescription, original.longDescription,
+    source?.familyClues].filter(Boolean).join(" "));
+  const declaredEnergies = new Set([...energyText.matchAll(energyPattern)].map((match) => energyIdentifier(match[0])));
+  const corroboratedHeadingEnergy = facts.energy === null && !hasStructuredEnergy && generalFamily === expected.family &&
+    (!shortFamily || shortFamily === expected.family) &&
+    headingEnergy !== undefined && energyIdentifier(headingEnergy) === expected.energy &&
+    declaredEnergies.size === 1 && declaredEnergies.has(expected.energy) &&
+    !/\b(?:sin|no (?:es|usa|utiliza|funciona con)|convertid[oa] a)\s+(?:motor (?:de )?)?(?:glp|lpg|diesel|gasoil|gasolina|electric[oa]s?|bateria)\b/u.test(energyText);
+  const advertisedHeightClass = "advertisedHeightClassM" in expected && expected.advertisedHeightClassM !== undefined &&
+    expected.family === "plataforma-tijera" && facts.workingHeightM === null &&
+    facts.liftingHeightM === expected.advertisedHeightClassM && facts.platformHeightM === null &&
+    !Object.keys(original.specs).some((key) => /^altura (?:maxima )?(?:de )?trabajo(?: \(m[m]?\))?$/u.test(fold(key))) &&
+    ![...sourceText.matchAll(/\baltura (?:maxima )?(?:de )?trabajo (?:de |hasta )?(\d+(?:[.,]\d+)?)\s*(?:m|metros?)\b/gu)].some((match) => {
+      const value = Number(match[1]?.replace(",", "."));
+      return value !== expected.workingHeightM && value !== expected.advertisedHeightClassM;
+    }) &&
+    generalFamily === expected.family && shortFamily === expected.family &&
+    containsEditorialBrandModel(original.title ?? "", original.brand, original.model) &&
+    containsEditorialBrandModel(original.shortDescription ?? "", original.brand, original.model) &&
+    containsEditorialBrandModel(original.longDescription ?? "", original.brand, original.model);
+  const corroboratedAdvertisedEnergy = advertisedHeightClass && facts.energy === null && !hasStructuredEnergy &&
+    expected.energy !== null && declaredEnergies.size === 1 && declaredEnergies.has(expected.energy);
+  if ((facts.energy !== expected.energy && !corroboratedHeadingEnergy && !corroboratedAdvertisedEnergy) ||
+    (facts.workingHeightM !== expected.workingHeightM && !advertisedHeightClass)) return specs;
+  if ("invariantGeometry" in expected) {
+    if (!expected.energy || facts.energy !== expected.energy || !original.year || !/^\d{4}$/u.test(original.year) ||
+      facts.year !== Number(original.year) || facts.year < expected.firstYear || facts.year > expected.lastYear ||
+      !containsEditorialBrandModel(original.title ?? "", original.brand, original.model) ||
+      !containsEditorialBrandModel(original.longDescription ?? "", original.brand, original.model) ||
+      new RegExp(`\\b${escapedModel}\\s+(?:serie(?:s)?\\s+[a-z0-9]+|s(?:i{1,3}|[123])|[a-z]{1,3}[0-9]+)\\b`, "u").test(sourceText) ||
+      declaredEnergies.size !== 1 || !declaredEnergies.has(expected.energy) ||
+      /\b(?:sin|no (?:es|usa|utiliza|funciona con)|convertid[oa] a)\s+(?:motor (?:de )?)?(?:glp|lpg|diesel|gasoil|gasolina|electric[oa]s?|bateria)\b/u.test(energyText) ||
+      claim.facts.some((fact) => fact.field !== "Anchura de plataforma" && fact.field !== "Longitud de plumín")) return specs;
+    if ([original.specs, specs].some((source) => Object.entries(source).some(([key, value]) => {
+      const label = fold(key);
+      return combinedGeometry.test(label) ||
+        /^(?:ano|ano de fabricacion|ano del modelo)$/u.test(label) && String(value).trim() !== original.year ||
+        /^(?:motor|tipo (?:de )?motor|motorizacion|energia|combustible)$/u.test(label) &&
+          [...fold(String(value)).matchAll(energyPattern)].some((match) => energyIdentifier(match[0]) !== expected.energy);
+    }))) return specs;
+  } else {
+    if (facts.lengthM !== expected.lengthM || facts.widthM !== expected.widthM) return specs;
+    if (expected.firstYear !== undefined || expected.lastYear !== undefined) {
+      if (!original.year || !/^\d{4}$/u.test(original.year) || facts.year !== Number(original.year) ||
+        expected.firstYear !== undefined && facts.year < expected.firstYear ||
+        expected.lastYear !== undefined && facts.year > expected.lastYear ||
+        !containsEditorialBrandModel(original.title ?? "", original.brand, original.model) ||
+        !containsEditorialBrandModel(original.longDescription ?? "", original.brand, original.model) ||
+        declaredEnergies.size !== 1 || !expected.energy || !declaredEnergies.has(expected.energy) ||
+        /\b(?:sin|no (?:es|usa|utiliza|funciona con)|convertid[oa] a)\s+(?:motor (?:de )?)?(?:glp|lpg|diesel|gasoil|gasolina|electric[oa]s?|bateria)\b/u.test(energyText) ||
+        Object.entries(original.specs).some(([key, value]) => /^(?:ano|ano de fabricacion|ano del modelo)$/u.test(fold(key)) && String(value).trim() !== original.year)) return specs;
+    }
+    const capacity = editorialQuantityOf(original.specs, ["Capacidad", "Capacidad carga", "Capacidad de carga",
+      "Capacidad de carga (kg)", "Capacidad de plataforma", "Capacidad máxima de plataforma", "Capacidad de la cesta"], "kg");
+    if (capacity !== expected.loadCapacityKg || facts.loadCapacityKg !== null && facts.loadCapacityKg !== capacity) return specs;
+  }
+  if (("invariantGeometry" in expected || claim.facts.some((fact) => fact.field === "Longitud de plumín")) && (
+    /\b(?:plumin|jib|brazo auxiliar)\b/u.test(sourceText) ||
+    [original.specs, specs].some((source) => Object.keys(source).some((key) => {
+      const label = fold(key);
+      return /\b(?:plumin|jib|brazo auxiliar)\b/u.test(label) && !geometryAliases["Longitud de plumín"]?.test(label);
+    })))) return specs;
   if (explicitGeometry.test(sourceText) || geometryConfigurationConflict.test(sourceText)) return specs;
   const additions: Record<string, string> = {};
   const sources = [original.specs, specs];

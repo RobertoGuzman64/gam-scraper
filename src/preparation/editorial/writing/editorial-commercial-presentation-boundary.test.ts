@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
+import { resolveSourcedScrubberShort } from "./editorial-sourced-concise-short.js";
 import { normalizePreparedEditorialPresentation } from "./prepared-editorial-presentation.js";
 import { prepareCommercialEditorialInputs } from "../../../commercial/projection/editorial-inputs.js";
 import { projectCommercialPresentation } from "../../../commercial/projection/presentation-projection.js";
@@ -65,4 +66,32 @@ test("una capacidad contradictoria se corrige por evidencia y no por referencia"
   assert.throws(() => normalizePreparedEditorialPresentation(
     { ...source, url: `${source.url}?otra=1` }, published
   ), /Identidad editorial discordante/u);
+});
+
+test("la descripción corta recupera la configuración de una fregadora cuando la identidad y las medidas se corroboran", () => {
+  const source: ProductRecord = { ...controlledGamForklift(), brand: null, model: "MODELO10", condition: "Nuevo",
+    categoryKey: "limpieza-fregadoras", categoryName: "Fregadoras industriales nuevas",
+    url: "https://online.gamrentals.com/es/fregadoras/CONTROL-03-fregadora-conductor-sentado-marca-modelo10",
+    title: "Fregadora MARCA MODELO10", shortDescription: "➨ MARCA MODELO10 Nueva ➨ Venta fregadora conductor sentado",
+    longDescription: "La MARCA MODELO10 es una fregadora de operario a bordo.",
+    specs: { Modelo: "MODELO10", Longitud: "1800 mm", Peso: "800 KG" } };
+  const current = "MARCA MODELO10 Nueva. Venta fregadora conductor sentado";
+  const prepared = { ...prepareSourceProduct(source).product, title: source.title, description: current,
+    spec: { Modelo: "MODELO10", Longitud: "1800 mm", Peso: "800 kg" } };
+  const result = resolveSourcedScrubberShort(source, prepared, current);
+  assert.equal(result, "Fregadora MARCA MODELO10 nueva, de conductor sentado, con longitud declarada de 1,8 m y peso de 800 kg.");
+  const normalized = normalizePreparedEditorialPresentation(source, prepared);
+  assert.equal(normalized.description, result);
+  assert.deepEqual(normalizePreparedEditorialPresentation(source, normalized), normalized);
+  assert.equal(normalized.description_general, prepared.description_general);
+  assert.deepEqual(normalized.spec, prepared.spec);
+  for (const candidate of [{ ...source, brand: "OTRA" }, { ...source, model: "OTRO" },
+    { ...source, url: "https://example.invalid/fregadora-conductor-sentado-marca-modelo10" },
+    { ...source, longDescription: "La MARCA MODELO10 es de operario acompañante." },
+    { ...source, specs: { ...source.specs, Longitud: "1900 mm" } }]) {
+    assert.equal(resolveSourcedScrubberShort(candidate, prepared, current), null);
+  }
+  assert.equal(resolveSourcedScrubberShort(source, { ...prepared, reference: "OTRA" }, current), null);
+  assert.equal(resolveSourcedScrubberShort(source, { ...prepared, title: "Fregadora MARCA OTRO" }, current), null);
+  assert.equal(resolveSourcedScrubberShort(source, prepared, "Texto ya revisado."), null);
 });

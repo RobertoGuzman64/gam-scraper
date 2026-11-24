@@ -1,13 +1,17 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { editorialMetricOf, editorialQuantityOf, formatEditorialQuantity } from "../measurements/editorial-measurements.js";
 import { editorialFamilyFromSourceGeneral, editorialFamilyName, editorialFamilyOf, resolveConsistentEditorialFamily } from "../core/editorial-families.js";
-import { verifiedEditorialIdentity, verifiedEditorialStructuredIdentity } from "../core/editorial-source-contract.js";
-import { resolveEditorialSource } from "../core/editorial-source.js";
+import { sameEditorialUnit, verifiedEditorialIdentity, verifiedEditorialStructuredIdentity } from "../core/editorial-source-contract.js";
+import { resolveEditorialSource, resolveEditorialLiteralTitleSource } from "../core/editorial-source.js";
 import { resolveEditorialFacts } from "../core/editorial-facts.js";
 import type { EditorialFamily } from "../core/editorial-families.js";
-import { containsEditorialBrandModel } from "../identity/editorial-identity-match.js";
+import { containsEditorialBrandModel, containsEditorialIdentity } from "../identity/editorial-identity-match.js";
 import { containsEditorialSourceSlugModel } from "../source/editorial-source-url.js";
-import { verifiedEditorialUnitPair } from "../identity/editorial-unit-provenance.js";
+import { findBrandTypo } from "../../../catalog/normalization/technical-title-identity.js";
+import { verifiedEditorialLiteralUnitPair, verifiedEditorialUnitPair } from "../identity/editorial-unit-provenance.js";
+import { loadEditorialKnowledge } from "../../../infrastructure/filesystem/editorial/knowledge.js";
+import { editorialIdentityKey } from "../core/editorial-knowledge.js";
+import type { EditorialVerifiedModelRule } from "../core/editorial-knowledge.js";
 
 const fold = (value: string): string => value.normalize("NFD").replace(/[\u0300-\u036f]/gu, "")
   .toLocaleLowerCase("es").trim().replace(/\s+/gu, " ");
@@ -21,6 +25,36 @@ const matchedMetric = (record: ProductRecord, keys: readonly string[], unit: "m"
   const expected = positive(raw);
   const observed = unit === "m" ? editorialMetricOf(record.specs, keys) : editorialQuantityOf(record.specs, keys, unit);
   return expected !== null && observed === expected ? expected : null;
+};
+
+export const resolveCorroboratedTitleBrand = (source: ProductRecord, prepared: ProductRecord): string | null => {
+  const brand = source.brand?.trim();
+  const model = source.model?.trim();
+  const title = source.title?.trim();
+  if (!brand || !model || !title || source.providerId !== prepared.providerId ||
+    !sameEditorialUnit(source, prepared) || source.title !== prepared.title ||
+    fold(String(source.specs?.Marca ?? "")) !== fold(brand) ||
+    fold(String(source.specs?.Modelo ?? "")) !== fold(model) ||
+    containsEditorialIdentity(title, brand) ||
+    fold(title.slice(-model.length)) !== fold(model) || !/\s/u.test(title[title.length - model.length - 1] ?? "") ||
+    source.specs?.["Título adicional"] !== undefined || prepared.specs?.["Título adicional"] !== undefined) return null;
+  const typo = findBrandTypo(title.slice(0, -model.length), brand);
+  const prefix = title.slice(0, -model.length).trimEnd();
+  const candidate = typo !== null ?
+    `${title.slice(0, typo.index)}${brand}${title.slice(typo.index + typo.length)}` :
+    `${prefix} ${brand} ${title.slice(-model.length)}`;
+  if (!verifiedEditorialUnitPair({ ...source, title: candidate }, { ...prepared, title: candidate })) return null;
+  const url = new URL(source.url);
+  const slug = url.pathname.split("/").filter(Boolean).at(-1) ?? "";
+  if (!containsEditorialSourceSlugModel(slug, model, undefined) ||
+    !containsEditorialIdentity(url.pathname, brand)) return null;
+  if (typo === null) {
+    const short = source.shortDescription?.slice(0, 550) ?? "";
+    const general = source.longDescription?.slice(0, 550) ?? "";
+    if (![short, general].every((text) => containsEditorialBrandModel(text, brand, model)) ||
+      !prefix.split(/\s+/u).every((word) => containsEditorialIdentity(general, word))) return null;
+  }
+  return candidate;
 };
 
 export const resolveDocumentedEditorialTitle = (record: ProductRecord): string | null => {
@@ -96,12 +130,17 @@ const corroboratedHeadingFamily = (
     prepared.specs?.["Título adicional"] !== undefined) return false;
   const heading = fold(record.longDescription ?? "");
   const platformHeading = /^(?:las?\s+)?(?:tijeras?|articuladas?)\s+(?:electricas?|diesel)\b|^(?:los?\s+)?(?:telescopicos?\s+(?:diesel|electricos?)|mastiles?\s+verticales?)\b/u;
+  const handlerHeading = /^manipuladores?\s*[.:]\s*unifica\b.{0,100}\bcarretilla\s+elevadora\b.{0,60}\bbrazo\s+telescopico\b/u;
   const generatorHeading = /^(?:contamos\s+con\s+)?grupos?\s+electrogenos?\b/u;
   if (!(family.startsWith("plataforma-") && platformHeading.test(heading) ||
-    family === "grupo-electrogeno" && generatorHeading.test(heading))) return false;
+    family === "grupo-electrogeno" && generatorHeading.test(heading) ||
+    family === "manipulador-telescopico" && handlerHeading.test(heading))) return false;
   const original = resolveEditorialFacts(record, family);
   const current = resolveEditorialFacts(prepared, family);
   if (!original || !current || original.family !== current.family || original.energy !== current.energy) return false;
+  if (family === "manipulador-telescopico") return original.workingHeightM !== null &&
+    original.workingHeightM === current.workingHeightM && original.loadCapacityKg !== null &&
+    original.loadCapacityKg === current.loadCapacityKg;
   if (family === "grupo-electrogeno") return original.powerKva !== null && original.powerKva === current.powerKva;
   return original.workingHeightM !== null && original.workingHeightM === current.workingHeightM &&
     original.loadCapacityKg !== null && original.loadCapacityKg === current.loadCapacityKg &&
@@ -127,17 +166,20 @@ const documentedElectricMobilityTitle = (record: ProductRecord, prepared: Produc
   if (!containsEditorialSourceSlugModel(slug, model, undefined)) return null;
   const families = [
     { name: "Bicicleta eléctrica", route: /\bbicicletas?[-\s]+electricas?\b/u, text: /\bbicicleta\s+electrica\b/u, claim: /\bes\s+una\s+bicicleta\s+electrica\b/u },
+    { name: "Motocicleta eléctrica", route: /\bmotocicletas?[-\s]+electricas?\b/u, text: /\bmotocicleta\s+electrica\b/u, claim: /\bes\s+una\s+motocicleta\s+electrica\b/u },
     { name: "Ciclomotor eléctrico", route: /\bciclomotores?[-\s]+electricos?\b/u, text: /\bciclomotor\s+electrico\b/u, claim: /\bes\s+un\s+ciclomotor\s+electrico\b/u }
   ];
   const matching = families.filter((family) => family.route.test(fold(clues)) &&
     texts.every((text) => {
-      const heading = text.slice(0, 180);
+      const heading = text.replace(/^cambio de titularidad y transporte no incluidos\s+/u, "").slice(0, 180);
       const match = family.claim.exec(heading);
       return match !== null && !/\bno\s+es\b/u.test(heading) &&
         containsEditorialBrandModel(heading.slice(0, match.index), brand, model);
     }));
   const family = matching[0];
-  if (!family || matching.length !== 1 || texts.some((text) => /\b(?:motocicletas?|motos?|scooters?|cuatriciclos?)\b/u.test(text) ||
+  if (!family || matching.length !== 1 || texts.some((text) => /\b(?:motos?|scooters?|cuatriciclos?)\b/u.test(text) ||
+    (family.name !== "Motocicleta eléctrica" && /\bmotocicletas?\b/u.test(text)) ||
+    (family.name === "Motocicleta eléctrica" && /\b(?:es|como|clasificad[oa]\s+como)\s+(?:un\s+)?ciclomotor\b/u.test(text)) ||
     families.some((other) => other !== family && other.text.test(text)))) return null;
   return `${family.name} ${record.title?.trim() ?? ""}`;
 };
@@ -176,13 +218,81 @@ const documentedEquipmentTitle = (record: ProductRecord, prepared: ProductRecord
   return null;
 };
 
+const titleWithFamily = (family: EditorialFamily, title: string): string => {
+  const noun = editorialFamilyName(family);
+  return `${noun[0]?.toLocaleUpperCase("es") ?? ""}${noun.slice(1)} ${title}`;
+};
+
+export const resolveManufacturerFamilyTitle = (
+  source: ProductRecord, prepared: ProductRecord, rule: EditorialVerifiedModelRule | undefined
+): string | null => {
+  const brand = source.brand?.trim();
+  const model = source.model?.trim();
+  const title = source.title?.trim();
+  if (!rule || !brand || !model || !title || !verifiedEditorialUnitPair(source, prepared) ||
+    !verifiedEditorialIdentity(source) || !verifiedEditorialIdentity(prepared) || source.providerId !== prepared.providerId ||
+    source.title !== prepared.title || fold(title) !== fold(`${brand} ${model}`) ||
+    editorialIdentityKey(brand, model) !== editorialIdentityKey(rule.brand, rule.model) ||
+    source.specs?.["Título adicional"] !== undefined || prepared.specs?.["Título adicional"] !== undefined) return null;
+  if ([source, prepared].some((item) => {
+    const origin = resolveEditorialSource(item);
+    const declarations = [editorialFamilyOf(origin?.familyClues ?? ""), editorialFamilyOf(`${item.subcategory ?? ""} | ${item.categoryName}`),
+      editorialFamilyFromSourceGeneral(item.longDescription)];
+    return declarations.some((family) => family !== null && family !== rule.family);
+  })) return null;
+  return titleWithFamily(rule.family, `${brand} ${model}`);
+};
+
+const literalSourceFamilyTitle = (source: ProductRecord, prepared: ProductRecord): string | null => {
+  const title = source.title?.trim();
+  const origin = resolveEditorialLiteralTitleSource(source);
+  const current = resolveEditorialLiteralTitleSource(prepared);
+  if (!title || !origin || !current || origin !== current ||
+    editorialFamilyOf(title) || source.providerId !== prepared.providerId ||
+    !verifiedEditorialLiteralUnitPair(source, prepared) || source.title !== prepared.title ||
+    source.longDescription !== prepared.longDescription || source.shortDescription?.trim() || prepared.shortDescription?.trim() ||
+    source.specs?.["Título adicional"] !== undefined || prepared.specs?.["Título adicional"] !== undefined) return null;
+  const heading = fold(source.longDescription ?? "");
+  const family = editorialFamilyFromSourceGeneral(source.longDescription);
+  if (family !== "camion-cesta" && family !== "torre-iluminacion") return null;
+  const route = editorialFamilyOf(origin);
+  if (route !== null && route !== family || [source, prepared].some((item) => {
+    const declared = editorialFamilyOf(`${item.subcategory ?? ""} | ${item.categoryName}`);
+    return declared !== null && declared !== family;
+  })) return null;
+  const metric = (keys: readonly string[]): number | null => {
+    const value = editorialMetricOf(source.specs, keys);
+    return value !== null && value > 0 && value === editorialMetricOf(prepared.specs, keys) ? value : null;
+  };
+  const work = metric(["Altura de trabajo"]);
+  const width = metric(["Anchura", "Ancho"]);
+  const length = metric(["Longitud", "Largo"]);
+  if (family === "torre-iluminacion") {
+    const weight = editorialQuantityOf(source.specs, ["Peso"], "kg");
+    return route === family && /^(?:las?\s+)?torres?\s+de\s+iluminacion\b/u.test(heading) &&
+      work !== null && work >= 3 && work <= 60 && width !== null && length !== null &&
+      weight !== null && weight === editorialQuantityOf(prepared.specs, ["Peso"], "kg") &&
+      typeof source.specs?.Potencia === "string" && source.specs.Potencia === prepared.specs?.Potencia &&
+      /^\d{1,2}\s*[x×]\s*\d{1,4}\s*W$/iu.test(source.specs.Potencia.trim()) ? titleWithFamily(family, title) : null;
+  }
+  const reach = metric(["Alcance lateral", "Alcance Lateral"]);
+  if (!/^(?:los?\s+)?camiones?\s+cesta\b/u.test(heading) || work === null || width === null || length === null ||
+    reach === null || reach >= work || work < 8 || work > 60 || width < 1.5 || width > 3 || length < 4 || length > 20) return null;
+  return titleWithFamily(family, title);
+};
+
 export const resolveDocumentedFamilyTitle = (record: ProductRecord, prepared: ProductRecord = record): string | null => {
+  const literal = literalSourceFamilyTitle(record, prepared);
+  if (literal !== null) return literal;
   const source = resolveEditorialSource(record);
   const brand = record.brand?.trim();
   const model = record.model?.trim();
   const title = record.title?.trim();
   if (!source || !verifiedEditorialIdentity(record) || !brand || !model || !title ||
     fold(title) !== fold(`${brand} ${model}`)) return null;
+  const rule = loadEditorialKnowledge().modelRules.get(editorialIdentityKey(brand, model));
+  const manufacturer = resolveManufacturerFamilyTitle(record, prepared, rule);
+  if (manufacturer !== null) return manufacturer;
   const mobility = documentedElectricMobilityTitle(record, prepared, source.familyClues);
   if (mobility !== null) return mobility;
   const equipment = documentedEquipmentTitle(record, prepared);

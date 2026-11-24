@@ -14,6 +14,7 @@ import { removeSourceTitleBranding, removeSourceSummaryBranding } from "../sourc
 import { restoreCorroboratedEditorialIdentity } from "../identity/editorial-crossed-identity.js";
 import { normalizeCorroboratedTowingSummary } from "../measurements/editorial-towing-summary.js";
 import { removeSourcedSaleWording } from "../source/editorial-source-brief.js";
+import { resolveSourcedScrubberShort } from "./editorial-sourced-concise-short.js";
 import { resolveSourcedShortDiscrepancy } from "../claims/editorial-sourced-short-discrepancy.js";
 
 export const normalizePreparedEditorialPresentation = (
@@ -23,7 +24,8 @@ export const normalizePreparedEditorialPresentation = (
     source.url !== prepared.sourceUrl) throw new Error(`Identidad editorial discordante: ${prepared.sourceUrl}`);
   const verifiedSource = reconcileGamVerifiedUnitYear(source);
   const restoredIdentity = restoreCorroboratedEditorialIdentity(source, prepared.title, prepared.description);
-  const sourceMotorConflict = hasUncorroboratedSignedMotor(resolveKnowledgeEditorial(source, source).fallbackGeneral);
+  const sourceKnowledge = resolveKnowledgeEditorial(source, source);
+  const sourceMotorConflict = hasUncorroboratedSignedMotor(sourceKnowledge.fallbackGeneral);
   const motorized = sourceMotorConflict ? { ...prepared, spec: { ...prepared.spec, Motor: undefined } } : prepared;
   const baseTitle = presentCommercialMotorization(
     normalizeEditorialTitle(removeSourceTitleBranding(source, restoredIdentity?.title ?? prepared.title), source.model), motorized
@@ -56,6 +58,8 @@ export const normalizePreparedEditorialPresentation = (
   const incompleteSummary = sourceShort?.length === 512 && !/[.!?]$/u.test(sourceShort) &&
     currentShort === normalizeEditorialSummary(sourceShort, source.model) ?
       resolveSourcedShortDiscrepancy(source, source, sourceShort, true) : null;
+  const scrubberSummary = !sourceKnowledge.short ?
+    resolveSourcedScrubberShort(source, { ...prepared, title }, currentShort) : null;
   const sourcedSaleSummary = removeSourcedSaleWording(source, currentShort);
   const descriptionTitle = prepared.description_title?.trim() === prepared.title?.trim() ||
     !prepared.description_title?.trim() ? title :
@@ -64,7 +68,7 @@ export const normalizePreparedEditorialPresentation = (
     ...prepared,
     title,
     description_title: descriptionTitle,
-    description: incompleteSummary ?? sourcedSaleSummary ?? currentShort,
+    description: incompleteSummary ?? scrubberSummary ?? sourcedSaleSummary ?? currentShort,
     description_general: normalizeEditorialGeneral(capacity.description_general, source.model)
   };
 };

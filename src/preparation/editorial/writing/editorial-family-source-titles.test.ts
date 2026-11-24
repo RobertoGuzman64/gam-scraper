@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
-import { resolveDocumentedFamilyTitle } from "./editorial-documented-title.js";
+import { resolveCorroboratedTitleBrand, resolveDocumentedFamilyTitle, resolveManufacturerFamilyTitle } from "./editorial-documented-title.js";
 import { editorialFamilyOf } from "../core/editorial-families.js";
 import { resolvePreparedEditorialTitle } from "./prepared-editorial-title.js";
 import { controlledGomarizPlatform, controlledMercaelevaForklift } from "../core/editorial-contract-records.js";
@@ -153,6 +153,7 @@ test("los encabezados sin corroboración técnica o con identidad y familia disc
 test("la movilidad eléctrica recupera la familia explícita del título sin alterar la identidad de la unidad", () => {
   for (const family of [
     { route: "bicicletas-electricas", claim: "una bicicleta eléctrica", title: "Bicicleta eléctrica" },
+    { route: "motocicletas-electricas", claim: "una motocicleta eléctrica", title: "Motocicleta eléctrica" },
     { route: "ciclomotores-electricos", claim: "un ciclomotor eléctrico", title: "Ciclomotor eléctrico" }
   ]) {
     const source: ProductRecord = {
@@ -167,6 +168,8 @@ test("la movilidad eléctrica recupera la familia explícita del título sin alt
     const expected = `${family.title} MARCA MODELO10`;
     assert.equal(resolvePreparedEditorialTitle(source, source), expected);
     assert.equal(prepareSourceProduct(source).product.title, expected);
+    const withDisclaimer = { ...source, longDescription: `Cambio de titularidad y transporte no incluidos ${source.longDescription}` };
+    assert.equal(resolveDocumentedFamilyTitle(withDisclaimer), expected);
     const other: ProductRecord = {
       ...source,
       providerId: "gomariz",
@@ -178,7 +181,7 @@ test("la movilidad eléctrica recupera la familia explícita del título sin alt
       { ...source, url: source.url.replace("modelo10", "modelo11") },
       { ...source, shortDescription: source.shortDescription?.replace("MODELO10", "MODELO11") ?? null },
       { ...source, longDescription: source.longDescription?.replace(" es ", " no es ") ?? null },
-      { ...source, longDescription: `${source.longDescription} También se anuncia como motocicleta.` },
+      { ...source, longDescription: `${source.longDescription} También se anuncia como ${family.title === "Motocicleta eléctrica" ? "ciclomotor" : "motocicleta"}.` },
       { ...source, specs: { ...source.specs, Motor: "Gasolina" } },
       { ...source, specs: { ...source.specs, Modelo: "MODELO11" } }
     ]) assert.equal(resolveDocumentedFamilyTitle(invalid), null);
@@ -221,4 +224,143 @@ test("las rutas de iluminación y compactación corroboradas enriquecen únicame
     assert.equal(resolveDocumentedFamilyTitle(source, { ...source, reference: "OTRA" }), null);
     assert.equal(resolveDocumentedFamilyTitle(source, { ...source, specs: { ...source.specs, Anchura: "1,4 m" } }), null);
   }
+});
+
+
+test("la marca omitida o errónea se recupera con identidad estructurada y evidencia de origen", () => {
+  for (const base of [controlledGomarizPlatform(), { ...controlledGomarizPlatform(), providerId: "gam" }]) {
+    const source: ProductRecord = {
+      ...base,
+      url: base.providerId === "gam" ?
+        `https://online.gamrentals.com/es/carretillas/${base.reference}-marcaindustrial-modelo10` :
+        "https://www.gomarizrent.com/producto/marcaindustrial-modelo10/",
+      brand: "MARCAINDUSTRIAL",
+      model: "MODELO10",
+      title: "Carretilla elevadora MODELO10",
+      shortDescription: "MARCAINDUSTRIAL MODELO10 para manutención.",
+      longDescription: "La carretilla elevadora MARCAINDUSTRIAL MODELO10 permite mover cargas.",
+      specs: { Marca: "MARCAINDUSTRIAL", Modelo: "MODELO10" }
+    };
+    const expected = "Carretilla elevadora MARCAINDUSTRIAL MODELO10";
+    assert.equal(resolveCorroboratedTitleBrand(source, source), expected);
+    assert.equal(resolvePreparedEditorialTitle(source, source), expected);
+    const corrected = prepareSourceProduct(source);
+    assert.equal(corrected.product.title, expected);
+    assert.equal(corrected.product.description_title, expected);
+    const typo = { ...source, title: "Carretilla elevadora MARCAINDUSTIAL MODELO10" };
+    assert.equal(resolveCorroboratedTitleBrand(typo, typo), expected);
+    const complete = { ...source, title: expected };
+    assert.equal(resolveCorroboratedTitleBrand(complete, complete), null);
+    for (const invalid of [
+      { ...source, title: "Carretilla elevadora OTRA MODELO10" },
+      { ...source, title: "Carretilla elevadora MODELO11" },
+      { ...source, url: source.url.replace("marcaindustrial", "otra") },
+      { ...source, url: source.url.replace("modelo10", "modelo11") },
+      { ...source, url: source.url.replace(new URL(source.url).hostname, "example.invalid") },
+      { ...source, shortDescription: "MARCAINDUSTRIAL MODELO11 para manutención." },
+      { ...source, specs: { ...source.specs, Marca: "OTRA" } },
+      { ...source, specs: { ...source.specs, "Título adicional": "IDENTIDAD PROTEGIDA" } }
+    ]) assert.equal(resolveCorroboratedTitleBrand(invalid, invalid), null);
+    assert.equal(resolveCorroboratedTitleBrand(source, { ...source, reference: "OTRA" }), null);
+    assert.equal(resolveCorroboratedTitleBrand(source, { ...source, specs: { ...source.specs, Modelo: "MODELO11" } }), null);
+  }
+});
+
+test("el encabezado de manipulación y las prestaciones concordantes identifican el tipo sin añadir magnitudes", () => {
+  const source: ProductRecord = {
+    ...controlledGomarizPlatform(),
+    title: "MARCA MODELO10",
+    longDescription: "Manipuladores. Unifica las características de una carretilla elevadora con las de un brazo telescópico.",
+    specs: { "Altura de trabajo": "6 m", Capacidad: "2500 kg" }
+  };
+  const expected = "Manipulador telescópico MARCA MODELO10";
+  assert.equal(resolveDocumentedFamilyTitle(source), expected);
+  assert.equal(prepareSourceProduct(source).product.title, expected);
+  const other = { ...source, reference: "OTRA-UNIDAD", model: "MODELO11", title: "MARCA MODELO11", url: source.url.replace("modelo10", "modelo11") };
+  assert.equal(resolveDocumentedFamilyTitle(other), "Manipulador telescópico MARCA MODELO11");
+  for (const invalid of [
+    { ...source, longDescription: "Manipuladores. Equipo para elevar personas." },
+    { ...source, longDescription: "Carretilla elevadora para mover palés." },
+    { ...source, specs: { ...source.specs, Capacidad: "2500 litros" } },
+    { ...source, specs: { ...source.specs, "Altura de trabajo": "6 kg" } },
+    { ...source, subcategory: "Carretilla elevadora" }
+  ]) assert.equal(resolveDocumentedFamilyTitle(invalid), null);
+  assert.equal(resolveDocumentedFamilyTitle(source, { ...source, reference: "OTRA" }), null);
+  assert.equal(resolveDocumentedFamilyTitle(source, { ...source, specs: { ...source.specs, Capacidad: "3000 kg" } }), null);
+});
+
+
+test("la familia acreditada por fabricante identifica títulos desnudos sin deducir prestaciones", () => {
+  const rule = { brand: "MARCA", model: "MODELO10", family: "carretilla-elevadora", manufacturerSource: "https://example.invalid/modelo10" } as const;
+  const source: ProductRecord = {
+    ...controlledGomarizPlatform(), title: "MARCA MODELO10", longDescription: "Equipo para operaciones de almacén.",
+    specs: { Capacidad: "2500 kg", Motor: "Eléctrico" }
+  };
+  const expected = "Carretilla elevadora MARCA MODELO10";
+  assert.equal(resolveManufacturerFamilyTitle(source, source, rule), expected);
+  const other: ProductRecord = { ...source, providerId: "gam", categoryKey: "segunda-mano",
+    reference: "OTRA-UNIDAD", url: "https://online.gamrentals.com/es/carretillas/OTRA-UNIDAD-marca-modelo10" };
+  assert.equal(resolveManufacturerFamilyTitle(other, other, rule), expected);
+  assert.equal(resolveManufacturerFamilyTitle(source, source, undefined), null);
+  assert.equal(resolveManufacturerFamilyTitle(source, source, { ...rule, model: "MODELO11" }), null);
+  assert.equal(resolveManufacturerFamilyTitle(source, source, { ...rule, brand: "OTRA" }), null);
+  for (const invalid of [
+    { ...source, title: expected },
+    { ...source, model: "MODELO11", title: "MARCA MODELO11" },
+    { ...source, longDescription: "Plataforma de tijera para elevar personas." },
+    { ...source, subcategory: "Plataforma de tijera" },
+    { ...source, url: "https://example.invalid/producto/marca-modelo10/" },
+    { ...source, specs: { ...source.specs, "Título adicional": "Otra familia" } }
+  ]) assert.equal(resolveManufacturerFamilyTitle(invalid, invalid, rule), null);
+  assert.equal(resolveManufacturerFamilyTitle(source, { ...source, reference: "DISTINTA" }, rule), null);
+  assert.equal(resolveManufacturerFamilyTitle(source, { ...source, title: "MARCA MODELO11" }, rule), null);
+});
+
+test("la familia del camión cesta se añade a la denominación compuesta literal sin reconstruir identidad", () => {
+  const source: ProductRecord = {
+    ...controlledGomarizPlatform(), brand: null, model: null, title: "MARCA CHASIS MODELO10",
+    url: "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/camion-plataforma/marca-chasis-modelo10/",
+    longDescription: "Los camiones cesta permiten realizar trabajos en altura.",
+    specs: { "Altura de trabajo": "18 m", "Alcance lateral": "9 m", Anchura: "2,2 m", Longitud: "7 m" }
+  };
+  const expected = "Camión cesta MARCA CHASIS MODELO10";
+  assert.equal(resolveDocumentedFamilyTitle(source), expected);
+  assert.equal(resolvePreparedEditorialTitle(source, source), expected);
+  const duplicate = { ...source, reference: "OTRA-UNIDAD", url: source.url.replace("modelo10/", "modelo10-2/") };
+  assert.equal(resolveDocumentedFamilyTitle(duplicate), expected);
+  for (const invalid of [
+    { ...source, title: "MARCA CHASIS MODELO11" },
+    { ...source, url: source.url.replace("gomarizrent.com", "example.invalid") },
+    { ...source, url: source.url.replace("camion-plataforma", "tijera") },
+    { ...source, longDescription: "Las plataformas de tijera permiten trabajos en altura." },
+    { ...source, specs: { ...source.specs, "Alcance lateral": "20 m" } },
+    { ...source, specs: { ...source.specs, Anchura: "2 kg" } },
+    { ...source, specs: { ...source.specs, "Título adicional": "Otra familia" } },
+    { ...source, subcategory: "Carretilla elevadora" }
+  ]) assert.equal(resolveDocumentedFamilyTitle(invalid), null);
+  assert.equal(resolveDocumentedFamilyTitle(source, { ...source, reference: "DISTINTA" }), null);
+  assert.equal(resolveDocumentedFamilyTitle(source, { ...source, specs: { ...source.specs, Longitud: "8 m" } }), null);
+  const already = { ...source, title: expected };
+  assert.equal(resolvePreparedEditorialTitle(already, already), expected);
+});
+
+test("la familia literal de iluminación admite el modelo reconciliado sin admitir otra identidad", () => {
+  const source: ProductRecord = { ...controlledGomarizPlatform(), brand: "MARCA", model: null, title: "MARCA MODELO10",
+    subcategory: null, categoryName: "Iluminación", url: "https://www.gomarizrent.com/energia-electrica-e-iluminacion/torre-de-luz/marca-modelo10/",
+    shortDescription: null, longDescription: "Las torres de iluminación son regulables en altura.",
+    specs: { "Altura de trabajo": "8 m", Longitud: "3 m", Anchura: "1,4 m", Peso: "1100 kg", Potencia: "4x120 W" } };
+  const prepared = { ...source, model: "MODELO10" };
+  assert.equal(resolveDocumentedFamilyTitle(source, prepared), "Torre de iluminación MARCA MODELO10");
+  assert.equal(resolveDocumentedFamilyTitle(source, { ...prepared, model: "MODELO11" }), null);
+  assert.equal(resolveDocumentedFamilyTitle(source, { ...prepared, specs: { ...prepared.specs, Potencia: "4x150 W" } }), null);
+});
+
+test("la familia de camión admite la inversión reconciliada de marca y chasis sin cambiar la identidad literal", () => {
+  const source: ProductRecord = { ...controlledGomarizPlatform(), brand: "CHASIS", model: "MARCA MODELO10", title: "MARCA CHASIS MODELO10",
+    shortDescription: null, url: "https://www.gomarizrent.com/producto/marca-chasis-modelo10/",
+    longDescription: "Los camiones cesta permiten realizar trabajos en altura.",
+    specs: { "Altura de trabajo": "18 m", "Alcance lateral": "9 m", Anchura: "2,2 m", Longitud: "7 m" } };
+  const prepared = { ...source, brand: "MARCA", model: "CHASIS MODELO10" };
+  assert.equal(resolveDocumentedFamilyTitle(source, prepared), "Camión cesta MARCA CHASIS MODELO10");
+  assert.equal(resolveDocumentedFamilyTitle(source, { ...prepared, model: "CHASIS MODELO11" }), null);
 });

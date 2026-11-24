@@ -1,7 +1,7 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { resolveManainEditorialDomainSource } from "../../manain/domain-source.js";
 import { resolveGamEditorialDomainSource, verifiedGamUnbrandedEditorialSource } from "../../gam/domain-source.js";
-import { resolveGomarizEditorialDomainSource } from "../../gomariz/domain-source.js";
+import { resolveGomarizEditorialDomainSource, resolveGomarizLiteralTitleSource } from "../../gomariz/domain-source.js";
 import { resolveMercaelevaEditorialDomainSource, verifiedMercaelevaUnbrandedEditorialSource, hasMercaelevaCorroboratedScissorHeights } from "../../mercaeleva/domain-source.js";
 
 export const resolveEditorialSource = (record: ProductRecord) =>
@@ -15,3 +15,6 @@ export const verifiedUnbrandedEditorialSource = (record: ProductRecord): boolean
 
 export const hasCorroboratedEditorialDistinctWorkHeights = (record: ProductRecord): boolean =>
   record.providerId === "mercaeleva" && hasMercaelevaCorroboratedScissorHeights(record);
+
+export const resolveEditorialLiteralTitleSource = (record: ProductRecord) =>
+  record.providerId === "gomariz" ? resolveGomarizLiteralTitleSource(record) : null;

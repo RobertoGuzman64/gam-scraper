@@ -21,6 +21,13 @@ const platformPattern = new RegExp(String.raw`\bplataforma(?:\s+principal)?\s+pr
 const confirmedExtensionPattern = new RegExp(String.raw`\bplataforma extensible de\s+${measure}\s*,?\s*(?:diseñada para|permite)\s+ampliar\b`, "giu");
 const extensionPattern = new RegExp(String.raw`\b(?:plataforma extensible de|extensi[oó]n de (?:la\s+)?plataforma(?:\s+de)?)\s+${measure}`, "giu");
 
+const turretPattern = /\b(?:torreta giratoria|(?:rotaci[oó]n|giro) de (?:la )?(?:torreta|torre)(?: de)?)\s*(±\s*)?(\d{2,3})\s*[°º](?:\s*\+\s*(\d{2,3})\s*[°º])?/giu;
+const stabilizerPattern = /\b(\d{1,2})\s+estabilizadores hidr[aá]ulicos\b/giu;
+const basketRotationPattern = /\brotaci[oó]n (?:hidr[aá]ulica )?(?:de (?:la )?cesta )?(?:de )?(\d{2,3})\s*[°º]\s*(?:a (?:cada lado|derecha e izquierda|izquierda y derecha)|\+\s*(\d{2,3})\s*[°º])/giu;
+const basketHeightPattern = new RegExp(String.raw`\baltura (?:m[aá]xima )?de (?:la )?(?:cesta|plataforma) de\s+${measure}`, "giu");
+const workHeightPattern = new RegExp(String.raw`\baltura (?:m[aá]xima )?de trabajo de\s+${measure}`, "giu");
+const truckMassPattern = new RegExp(String.raw`\bcami[oó]n de\s+(${number})\s*kg de MMA\b`, "giu");
+
 const metric = (raw: string | undefined, unit: string | undefined): number | null => {
   if (!raw || !unit) return null;
   const millimetres = unit.toLowerCase() === "mm";
@@ -82,7 +89,12 @@ export const recoverSourcePlatformGeometry = (
   const urlFamily = editorialFamilyOf(new URL(original.url).pathname);
   if (urlFamily && !urlFamily.startsWith("plataforma-") && urlFamily !== "camion-cesta") return specs;
   const family = families[0] ?? (explicitlyTruckMounted(original) && explicitlyTruckMounted(recovered) ? "camion-cesta" : null);
-  if (!family || (!family.startsWith("plataforma-") && family !== "camion-cesta")) return specs;
+  const truckHeading = /\bplataforma(?:\s+(?:aerea|elevadora|articulada|telescopica)){0,4}\s+sobre\s+camion\b/u;
+  const compatibleTruckFamily = (value: typeof family): boolean => value === null || value === "camion-cesta" ||
+    value === "plataforma-articulada" || value === "plataforma-telescopica";
+  const truck = compatibleTruckFamily(family) && compatibleTruckFamily(urlFamily) &&
+    [original.title, recovered.title, text, original.shortDescription].every((value) => truckHeading.test(fold(value ?? "")));
+  if (!truck && (!family || (!family.startsWith("plataforma-") && family !== "camion-cesta"))) return specs;
   const absent = (pattern: RegExp): boolean => ![...Object.keys(original.specs ?? {}), ...Object.keys(specs)].some((key) => pattern.test(key));
   const additions: Record<string, string> = {};
   const fitsExterior = (length: number, width: number): boolean => {
@@ -90,7 +102,7 @@ export const recoverSourcePlatformGeometry = (
     const exteriorWidth = editorialMetricOf(specs, ["Anchura", "Ancho", "Anchura total", "Anchura (mm)"]);
     return (exteriorLength === null || length <= exteriorLength) && (exteriorWidth === null || width <= exteriorWidth);
   };
-  if (absent(/(?:dimensiones|medidas|longitud|anchura|ancho|alto)\s+(?:de\s+)?(?:la\s+)?(?:cesta|plataforma)\b/iu)) {
+  if (family && absent(/(?:dimensiones|medidas|longitud|anchura|ancho|alto)\s+(?:de\s+)?(?:la\s+)?(?:cesta|plataforma)\b/iu)) {
     const basket = claim(basketPattern, (match) => {
       const capacity = new RegExp(String.raw`\bcapacidad(?: máxima)? de\s+(${number})\s*kg\b`, "iu").exec(match[0]);
       if (capacity && identity.loadCapacity !== undefined &&
@@ -123,6 +135,58 @@ export const recoverSourcePlatformGeometry = (
       consistentClaim(text, confirmedExtensionPattern, (match) => metric(match[1], match[2])) === extension;
     if (explicitlyExtended && extension !== null && platformLength !== null && extension >= 0.1 && extension <= Math.min(platformLength, 5)) {
       additions["Extensión de plataforma"] = declaredMetres(extension);
+    }
+  }
+  if (truck) {
+    if (absent(/(?:rotaci[oó]n|giro).*(?:torreta|torre)|torreta giratoria/iu)) {
+      const rotation = claim(turretPattern, (match) => {
+        const angle = Number(match[2]);
+        const second = match[3] === undefined ? null : Number(match[3]);
+        if (!Number.isInteger(angle) || angle < 60 || angle > 720 ||
+          second !== null && (second !== angle || match[1])) return null;
+        return second === null ? `${match[1] ? "±" : ""}${angle}°` : `${angle}° + ${second}°`;
+      });
+      if (rotation !== null) additions["Rotación de torreta"] = rotation;
+    }
+    if (absent(/(?:n[uú]mero|cantidad).*(?:estabilizador|apoyo)|(?:estabilizadores|apoyos).*\b(?:n[uú]mero|cantidad)\b/iu) &&
+      ![original.specs, specs].some((values) => Object.entries(values ?? {}).some(([key, value]) =>
+        /estabilizadores/iu.test(key) && value !== true))) {
+      const count = claim(stabilizerPattern, (match) => {
+        const value = Number(match[1]);
+        return Number.isInteger(value) && value >= 2 && value <= 8 ? value : null;
+      });
+      if (count !== null) additions["Número de estabilizadores hidráulicos"] = String(count);
+    }
+    if (absent(/(?:rotaci[oó]n|giro).*(?:cesta|plataforma)/iu)) {
+      const rotation = claim(basketRotationPattern, (match) => {
+        const angle = Number(match[1]);
+        const prefix = (match.input ?? "").slice(0, match.index ?? 0).split(/(?<!\d)[.!?;\n]|[.!?;\n](?!\d)/u).at(-1) ?? "";
+        const basketSubject = /\bcesta\b[^.!?;\n]*\b(?:cuenta con|dispone de|incorpora|tiene)\b/iu.test(prefix) &&
+          !/\b(?:torreta|torre|brazo)\b/iu.test(prefix);
+        return angle >= 30 && angle <= 180 && (match[2] === undefined || Number(match[2]) === angle) &&
+          (/\brotaci[oó]n (?:hidr[aá]ulica )?de (?:la )?cesta\b/iu.test(match[0]) || basketSubject) ? angle : null;
+      });
+      if (rotation !== null) additions["Rotación de cesta"] = `${rotation}° a cada lado`;
+    }
+    if (absent(/altura.*(?:cesta|plataforma)|(?:cesta|plataforma).*altura/iu)) {
+      const height = claim(basketHeightPattern, (match) => metric(match[1], match[2]));
+      const work = claim(workHeightPattern, (match) => metric(match[1], match[2]));
+      const declaredWork = editorialMetricOf(specs, ["Altura de trabajo", "Altura de trabajo (m)", "Altura de elevación (m)"]);
+      if (height !== null && work !== null && declaredWork !== null && Math.abs(declaredWork - work) <= 0.15 &&
+        height >= 1 && work - height >= 1 && work - height <= 3) additions["Altura de plataforma"] = declaredMetres(height);
+    }
+    if (absent(/(?:masa|peso).*(?:cam[ií][oó]n|veh[ií]culo|soporte|autorizad[oa])|\b(?:MMA|PMA|Peso)\b/iu)) {
+      const mass = claim(truckMassPattern, (match) => editorialQuantity(`${match[1]} kg`, "kg"));
+      const modelToken = fold(identity.model).replace(/[^a-z0-9]/gu, "");
+      const modelEnd = new RegExp(`(?:^|[^a-z0-9])${[...modelToken].join("[^a-z0-9]{0,3}")}(?![a-z0-9])`, "u").exec(fold(original.title ?? ""));
+      const titleQualifier = modelEnd ? fold(original.title ?? "").slice(modelEnd.index + modelEnd[0].length).trim() : null;
+      const chassis = /\bsobre camion\s+([a-z]+)\s+de\s+\d/u.exec(fold(original.shortDescription ?? ""))?.[1];
+      const corroboratedChassis = (qualifier: string): boolean => /^[a-z0-9]+(?:[ -][a-z0-9]+)*$/u.test(qualifier) &&
+        new RegExp(`\\b(?:camion|vehiculo)\\s+${qualifier}\\b`, "u").test(fold(text));
+      if (mass !== null && mass >= 2000 && mass <= 40000 && titleQualifier !== null &&
+        (!titleQualifier || corroboratedChassis(titleQualifier)) && (!chassis || corroboratedChassis(chassis))) {
+        additions["Masa máxima autorizada del vehículo"] = `${formatEditorialQuantity(mass)} kg`;
+      }
     }
   }
   if (!Object.keys(additions).length) return specs;

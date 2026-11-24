@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { prepareSourceProduct } from "../../prepare-product.js";
+import { normalizeEditorialTitle } from "../core/editorial-normalization.js";
 import { resolvePreparedEditorialTitle } from "./prepared-editorial-title.js";
 import { resolveDocumentedFamilyTitle } from "./editorial-documented-title.js";
 import { normalizeVerifiedEditorialCapacity } from "../measurements/coherence/editorial-capacity-coherence.js";
@@ -137,4 +138,9 @@ test("la corrección de capacidad se comparte por evidencia, no por referencia o
       title: document.title, description_general: document.description_general
     });
   }
+});
+
+test("normaliza la errata de plataforma cuando precede al número de ejes", () => {
+  assert.equal(normalizeEditorialTitle("Platafora 4 ejes MARCA MODELO10", "MODELO10"), "Plataforma 4 ejes MARCA MODELO10");
+  assert.equal(normalizeEditorialTitle("Platafora MODELO10", "MODELO10"), "Platafora MODELO10");
 });

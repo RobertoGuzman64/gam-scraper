@@ -46,3 +46,22 @@ export const resolveGomarizEditorialDomainSource = (record: ProductRecord): Edit
     motor: record.specs?.Motor
   };
 };
+
+export const resolveGomarizLiteralTitleSource = (record: ProductRecord): string | null => {
+  if (record.providerId !== "gomariz" || record.categoryKey !== "venta" || record.condition !== "Segunda mano" ||
+    !record.reference?.trim() || !record.title?.trim()) return null;
+  const url = verifiedEditorialUrl(record.url, ["www.gomarizrent.com", "gomarizrent.com"]);
+  if (!url) return null;
+  const path = url.pathname.split("/").filter(Boolean);
+  if (!(path[0] === "producto" && path.length === 2 || path[0] === "venta" && path.length === 4 ||
+    path[0] !== "venta" && path.length === 3)) return null;
+  const literal = (value: string): string => value.normalize("NFD").replace(/\p{M}/gu, "")
+    .toLocaleLowerCase("es").replace(/[^a-z0-9]/gu, "");
+  const slug = path.at(-1) ?? "";
+  const title = literal(record.title);
+  if (title.length < 6 || literal(slug) !== title && literal(slug.replace(/-\d+$/u, "")) !== title) return null;
+  const route = path.slice(path[0] === "venta" ? 1 : 0, -1).join("/");
+  const familyClues = sourceFamilies[route] ?? route;
+  if (route !== "producto" && !editorialFamilyOf(familyClues)) return null;
+  return familyClues;
+};

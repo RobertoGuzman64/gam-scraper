@@ -1,6 +1,6 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { resolveEditorialFacts } from "../core/editorial-facts.js";
-import { resolveDocumentedEditorialTitle, resolveDocumentedFamilyTitle } from "./editorial-documented-title.js";
+import { resolveCorroboratedTitleBrand, resolveDocumentedEditorialTitle, resolveDocumentedFamilyTitle } from "./editorial-documented-title.js";
 import { editorialFamilyIsMasculine, editorialFamilyName } from "../core/editorial-families.js";
 import { formatEditorialQuantity, hasEditorialMillimetreUnit } from "../measurements/editorial-measurements.js";
 import { sameEditorialUnit, verifiedEditorialIdentity } from "../core/editorial-source-contract.js";
@@ -8,6 +8,8 @@ import { sameEditorialUnit, verifiedEditorialIdentity } from "../core/editorial-
 export const resolvePreparedEditorialTitle = (record: ProductRecord, sourceUnitRecord: ProductRecord): string | null => {
   const documented = resolveDocumentedEditorialTitle(sourceUnitRecord);
   if (documented !== null) return documented;
+  const brand = resolveCorroboratedTitleBrand(sourceUnitRecord, record);
+  if (brand !== null) return brand;
   if (sourceUnitRecord.providerId === "gam" && sourceUnitRecord.shortDescription === null &&
     sourceUnitRecord.longDescription === null &&
     verifiedEditorialIdentity(sourceUnitRecord) && sameEditorialUnit(record, sourceUnitRecord) &&

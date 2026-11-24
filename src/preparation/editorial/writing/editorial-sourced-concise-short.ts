@@ -1,3 +1,9 @@
+import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
+import { resolveEditorialSource } from "../core/editorial-source.js";
+import { normalizeEditorialSummary } from "../core/editorial-normalization.js";
+import { containsEditorialBrandModel } from "../identity/editorial-identity-match.js";
+import { containsEditorialSourceSlugModel } from "../source/editorial-source-url.js";
+import { editorialMetricOf, editorialQuantityOf, formatEditorialQuantity } from "../measurements/editorial-measurements.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { sameEditorialUnit } from "../core/editorial-source-contract.js";
 
@@ -46,4 +52,29 @@ export const resolveSourcedConciseShort = (
   const retainedTerms = normalize(retained);
   if ([...remaining.matchAll(attributes)].some((match) => !retainedTerms.includes(normalize(match[0])))) return null;
   return first;
+};
+
+export const resolveSourcedScrubberShort = (source: ProductRecord, prepared: ImportCandidate, current: string | null): string | null => {
+  const original = source.shortDescription?.trim();
+  const model = source.model?.trim();
+  const title = source.title?.trim();
+  if (!original || !model || !title || source.providerId !== prepared.providerId || source.reference !== prepared.reference ||
+    source.url !== prepared.sourceUrl || source.condition !== "Nuevo" || source.specs?.Modelo !== model ||
+    current !== normalizeEditorialSummary(original, model)) return null;
+  const identity = /^➨\s*([\p{L}][\p{L}\d-]*)\s+([\p{L}\d.-]+)\s+Nueva\s+➨\s*Venta\s+(?:de\s+)?fregadora\s+(?:de\s+)?conductor\s+sentado$/iu.exec(original);
+  const brand = identity?.[1];
+  if (!brand || identity?.[2] !== model || source.brand && source.brand !== brand ||
+    normalize(title) !== normalize(`Fregadora ${brand} ${model}`) || normalize(prepared.title ?? "") !== normalize(title) ||
+    !resolveEditorialSource({ ...source, brand })) return null;
+  const slug = new URL(source.url).pathname.split("/").filter(Boolean).at(-1) ?? "";
+  const general = source.longDescription ?? "";
+  if (!/\bfregadora\b/iu.test(slug) || !/\b(?:conductor|operario)-sentado\b/iu.test(slug) ||
+    !containsEditorialSourceSlugModel(slug, model, undefined) || !normalize(slug).endsWith(normalize(`${brand} ${model}`)) ||
+    !containsEditorialBrandModel(general, brand, model) || !/\b(?:operario|conductor)\s+(?:a bordo|sentado)\b/iu.test(general) ||
+    /\b(?:opcional|sin conductor|de pie|acompa[ñn]ante)\b/iu.test(general)) return null;
+  const length = editorialMetricOf(source.specs, ["Longitud"]);
+  const weight = editorialQuantityOf(source.specs, ["Peso"], "kg");
+  if (length === null || length < 0.5 || length > 5 || length !== editorialMetricOf(prepared.spec, ["Longitud"]) ||
+    weight === null || weight < 50 || weight > 5000 || weight !== editorialQuantityOf(prepared.spec, ["Peso"], "kg")) return null;
+  return `Fregadora ${brand} ${model} nueva, de conductor sentado, con longitud declarada de ${formatEditorialQuantity(length)} m y peso de ${formatEditorialQuantity(weight)} kg.`;
 };

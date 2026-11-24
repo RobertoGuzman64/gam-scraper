@@ -6,6 +6,60 @@
       "model": "SLA15",
       "family": "elevador-materiales",
       "manufacturerSource": "https://www.genielift.com/es/aerial-lift-products/portable---manual-lifts/sla-15"
+    },
+    {
+      "brand": "HELI",
+      "model": "CPCD25",
+      "family": "carretilla-elevadora",
+      "manufacturerSource": "https://www.helichina.com/contact/bidding/202107/t20210721_5368580.html"
+    },
+    {
+      "brand": "HELI",
+      "model": "CPD25",
+      "family": "carretilla-elevadora",
+      "manufacturerSource": "https://www.helichina.com/contact/bidding/202107/t20210721_5368580.html"
+    },
+    {
+      "brand": "Baoli",
+      "model": "KB25",
+      "family": "carretilla-elevadora",
+      "manufacturerSource": "https://www.uprent.it/public/file/carrello-elevatore-diesel2-10545.pdf"
+    },
+    {
+      "brand": "Baoli",
+      "model": "KB30",
+      "family": "carretilla-elevadora",
+      "manufacturerSource": "https://www.uprent.it/public/file/carrello-elevatore-diesel2-10545.pdf"
+    },
+    {
+      "brand": "Toyota",
+      "model": "02-8FDF25",
+      "family": "carretilla-elevadora",
+      "manufacturerSource": "https://toyota-forklifts.eu/globalassets/manual-do-operador-tonero.pdf/"
+    },
+    {
+      "brand": "Manitou",
+      "model": "ME316-48V",
+      "family": "carretilla-elevadora",
+      "manufacturerSource": "https://www.malcop.com/wp-content/uploads/2015/09/Carretilla-elevadora-electrica-1600-kg.-de-carga-triciclo.pdf"
+    },
+    {
+      "brand": "Skyjack",
+      "model": "SJ16",
+      "family": "plataforma-mastil",
+      "manufacturerSource": "https://www.skyjack.com/en-au/product/sj16"
+    },
+    {
+      "brand": "Snorkel",
+      "model": "A46JE",
+      "family": "plataforma-articulada",
+      "manufacturerSource": "https://snorkellifts.com/snorkel-opens-assembly-line-for-snorkel-a46je-articulated-boom-lifts-in-china/"
+    },
+    {
+      "brand": "Caterpillar",
+      "model": "DP20KMC",
+      "family": "carretilla-elevadora",
+      "manufacturerSource": "https://www.ebooklibonline.com/onlinepages/PREVIEW-SM-CATERPILLAR%20CAT%20DP15K.pdf"
     }
   ]
 }
