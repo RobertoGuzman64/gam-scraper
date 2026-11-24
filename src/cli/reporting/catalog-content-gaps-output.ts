@@ -4,6 +4,18 @@ import type { ReuseReport } from "../../catalog/diagnostics/editorial-reuse.js";
 import { analyzeDescriptionCoverage } from "../../catalog/diagnostics/description-coverage.js";
 import type { DescriptionPriorities } from "../../catalog/diagnostics/description-priorities.js";
 
+export const printDocumentaryNarrative = (editorial: EditorialAnalysis, label: string, limit: number, detailed: boolean): void => {
+  const cases = editorial.cases.flatMap((item) => {
+    const issues = item.issues.filter((issue) => issue.code === "corta_justificacion_documental" || issue.code === "general_justificacion_documental");
+    return issues.length ? [{ item, issues }] : [];
+  });
+  const fields = cases.reduce((total, item) => total + item.issues.length, 0);
+  printReportLine(`NARRATIVA DOCUMENTAL | ${label} | ${cases.length} fichas · ${fields} campos con señales de justificación de prestaciones; revisión editorial, no filtro de salida`);
+  if (detailed) for (const { item, issues } of cases.slice(0, limit)) for (const issue of issues) {
+    printReportLine(`  ${item.providerId} | ${item.reference ?? item.identity} | ${issue.field} | ${issue.preview} | ${item.url}`);
+  }
+};
+
 export const printEditorial = (editorial: EditorialAnalysis, limit: number, detailed = false): void => {
   printReportLine("CALIDAD EDITORIAL | umbrales orientativos, sin intervenir fichas");
   if (detailed) printReportLine(`CRITERIOS (palabras) | título >= ${editorial.criteria.minTitleWords} | corta ${editorial.criteria.minShortWords}-${editorial.criteria.maxShortWords} | general ${editorial.criteria.minLongWords}-${editorial.criteria.maxLongWords}`);
@@ -12,6 +24,7 @@ export const printEditorial = (editorial: EditorialAnalysis, limit: number, deta
     const long = provider.lengths.description_general;
     printReportLine(`${provider.providerId} | corta: ${short.present}/${provider.total}, mediana ${short.words.median ?? "-"} palabras, P90 ${short.words.p90 ?? "-"} | general: ${long.present}/${provider.total}, mediana ${long.words.median ?? "-"} palabras, P90 ${long.words.p90 ?? "-"}`);
   }
+  printDocumentaryNarrative(editorial, "población evaluada", limit, detailed);
   printReportLine(`SEÑALES EDITORIALES | ${editorial.patterns.length} patrones · ${editorial.cases.length} fichas observadas; orientativas, no defectos confirmados`);
   if (detailed) for (const pattern of editorial.patterns.slice(0, limit)) {
     printReportLine(`${pattern.providerId} | ${pattern.category} | ${pattern.code} | ${pattern.affected}/${pattern.total} | ejemplos ${pattern.examples.join(", ")}`);

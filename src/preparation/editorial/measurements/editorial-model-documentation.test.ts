@@ -43,6 +43,16 @@ test("los documentos técnicos se obtienen del conocimiento tipado y no de narra
   }
 });
 
+test("el texto comercial conserva la altura acreditada sin explicar documentación ni consenso del modelo", () => {
+  const source = documentedMercaeleva();
+  const result = prepareSourceProduct(source);
+  assert.equal(result.status, "ready");
+  assert.match(result.product.description_general ?? "", /altura de trabajo de 14 m/u);
+  assert.match(result.product.description_general ?? "", /verificar la capacidad de cesta/u);
+  assert.doesNotMatch(result.product.description_general ?? "",
+    /documentación técnica (?:de referencia )?del modelo|otras fichas del catálogo|no acreditan la configuración ni las prestaciones de esta unidad/iu);
+});
+
 test("la referencia técnica se reutiliza entre proveedores sin atribuir sus capacidades a la unidad", () => {
   const mercaeleva = documentedMercaeleva();
   const gomariz = documentedGomariz();

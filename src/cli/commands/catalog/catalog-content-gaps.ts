@@ -2,7 +2,7 @@ import { printCommandHeader, printCommandSection, printReportLine } from "../../
 import { basename, dirname, resolve } from "node:path";
 import type { GapInput } from "../../../catalog/diagnostics/content-gaps-types.js";
 import { readContentGapOptions, type CommandOptions } from "./catalog-content-gaps-options.js";
-import { printEditorial, printDescriptionCoverage, printDescriptionPriorities, printEditorialReuse } from "../../reporting/catalog-content-gaps-output.js";
+import { printEditorial, printDescriptionCoverage, printDescriptionPriorities, printEditorialReuse, printDocumentaryNarrative } from "../../reporting/catalog-content-gaps-output.js";
 import { publicationOriginalSources } from "../../../infrastructure/filesystem/catalog/accredited-publication-original.js";
 import { originalSources } from "../../../infrastructure/filesystem/catalog/original-catalog-sources.js";
 import { createHash } from "node:crypto";
@@ -169,6 +169,8 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
     printCommandSection("DESCRIPCIONES · P0");
     printDescriptionCoverage(coverage, options.detailed);
     printDescriptionPriorities(priorities, options.limit, options.detailed);
+    printDocumentaryNarrative(editorial, "publicaciones finales", options.limit, options.detailed);
+    if (!options.detailed) printDocumentaryNarrative(editorialPrepared, "preparación actual", options.limit, false);
     if (options.detailed) printReportLine("CALIDAD EDITORIAL | vista derivada tras preparación; señales orientativas independientes de P0");
     if (options.detailed) printEditorial(editorialPrepared, options.limit, true);
     printEditorialReuse(editorialReuse, options.limit, options.detailed);

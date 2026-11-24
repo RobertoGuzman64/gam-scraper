@@ -4,6 +4,10 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ProductTechnicalProvenance, TechnicalSpecEvidence } from "../../../contracts/technical-provenance.js";
 import { technicalDocumentClaimSha256 } from "../../../contracts/technical-provenance.js";
 import { originalRecordFingerprint } from "../../../catalog/identity-fingerprint.js";
+import { prepareSourceProduct } from "../../prepare-product.js";
+import { resolvePreparedEditorial } from "../core/prepared-editorial.js";
+import { captureSourceEditorialEvidence } from "./source-editorial-evidence.js";
+import { matchesTechnicalDocumentVerification } from "../../../contracts/technical-provenance.js";
 import { resolveSourcedTechnicalContext } from "../measurements/sourced/editorial-sourced-technical-context.js";
 import { resolveSourcedConciseShort } from "../writing/editorial-sourced-concise-short.js";
 import { resolveSourcedLongEvidence, resolveReviewedModelGeneral } from "./editorial-sourced-long-evidence.js";
@@ -160,6 +164,50 @@ const reviewedFixture = (source: ProductRecord, field: string, value: string): T
 
 const reviewedProvenance = (source: ProductRecord, entries: readonly TechnicalSpecEvidence[]): ProductTechnicalProvenance => ({
   originalRecordSha256: originalRecordFingerprint(source), entries
+});
+
+test("la acreditación documental de una prestación no altera la redacción cuando los hechos son idénticos", () => {
+  for (const source of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const field = "Extensión de plataforma";
+    const value = "0,9 m";
+    const prepared: ProductRecord = { ...source, specs: { ...source.specs, [field]: value } };
+    const claim = reviewedFixture(source, field, value);
+    assert.ok(claim.document && claim.verification);
+    assert.ok(matchesTechnicalDocumentVerification(claim.document, field, value, claim.verification));
+    const provenance = reviewedProvenance(source, [claim]);
+    const before = JSON.stringify({ source, prepared, provenance });
+    const evidence = captureSourceEditorialEvidence(prepared);
+    const plain = resolvePreparedEditorial(prepared, source, evidence, source);
+    const accredited = resolvePreparedEditorial(prepared, source, evidence, source, provenance);
+    assert.match(plain.preparedLong ?? "", /altura de trabajo de 10 m/u);
+    assert.match(plain.preparedLong ?? "", /verificar la capacidad de cesta/u);
+    assert.equal(prepared.specs?.[field], value);
+    assert.equal(JSON.stringify({ source, prepared, provenance }), before);
+    assert.deepEqual(accredited, plain, source.providerId);
+  }
+});
+
+test("la recuperación acreditada conserva specs y procedencia sin narrar su acreditación en la preparación final", () => {
+  const source: ProductRecord = {
+    ...controlledGomarizPlatform(), brand: "SNORKEL", model: "S3219E", year: "2017",
+    url: "https://www.gomarizrent.com/producto/snorkel-s3219e-control/",
+    title: "Plataforma de tijera eléctrica SNORKEL S3219E",
+    longDescription: "Plataforma de tijera eléctrica SNORKEL S3219E para trabajos en altura.",
+    specs: { Marca: "SNORKEL", Modelo: "S3219E", "Altura de trabajo": "7,79 m", Capacidad: "250 kg",
+      Motor: "Eléctrico", Longitud: "1,78 m", Anchura: "0,81 m", "Año": "2017" }
+  };
+  const before = JSON.stringify(source);
+  const prepared = prepareSourceProduct(source);
+  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.product.spec["Altura de plataforma"], "5,79 m");
+  const claim = prepared.technicalProvenance?.entries.find((entry) => entry.field === "Altura de plataforma");
+  assert.equal(claim?.scope, "model-document");
+  assert.ok(claim?.document && claim.verification);
+  assert.ok(matchesTechnicalDocumentVerification(claim.document, claim.field, claim.value, claim.verification));
+  assert.equal(prepared.technicalProvenance?.originalRecordSha256, originalRecordFingerprint(source));
+  assert.equal(JSON.stringify(source), before);
+  assert.match(prepared.product.description_general ?? "", /altura de trabajo de 7,79 m/u);
+  assert.doesNotMatch(prepared.product.description_general ?? "", /documentación técnica (?:de referencia )?del modelo|otras fichas del catálogo|prestaciones de referencia del modelo/iu);
 });
 
 const reviewedGeneralFixture = "La plataforma de tijera eléctrica MARCA MODELO10 declara una altura de trabajo de 10 m. La altura de trabajo no equivale a la altura de plataforma.";

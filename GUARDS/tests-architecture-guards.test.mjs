@@ -34,6 +34,47 @@ const fixture = (t) => {
 
 const rules = (findings) => new Set(findings.map((entry) => entry.rule));
 
+test("la frontera documental detecta la procedencia aunque cambien los nombres y la redacción", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/preparation/editorial/core/editorial-composition.ts";
+  const testPath = "src/preparation/editorial/core/tests/contract.test.ts";
+  write("src/contracts/technical-provenance.ts", "export type ProductTechnicalProvenance = { entries: readonly string[] };\n");
+  write(path, "import type { ProductTechnicalProvenance as Evidence } from '../../../contracts/technical-provenance.js'; export const compose = (data: Evidence) => `Valores contrastados: ${data.entries.join(', ')}`;\n");
+  write(testPath, "import { compose } from '../editorial-composition.js'; compose({ entries: [] });\n");
+  const result = inspectEditorialArchitecture(root).findings;
+  const violation = result.find((item) => item.rule === "E-DOCUMENTARY-PROVENANCE-BOUNDARY");
+  assert.ok(violation);
+  assert.equal(violation.path, path);
+  assert.ok(violation.detail.includes(testPath));
+});
+
+test("detecta el acceso a documentos y consensos y su canal de redacción aunque se usen aliases", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/preparation/editorial/core/editorial-composition.ts";
+  write(path, "export const compose = (index: { models: string[]; technicalReferences: string[] }) => { const { models: facts } = index; const docs = index['technicalReferences']; return { modelReference: facts.concat(docs).join(', ') }; };\n");
+  const violations = inspectEditorialArchitecture(root).findings.filter((item) => item.path === path);
+  assert.equal(violations.filter((item) => item.rule === "E-DOCUMENTARY-MODEL-EVIDENCE").length, 2);
+  assert.equal(violations.filter((item) => item.rule === "E-DOCUMENTARY-NARRATIVE-CHANNEL").length, 1);
+  assert.ok(violations.every((item) => item.detail.includes("función: compose")));
+});
+
+test("diagnostica tests que exigen una justificación documental, no los que impiden su emisión", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/preparation/editorial/core/tests/contract.test.ts";
+  write(path, "import assert from 'node:assert/strict'; import test from 'node:test'; test('expectativa indebida', () => { assert.match('texto', /prestaciones de referencia del modelo/u); }); test('prestación legítima', () => { assert.match('10 m', /10 m/u); assert.doesNotMatch('texto', /prestaciones de referencia del modelo/u); });\n");
+  const violations = inspectEditorialArchitecture(root).findings.filter((item) => item.rule === "E-DOCUMENTARY-TEST-EXPECTATION");
+  assert.equal(violations.length, 1);
+  assert.equal(violations[0].path, path);
+  assert.ok(violations[0].detail.includes("expectativa indebida"));
+});
+
+test("permite redactar prestaciones acreditadas, identidad y advertencias comerciales sin consumir su expediente", (t) => {
+  const { root, write } = fixture(t);
+  write("src/preparation/editorial/core/editorial-composition.ts",
+    "export const compose = (facts: { height: number }, knowledge: { modelRules: Map<string, string> }) => ({ general: `Altura de trabajo de ${facts.height} m. Consultar la documentación de seguridad del fabricante antes del uso.`, family: knowledge.modelRules.get('modelo') });\n");
+  assert.deepEqual(inspectEditorialArchitecture(root).findings, []);
+});
+
 test("npm test ejecuta los guards arquitectónicos y sus autopruebas antes del build", () => {
   const { scripts } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
   const steps = scripts.test.split(" && ");

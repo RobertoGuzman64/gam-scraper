@@ -115,6 +115,75 @@ const referenceExpression = (node, aliases) => hasReference(node) || ts.isIdenti
 const memberTransfer = (node, name) => matchesMember(node, name) &&
   (ts.isIdentifier(node.expression) || ts.isPropertyAccessExpression(node.expression));
 
+const documentaryEvidenceFields = new Set(["models", "technicalReferences", "catalogReferences", "modelReference"]);
+const technicalEvidenceModule = /(?:^src\/contracts\/technical-provenance\.ts$|^src\/preparation\/provenance\/)/u;
+const enclosingFunction = (node) => {
+  for (let parent = node; parent; parent = parent.parent) {
+    if (!ts.isFunctionLike(parent)) continue;
+    if (parent.name) return nameOf(parent.name);
+    if (parent.parent && ts.isVariableDeclaration(parent.parent)) return nameOf(parent.parent.name);
+  }
+  return null;
+};
+const boundaryMember = (node) => {
+  if (ts.isPropertyAccessExpression(node)) return node.name.text;
+  if (ts.isElementAccessExpression(node) && ts.isStringLiteralLike(node.argumentExpression)) return node.argumentExpression.text;
+  if (ts.isBindingElement(node) && ts.isObjectBindingPattern(node.parent)) return nameOf(node.propertyName ?? node.name);
+  if (ts.isPropertyAssignment(node) || ts.isShorthandPropertyAssignment(node)) return nameOf(node.name);
+  return null;
+};
+const documentaryBoundary = (project, path, source, push) => {
+  const dependencies = project.dependencies.get(path) ?? [];
+  const consumers = [...project.dependencies].filter(([, imports]) => imports.includes(path)).map(([consumer]) => consumer);
+  const downstream = consumers.filter((consumer) => !isTest(consumer));
+  const tests = consumers.filter(isTest);
+  const context = (node) => {
+    const owner = enclosingFunction(node);
+    return `${owner ? ` | función: ${owner}` : ""} | consumidores directos: ${downstream.join(", ") || "ninguno"}` +
+      ` | tests consumidores directos a revisar: ${tests.join(", ") || "ninguno"}`;
+  };
+  const raw = dependencies.filter((dependency) => technicalEvidenceModule.test(dependency));
+  if (raw.length > 0) {
+    const imports = [];
+    visitNodes(source, (node) => {
+      if (ts.isImportDeclaration(node) && ts.isStringLiteralLike(node.moduleSpecifier) &&
+        /(?:\/technical-provenance(?:\.js)?$|\/provenance\/)/u.test(node.moduleSpecifier.text)) imports.push(node);
+    });
+    const node = imports[0] ?? source;
+    push("E-DOCUMENTARY-PROVENANCE-BOUNDARY", path, node,
+      `La composición no recibe el expediente de procedencia técnica (${raw.join(", ")}); conservarlo en recuperación y acreditación, entregar hechos aptos para redacción${context(node)}`);
+  }
+  visitNodes(source, (node) => {
+    const field = boundaryMember(node);
+    if (!documentaryEvidenceFields.has(field)) return;
+    const rule = field === "modelReference" ? "E-DOCUMENTARY-NARRATIVE-CHANNEL" : "E-DOCUMENTARY-MODEL-EVIDENCE";
+    const detail = field === "modelReference" ?
+      "Retirar el canal narrativo de referencias de modelo; no retirar el conocimiento técnico" :
+      `La composición accede a evidencia cruda de modelo (${field}); trasladar su consumo a la acreditación de hechos, no a la redacción`;
+    push(rule, path, node, `${detail}${context(node)}`);
+  });
+};
+
+const documentaryTestExpectation = (source, path, push) => {
+  const knownJustification = /documentaci[oó]n t[eé]cnica (?:de referencia )?del modelo|otras fichas del cat[aá]logo|prestaciones de referencia del modelo|no acreditan la configuraci[oó]n ni las prestaciones de esta unidad|las magnitudes corresponden al modelo o versi[oó]n documentada/iu;
+  visitNodes(source, (node) => {
+    if (!ts.isCallExpression(node) || !ts.isPropertyAccessExpression(node.expression) ||
+      node.expression.expression.getText(source) !== "assert" || node.expression.name.text !== "match") return;
+    const expected = node.arguments[1];
+    if (!expected || !ts.isRegularExpressionLiteral(expected) || !knownJustification.test(expected.text)) return;
+    let title = null;
+    for (let parent = node.parent; parent; parent = parent.parent) {
+      if (ts.isCallExpression(parent) && ts.isIdentifier(parent.expression) && parent.expression.text === "test" &&
+        parent.arguments[0] && ts.isStringLiteralLike(parent.arguments[0])) {
+        title = parent.arguments[0].text;
+        break;
+      }
+    }
+    push("E-DOCUMENTARY-TEST-EXPECTATION", path, node,
+      `La prueba exige una fórmula de justificación documental; revisar el contrato de redacción, conservar las comprobaciones de valor y procedencia${title ? ` | test: ${title}` : ""}`);
+  });
+};
+
 export const inspectEditorialArchitecture = (root) => {
   const project = makeProject(root);
   const active = reachable(project, [
@@ -137,8 +206,13 @@ export const inspectEditorialArchitecture = (root) => {
   }
 
   for (const [path, source] of project.files) {
-    if (isTest(path) || !path.startsWith("src/")) continue;
+    if (isTest(path)) {
+      if (sharedEditorial.test(path)) documentaryTestExpectation(source, path, push);
+      continue;
+    }
+    if (!path.startsWith("src/")) continue;
     const connected = active.has(path);
+    if (sharedEditorial.test(path)) documentaryBoundary(project, path, source, push);
     const narrative = providerModule.test(path) ? providerNarrator(source) : null;
     if (connected && providerModule.test(path) && !trustedSourceAdapter.test(path) &&
       (providerEditorial.test(path) || narrative)) {

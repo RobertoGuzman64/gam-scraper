@@ -50,6 +50,25 @@ test("mide palabras y caracteres de textos preparados, incluidos vacíos, y sepa
   assert.equal(result.providers[0]?.findings.general_ausente, 1);
 });
 
+test("localiza explicaciones de acreditación de specs sin confundirlas con prestaciones o cautelas comerciales", () => {
+  const legit = "Plataforma de tijera de 10 m de altura de trabajo, con una capacidad de cesta de 450 kg. Consultar el manual del fabricante y comprobar la capacidad con la extensión desplegada.";
+  const documented = "La documentación técnica del modelo MARCA MODELO10 recoge extensión de plataforma de 0,9 m. Son prestaciones de referencia del modelo; deben contrastarse con la configuración concreta de la unidad.";
+  const manufacturer = "La documentación técnica de referencia del modelo MARCA MODELO10 recoge altura de plataforma de 8 m. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.";
+  const consensus = "Como referencia, otras fichas del catálogo del modelo MARCA MODELO10 publican altura de plataforma de 8 m; estos datos no acreditan por sí solos la configuración de esta unidad.";
+  const entries = [entry("legitima", { short: legit, long: legit }), entry("documental", { long: `${legit} ${documented}` }),
+    entry("fabricante", { long: manufacturer }), entry("consenso", { short: consensus, long: `${legit} ${consensus}` })];
+  for (const result of [analyzeEditorialQuality(entries), analyzePublishedEditorialQuality(entries.map((item) => item.prepared.product))]) {
+    const detected = result.cases.flatMap((item) => item.issues.filter((issue) => issue.code.endsWith("_justificacion_documental"))
+      .map((issue) => ({ reference: item.reference, field: issue.field, preview: issue.preview })));
+    assert.deepEqual(detected.map(({ reference, field }) => [reference, field]), [
+      ["consenso", "description"], ["consenso", "description_general"],
+      ["documental", "description_general"], ["fabricante", "description_general"]]);
+    assert.ok(detected.every((item) => /^(?:La documentación técnica|Como referencia)/u.test(item.preview)));
+    assert.equal(result.providers[0]?.findings.general_justificacion_documental, 3);
+    assert.equal(result.providers[0]?.findings.corta_justificacion_documental, 1);
+  }
+});
+
 test("detecta equivalencia, general menor que corta y título reutilizado sin afirmar datos inventados", () => {
   const common = "Plataforma LGMG modelo";
   const result = analyzeEditorialQuality([

@@ -26,7 +26,8 @@ export type EditorialIssueCode =
   "titulo_ausente" | "titulo_muy_breve" | "corta_ausente" | "corta_muy_breve" | "corta_demasiado_larga" |
   "general_ausente" | "general_muy_breve" | "general_desproporcionada" | "general_no_supera_corta" |
   "corta_igual_titulo" | "descripciones_iguales" | "general_repetida_entre_modelos" |
-  "general_sin_modelo" | "general_telegrafica" | "general_repeticion_interna";
+  "general_sin_modelo" | "general_telegrafica" | "general_repeticion_interna" |
+  "corta_justificacion_documental" | "general_justificacion_documental";
 
 export type EditorialLengthStats = {
   readonly present: number;
@@ -138,6 +139,27 @@ const metricsOf = (entries: readonly Entry[]): EditorialMetrics => ({
 });
 const addIssue = (list: EditorialIssue[], code: EditorialIssueCode, field: EditorialField, value: Measured): void => {
   list.push({ code, field, words: value.words, characters: value.characters, preview: value.text.slice(0, 180) });
+};
+
+const documentaryNarrative = (value: Measured): string | null => {
+  const signals = [
+    /\b(?:la\s+)?documentaci[oó]n\s+t[eé]cnica\s+(?:de\s+referencia\s+)?del\s+modelo\s+[^.!?;]{1,140}?\b(?:recoge|documenta|acredita|indica|especifica)\b/iu,
+    /\b(?:como\s+referencia,?\s+)?otras\s+fichas\s+del\s+cat[aá]logo\s+del\s+modelo\b/iu,
+    /\bson\s+prestaciones\s+de\s+referencia\s+del\s+modelo;\s*deben\s+contrastarse\s+con\s+la\s+configuraci[oó]n\s+concreta\s+de\s+la\s+unidad\b/iu,
+    /\blas\s+magnitudes\s+corresponden\s+al\s+modelo\s+o\s+versi[oó]n\s+documentada\s+y\s+no\s+acreditan\s+la\s+configuraci[oó]n\b/iu
+  ];
+  const starts = signals.flatMap((signal) => {
+    const match = signal.exec(value.text);
+    return match ? [match.index] : [];
+  });
+  return starts.length ? value.text.slice(Math.min(...starts), Math.min(...starts) + 180) : null;
+};
+
+const addDocumentaryIssue = (issues: EditorialIssue[], field: "description" | "description_general", value: Measured): void => {
+  const preview = documentaryNarrative(value);
+  if (preview === null) return;
+  issues.push({ code: field === "description" ? "corta_justificacion_documental" : "general_justificacion_documental",
+    field, words: value.words, characters: value.characters, preview });
 };
 
 const modelComponentPresent = (text: string, component: string): boolean => {
@@ -254,6 +276,8 @@ const analyze = (source: readonly Entry[]): EditorialAnalysis => {
       if (isTelegraphic(long)) addIssue(issues, "general_telegrafica", "description_general", long);
       if (repeatsPassage(long)) addIssue(issues, "general_repeticion_interna", "description_general", long);
     }
+    addDocumentaryIssue(issues, "description", short);
+    addDocumentaryIssue(issues, "description_general", long);
     if (issues.length) cases.push({ identity: item.identity, providerId: item.providerId,
       categoryKey: item.categoryKey, reference: item.reference, url: item.url, issues });
     for (const issue of issues) {
@@ -288,7 +312,7 @@ const analyze = (source: readonly Entry[]): EditorialAnalysis => {
       characters: item.long.characters, preview: item.long.text.slice(0, 180) }));
   return {
     criteria: EDITORIAL_CRITERIA,
-    note: "Señales orientativas, no defectos confirmados. La ausencia del modelo es literal (puede haber variantes de escritura); los bloques repetidos y textos telegráficos requieren revisión editorial. No se rellena ni modifica ninguna ficha.",
+    note: "Señales orientativas, no defectos confirmados. La ausencia del modelo es literal (puede haber variantes de escritura); los bloques repetidos, textos telegráficos y señales de justificación documental requieren revisión editorial. Las señales documentales no constituyen una prohibición de las prestaciones técnicas ni de las advertencias legítimas. No se rellena ni modifica ninguna ficha.",
     lengths: metricsOf(entries), providers, patterns, cases, longestGeneral
   };
 };
