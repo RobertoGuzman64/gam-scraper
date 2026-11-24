@@ -32,7 +32,7 @@ const summarize = (
   const readyProducts = preparation.products.filter((item) => item.status === "ready").map((item) => item.product);
   const difference = context.activeFile ? differenceBetween(context.activeFile, "preparación sin acreditar",
     context.activeProducts, readyProducts) : null;
-  const specificationReconciliation = difference ? reconcileRemovedSpecifications(context.providerId, difference, context.activeProducts, readyProducts) : null;
+  const specificationReconciliation = difference ? reconcileRemovedSpecifications(context.providerId, difference, context.activeProducts, readyProducts, context.originalProducts) : null;
   return {
     providerId: context.providerId, status, sourceCount: context.sourceProducts,
     ready: preparation.totals.ready, review: preparation.totals.review,

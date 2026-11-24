@@ -3,6 +3,7 @@ import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.
 import type { PreparedProduct } from "../../preparation/contracts.js";
 import { fold } from "../../preparation/classification/category-utils.js";
 import { isLeafCategoryForCondition, resolveCategory } from "../../preparation/classification/category-mapping.js";
+import { validateCreateManyCandidate, validateImportCandidate } from "../legacy-export/import-validation.js";
 import { productAttributes } from "../../preparation/product/product-attributes.js";
 import { contradictsGamGlpCategory, documentedSourceCommercialSlug } from "./source-category-evidence.js";
 import { reconcileGamSourceForCommercialFallback, reconcileSourceForCommercialProjection } from "./gam-category-evidence.js";
@@ -80,5 +81,8 @@ export const projectCommercialCategory = (
     ...mapped.product, categorySellID: category.id, category: category.name,
     attributes: resolved.attributes
   };
-  return { ...mapped, product };
+  return { ...mapped, product, importIssues: {
+    excel: validateImportCandidate(product, catalog),
+    createMany: validateCreateManyCandidate(product, catalog)
+  } };
 };

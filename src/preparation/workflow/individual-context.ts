@@ -27,6 +27,7 @@ export type IndividualPreparationContext<T extends IndividualPreparationProvider
   readonly sourceFile: string;
   readonly catalogSha256: string;
   readonly sourceProducts: number;
+  readonly originalProducts: readonly ProductRecord[];
   readonly sourcePrefix: string;
   readonly sourceRecord: PreparationSource["record"];
   readonly fingerprints: PreparationFingerprints;
@@ -172,7 +173,7 @@ export const resolveIndividualPreparationContext = async <T extends IndividualPr
   const activeProducts = activeFile ? (await readAccreditedPublication(activeFile)).products : [];
   return {
     providerId, sourceFile, catalogSha256, sourceProducts: source.products.length, sourcePrefix: source.prefix,
-    sourceRecord: source.record,
+    sourceRecord: source.record, originalProducts: source.products,
     fingerprints, preparedDirectory, outputFile, preparationFile: existing?.file ?? null,
     preparation: existing?.preparation ?? null, activeFile, activeProducts
   };

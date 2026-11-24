@@ -17,10 +17,49 @@ const energyOf = (record: ProductRecord): "diesel" | "electrica" | null => {
   return motorEnergy && textEnergy && motorEnergy !== textEnergy ? null : motorEnergy ?? textEnergy;
 };
 
+const singleOperatorModels: ReadonlyMap<string, string> = new Map([
+  ["genie:gr-15", "227 kg"],
+  ["genie:grc-12", "227 kg"],
+  ["skyjack:sj16", "227 kg"],
+  ["jlg:1230es", "230 kg"]
+]);
+
+export const documentedManainLeafSlug = (record: ProductRecord, condition: ImportCandidate["condition"]): string | null => {
+  if (record.categoryKey !== "venta" || condition !== "Segunda_Mano" ||
+    fold(String(record.specs?.["Nueva o usada"] ?? "")) !== "usada") return null;
+  const family = manainSourceFamily(record);
+  if (!family || manainSourceDescriptionContradictsFamily(record, family)) return null;
+  const brand = fold(record.brand ?? "");
+  const model = fold(record.model ?? "");
+  if (!brand || !model || fold(String(record.specs?.Marca ?? "")) !== brand ||
+    fold(String(record.specs?.Modelo ?? "")) !== model) return null;
+  const motor = fold(String(record.specs?.Motor ?? ""));
+  if (family === "elevacion-mastil" && motor === "electrico" && energyOf(record) === "electrica" &&
+    typeof record.specs?.["Altura trabajo"] === "string" && record.specs["Altura trabajo"].trim()) {
+    const capacity = singleOperatorModels.get(`${brand}:${model}`);
+    if (capacity && fold(String(record.specs?.["Capacidad carga"] ?? "")) === capacity) {
+      return "plataformas-unipersonales-segunda-mano";
+    }
+  }
+  if (family === "manipulacion-apilador" && motor === "electrico" && energyOf(record) === "electrica" &&
+    (/^apilador electric[oa]\b/u.test(fold(record.shortDescription ?? "")) ||
+      brand === "atlet" && model === "160 sth sn 380" && fold(String(record.specs?.["Capacidad carga"] ?? "")) === "1600 kg")) {
+    return "apiladores-electricos-segunda-mano";
+  }
+  if (family === "movimiento-tierra-rodillo-compactador" && brand === "wacker" && model === "rd 28-120" &&
+    motor === "diesel" && energyOf(record) === "diesel" && fold(String(record.specs?.["Diametro del tambor"] ?? "")) === "720 mm" &&
+    fold(String(record.specs?.Peso ?? "")) === "2695 kg") {
+    return "rodillo-tandem-segunda-mano";
+  }
+  return null;
+};
+
 export const manainCategorySlug = (record: ProductRecord, condition: ImportCandidate["condition"]): string | null => {
   if (condition === null) return null;
   const family = manainSourceFamily(record);
   if (!family || manainSourceDescriptionContradictsFamily(record, family)) return null;
+  const documentedLeaf = documentedManainLeafSlug(record, condition);
+  if (documentedLeaf) return documentedLeaf;
   const used = condition === "Segunda_Mano";
   if (family === "elevacion-tijera" || family === "elevacion-brazo-articulado") {
     const energy = energyOf(record);

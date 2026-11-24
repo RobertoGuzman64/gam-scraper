@@ -4,6 +4,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import type { ImportCandidate } from "../commercial/legacy-export/contracts.js";
 import { readActiveCatalogIndex, withActiveCatalogLock, writeActiveCatalogIndex } from "../infrastructure/filesystem/catalog/active-selection.js";
+import { readVerifiedManainRecordSource } from "../infrastructure/filesystem/catalog/manain-record-source.js";
 import { readPortableOriginal } from "../infrastructure/filesystem/catalog/portable-original.js";
 import { readAccreditedPublication, resolveAccreditedPublication } from "../infrastructure/filesystem/catalog/accredited-publication.js";
 import { publicationApprovalSha, resolvePublicationDirectory } from "../infrastructure/filesystem/catalog/publication-identity.js";
@@ -125,8 +126,16 @@ const describe = async (root: string, providerId: string, sha: string): Promise<
   const old = current ? (await readAccreditedPublication(current)).products : [];
   const difference = differenceBetween(previous, sha, old, candidate.products);
   const approval: unknown = JSON.parse(await readFile(join(dirname(candidate.path), "accreditation.json"), "utf8"));
-  const originalProducts = providerId === "gomariz" && difference.removed.length > 0
-    ? (await readPortableOriginal(root, providerId)).products : undefined;
+  const needsOriginal = difference.removedSpecifications.some((key) => key.endsWith(":Peso"));
+  const originalDirectory = join(root, "catalogs", "providers", providerId, "original");
+  const originalAvailable = needsOriginal && await lstat(originalDirectory).then(() => true, (error: unknown) => {
+    if (missing(error)) return false;
+    throw error;
+  });
+  const originalProducts = providerId === "manain"
+    ? (await readVerifiedManainRecordSource(root)).originalProducts
+    : originalAvailable || (providerId === "gomariz" && difference.removed.length > 0)
+      ? (await readPortableOriginal(root, providerId)).products : undefined;
   const acceptance = evaluateIndividualPublicationDifference(providerId, difference, old, candidate.products, approval, originalProducts);
   return { difference, acceptance };
 };

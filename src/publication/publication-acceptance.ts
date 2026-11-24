@@ -131,7 +131,7 @@ export const evaluateIndividualPublicationDifference = (
   const excluded = difference.removed.filter((identity) => !exclusions.has(identity));
   const removed = providerId === "gomariz"
     ? reconcileHistoricalGomarizAbsences(excluded, published, originalProducts) : excluded;
-  const remainingSpecifications = reconcileRemovedSpecifications(providerId, difference, previousProducts, nextProducts).unresolved;
+  const remainingSpecifications = reconcileRemovedSpecifications(providerId, difference, previousProducts, nextProducts, originalProducts).unresolved;
   const removedSpecifications = remainingSpecifications.filter((item) => {
     if (!isApprovedGamIndividual(providerId, approval)) return true;
     const separator = item.lastIndexOf(":");

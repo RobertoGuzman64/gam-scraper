@@ -280,3 +280,18 @@ test("Manain: las etiquetas del manipulador resuelven magnitudes obligatorias si
     "invalid");
   assert.equal(resolveAttribute(usedScissor, capacity).status, "not_observed");
 });
+
+test("Manain: la familia de apiladores eléctricos se clasifica sin depender del modelo ni de la capacidad", () => {
+  const source: ProductRecord = {
+    ...machine("https://manain.com/producto/venta-manipulacion-apilador-equiptest-s1/", {
+      "Nueva o usada": "usada", Marca: "EQUIPTEST", Modelo: "S1", Motor: "Eléctrico", "Capacidad carga": "1200 kg"
+    }, "Apilador eléctrico"),
+    brand: "EQUIPTEST", model: "S1", title: "S1", condition: "Segunda mano"
+  };
+  const prepared = prepareProduct(source, catalog);
+  assert.equal(category(prepared.product.categorySellID), "apiladores-electricos-segunda-mano");
+  assert.ok(prepared.importIssues?.createMany.includes("Atributo obligatorio ausente: Altura de elevación"));
+  assert.equal(category(prepareProduct({ ...source, shortDescription: "Apilador diésel" }, catalog).product.categorySellID), null);
+  assert.equal(category(prepareProduct({ ...source, specs: { ...source.specs, Modelo: "S2" } }, catalog).product.categorySellID), null);
+  assert.equal(category(prepareProduct({ ...source, url: "https://manain.com/producto/venta-elevacion-mastil-equiptest-s1/" }, catalog).product.categorySellID), null);
+});

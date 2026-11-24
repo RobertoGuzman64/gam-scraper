@@ -34,3 +34,23 @@ test("sin categoría documentada no inventa destino ni traslada atributos", () =
   assert.deepEqual(result.product.attributes, []);
   assert.deepEqual(unclassified.product.attributes, []);
 });
+
+test("la recuperación de categoría recalcula los diagnósticos de ambos receptores sin cambiar el estado técnico", () => {
+  const source = { ...base, providerId: "manain", categoryKey: "venta", categoryName: "Maquinaria en venta",
+    url: "https://manain.com/producto/venta-manipulacion-apilador-equiptest-s1/", title: "S1",
+    brand: "EQUIPTEST", model: "S1", shortDescription: "Apilador eléctrico", longDescription: null,
+    specs: { Marca: "EQUIPTEST", Modelo: "S1", Motor: "Eléctrico", "Nueva o usada": "usada", "Capacidad carga": "1200 kg" } };
+  const mapped = prepareProduct(source, catalog);
+  const unclassified = { ...mapped, product: { ...mapped.product, categorySellID: null, category: null, attributes: [] },
+    importIssues: { excel: ["Categoría no coincide de forma única con el backend"], createMany: ["Categoría no válida para create/many"] } };
+  const original = JSON.stringify(unclassified);
+  const projected = projectCommercialCategory(source, unclassified, catalog);
+  assert.equal(projected.product.categorySellID, mapped.product.categorySellID);
+  assert.ok(projected.product.categorySellID !== null);
+  assert.deepEqual(projected.importIssues, mapped.importIssues);
+  assert.ok(projected.importIssues?.createMany.includes("Atributo obligatorio ausente: Altura de elevación"));
+  assert.ok(!projected.importIssues?.createMany.includes("Categoría no válida para create/many"));
+  assert.equal(projected.status, mapped.status);
+  assert.deepEqual(projected.issues, mapped.issues);
+  assert.equal(JSON.stringify(unclassified), original);
+});

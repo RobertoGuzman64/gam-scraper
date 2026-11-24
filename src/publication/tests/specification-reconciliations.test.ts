@@ -8,6 +8,9 @@ import { evaluateIndividualPublicationDifference } from "../publication-acceptan
 
 import { reconcileRemovedSpecifications } from "../specification-reconciliations.js";
 
+import type { ProductRecord } from "../../contracts/catalog.js";
+import { prepareSourceProduct } from "../../preparation/prepare-product.js";
+
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 
 import { accreditedReconciliationCases } from "../../testing/fixtures/gam/specification-reconciliations.js";
@@ -68,4 +71,57 @@ test("un cambio del valor previo, del destino o de la procedencia invalida cada 
     assert.ok(reconcileRemovedSpecifications("gam", difference, previous, damaged).unresolved.includes(removal), removal);
     assert.equal(evaluateIndividualPublicationDifference("gam", difference, previous, damaged, null).accepted, false, removal);
   }
+});
+
+const platform: ProductRecord = {
+  providerId: "manain", categoryKey: "venta", categoryName: "Maquinaria en venta",
+  url: "https://manain.com/producto/venta-elevacion-brazo-articulado-equiptest-tx1/",
+  title: "TX1", shortDescription: null, longDescription: null, price: null,
+  condition: "Segunda mano", reference: "TEST-TX1", brand: "EQUIPTEST", model: "TX1",
+  year: "2021", location: null, country: null, horometer: "500", serialNumber: null,
+  image: "https://manain.com/imagen-tx1.jpg",
+  specs: { Marca: "EQUIPTEST", Modelo: "TX1", Motor: "Diésel", "Nueva o usada": "usada",
+    "Altura trabajo": "15 m", "Capacidad carga": "230 kg", Peso: "10 kg" }
+};
+
+test("reconcilia únicamente retiradas de peso reproducibles desde el original de la unidad", () => {
+  const duplicate: ProductRecord = { ...platform, specs: { ...platform.specs, Peso: "1200 kg", "Peso operativo": "1200 kg" } };
+  for (const source of [platform, duplicate]) {
+    const prepared = prepareSourceProduct(source);
+    assert.equal(prepared.status, "ready");
+    const field = source === platform ? "Peso" : "Peso operativo";
+    const originalWeight = source.specs?.[field];
+    assert.ok(originalWeight);
+    const old = { ...prepared.product, spec: { ...prepared.product.spec, [field]: originalWeight } };
+    const updated = prepared.product;
+    const difference = differenceBetween("before", "after", [old], [updated]);
+    const evaluate = (originals: readonly ProductRecord[], before = old, after = updated) =>
+      reconcileRemovedSpecifications(source.providerId, difference, [before], [after], originals);
+    assert.deepEqual(evaluate([source]), { resolved: difference.removedSpecifications, unresolved: [] });
+    assert.equal(evaluateIndividualPublicationDifference(source.providerId, difference, [old], [updated], null, [source]).accepted, true);
+    for (const originals of [[], [source, source], [{ ...source, url: "https://example.com/otra-unidad" }],
+      [{ ...source, specs: { ...source.specs, [field]: "1300 kg" } }]]) {
+      assert.deepEqual(evaluate(originals).unresolved, difference.removedSpecifications);
+    }
+    assert.deepEqual(evaluate([source], { ...old, spec: { ...old.spec, [field]: "1300 kg" } }).unresolved, difference.removedSpecifications);
+    assert.deepEqual(evaluate([source], old, { ...updated, description_general: "Peso declarado de 10 kg" }).unresolved, difference.removedSpecifications);
+    assert.deepEqual(evaluate([source], old, { ...updated, spec: { ...updated.spec, Peso: "1300 kg" } }).unresolved, difference.removedSpecifications);
+  }
+});
+
+test("la omisión del peso inverosímil es aplicable a otros proveedores y no admite pesos válidos", () => {
+  const source: ProductRecord = { ...platform, providerId: "gomariz", title: "EQUIPTEST TX1 Plataforma articulada",
+    url: "https://www.gomarizrent.com/elevacion-y-trabajos-en-altura/brazo-articulado/equiptest-tx1/",
+    image: "https://www.gomarizrent.com/imagen-tx1.jpg",
+    specs: { Marca: "EQUIPTEST", Modelo: "TX1", Motor: "Diésel", "Altura de trabajo": "15 m", Capacidad: "230 kg", Peso: "10 kg" } };
+  const prepared = prepareSourceProduct(source);
+  assert.equal(prepared.status, "ready");
+  const next = prepared.product;
+  const previous = { ...next, spec: { ...next.spec, Peso: "10 kg" } };
+  const diff = differenceBetween("before", "after", [previous], [next]);
+  assert.equal(evaluateIndividualPublicationDifference(source.providerId, diff, [previous], [next], null, [source]).accepted, true);
+  const valid = { ...source, specs: { ...source.specs, Peso: "1200 kg" } };
+  const before = prepareSourceProduct(valid).product;
+  const after = { ...before, spec: Object.fromEntries(Object.entries(before.spec).filter(([key]) => key !== "Peso")) };
+  assert.equal(evaluateIndividualPublicationDifference(source.providerId, differenceBetween("before", "after", [before], [after]), [before], [after], null, [valid]).accepted, false);
 });
