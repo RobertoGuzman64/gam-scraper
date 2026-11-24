@@ -46,7 +46,7 @@ Una instalación nueva no requiere ejecutar migraciones de nombres. Si se actual
 
 ## Requisitos e instalación
 
-- Node.js `>=18.18.0` y npm.
+- Node.js `>=18.18.0` y npm para el núcleo de la CLI. Los recorridos Chrome por WebSocket requieren además `WebSocket` global (Node.js 22+ o runtime compatible): Manain y Mercaeleva en Windows. Mercaeleva en sistemas no Windows utiliza DevTools Pipe.
 - Acceso HTTPS a los portales.
 - Permisos de escritura en `storage/`.
 - Chrome o Chromium (o Edge compatible, según el extractor) para Mercaeleva y Manain cuando se necesite; se pueden definir `CHROME_PATH` o `CHROMIUM_PATH`. Manain puede requerir navegador visible y verificación humana.
@@ -65,13 +65,13 @@ npm run ayuda
 La estructura de `src/` agrupa responsabilidades y no hitos temporales del desarrollo:
 
 - `src/catalog/`: identidad, calidad, normalización, cobertura, diagnósticos, editorial e intervenciones.
-- `src/preparation/`: preparación técnica, motor editorial compartido en `shared/editorial/`, adaptación de semántica por proveedor, evidencias, reconciliaciones y orquestación offline en `workflow/`. El antiguo sistema de narradores editoriales individualizados ya no está conectado al recorrido productivo detectado por los guards.
+- `src/preparation/`: preparación técnica y editorial organizada en `editorial/{claims,core,identity,measurements,source,writing}/`, `technical/`, `provenance/`, `classification/`, `quality/`, `product/`, `documents/` y `workflow/`, con reglas específicas en `{gam,gomariz,mercaeleva,manain}/`. El motor editorial es compartido; los narradores individuales no están conectados al recorrido productivo detectado por los guards.
 - `src/scraping/`: extracción, lotes, salida CSV/JSON y ciclo de publicación de origen; `workflow/`, `batch/` y `output/`.
 - `src/campaign/` y `src/publication/`: campaña global, acreditación y retención; publicaciones individuales, FINISH y snapshots técnicos independientes.
 - `src/infrastructure/filesystem/catalog/technical-publication.ts`: almacenamiento, integridad, activación y retención de las versiones técnicas.
 - `src/commercial/`: proyección y exportación comercial actual, auditorías y compatibilidad de exportación legada.
 - `src/infrastructure/`: filesystem, HTTP, navegador, locks, almacenamiento, referencias y XLSX.
-- `src/panel/`: lectura y presentación local de evidencias de publicaciones y exportación, con explorador de fichas; `src/tools/catalog/` prepara las clasificaciones técnicas para ese explorador. El panel no decide ni modifica fichas.
+- `src/panel/`: propietario de la lectura, preparación de evidencias y presentación del explorador. `src/tools/catalog/` conserva fachadas de compatibilidad hacia `panel/`; no es el propietario de esa lógica. El panel no decide ni modifica fichas.
 - `src/cli/`: comandos y presentación; `src/contracts/` y `src/shared/`: contratos y utilidades transversales.
 - `src/testing/`: fixtures, builders, casos de dominio e integración acreditada; las suites se ubican junto a sus módulos en `tests/` o dentro de `src/testing/integration/` según su responsabilidad. No se crean suites nuevas por máquina ni se obligan a leer catálogos completos las pruebas de dominio.
 - `scripts/`: entradas de ejecución y compilación en la raíz; `scripts/inspection/`, `scripts/maintenance/` y `scripts/operations/` para las herramientas especializadas.

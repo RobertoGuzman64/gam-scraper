@@ -19,18 +19,17 @@ La reutilización semántica se protege mediante el motor compartido, los guards
 ```text
 ProductRecord de origen
   └─ src/preparation/prepare-product.ts
-       ├─ identidad, condición y reconciliaciones técnicas de origen
-       ├─ recuperación documental y especificaciones técnicas
-       ├─ captura de evidencia editorial de fuente
-       │    mapping/source-editorial-evidence.ts
-       ├─ resolvePreparedEditorial(...)
-       │    mapping/prepared-editorial.ts
-       │    ├─ mapping/prepared-editorial-source.ts
-       │    │    ├─ dominio y evidencia compartidos
-       │    │    └─ mapping/knowledge-editorial.ts
-       │    └─ mapping/prepared-editorial-title.ts
+       ├─ identidad, condición y reconciliaciones en technical/
+       ├─ recuperación documental en technical/documented-technical-recovery.ts
+       ├─ procedencia técnica en provenance/technical-provenance.ts
+       ├─ evidencia editorial de fuente en editorial/claims/source-editorial-evidence.ts
+       ├─ resolvePreparedEditorial(...) en editorial/core/prepared-editorial.ts
+       │    ├─ editorial/core/prepared-editorial-source.ts
+       │    ├─ editorial/core/knowledge-editorial.ts
+       │    ├─ editorial/source/context/prepared-source-general.ts
+       │    └─ editorial/writing/prepared-editorial-title.ts
        ├─ normalizePreparedEditorialPresentation(...)
-       │    mapping/prepared-editorial-presentation.ts
+       │    editorial/writing/prepared-editorial-presentation.ts
        └─ PreparedProduct: ready o review, con issues y producto preparado
              └─ src/commercial/projection/presentation-projection.ts
                 proyecta la presentación y metadatos; no reescribe las descripciones
@@ -38,21 +37,22 @@ ProductRecord de origen
 
 `prepareSourceProduct` prepara sin catálogo de importación; `prepareWithCatalog` incorpora las validaciones y mapeos dependientes de `ImportCatalog`. No confundir `ready/review` técnico con aprobación editorial o comercial, ni alterar ese estado para salvar una ficha insuficientemente acreditada.
 
-La composición y la presentación posterior pertenecen al circuito compartido de `src/preparation/shared/editorial/`. La presentación ya preparada pasa a la proyección comercial: no implementar un segundo redactor en `commercial/`, en los auditores, en `prepare-product.ts` ni en scripts de publicación.
+La composición y la presentación posterior pertenecen al circuito compartido de `src/preparation/editorial/`, sin un nivel obligatorio `shared/`. La presentación ya preparada pasa a la proyección comercial: no implementar un segundo redactor en `commercial/`, en los auditores, en `prepare-product.ts` ni en scripts de publicación.
 
 ## Propietarios y fronteras
 
-| Ubicación                                      | Responsabilidad real                                                                                           | Lo que no debe hacer                                                        |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `shared/editorial/domain/`                     | Reglas reutilizables de identidad, familia, medidas, afirmaciones, coherencia, procedencia y composición       | Ramificar por una referencia concreta o inferir equipamiento de otra unidad |
-| `shared/editorial/mapping/`                    | Captura y composición de evidencia, conocimiento, precedencias de títulos, corta y general, presentación final | Duplicar reglas ya existentes en un proveedor o inventar fuentes            |
-| `shared/editorial/evidence/`                   | Aplicación de evidencia editorial acreditada y verificaciones asociadas                                        | Sustituir por código narrativo una fuente o autorización                    |
-| `{gam,gomariz,mercaeleva}/editorial/`          | Interpretación y autenticidad de señales propias de cada origen; evidencia legítimamente particular            | Decidir la redacción final mediante narradores independientes               |
-| `data/editorial/knowledge/`                    | Procedencia por unidad, huellas, textos y fuentes documentales integradas                                      | Actuar como código de reglas por referencia                                 |
-| `shared/technical/` y adaptadores `technical/` | Reconstrucción y reconciliación de hechos técnicos, con prioridades explícitas                                 | Usar texto comercial para acreditar características no corroboradas         |
-| `commercial/projection/`                       | Transferencia, proyección y metadatos compatibles con el contrato comercial                                    | Redactar de nuevo título, descripción corta o general                       |
+| Ubicación                                           | Responsabilidad real                                                   | Límite                                                      |
+| --------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `editorial/core/`                                   | Composición común, contrato de fuente y conocimiento editorial         | No introducir casos comerciales por referencia              |
+| `editorial/claims/` y `editorial/source/`           | Captura y valoración de afirmaciones, contexto y evidencia de origen   | No inferir prestaciones por semejanza entre unidades        |
+| `editorial/identity/` y `editorial/measurements/`   | Identidad, variantes, magnitudes y coherencia                          | No mezclar medidas no equivalentes ni identidades distintas |
+| `editorial/writing/`                                | Título, texto y presentación editorial, con precedencias               | No duplicar narradores por proveedor                        |
+| `{gam,gomariz,mercaeleva,manain}/domain-source.ts`  | Interpretar señales concretas de cada origen                           | No asumir la autoridad de redacción del motor común         |
+| `technical/` y adaptadores específicos de proveedor | Recuperación y reconciliación técnicas con orden explícito             | No convertir texto comercial en evidencia técnica           |
+| `data/editorial/knowledge/`                         | Evidencias declarativas firmadas por unidad y referencias documentales | No usar entradas como código genérico por referencia        |
+| `commercial/projection/`                            | Proyección de datos ya preparados                                      | No redactar de nuevo títulos o descripciones                |
 
-Las implementaciones editoriales activas por origen incluyen `gam/editorial/source/domain-source.ts`, `gomariz/editorial/mapping/domain-source.ts` y `mercaeleva/editorial/mapping/domain-source.ts`. Existe además evidencia de origen en `mercaeleva/editorial/evidence/`. Su presencia **no** implica un motor de redacción separado por proveedor.
+Los adaptadores `gam/domain-source.ts`, `gomariz/domain-source.ts`, `mercaeleva/domain-source.ts` y `manain/domain-source.ts` interpretan el origen; su presencia **no** implica un motor editorial independiente.
 
 ## Evidencia y precedencias
 
@@ -65,7 +65,7 @@ Distinguir siempre:
 - **Texto original de fuente:** es evidencia atribuida y solo se transforma cuando la identidad, los conceptos y las negaciones permiten hacerlo.
 - **Texto o título firmado:** puede conservar contenido acreditado y precedencias específicas; su existencia no autoriza crear una regla general a partir de una referencia irrepetible.
 
-`prepared-editorial-source.ts` integra la evidencia de origen, composición reutilizable, conocimiento, extractos y recuperación bajo condiciones explícitas. El título se decide mediante `prepared-editorial-title.ts` y la prioridad de título verificado. `prepared-editorial-presentation.ts` normaliza identidad, motor, combustible, altura y capacidad cuando están corroborados; no debe destruir detalles acreditados de títulos o cortas anteriores. La composición posterior respeta firma y autenticidad de fuente. Antes de alterar una precedencia hay que contrastar **título, corta, general, especificaciones, estado y origen** en los productos afectados y no afectados.
+`editorial/core/prepared-editorial-source.ts` coordina la evidencia de origen y el conocimiento; `editorial/source/context/prepared-source-general.ts` resuelve la composición general bajo las precedencias existentes. El título se decide mediante `editorial/writing/prepared-editorial-title.ts` y la prioridad de título verificado. `editorial/writing/prepared-editorial-presentation.ts` normaliza identidad, motor, combustible, altura y capacidad cuando están corroborados; no debe destruir detalles acreditados de títulos o cortas anteriores. La composición posterior respeta firma y autenticidad de fuente. Antes de alterar una precedencia hay que contrastar **título, corta, general, especificaciones, estado y origen** en los productos afectados y no afectados.
 
 ## Conocimiento declarativo y regeneración
 
@@ -91,8 +91,8 @@ La verificación de `verified-units.json` utiliza el propio índice como fuente 
 ## Cómo mejorar el motor a partir de ahora
 
 1. Identificar una **responsabilidad funcional común** con defecto o información acreditada actualmente desaprovechada; distinguirla de la ausencia legítima de evidencia.
-2. Localizar el propietario actual en dominio, mapping, adaptador o índices; comprobar condiciones y consumidores existentes antes de añadir módulos.
-3. Centralizar la regla en el dominio o mapper compartido. Adaptar la semántica particular únicamente donde nace el dato. Evitar `switch` por referencia, narradores por modelo y correcciones en la proyección comercial.
+2. Localizar el propietario actual en `editorial/{core,claims,identity,measurements,source,writing}/`, el adaptador del origen o los índices; comprobar condiciones y consumidores existentes antes de añadir módulos.
+3. Centralizar la regla en la responsabilidad editorial compartida que corresponda. Adaptar la semántica particular únicamente donde nace el dato. Evitar `switch` por referencia, narradores por modelo y correcciones en la proyección comercial.
 4. Demostrar aplicación a **otra máquina nueva compatible** usando las mismas precondiciones, y rechazo ante variante incompatible, proveedor distinto, modelo parecido, negación, magnitud no equivalente, procedencia insuficiente o unidad distinta, según la regla.
 5. Mantener la salida anterior donde no existe evidencia nueva; comprobar muestras positivas/negativas y diferencias reales de catálogo cuando puedan cambiar publicaciones.
 6. Verificar guards, pruebas pertinentes, contrato comercial y el build/test oficial cuando exista entorno completo. Un fallo por dependencias ausentes queda **no acreditado**, no se convierte en PASS.
