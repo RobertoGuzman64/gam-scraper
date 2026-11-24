@@ -6,7 +6,7 @@ import { ts, visitNodes, isTest } from "./guards-architecture-core.mjs";
 
 const productionLayers = new Set([
   "campaign", "catalog", "commercial", "contracts", "infrastructure",
-  "preparation", "publication", "scraping", "shared"
+  "panel", "preparation", "publication", "scraping", "shared"
 ]);
 const providers = new Set(["gam", "gomariz", "mercaeleva", "manain"]);
 const internalTools = new Set(["cli", "testing", "tools"]);

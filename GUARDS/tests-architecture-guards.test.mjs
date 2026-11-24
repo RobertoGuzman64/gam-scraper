@@ -8,6 +8,7 @@ import test from "node:test";
 import { inspectEditorialArchitecture } from "./tests-editorial-architecture-guard.mjs";
 import { inspectTestArchitecture } from "./tests-domain-tests-guard.mjs";
 import { inspectModuleIntegrity } from "./tests-module-integrity-guard.mjs";
+import { ts } from "./guards-architecture-core.mjs";
 import { inspectPanelHeavyPreparations } from "./tests-performance-guard.mjs";
 
 const fixture = (t) => {
@@ -564,6 +565,65 @@ test("el guard productivo respeta dependencias normales e imports desde tests", 
   linkModules(write, "src/preparation/gam/technical/tests/support/fixture.ts", "src/testing/builders/shared-fixture.ts");
   assert.deepEqual(inspectModuleIntegrity(root).missing, []);
   assert.deepEqual(inspectModuleIntegrity(root).boundaries, []);
+});
+
+test("panel conserva la propiedad del explorador y tools solo actúa como fachada", (t) => {
+  const { root, write } = fixture(t);
+  linkModules(write, "src/tools/catalog/reader.ts", "src/panel/explorer/reader.ts");
+  assert.deepEqual(inspectModuleIntegrity(root).boundaries, []);
+  const source = "src/panel/application/build.ts";
+  const target = "../../tools/catalog/reader.js";
+  for (const code of [
+    `import { result } from '${target}'; export const build = result;`,
+    `export { result } from '${target}';`,
+    `export const build = () => import('${target}');`
+  ]) {
+    write(source, `${code}\n`);
+    const { missing, boundaries } = inspectModuleIntegrity(root);
+    assert.deepEqual(missing, []);
+    assert.equal(boundaries.length, 1);
+    assert.match(boundaries[0] ?? "", /no debe depender de CLI, herramientas ni fixtures de test/u);
+  }
+});
+
+const usesSharedAccreditation = (path, code) => {
+  const parsed = ts.createSourceFile(path, code, ts.ScriptTarget.Latest, true);
+  const bindings = new Set();
+  for (const statement of parsed.statements) {
+    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier) ||
+      statement.moduleSpecifier.text !== "../catalog/editorial/campaign-accreditation.js") continue;
+    const named = statement.importClause?.namedBindings;
+    if (!named || !ts.isNamedImports(named)) continue;
+    for (const element of named.elements) {
+      if ((element.propertyName?.text ?? element.name.text) === "isCampaignAccreditation") {
+        bindings.add(element.name.text);
+      }
+    }
+  }
+  let used = false;
+  const visit = (node) => {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && bindings.has(node.expression.text)) {
+      used = true;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(parsed);
+  return used;
+};
+
+test("campaña y publicación individual reutilizan el mismo validador de acreditación", () => {
+  for (const path of ["src/campaign/editorial.ts", "src/publication/individual-editorial.ts"]) {
+    assert.ok(usesSharedAccreditation(path, readFileSync(join(guardedRepositoryRoot, path), "utf8")), path);
+  }
+  const path = "src/campaign/editorial.ts";
+  assert.equal(usesSharedAccreditation(path,
+    "const isCampaignAccreditation = (value) => value !== null; isCampaignAccreditation({});"), false);
+  assert.equal(usesSharedAccreditation(path,
+    "import { isCampaignAccreditation } from './local-validator.js'; isCampaignAccreditation({});"), false);
+  assert.equal(usesSharedAccreditation(path,
+    "import { isCampaignAccreditation } from '../catalog/editorial/campaign-accreditation.js';"), false);
+  assert.equal(usesSharedAccreditation(path,
+    "import { isCampaignAccreditation as validate } from '../catalog/editorial/campaign-accreditation.js'; validate({});"), true);
 });
 
 test("la presentación operativa no importa orquestadores, pero conserva contratos de lectura", (t) => {
