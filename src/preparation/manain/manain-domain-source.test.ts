@@ -90,4 +90,82 @@ test("Manain: las medidas de alcance ambiguas permanecen pendientes sin depender
   assert.equal(prepared.status, "review");
   assert.ok(prepared.issues.includes("Atributo no normalizable: Alcance máximo"));
   assert.equal(prepared.product.spec["Alcance maximo"], "3,09/1,01 m");
+  assert.match(prepared.product.description_general ?? "", /altura de elevación de 14 m/u);
+  assert.doesNotMatch(prepared.product.description_general ?? "", /alcance lateral de/u);
+  const scalar = { ...record, specs: { ...record.specs, "Alcance maximo": "3,4 m" } };
+  const adapted = reconcileManainEditorialSourceSpecs(scalar);
+  assert.equal(resolveEditorialFacts(adapted)?.lateralReachM, 3.4);
+  assert.equal(resolveEditorialFacts(adapted)?.liftingHeightM, 14);
+
+});
+
+test("Manain: el alcance horizontal de una plataforma alimenta la narrativa compartida sin duplicar specs", () => {
+  const record: ProductRecord = {
+    providerId: "manain", categoryKey: "venta", categoryName: "Maquinaria en venta",
+    url: "https://manain.com/producto/venta-elevacion-brazo-articulado-equiptest-ba1/",
+    title: "BA1", shortDescription: null, longDescription: null, price: null,
+    condition: "Segunda mano", reference: "CONTROL-BA1", brand: "EQUIPTEST", model: "BA1",
+    year: "2022", location: null, country: null, horometer: "300", serialNumber: null, image: null,
+    specs: { Marca: "EQUIPTEST", Modelo: "BA1", Motor: "Diésel", "Nueva o usada": "usada",
+      "Altura trabajo": "16 m", "Capacidad carga": "230 kg", "Alcance horizontal max.": "8,20 m", Peso: "6500 kg" }
+  };
+  const original = JSON.stringify(record);
+  const adapted = reconcileManainEditorialSourceSpecs(record);
+  assert.equal(resolveEditorialFacts(adapted)?.lateralReachM, 8.2);
+  assert.equal(reconcileManainEditorialSourceSpecs(adapted), adapted);
+  const prepared = prepareSourceProduct(record);
+  assert.match(prepared.product.description ?? "", /alcance lateral de 8,2 m/u);
+  assert.match(prepared.product.description_general ?? "", /alcance lateral de 8,2 m/u);
+  assert.equal(prepared.product.spec["Alcance horizontal max."], "8,20 m");
+  assert.equal(prepared.product.spec["Alcance Lateral"], undefined);
+  assert.equal(JSON.stringify(record), original);
+  for (const specs of [
+    { ...record.specs, "Alcance horizontal": "9 m" },
+    { ...record.specs, "Alcance horizontal max.": "8/9 m" },
+    { ...record.specs, "Alcance horizontal max.": "8 mm" },
+    { ...record.specs, "Alcance horizontal max.": "90 m" }
+  ]) {
+    const rejected = reconcileManainEditorialSourceSpecs({ ...record, specs });
+    assert.equal(rejected.specs?.["Alcance Lateral"], undefined);
+    assert.equal(resolveEditorialFacts(rejected)?.lateralReachM, null);
+  }
+  const canonical = { ...record, specs: { ...record.specs, "Alcance lateral": "7 m" } };
+  assert.equal(reconcileManainEditorialSourceSpecs(canonical).specs?.["Alcance Lateral"], undefined);
+  const other = { ...record, url: record.url.replace("brazo-articulado", "tijera") };
+  assert.equal(reconcileManainEditorialSourceSpecs(other).specs?.["Alcance Lateral"], undefined);
+  const unrelated = { ...record, providerId: "gam" };
+  assert.equal(reconcileManainEditorialSourceSpecs(unrelated), unrelated);
+});
+
+test("Manain: altura de elevación y mástil se adaptan por familia y unidad sin inferir medidas", () => {
+  const record: ProductRecord = {
+    providerId: "manain", categoryKey: "venta", categoryName: "Maquinaria en venta",
+    url: "https://manain.com/producto/venta-manipulacion-carretilla-equiptest-ce1/",
+    title: "CE1", shortDescription: null, longDescription: null, price: null,
+    condition: "Segunda mano", reference: "CONTROL-CE1", brand: "EQUIPTEST", model: "CE1",
+    year: "2022", location: null, country: null, horometer: "300", serialNumber: null, image: null,
+    specs: { Marca: "EQUIPTEST", Modelo: "CE1", Motor: "Diésel", "Nueva o usada": "usada",
+      "Capacidad carga": "2500 kg", "Altura elevacion": "4750 mm", "Tipo mastil": "triplex", Peso: "4500 kg" }
+  };
+  const original = JSON.stringify(record);
+  const adapted = reconcileManainEditorialSourceSpecs(record);
+  assert.equal(resolveEditorialFacts(adapted)?.liftingHeightM, 4.75);
+  assert.equal(resolveEditorialFacts(adapted)?.mastType, "tríplex");
+  assert.equal(reconcileManainEditorialSourceSpecs(adapted), adapted);
+  const prepared = prepareSourceProduct(record);
+  assert.match(prepared.product.description ?? "", /altura de elevación de 4,75 m/u);
+  assert.match(prepared.product.description_general ?? "", /mástil tríplex declarado/u);
+  assert.equal(prepared.product.spec["Altura elevacion"], "4750 mm");
+  assert.equal(prepared.product.spec["Altura de elevación (m)"], undefined);
+  assert.equal(prepared.product.spec["Tipo Mástil"], undefined);
+  assert.equal(JSON.stringify(record), original);
+  const invalid = { ...record, specs: { ...record.specs, "Altura elevacion": "4/5 m", "Tipo mastil": "desconocido" } };
+  const rejected = reconcileManainEditorialSourceSpecs(invalid);
+  assert.equal(rejected.specs?.["Altura de elevación (m)"], undefined);
+  assert.equal(rejected.specs?.["Tipo Mástil"], undefined);
+  const canonical = { ...record, specs: { ...record.specs, "Altura de elevación (mm)": "4000 mm", "Tipo de mástil": "Dúplex" } };
+  assert.equal(reconcileManainEditorialSourceSpecs(canonical).specs?.["Altura de elevación (m)"], undefined);
+  assert.equal(reconcileManainEditorialSourceSpecs(canonical).specs?.["Tipo Mástil"], undefined);
+  const pump = { ...record, url: record.url.replace("manipulacion-carretilla", "pequena-maquinaria-bomba-sumergible") };
+  assert.equal(reconcileManainEditorialSourceSpecs(pump), pump);
 });

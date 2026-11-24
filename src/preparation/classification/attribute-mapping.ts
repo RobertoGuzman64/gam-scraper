@@ -3,6 +3,7 @@ import type { ProductRecord, SpecScalar } from "../../contracts/catalog.js";
 import type { Attribute, AttributeResolution, Candidate } from "./attribute-types.js";
 import { fold, scalar, numberToken } from "./attribute-utils.js";
 import { classificationProvider } from "./classification-provider.js";
+import { editorialHasImplausibleWeight } from "../editorial/core/editorial-facts.js";
 
 const notPublished = (value: SpecScalar): boolean =>
   typeof value === "string" && ["n/d", "n/a", "no disponible", "no informado", "sin datos", "-", "—", "a consultar"].includes(fold(value));
@@ -107,6 +108,11 @@ export const resolveAttribute = (record: ProductRecord, attribute: Attribute): A
     candidates.push({ key: attribute.name, value: direct });
   }
   if (candidates.length === 0) return { status: ambiguousSource ? "rejected" : "not_observed", value: null };
+  if ((attribute.name === "Peso" || attribute.name === "Peso operativo") &&
+    (attribute.type === "NUMBER" || attribute.type === "DECIMAL") && unitOf(attribute.unit_option) === "kg" &&
+    candidates.some((candidate) => candidate.key === "Peso") && editorialHasImplausibleWeight(record)) {
+    return { status: "rejected", value: null };
+  }
   const converted = candidates.map((candidate) => {
     const fallback = convert(candidate.value, candidate.key, attribute);
     return rules ? rules.convert(record, attribute, candidate, fallback) : fallback;

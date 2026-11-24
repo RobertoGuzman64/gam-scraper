@@ -1,9 +1,9 @@
-import type { ProductRecord } from "../../contracts/catalog.js";
+import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
 import { manainConditionEvidence } from "./condition.js";
 import { manainSourceFamily } from "./source.js";
 import type { ManainFamily } from "./source.js";
 import { editorialFamilyName, editorialFamilyOf } from "../editorial/core/editorial-families.js";
-import { editorialQuantity } from "../editorial/measurements/editorial-measurements.js";
+import { editorialQuantity, editorialQuantityOf, formatEditorialQuantity } from "../editorial/measurements/editorial-measurements.js";
 import type { EditorialFamily } from "../editorial/core/editorial-families.js";
 import type { EditorialSource } from "../editorial/core/editorial-source-contract.js";
 import { verifiedEditorialUrl } from "../editorial/source/editorial-source-url.js";
@@ -106,13 +106,40 @@ export const resolveManainEditorialDomainSource = (record: ProductRecord): Edito
 export const reconcileManainEditorialSourceSpecs = (record: ProductRecord): ProductRecord => {
   if (!resolveManainEditorialDomainSource(record)) return record;
   const family = manainSourceFamily(record);
+  const additions: Record<string, SpecValue> = {};
+  const absent = (keys: readonly string[]): boolean => keys.every((key) => record.specs?.[key] === undefined);
   if (family?.startsWith("elevacion-") || family?.startsWith("manipulacion-")) {
     const capacity = record.specs?.["Capacidad carga"];
     if (typeof capacity === "string" && editorialQuantity(capacity, "kg") !== null &&
-      !["Capacidad de carga (kg)", "Capacidad de carga", "Capacidad"].some((key) => record.specs?.[key] !== undefined)) {
-      return { ...record, specs: { ...record.specs, "Capacidad de carga": capacity } };
+      absent(["Capacidad de carga (kg)", "Capacidad de carga", "Capacidad"])) {
+      additions["Capacidad de carga"] = capacity;
     }
   }
+  const telehandler = family === "manipulacion-manipulador";
+  const boom = family === "elevacion-brazo-articulado" || family === "elevacion-brazo-telescopico" ||
+    family === "elevacion-camion-cesta";
+  if ((boom || telehandler) && absent(["Alcance lateral", "Alcance Lateral"])) {
+    const reach = editorialQuantityOf(record.specs, telehandler ? ["Alcance maximo"] :
+      ["Alcance horizontal max.", "Alcance horizontal"], "m");
+    if (reach !== null && reach >= 0.5 && reach <= 60) additions["Alcance Lateral"] = `${formatEditorialQuantity(reach)} m`;
+  }
+  const forklift = family === "manipulacion-carretilla" || family === "manipulacion-carretilla-4x4" ||
+    family === "manipulacion-retractil";
+  if ((forklift || telehandler) && absent(["Altura máxima de elevación", "Altura de elevación (mm)", "Altura de elevación (m)"])) {
+    const height = editorialQuantity(record.specs?.[telehandler ? "Altura de elevacion max" : "Altura elevacion"],
+      telehandler ? "m" : "mm");
+    const metres = height === null ? null : telehandler ? height : height / 1000;
+    if (metres !== null && metres >= 0.5 && metres <= 60) {
+      additions["Altura de elevación (m)"] = `${formatEditorialQuantity(metres)} m`;
+    }
+  }
+  if (forklift && absent(["Tipo Mástil", "Tipo de mástil"])) {
+    const mast = record.specs?.["Tipo mastil"];
+    if (typeof mast === "string" && /^(?:simplex?|d[uú]plex|tr[ií]plex)$/iu.test(mast.trim())) {
+      additions["Tipo Mástil"] = mast;
+    }
+  }
+  if (Object.keys(additions).length) return { ...record, specs: { ...record.specs, ...additions } };
   const smallElectricTool = family === "pequena-maquinaria-radiales-electricas" ||
     family === "pequena-maquinaria-martillos-electricos";
   if (!smallElectricTool || record.specs?.Motor !== "Eléctrico") return record;

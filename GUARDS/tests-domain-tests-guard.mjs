@@ -285,11 +285,13 @@ const accreditedCatalogIntegrations = new Map([
   }]
 ]);
 
+const accreditedSourceSha256 = (source) => createHash("sha256")
+  .update(source.replace(/\r\n/gu, "\n")).digest("hex");
+
 const creditedCatalogIntegration = (path, source, direct) => {
   const contract = accreditedCatalogIntegrations.get(path);
   if (!contract || direct.length !== contract.reads) return null;
-  const sha256 = createHash("sha256").update(source.text).digest("hex");
-  return sha256 === contract.sha256 ? contract : null;
+  return accreditedSourceSha256(source.text) === contract.sha256 ? contract : null;
 };
 
 const transitiveExceptions = new Map([
@@ -308,7 +310,7 @@ const isAccreditedTransitive = (path, helper, project, helperEvidence) => {
   if (transitiveExceptions.get(path) !== helper || (helperEvidence.get(helper) ?? []).length !== 1) return false;
   const source = project.files.get(helper)?.text;
   return typeof source === "string" &&
-    createHash("sha256").update(source).digest("hex") === accreditedTransitiveSources.get(helper);
+    accreditedSourceSha256(source) === accreditedTransitiveSources.get(helper);
 };
 
 const isCount = (node, source) => /\b(?:catalog|original|publication|products|changed|improved|records|entries|units|machines|gam|gomariz|mercaeleva|manain)\b[\w.\[\]?]*\.length\b/iu.test(node.getText(source));

@@ -123,3 +123,23 @@ test("un peso incompatible con la familia se retiene en el origen pero no en la 
   const foreign = { ...platform, providerId: "gam", categoryKey: "incompatible" };
   assert.equal(rejectImplausibleTechnicalWeight(foreign, input), input);
 });
+
+
+test("la presentación elimina una unidad duplicada solo en dimensiones triples de horquillas", () => {
+  const sourceSpecs: SpecsMap = {
+    Horquillas: "1200 mm x 125 mm x 45 mm mm",
+    "Medida de horquillas": "1200 mm x 125 mm x 45 mm mm",
+    "Horquillas adicionales": "1200 mm x 125 mm x 45 mm mm",
+    "Dimensiones": "1200 mm x 125 mm x 45 cm mm",
+    "Horquillas alternativas": "1200 mm x 125 mm"
+  };
+  const before = JSON.stringify(sourceSpecs);
+  const presented = normalizeTechnicalPresentation(sourceSpecs);
+  assert.equal(presented.Horquillas, "1200 mm x 125 mm x 45 mm");
+  assert.equal(presented["Medida de horquillas"], sourceSpecs["Medida de horquillas"]);
+  assert.equal(presented["Horquillas adicionales"], sourceSpecs["Horquillas adicionales"]);
+  assert.equal(presented.Dimensiones, sourceSpecs.Dimensiones);
+  assert.equal(presented["Horquillas alternativas"], sourceSpecs["Horquillas alternativas"]);
+  assert.equal(normalizeTechnicalPresentation(presented), presented);
+  assert.equal(JSON.stringify(sourceSpecs), before);
+});

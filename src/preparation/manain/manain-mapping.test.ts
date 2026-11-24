@@ -261,3 +261,22 @@ test("Manain: disponibilidad de elevación libre sin medida no se interpreta com
   const malformed = { ...source, specs: { ...source.specs, "Elevacion libre": "inexacta" } };
   assert.equal(resolveAttribute(malformed, attribute("Elevación libre")).status, "invalid");
 });
+
+
+test("Manain: las etiquetas del manipulador resuelven magnitudes obligatorias sin aceptar valores incompatibles", () => {
+  const source = machine("https://manain.com/producto/venta-manipulacion-manipulador-equiptest-tx1/", {
+    "Nueva o usada": "usada", Motor: "Diésel", "Capacidad carga": "4000 kg",
+    "Altura de elevacion max": "14 m", "Alcance maximo": "3,09/1,01 m"
+  }, "");
+  const result = prepareProduct(source, catalog);
+  assert.equal(category(result.product.categorySellID), "manipulador-teñescopico-segunda-mano");
+  const capacity = attribute("Capacidad máxima");
+  const height = attribute("Altura máxima de elevación");
+  assert.ok(result.product.attributes.some((entry) => entry.attributeID === capacity.id && entry.value === 4000));
+  assert.ok(result.product.attributes.some((entry) => entry.attributeID === height.id && entry.value === 14));
+  assert.equal(resolveAttribute({ ...source, specs: { ...source.specs, "Capacidad máxima": "3000 kg" } }, capacity).status,
+    "contradiction");
+  assert.equal(resolveAttribute({ ...source, specs: { ...source.specs, "Altura de elevacion max": "14/15 m" } }, height).status,
+    "invalid");
+  assert.equal(resolveAttribute(usedScissor, capacity).status, "not_observed");
+});

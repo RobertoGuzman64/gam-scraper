@@ -6,7 +6,7 @@ import { excludeGamRelatedProductImages } from "../catalog/normalization/gam/gal
 import { excludeGomarizForeignCover } from "../catalog/normalization/gomariz/gallery.js";
 import { productAttributes } from "./product/product-attributes.js";
 import { sourceAttributeQualityIssues, sourceTechnicalQualityIssues } from "./quality/attribute-quality.js";
-import { sourceSemanticQualityIssues } from "./quality/semantic-quality.js";
+import { canOmitImplausiblePlatformWeight, sourceSemanticQualityIssues, withoutRejectedWeight } from "./quality/semantic-quality.js";
 import { preparedTechnicalConsistencyIssues } from "./technical/technical-consistency.js";
 import { resolveCommercialCondition } from "./product/condition.js";
 import type { ImportCandidate, ImportCatalog } from "../commercial/legacy-export/contracts.js";
@@ -43,7 +43,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   }
   record = reconcileInitialTechnicalEvidence(record);
   const publicationConflict = publicationConflictForMercaeleva(record);
-  const semanticIssues = sourceSemanticQualityIssues(resolveSourceTechnicalSemanticRecord(record));
+  const semanticRecord = resolveSourceTechnicalSemanticRecord(record);
   record = reconcileTechnicalSourceForRecovery(record, technicalProvenance.observe);
   const recoverySource = record;
   const sourceYearSpecs = recoverBaseTechnicalSpecs(record, sourceUnitRecord, technicalProvenance.observe);
@@ -70,22 +70,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const reference = record.reference?.trim() || null;
   const editorial = resolvePreparedEditorial(editorialRecord, restoredFamily ? originalRecord : sourceUnitRecord, sourceEditorial, originalRecord);
   const attributeResult = catalog ? productAttributes(qualityRecord, category, catalog) : null;
-  if (editorial.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
-  if (editorial.sourceMotorConflict) issues.push("Motorización de origen no corroborada por evidencia histórica firmada");
-  if (editorial.sourceIdentityConflict) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");
-  if (editorial.sourceModelConflict && !editorial.sourceIdentityConflict)
-    issues.push("Identidad GAM contradictoria entre título y modelo técnico");
-  if (contradictoryCondition) issues.push("Condición comercial contradictoria entre la ficha y el origen");
-  if (publicationConflict !== null) issues.push(publicationConflict);
-  issues.push(...semanticIssues);
-  if (!reference) issues.push("Referencia ausente");
-  if (price === null && /\d/.test(record.price ?? "") &&
-    !hasDocumentedGomarizPriceOnRequest(originalRecord)) issues.push("Precio publicado inválido");
-  issues.push(...(catalog === null ? sourceTechnicalQualityIssues(qualityRecord) :
-    category ? attributeResult!.qualityIssues : sourceAttributeQualityIssues(qualityRecord, catalog)));
-
   const descriptions = { short: editorial.preparedShort, general: editorial.preparedLong };
-  issues.push(...preparedTechnicalConsistencyIssues(qualityRecord, reconciledSpecs));
   const normalizedSpecs = normalizePreparedTechnicalSpecs(record, reconciledSpecs, technicalProvenance.observe);
   const limitedSpecs = presentGamVerifiedRestrictedCapacity(record, normalizedSpecs);
   const handledSpecs = reconcileHandlingFamilySpecs(editorialRecord, limitedSpecs);
@@ -111,6 +96,25 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
     attributes: attributeResult?.attributes ?? []
   };
   const presented = normalizePreparedEditorialPresentation(sourceUnitRecord, product);
+  const weightOmitted = canOmitImplausiblePlatformWeight(semanticRecord, editorialRecord, presented, catalog) &&
+    semanticRecord.specs?.Peso === qualityRecord.specs?.Peso;
+  const blockingQualityRecord = weightOmitted ? withoutRejectedWeight(qualityRecord) : qualityRecord;
+  if (editorial.heightConflict) issues.push("Descripción comercial contradictoria: altura de trabajo");
+  if (editorial.sourceMotorConflict) issues.push("Motorización de origen no corroborada por evidencia histórica firmada");
+  if (editorial.sourceIdentityConflict) issues.push("Identidad GAM contradictoria entre título, resumen y ficha técnica");
+  if (editorial.sourceModelConflict && !editorial.sourceIdentityConflict)
+    issues.push("Identidad GAM contradictoria entre título y modelo técnico");
+  if (contradictoryCondition) issues.push("Condición comercial contradictoria entre la ficha y el origen");
+  if (publicationConflict !== null) issues.push(publicationConflict);
+  issues.push(...sourceSemanticQualityIssues(weightOmitted ? withoutRejectedWeight(semanticRecord) : semanticRecord));
+  if (!reference) issues.push("Referencia ausente");
+  if (price === null && /\d/.test(record.price ?? "") &&
+    !hasDocumentedGomarizPriceOnRequest(originalRecord)) issues.push("Precio publicado inválido");
+  issues.push(...(catalog === null ? sourceTechnicalQualityIssues(blockingQualityRecord) :
+    category ? (weightOmitted ? productAttributes(blockingQualityRecord, category, catalog).qualityIssues : attributeResult!.qualityIssues) :
+      sourceAttributeQualityIssues(blockingQualityRecord, catalog)));
+
+  issues.push(...preparedTechnicalConsistencyIssues(qualityRecord, reconciledSpecs));
   if (hasVerifiedPublishedEditorialLoadConflict(sourceUnitRecord, presented) &&
     !issues.some((issue) => /(?:atributo contradictorio: capacidad de carga|capacidad contradictoria:)/iu.test(issue))) {
     issues.push("Descripción comercial contradictoria: capacidad de carga");

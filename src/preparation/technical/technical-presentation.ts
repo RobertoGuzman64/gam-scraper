@@ -11,6 +11,9 @@ const normalizeValue = (key: string, value: SpecValue): SpecValue => {
   const name = fold(key);
   if (identityFields.has(name)) return value;
   const text = fold(value);
+  const repeatedForkUnit = name === "horquillas" ?
+    /^(\d{2,4}\s*mm\s*[x×]\s*\d{2,4}\s*mm\s*[x×]\s*\d{1,4}\s*mm)\s+mm$/iu.exec(value.trim()) : null;
+  if (repeatedForkUnit?.[1]) return repeatedForkUnit[1];
   if (text === "si") return "Sí";
   if (text === "no") return "No";
   if (!/^tipo(?: de)? mastil$/u.test(name)) return value;

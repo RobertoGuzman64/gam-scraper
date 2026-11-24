@@ -12,6 +12,10 @@ export const applyManainAliases = (record: ProductRecord, attribute: Attribute, 
   if (attribute.name === "Peso operativo" && family === "movimiento-tierra-miniexcavadora") keys.add(fold("Peso"));
   if (attribute.name === "Capacidad de la cesta" && family.startsWith("elevacion-")) keys.add(fold("Capacidad carga"));
   if (attribute.name === "Capacidad de carga" && !family.startsWith("elevacion-")) keys.add(fold("Capacidad carga"));
+  if (family === "manipulacion-manipulador") {
+    if (attribute.name === "Capacidad máxima") keys.add(fold("Capacidad carga"));
+    if (attribute.name === "Altura máxima de elevación") keys.add(fold("Altura de elevacion max"));
+  }
   if (attribute.name === "Capacidad del depósito" && family === "energia-grupo-electrogeno") keys.add(fold("Capacidad depósito"));
   const rawMotor = record.specs?.Motor;
   if (typeof rawMotor !== "string") return;

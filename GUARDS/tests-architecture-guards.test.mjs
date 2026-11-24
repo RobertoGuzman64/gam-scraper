@@ -538,9 +538,12 @@ test("las lecturas protegidas son contratos de integración exactos y no infracc
 test("la acreditación exacta se revoca ante cualquier cambio y no acepta nuevas lecturas", (t) => {
   const { root, write } = fixture(t);
   const path = "src/preparation/tests/catalog-publication-consistency.test.ts";
-  const original = readFileSync(join(guardedRepositoryRoot, path), "utf8");
+  const original = readFileSync(join(guardedRepositoryRoot, path), "utf8").replace(/\r\n/gu, "\n");
   write(path, original);
   assert.equal(inspectTestArchitecture(root).integrations.length, 2);
+  write(path, original.replace(/\n/gu, "\r\n"));
+  assert.equal(inspectTestArchitecture(root).integrations.length, 2);
+  assert.equal(inspectTestArchitecture(root).findings.length, 0);
   write(path, original + "\nconst regression = 42;\n");
   assert.equal(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-PRODUCT-CATALOG").length, 2);
   write(path, original + "\nconst extra = 'catalogs/providers/gomariz/original/other.json';\n");
@@ -549,6 +552,26 @@ test("la acreditación exacta se revoca ante cualquier cambio y no acepta nuevas
   write("src/preparation/editorial/core/tests/new-catalog.test.ts", original);
   assert.equal(inspectTestArchitecture(root).integrations.length, 2);
   assert.ok(inspectTestArchitecture(root).findings.some((item) => item.path === "src/preparation/editorial/core/tests/new-catalog.test.ts"));
+});
+
+test("la excepción transitiva de Manain tolera CRLF sin autorizar modificaciones", (t) => {
+  const { root, write } = fixture(t);
+  const helper = "src/testing/builders/manain-individual-selection-fixture.ts";
+  const source = readFileSync(join(guardedRepositoryRoot, helper), "utf8").replace(/\r\n/gu, "\n");
+  for (const suite of [
+    "src/publication/tests/manain-individual-selection.test.ts",
+    "src/publication/tests/manain-individual-finish.test.ts"
+  ]) {
+    write(suite, "import { createManainSelectionWorkspace } from '../../testing/builders/manain-individual-selection-fixture.js'; export const workspace = createManainSelectionWorkspace;\n");
+  }
+  write(helper, source);
+  assert.equal(inspectTestArchitecture(root).exceptions.length, 2);
+  write(helper, source.replace(/\n/gu, "\r\n"));
+  const equivalent = inspectTestArchitecture(root);
+  assert.equal(equivalent.exceptions.length, 2);
+  assert.equal(equivalent.findings.filter((item) => item.rule === "T-TRANSITIVE-CATALOG").length, 0);
+  write(helper, source + "\nconst regression = 42;\n");
+  assert.equal(inspectTestArchitecture(root).findings.filter((item) => item.rule === "T-TRANSITIVE-CATALOG").length, 2);
 });
 
 const linkModules = (write, from, to) => {

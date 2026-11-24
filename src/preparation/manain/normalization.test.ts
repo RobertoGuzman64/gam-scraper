@@ -94,3 +94,62 @@ test("Manain: la preparación integra la unificación binaria sin alterar el reg
   assert.equal(prepared.product.spec.Matriculada, "Sí");
   assert.equal(JSON.stringify(source), original);
 });
+
+test("Manain: unifica únicamente medidas explícitas en metros sin alterar su significado", () => {
+  const specs: SpecsMap = {
+    "Longitud plataforma": "1.81 m",
+    "Ancho plataforma": "0.9 m",
+    "Altura trabajo": "21.58 m",
+    "Longitud total": "1.90 m",
+    "Altura max. replegada": "3.70 m mm",
+    "Peso": "5.2000 kg",
+    "Año": "2024",
+    Modelo: "1.2 m",
+    "Tracción": "4x4"
+  };
+  const original = JSON.stringify(specs);
+  const output = normalizeManainTechnicalSpecs(record, specs);
+  assert.deepEqual(output, {
+    ...specs,
+    "Longitud plataforma": "1,81 m",
+    "Ancho plataforma": "0,9 m",
+    "Altura trabajo": "21,58 m",
+    "Longitud total": "1,9 m"
+  });
+  assert.equal(normalizeManainTechnicalSpecs(record, output), output);
+  assert.equal(JSON.stringify(specs), original);
+  assert.equal(normalizeManainTechnicalSpecs({ ...record, providerId: "gomariz" }, specs), specs);
+});
+
+test("Manain: la preparación presenta metros con coma y preserva las magnitudes de origen", () => {
+  const source: ProductRecord = {
+    ...record,
+    specs: { ...record.specs, "Altura trabajo": "9.50 m", "Longitud plataforma": "1.42 m" }
+  };
+  const original = JSON.stringify(source);
+  const prepared = prepareSourceProduct(source);
+  assert.equal(prepared.status, "ready");
+  assert.equal(prepared.product.spec["Altura trabajo"], "9,5 m");
+  assert.equal(prepared.product.spec["Longitud plataforma"], "1,42 m");
+  assert.equal(JSON.stringify(source), original);
+});
+
+
+test("Manain: corrige un modelo repetido solo con identidad de origen coincidente", () => {
+  const source: ProductRecord = {
+    ...record,
+    model: "TX2 PRO, TX2 PRO",
+    specs: { ...record.specs, Modelo: "TX2 PRO, TX2 PRO" }
+  };
+  const original = JSON.stringify(source);
+  const normalized = normalizeManainTechnicalSpecs(source, source.specs!);
+  assert.equal(normalized.Modelo, "TX2 PRO");
+  assert.equal(normalizeManainTechnicalSpecs(source, normalized), normalized);
+  assert.equal(JSON.stringify(source), original);
+  assert.equal(normalizeManainTechnicalSpecs({ ...source, model: "TX2 PRO" }, source.specs!).Modelo,
+    "TX2 PRO, TX2 PRO");
+  assert.equal(normalizeManainTechnicalSpecs({ ...source, providerId: "gam" }, source.specs!).Modelo,
+    "TX2 PRO, TX2 PRO");
+  const alternatives: SpecsMap = { Modelo: "TX2 PRO, TX3 PRO" };
+  assert.equal(normalizeManainTechnicalSpecs({ ...source, model: "TX2 PRO, TX3 PRO" }, alternatives), alternatives);
+});
