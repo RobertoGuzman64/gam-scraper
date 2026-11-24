@@ -1,3 +1,4 @@
+import { sameProductProvider } from "../../../catalog/identity.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { sameEditorialUnit } from "../core/editorial-source-contract.js";
 import { resolveEditorialLiteralTitleSource, resolveEditorialSource } from "../core/editorial-source.js";
@@ -33,7 +34,7 @@ export const verifiedEditorialLiteralUnitPair = (source: ProductRecord, prepared
   const sameCompound = Boolean(title && source.model && prepared.model &&
     tokens(sourceIdentity) === tokens(preparedIdentity) && tokens(title) === tokens(sourceIdentity));
   return Boolean(title && origin && origin === resolveEditorialLiteralTitleSource(prepared) &&
-    source.providerId === prepared.providerId && source.reference === prepared.reference &&
+    sameProductProvider(source, prepared) && source.reference === prepared.reference &&
     source.url === prepared.url && source.condition === prepared.condition && source.title === prepared.title &&
     source.longDescription === prepared.longDescription && source.shortDescription === prepared.shortDescription &&
     (sameCompound || ((!source.model || source.model === prepared.model) &&

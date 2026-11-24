@@ -7,6 +7,9 @@ type IdentifiableProduct = {
   readonly url: string;
 };
 
+export const sameProductProvider = (left: Pick<ProductRecord, "providerId">, right: Pick<ProductRecord, "providerId">): boolean =>
+  left.providerId === right.providerId;
+
 const normalizeKey = (value: string): string => value.trim().toLowerCase().replace(/\s+/g, " ");
 
 export const buildProductIdentity = (product: IdentifiableProduct): { readonly reason: DedupeReason; readonly key: string } => {

@@ -20,8 +20,23 @@ const references = [
   { providerId: "mercaeleva", reference: "M238-0251", count: 3 }
 ] as const;
 
+const claimFields = new Map<string, readonly string[]>([
+  [JSON.stringify(["LGMG","S1012E-2","https://www.lgmglifts.com/upload/file/2025/04/lgmg-scissorlift-en-S1012E-2.pdf","2026-11-21"]), ["Anchura de plataforma","Capacidad de plataforma","Extensión de plataforma","Longitud de plataforma"]],
+  [JSON.stringify(["JLG","2630ES","https://www.megaltura.com/wp-content/uploads/2022/08/JLG-2630-ES.pdf","2026-11-21"]), ["Altura de plataforma","Anchura (mm)","Distancia entre ejes (mm)","Extensión de plataforma"]],
+  [JSON.stringify(["Skyjack","SJ9250","https://www.skyjack.com/sites/default/files/specifications/ENEU-SJ9241-50RT_0.pdf","2026-11-21"]), ["Altura de plataforma","Anchura (mm)","Anchura de plataforma"]],
+  [JSON.stringify(["Haulotte","HA20PX","https://www.grarasulin.com/wp-content/uploads/2023/05/ha20px_uk_bda0a.pdf","2026-11-21"]), ["Alcance horizontal (m)","Altura de plataforma","Anchura (mm)","Capacidad máxima de plataforma"]],
+  [JSON.stringify(["Genie","S-65","https://www.colle.eu/media/3955/genie-s65-en.pdf","2026-11-21"]), ["Alcance horizontal máximo","Altura máxima de plataforma","Capacidad máxima de plataforma"]],
+  [JSON.stringify(["JLG","860SJ","https://www.jlg.com/en/equipment/boom-lifts/telescopic/engine-powered/800-series/860sj","2026-11-21"]), ["Alcance horizontal (m)","Altura de plataforma"]],
+  [JSON.stringify(["LOGITRANS","ELFR/SELFR","https://logitrans.com/rotator-with-non-adjustable-box-holders/","2026-11-21"]), ["Soportes necesarios para más de 500 kg"]],
+  [JSON.stringify(["LOGITRANS","LogiQ 200/300","https://logitrans.com/logiq-200-quarter-pallet-lifter/","2026-11-21"]), ["Propulsión"]],
+  [JSON.stringify(["Genie","Z-30/20N","https://manualzilla.com/doc/6014943/from-sn-951-to-6289--z-30-20n--pn-43651-","2026-11-21"]), ["Alcance horizontal (m)","Altura de plataforma","Anchura (mm)","Capacidad máxima de plataforma"]],
+  [JSON.stringify(["Manitou","150AETJC","https://www.lectura-specs.es/es/modelo/plataformas-elevadoras/plataformas-elevadoras-articuladas-plataformas-articuladas-de-ruedas-manitou/150-aetj-c-1036275","2026-11-21"]), ["Alcance horizontal (m)","Anchura (mm)","Capacidad máxima de plataforma"]]
+]);
+const claims = reviewedModelDocumentClaims().filter((claim) =>
+  claimFields.get(JSON.stringify([claim.document.brand, claim.document.model, claim.document.url,
+    claim.verification.reviewedOn]))?.includes(claim.field));
+
 test("fase 27: las 29 verificaciones documentales son emitidas por el motor sin alterar el producto", async () => {
-  const claims = reviewedModelDocumentClaims().slice(83, 112);
   assert.equal(claims.length, 29);
   const verified = new Set<string>();
   for (const providerId of ["gam", "mercaeleva"] as const) {
@@ -56,7 +71,7 @@ test("fase 27: las 29 verificaciones documentales son emitidas por el motor sin 
 });
 
 test("fase 27: una fuente, marca, variante o valor diferente no convalida la prueba", () => {
-  for (const claim of reviewedModelDocumentClaims().slice(83, 112)) {
+  for (const claim of claims) {
     assert.deepEqual(reviewedModelDocumentVerification(claim.document, claim.field, claim.value), claim.verification);
     assert.equal(reviewedModelDocumentVerification({ ...claim.document, url: claim.document.url + "-diferente" },
       claim.field, claim.value), null);

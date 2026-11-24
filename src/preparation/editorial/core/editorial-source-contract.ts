@@ -1,3 +1,4 @@
+import { sameProductProvider } from "../../../catalog/identity.js";
 import { containsEditorialBrandModel, containsEditorialIdentity } from "../identity/editorial-identity-match.js";
 import type { ProductRecord, SpecValue } from "../../../contracts/catalog.js";
 
@@ -42,7 +43,7 @@ export const verifiedEditorialStructuredIdentity = (record: ProductRecord): bool
 };
 
 export const sameEditorialUnit = (source: ProductRecord, prepared: ProductRecord): boolean =>
-  Boolean(source.reference?.trim()) && source.reference === prepared.reference &&
+  sameProductProvider(source, prepared) && Boolean(source.reference?.trim()) && source.reference === prepared.reference &&
   source.url === prepared.url &&
   source.brand === prepared.brand && source.model === prepared.model &&
   source.condition === prepared.condition;

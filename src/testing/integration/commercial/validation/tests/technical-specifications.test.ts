@@ -7,6 +7,7 @@ import { projectCommercialPresentation } from "../../../../../commercial/project
 import type { ImportCandidate } from "../../../../../commercial/legacy-export/contracts.js";
 import { analyzePresentationConsistency } from "../../../../../commercial/diagnostics/presentation-consistency.js";
 import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../../../../../commercial/validation/technical-specifications.js";
+import { normalizeTechnicalPresentation, normalizeOriginalMassPresentation, normalizeOriginalLengthPresentation, normalizeOriginalEnergyPresentation } from "../../../../../preparation/technical/technical-presentation.js";
 import { projectPresentableSpecifications } from "../../../../../commercial/projection/spec-projection.js";
 
 const publication = async (providerId: string): Promise<readonly ImportCandidate[]> => {
@@ -126,13 +127,13 @@ test("corrige las especificaciones comerciales con evidencia real sin reescribir
     } else assert.match(String(spec["Batería (V / Ah)"]), /^24V \/ /u);
     if (reference === "2244") assert.equal(spec["Centro de carga"], "130 mm");
   }
-  assert.equal(presentation("2248")["Capacidad de la batería"], "24V / 250AH(V/Ah)");
+  assert.equal(presentation("2248")["Capacidad de la batería"], "24 V / 250 Ah");
   assert.equal(presentation("2248")["Batería (V / Ah)"], undefined);
   for (const reference of ["2249", "2250"]) {
     assert.equal(presentation(reference)["Batería (V / Ah)"], "24V / 315-500Ah(V/Ah)", reference);
     assert.equal(presentation(reference)["Capacidad de la batería"], undefined, reference);
     assert.equal(presentation(reference)["Altura Plataforma"], undefined, reference);
-    assert.equal(presentation(reference).Peso, "678 KG", reference);
+    assert.equal(presentation(reference).Peso, "678 kg", reference);
   }
   assert.equal(presentation("2241")["Centro de carga"], undefined);
   assert.equal(presentation("2241")["Altura de elevación (mm)"], "8895 mm");
@@ -190,7 +191,7 @@ test("la recuperación Yale conserva los campos ya publicados y exige la evidenc
     assert.ok(sourceSpecs, reference);
     assert.deepEqual(projectPresentableSpecifications(published.spec, source), published.spec, reference);
     if (reference === "2248") {
-      assert.equal(published.spec["Capacidad de la batería"], "24V / 250AH(V/Ah)");
+      assert.equal(published.spec["Capacidad de la batería"], "24 V / 250 Ah");
       assert.equal(published.spec["Batería (V / Ah)"], undefined);
       continue;
     }
@@ -246,7 +247,9 @@ test("la cohorte GAM saneada conserva las especificaciones válidas sin requerir
       assert.equal(sourceSpecs["Capacidad de carga (kg)"], "8000 KG", reference);
       assert.equal(product.spec["Capacidad de arrastre"], reconciledArrastre, reference);
     }
-    for (const [key, value] of Object.entries(sourceSpecs)) {
+    const normalizedSource = normalizeOriginalEnergyPresentation(normalizeOriginalLengthPresentation(
+      normalizeOriginalMassPresentation(normalizeTechnicalPresentation(sourceSpecs), sourceSpecs), sourceSpecs), sourceSpecs);
+    for (const [key, value] of Object.entries(normalizedSource)) {
       if (removed.includes(key)) continue;
       if (key === "Capacidad de carga (kg)" && reconciledArrastre !== null &&
         product.spec[key] === undefined) continue;

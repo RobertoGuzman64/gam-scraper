@@ -17,7 +17,18 @@ const references = [
   { providerId: "gam", reference: "2365", count: 2 }
 ] as const;
 
-const claims = reviewedModelDocumentClaims().slice(175, 190);
+const claimFields = new Map<string, readonly string[]>([
+  [JSON.stringify(["Niftylift","HR12NDE","https://www.dragon-access.co.uk/niftylift-hr12/","2026-11-21"]), ["Alcance horizontal (m)","Capacidad máxima de plataforma"]],
+  [JSON.stringify(["Hollandlift","N-165EL12","https://www.colle.eu/en/rent/working-at-heights/aerial-lifts/scissor-lifts/holland-lift-n165el12/","2026-11-21"]), ["Altura de plataforma","Capacidad máxima de plataforma"]],
+  [JSON.stringify(["Oil & Steel","SNAKE 189","https://www.lectura-specs.com/en/model/aerial-work-platform/articulating-boom-lifts-trailer-mounted-articulating-boom-lifts-oil-steel/snake-189-11697682","2026-11-21"]), ["Alcance horizontal (m)","Capacidad máxima de plataforma"]],
+  [JSON.stringify(["JLG","4014PS","https://www.lectura-specs.com/en/model/forklifts/telehandlers-jlg/4014-ps-1152518","2026-11-21"]), ["Alcance horizontal (m)","Anchura de transporte","Longitud de transporte"]],
+  [JSON.stringify(["JLG","153-12","https://www.manualslib.mx/manual/359967/Jlg-Liftlux-153-12.html?page=64","2026-11-21"]), ["Altura de plataforma","Capacidad máxima de plataforma"]],
+  [JSON.stringify(["Oil & Steel","SCORPION 1812","https://www.tvicranes.com/es/paginas/alquiler","2026-11-21"]), ["Alcance horizontal (m)","Anchura de plataforma"]],
+  [JSON.stringify(["BRAVI","SOLO GYPS","https://www.manualslib.com/manual/2589077/Bravi-Platforms-Solo-Gyps.html","2026-11-21"]), ["Capacidad del elevador de paneles","Tamaño máximo del panel"]]
+]);
+const claims = reviewedModelDocumentClaims().filter((claim) =>
+  claimFields.get(JSON.stringify([claim.document.brand, claim.document.model, claim.document.url,
+    claim.verification.reviewedOn]))?.includes(claim.field));
 
 test("fase 31: las quince afirmaciones verificadas se emiten desde el motor sin cambiar el producto", async () => {
   assert.equal(claims.length, 15);

@@ -1,3 +1,4 @@
+import { sameProductProvider } from "../../../../catalog/identity.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { resolveEditorialFacts } from "../../core/editorial-facts.js";
 import { editorialFamilyOf } from "../../core/editorial-families.js";
@@ -78,7 +79,7 @@ const batteryVoltageContext = (source: ProductRecord, prepared: ProductRecord, g
 };
 
 export const resolveSourcedCombinedBatteryGeneral = (source: ProductRecord, prepared: ProductRecord, general: string | null): string | null => {
-  if (!general || source.providerId !== prepared.providerId) return null;
+  if (!general || !sameProductProvider(source, prepared)) return null;
   if (!source.brand || !source.model || !verifiedEditorialUnitPair(source, prepared) ||
     !verifiedEditorialIdentity(source) || !verifiedEditorialIdentity(prepared) ||
     !/^La ficha técnica de\b/u.test(general) || !containsEditorialBrandModel(general, source.brand, source.model) ||
@@ -216,7 +217,7 @@ const conflictingPalletTruckGeneral = (source: ProductRecord, prepared: ProductR
   const original = source.longDescription?.trim();
   const summary = source.shortDescription?.trim();
   if (!brand || !model || !original || !summary || general.trim() !== original ||
-    source.providerId !== prepared.providerId || !verifiedEditorialUnitPair(source, prepared) ||
+    !sameProductProvider(source, prepared) || !verifiedEditorialUnitPair(source, prepared) ||
     !verifiedEditorialIdentity(source) || !verifiedEditorialIdentity(prepared) ||
     source.specs?.Marca !== brand || source.specs?.Modelo !== model ||
     prepared.specs?.Marca !== brand || prepared.specs?.Modelo !== model ||

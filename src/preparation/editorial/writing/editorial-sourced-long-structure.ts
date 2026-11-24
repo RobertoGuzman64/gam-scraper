@@ -1,3 +1,4 @@
+import { sameProductProvider } from "../../../catalog/identity.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { sameEditorialUnit, verifiedEditorialIdentity } from "../core/editorial-source-contract.js";
 
@@ -8,7 +9,7 @@ import { editorialMetricOf, editorialQuantity, formatEditorialQuantity } from ".
 
 const structureReachTruckListing = (source: ProductRecord, prepared: ProductRecord, current: string): string | null => {
   if (prepared.longDescription?.trim() !== current ||
-    source.providerId !== prepared.providerId || source.condition !== "Segunda mano" ||
+    !sameProductProvider(source, prepared) || source.condition !== "Segunda mano" ||
     !source.brand || !source.model || editorialFamilyOf(source.title ?? "") !== "carretilla-retractil") return null;
   const match = /^Ref\. ([A-Z0-9-]+) CARRETILLA RETR[AÁ]CTIL EL[EÉ]CTRICA (\d{3,5}) kg ALTURA DE ELEVACI[OÓ]N (\d[\d.,]*) mm (.+?) HORAS (\d+) AÑO DE FABRICACI[OÓ]N (\d{4})$/iu.exec(current);
   if (!match?.[1] || !match[2] || !match[3] || !match[4] || !match[5] || !match[6] ||

@@ -1,3 +1,4 @@
+import { sameProductProvider } from "../../../catalog/identity.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 import { resolveEditorialSource } from "../core/editorial-source.js";
 import { normalizeEditorialSummary } from "../core/editorial-normalization.js";
@@ -58,7 +59,7 @@ export const resolveSourcedScrubberShort = (source: ProductRecord, prepared: Imp
   const original = source.shortDescription?.trim();
   const model = source.model?.trim();
   const title = source.title?.trim();
-  if (!original || !model || !title || source.providerId !== prepared.providerId || source.reference !== prepared.reference ||
+  if (!original || !model || !title || !sameProductProvider(source, prepared) || source.reference !== prepared.reference ||
     source.url !== prepared.sourceUrl || source.condition !== "Nuevo" || source.specs?.Modelo !== model ||
     current !== normalizeEditorialSummary(original, model)) return null;
   const identity = /^➨\s*([\p{L}][\p{L}\d-]*)\s+([\p{L}\d.-]+)\s+Nueva\s+➨\s*Venta\s+(?:de\s+)?fregadora\s+(?:de\s+)?conductor\s+sentado$/iu.exec(original);

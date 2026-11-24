@@ -14,7 +14,16 @@ const expected = [
   { providerId: "mercaeleva", reference: "M971-8124", count: 2 },
   { providerId: "gam", reference: "4661", count: 1 }
 ] as const;
-const claims = reviewedModelDocumentClaims().slice(190, 204);
+const claimFields = new Map<string, readonly string[]>([
+  [JSON.stringify(["JLG","3394RT","https://www.gregorypoolelift.com/new-equipment/aerial-lifts/3394rt/","2026-11-21"]), ["Altura de plataforma","Anchura (mm)","Anchura de plataforma","Longitud de plataforma"]],
+  [JSON.stringify(["Manitou","160ATJ","https://www.lectura-specs.es/es/modelo/plataformas-elevadoras/plataformas-elevadoras-articuladas-plataformas-articuladas-de-ruedas-manitou/160-atj-11680545","2026-11-21"]), ["Anchura (mm)","Anchura de plataforma","Capacidad máxima de plataforma","Longitud de plataforma"]],
+  [JSON.stringify(["JLG","660SJ","https://www.lectura-specs.es/es/modelo/plataformas-elevadoras/plataformas-telescopicas/plataformas-telescopicas-de-ruedas-jlg/660sj-1157114","2026-11-21"]), ["Alcance horizontal (m)","Anchura (mm)","Capacidad máxima de plataforma"]],
+  [JSON.stringify(["Genie","S-125","https://www.gtaccess.co.uk/machine/genie-s125","2026-11-21"]), ["Alcance horizontal (m)","Capacidad máxima de plataforma"]],
+  [JSON.stringify(["CTE","ZED 21.3 JHV","https://www.afi-rentals.co.uk/news/wilson-access-continues-fleet-investment-with-four-new-cte-zed-213-jhv-truck-mounts","2026-11-21"]), ["Alcance horizontal (m)"]]
+]);
+const claims = reviewedModelDocumentClaims().filter((claim) =>
+  claimFields.get(JSON.stringify([claim.document.brand, claim.document.model, claim.document.url,
+    claim.verification.reviewedOn]))?.includes(claim.field));
 
 test("fase 32: las 14 acreditaciones del motor conservan fuente, mecanismo y valores comerciales", async () => {
   assert.equal(claims.length, 14);

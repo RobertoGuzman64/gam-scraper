@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
+import { matchesTechnicalDocumentVerification, type TechnicalSpecEvidence } from "../../../contracts/technical-provenance.js";
+import { normalizeSpecKey } from "../../../catalog/normalization/normalize-specs.js";
 import { buildProductIdentity } from "../../../catalog/identity.js";
 import { readVerifiedManainRecordSource } from "../../../infrastructure/filesystem/catalog/manain-record-source.js";
 import { prepareImportBatch } from "../../product/batch-identity.js";
@@ -51,7 +53,20 @@ test("Manain: el original verificado atraviesa íntegramente el motor editorial 
     const normalizedSpecs = normalizePreparedTechnicalSpecs(source, originalSpecs);
     const expectedSpecs = normalizeOriginalEnergyPresentation(normalizeOriginalLengthPresentation(
       normalizeOriginalMassPresentation(normalizedSpecs, originalSpecs), originalSpecs), originalSpecs);
-    assert.deepEqual(prepared.product.spec, expectedSpecs);
+    for (const [key, value] of Object.entries(expectedSpecs)) {
+      assert.deepEqual(prepared.product.spec[key], value, key);
+    }
+    for (const [key, value] of Object.entries(prepared.product.spec)) {
+      if (key in expectedSpecs) continue;
+      const entry: TechnicalSpecEvidence | undefined = prepared.technicalProvenance?.entries.find((candidate) =>
+        candidate.field === normalizeSpecKey(key) && candidate.value === value);
+      assert.ok(entry, key);
+      assert.equal(entry.scope, "model-document");
+      assert.ok(entry.verification);
+      assert.ok(matchesTechnicalDocumentVerification(entry.document, entry.field, entry.value, entry.verification));
+      assert.equal(entry.document.brand, source.brand);
+      assert.equal(entry.document.model, source.model);
+    }
     assert.equal(prepared.product.categorySellID, null);
     assert.deepEqual(prepared.product.attributes, []);
     assert.equal(prepared.status, prepared.issues.length === 0 ? "ready" : "review");

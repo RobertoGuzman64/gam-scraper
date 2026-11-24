@@ -16,7 +16,17 @@ const references = [
   { providerId: "mercaeleva", reference: "M829-9712", count: 2 }
 ] as const;
 
-const claims = reviewedModelDocumentClaims().slice(143, 162);
+const claimFields = new Map<string, readonly string[]>([
+  [JSON.stringify(["LITTIUM","Ibiza Titanium","https://www.manualslib.com/manual/2197948/Littium-Ibiza-Titanium.html?page=20","2026-11-21"]), ["Carga máxima admitida","Peso con batería","Potencia del motor","Tensión nominal del motor","Velocidad máxima de asistencia"]],
+  [JSON.stringify(["BRAVI","SKY DECK","https://www.bravi-platforms.com/wp-content/uploads/2022/08/PERI-SKYDECK_EN.pdf","2026-11-21"]), ["Dimensiones del panel admitido","Montaje del soporte","Número máximo de soportes por Leonardo HD","Peso neto del portapaneles"]],
+  [JSON.stringify(["ZERO","DS 14","https://www.zeromotorcycle.eu/en/motorcycle/ds/","2026-11-21"]), ["Altura del asiento","Par motor máximo del modelo","Peso en orden de marcha del modelo"]],
+  [JSON.stringify(["JLG","E600JP","https://sitecore.jlg.com/dfsmedia/e4042b10c9ce4595b4cc059f1299f079/140840-source","2026-11-21"]), ["Alcance horizontal (m)","Altura de plataforma","Capacidad máxima de plataforma"]],
+  [JSON.stringify(["JLG","800AJ","https://sitecore.jlg.com/dfsmedia/e4042b10c9ce4595b4cc059f1299f079/142288-source","2026-11-21"]), ["Alcance horizontal (m)","Altura de plataforma"]],
+  [JSON.stringify(["JLG","860SJ","https://www.jlg.com/en/equipment/boom-lifts/telescopic/engine-powered/800-series/860sj","2026-11-21"]), ["Anchura (mm)","Capacidad de plataforma sin restricciones"]]
+]);
+const claims = reviewedModelDocumentClaims().filter((claim) =>
+  claimFields.get(JSON.stringify([claim.document.brand, claim.document.model, claim.document.url,
+    claim.verification.reviewedOn]))?.includes(claim.field));
 
 test("fase 29: las 19 afirmaciones revisadas se emiten durante la preparación sin mutar el producto", async () => {
   assert.equal(claims.length, 19);

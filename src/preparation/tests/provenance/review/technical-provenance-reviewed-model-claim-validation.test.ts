@@ -16,7 +16,17 @@ const references = [
   { providerId: "mercaeleva", reference: "M018-7013", count: 4 }
 ] as const;
 
-const claims = reviewedModelDocumentClaims().slice(162, 175);
+const claimFields = new Map<string, readonly string[]>([
+  [JSON.stringify(["YALE","PLHP25","https://www.briggsstore.co.uk/uploads/Yale_EN_PLHP25_standard_spec-sheet.pdf","2026-11-21"]), ["Centro de carga (mm)","Elevación de las horquillas","Peso de servicio"]],
+  [JSON.stringify(["LOGITRANS","Self Maxi","https://logitrans.com/fully-powered-logiflex-stacker-self-maxi/","2026-11-21"]), ["Controlador de tracción"]],
+  [JSON.stringify(["LOGITRANS","Self Maxi S","https://logitrans.com/fully-powered-logiflex-stacker-with-straddle-legs-selfs-maxi/","2026-11-21"]), ["Controlador de tracción"]],
+  [JSON.stringify(["CTE","TRACCESS 170E","https://cpslift.com/access-platforms/cte-traccess-platforms/traccess-170-e/","2026-11-21"]), ["Alcance horizontal (m)","Rotación de torreta"]],
+  [JSON.stringify(["CTE","TRACCESS 230","https://cpslift.com/access-platforms/cte-traccess-platforms/traccess-230/","2026-11-21"]), ["Alcance horizontal (m)","Anchura en transporte"]],
+  [JSON.stringify(["JLG","1250AJP","https://jlg.ru/upload/iblock/a55/a55ac022eb564236eb1714d950c513c3.pdf","2026-11-21"]), ["Alcance horizontal (m)","Altura de plataforma","Anchura con ejes recogidos","Longitud (mm)"]]
+]);
+const claims = reviewedModelDocumentClaims().filter((claim) =>
+  claimFields.get(JSON.stringify([claim.document.brand, claim.document.model, claim.document.url,
+    claim.verification.reviewedOn]))?.includes(claim.field));
 
 test("fase 30: las 13 afirmaciones revisadas se emiten durante la preparación sin mutar el producto", async () => {
   assert.equal(claims.length, 13);

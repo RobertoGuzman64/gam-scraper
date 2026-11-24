@@ -60,11 +60,17 @@ test("admite informes en catalogs/reports sin admitir entradas desconocidas en l
     const directory = join(root, "catalogs", "reports", "revision");
     await mkdir(directory, { recursive: true });
     await writeFile(join(directory, "categorias-sin-asignar.csv"), "referencia,categoria\n");
+    for (const name of ["editorial-coverage", "editorial-knowledge"]) {
+      const report = join(root, "catalogs", "reports", name);
+      await mkdir(report);
+      await writeFile(join(report, "audit.json"), "{}");
+    }
     const valid = await inspectPortableInventory(root, input(root));
     assert.deepEqual(valid.issues, []);
+    await writeFile(join(root, "catalogs", "reports", "desconocido.txt"), "entrada no acreditada");
     await writeFile(join(root, "catalogs", "desconocido.txt"), "entrada no acreditada");
     const invalid = await inspectPortableInventory(root, input(root));
-    assert.ok(invalid.issues.some((issue) => issue.includes("desconocido.txt")));
+    assert.equal(invalid.issues.filter((issue) => issue.includes("desconocido.txt")).length, 2);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 

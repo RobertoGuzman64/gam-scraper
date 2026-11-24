@@ -1,3 +1,4 @@
+import { sameProductProvider } from "../../../catalog/identity.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { editorialMetricOf, editorialQuantityOf, formatEditorialQuantity } from "../measurements/editorial-measurements.js";
 import { editorialFamilyFromSourceGeneral, editorialFamilyName, editorialFamilyOf, resolveConsistentEditorialFamily } from "../core/editorial-families.js";
@@ -31,7 +32,7 @@ export const resolveCorroboratedTitleBrand = (source: ProductRecord, prepared: P
   const brand = source.brand?.trim();
   const model = source.model?.trim();
   const title = source.title?.trim();
-  if (!brand || !model || !title || source.providerId !== prepared.providerId ||
+  if (!brand || !model || !title || !sameProductProvider(source, prepared) ||
     !sameEditorialUnit(source, prepared) || source.title !== prepared.title ||
     fold(String(source.specs?.Marca ?? "")) !== fold(brand) ||
     fold(String(source.specs?.Modelo ?? "")) !== fold(model) ||
@@ -230,7 +231,7 @@ export const resolveManufacturerFamilyTitle = (
   const model = source.model?.trim();
   const title = source.title?.trim();
   if (!rule || !brand || !model || !title || !verifiedEditorialUnitPair(source, prepared) ||
-    !verifiedEditorialIdentity(source) || !verifiedEditorialIdentity(prepared) || source.providerId !== prepared.providerId ||
+    !verifiedEditorialIdentity(source) || !verifiedEditorialIdentity(prepared) || !sameProductProvider(source, prepared) ||
     source.title !== prepared.title || fold(title) !== fold(`${brand} ${model}`) ||
     editorialIdentityKey(brand, model) !== editorialIdentityKey(rule.brand, rule.model) ||
     source.specs?.["Título adicional"] !== undefined || prepared.specs?.["Título adicional"] !== undefined) return null;
@@ -248,7 +249,7 @@ const literalSourceFamilyTitle = (source: ProductRecord, prepared: ProductRecord
   const origin = resolveEditorialLiteralTitleSource(source);
   const current = resolveEditorialLiteralTitleSource(prepared);
   if (!title || !origin || !current || origin !== current ||
-    editorialFamilyOf(title) || source.providerId !== prepared.providerId ||
+    editorialFamilyOf(title) || !sameProductProvider(source, prepared) ||
     !verifiedEditorialLiteralUnitPair(source, prepared) || source.title !== prepared.title ||
     source.longDescription !== prepared.longDescription || source.shortDescription?.trim() || prepared.shortDescription?.trim() ||
     source.specs?.["Título adicional"] !== undefined || prepared.specs?.["Título adicional"] !== undefined) return null;

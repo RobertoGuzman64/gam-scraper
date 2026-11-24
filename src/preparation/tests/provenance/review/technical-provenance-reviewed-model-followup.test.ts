@@ -20,7 +20,21 @@ const references = [
   { providerId: "mercaeleva", reference: "M624-7785", count: 4 }
 ] as const;
 
-const claims = reviewedModelDocumentClaims().slice(112, 143);
+const claimFields = new Map<string, readonly string[]>([
+  [JSON.stringify(["Toyota","6FBRE14","https://www.toyotamaterialhandling.com.au/media/20096/6fbre12_20.341.pdf","2026-11-21"]), ["Anchura exterior del modelo","Centro de carga nominal del modelo","Propulsión","Radio de giro exterior del modelo"]],
+  [JSON.stringify(["LGMG","AS1413","https://www.mercaeleva.com/pdf/fichas/2022/merca-eleva-tijera-electrica-lgmg-as1413.pdf","2026-11-21"]), ["Anchura de plataforma","Capacidad de plataforma","Extensión de plataforma","Longitud de plataforma"]],
+  [JSON.stringify(["BT","SWE 160","https://toyota-material-handling.co.th/products/275","2026-11-21"]), ["Anchura (mm)","Centro de carga (mm)","Radio de giro (mm)"]],
+  [JSON.stringify(["Linde","T18","https://www.linde-mh.es/es/Productos/Transpaletas/T14-T20/","2026-11-21"]), ["Capacidad nominal de carga","Elevación de horquillas"]],
+  [JSON.stringify(["Tennant","BCS S16H Descarga alto","https://www.tennantco.com/content/dam/tennant/tennantco/products/machines/sweeper%20riders/s16/s16-specifications-en-emea.pdf","2026-11-21"]), ["Altura máxima de descarga de la tolva"]],
+  [JSON.stringify(["Tennant","BCS S20 Batería","https://www.tennantco.com/content/dam/tennant/tennantco/products/machines/sweeper%20riders/S20/s20-specifications-battery-en-noam.pdf","2026-11-21"]), ["Longitud del cepillo principal"]],
+  [JSON.stringify(["Manitou","200ATJ","https://www.lectura-specs.com/en/model/aerial-work-platform/articulating-boom-lifts-wheeled-articulating-boom-lifts-manitou/200-atj-1161009","2026-11-21"]), ["Alcance horizontal (m)","Anchura (mm)","Capacidad máxima de plataforma"]],
+  [JSON.stringify(["JLG","SL203-204","https://cdnc.heyzine.com/flip-book/pdf/3bf89898f6e750b3a716118e3b59d30cf09fe308-1.pdf","2026-11-21"]), ["Altura de plataforma según catálogo técnico","Anchura según catálogo técnico","Capacidad de carga de plataforma según catálogo técnico","Dimensiones de plataforma según catálogo técnico","Longitud según catálogo técnico"]],
+  [JSON.stringify(["Genie","Z-30/20NRJ","https://www.mateco.es/fileadmin/user_upload/Guia-de-alquiler-2019.pdf","2026-11-21"]), ["Alcance horizontal (m)","Altura de plataforma","Anchura (mm)","Capacidad máxima de plataforma"]],
+  [JSON.stringify(["JLG","1350 SJP","https://www.manualslib.com/manual/1277304/Jlg-1350sjp.html","2026-11-21"]), ["Alcance horizontal máximo sin restricción de carga","Altura de plataforma","Anchura con ejes recogidos","Capacidad de plataforma sin restricciones"]]
+]);
+const claims = reviewedModelDocumentClaims().filter((claim) =>
+  claimFields.get(JSON.stringify([claim.document.brand, claim.document.model, claim.document.url,
+    claim.verification.reviewedOn]))?.includes(claim.field));
 
 test("fase 28: las 31 afirmaciones revisadas se emiten durante la preparación sin mutar el producto", async () => {
   assert.equal(claims.length, 31);

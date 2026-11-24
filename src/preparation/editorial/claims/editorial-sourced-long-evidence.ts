@@ -1,3 +1,4 @@
+import { sameProductProvider } from "../../../catalog/identity.js";
 import type { ProductTechnicalProvenance } from "../../../contracts/technical-provenance.js";
 import { matchesTechnicalDocumentVerification } from "../../../contracts/technical-provenance.js";
 import { originalRecordFingerprint } from "../../../catalog/identity-fingerprint.js";
@@ -99,7 +100,7 @@ export const resolveReviewedModelGeneral = (
   original: ProductRecord, prepared: ProductRecord, general: string | null, provenance: ProductTechnicalProvenance
 ): string | null => {
   if (!general?.trim() || general.includes(reviewedModelCaution) || general.trim().split(/\s+/u).length > 150 ||
-    !original.brand || !original.model || original.providerId !== prepared.providerId ||
+    !original.brand || !original.model || !sameProductProvider(original, prepared) ||
     !captureSourceEditorialEvidence(original).identityVerified || !captureSourceEditorialEvidence(prepared).identityVerified ||
     !verifiedEditorialUnitPair(original, prepared) ||
     !containsEditorialBrandModel(general, original.brand, original.model) ||

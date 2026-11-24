@@ -188,7 +188,7 @@ export const inspectPortableInventory = async (
       await readActiveCatalogIndex(root);
       await checkKnownEntries(join(catalogRoot, "providers"), CAMPAIGN_PROVIDERS, issues);
       await checkKnownEntries(join(catalogRoot, "commercial"), ["develop", "production"], issues);
-      await checkKnownEntries(join(catalogRoot, "reports"), ["revision", "individual-finish", "commercial"], issues);
+      await checkKnownEntries(join(catalogRoot, "reports"), ["revision", "individual-finish", "commercial", "editorial-coverage", "editorial-knowledge"], issues);
       await checkKnownEntries(join(catalogRoot, "reports", "commercial"), ["develop", "production"], issues);
       for (const environment of ["develop", "production"]) {
         const exported = join(catalogRoot, "commercial", environment);
