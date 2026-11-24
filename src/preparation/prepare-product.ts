@@ -22,6 +22,7 @@ import { reconcileHandlingFamilySpecs } from "./technical/handling-family-specif
 import { presentGamVerifiedRestrictedCapacity } from "./gam/reconciliation/gam-verified-capacity-coherence.js";
 import { recoverSourcePlatformGeometry } from "./technical/platform-geometry-recovery.js";
 import { recoverBaseTechnicalSpecs } from "./technical/base-technical-recovery.js";
+import { recoverReviewedModelTechnicalSpecs } from "./technical/documented-technical-evidence.js";
 import { recoverDocumentedTechnicalSpecs } from "./technical/documented-technical-recovery.js";
 import { resolvePreparedEditorial } from "./editorial/core/prepared-editorial.js";
 import { normalizePreparedEditorialPresentation } from "./editorial/writing/prepared-editorial-presentation.js";
@@ -55,8 +56,9 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const beforeReconciliation = record;
   record = reconcileTechnicalBeforeEditorial(record, technicalProvenance.observe);
   record = reconcileTechnicalAfterEditorial(record);
-  const reconciledSpecs = recoverSourcePlatformGeometry(originalRecord, recoverySource,
+  const sourceGeometrySpecs = recoverSourcePlatformGeometry(originalRecord, recoverySource,
     applyReconciledTechnicalSpecs(beforeReconciliation, record, documentedSpecs), technicalProvenance.observe);
+  const reconciledSpecs = recoverReviewedModelTechnicalSpecs(originalRecord, sourceGeometrySpecs, technicalProvenance.observe);
   const editorialRecord = reconcileManainEditorialSourceSpecs({ ...record, specs: reconciledSpecs,
     shortDescription: sourceUnitRecord.shortDescription, longDescription: coherentSource.longDescription });
   const sourceEditorial = captureSourceEditorialEvidence(editorialRecord);

@@ -3,7 +3,12 @@ import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
 import type { DocumentedTechnicalSource as ProvenanceSource } from "../../contracts/technical-provenance.js";
 import type { TechnicalRecoveryObservation } from "../provenance/technical-recovery-observation.js";
 import { reviewedCatalogModelIdentity, matchesDocumentedTechnicalIdentity } from "./reviewed-catalog-model-identity.js";
-import { reviewedModelDocumentVerification } from "./reviewed-model-claims.js";
+import { reusableReviewedModelClaims, reviewedModelDocumentVerification } from "./reviewed-model-claims.js";
+
+import { resolveEditorialFacts } from "../editorial/core/editorial-facts.js";
+import type { EditorialEnergy } from "../editorial/core/editorial-facts.js";
+import { editorialMetricOf, editorialQuantityOf } from "../editorial/measurements/editorial-measurements.js";
+import { fold } from "../classification/category-utils.js";
 
 export type DocumentedTechnicalUnit = {
   readonly fingerprint: string;
@@ -159,5 +164,92 @@ export const applyDocumentedTechnicalEvidence = (
         unit.source ?? unit.sources?.[0] ?? (source.exactTitleAndUrl ? unit.url : undefined), mechanism, observe);
     }
   }
+  return result;
+};
+
+const geometryAliases: Readonly<Record<string, RegExp>> = {
+  "Altura de plataforma": /^altura (?:maxima )?(?:de (?:la )?)?plataforma(?: (?:maxima|max\.?))?(?: \(m[m]?\))?$/u,
+  "Longitud de plataforma": /^(?:longitud|largo) (?:de (?:la )?)?(?:plataforma|cesta)(?: principal)?(?: \(m[m]?\))?$/u,
+  "Anchura de plataforma": /^(?:anchura|ancho) (?:de (?:la )?)?(?:plataforma|cesta)(?: principal)?(?: \(m[m]?\))?$/u,
+  "Extensión de plataforma": /^(?:extension(?: de (?:la )?plataforma)?|longitud (?:de )?extension|plataforma extensible)(?: \(m[m]?\))?$/u
+};
+
+const combinedGeometry = /^(?:dimensiones|medidas) (?:de (?:la )?)?(?:cesta|plataforma)\b/u;
+const explicitGeometry = /\b(?:altura|longitud|anchura|ancho|largo|dimensiones|medidas|extension) (?:de (?:la )?)?(?:plataforma|cesta)\b[^.!?;\n]{0,50}\d|\b(?:plataforma extensible|longitud (?:de )?extension)\b[^.!?;\n]{0,50}\d/u;
+
+const geometryConfigurationConflict = /\b(?:sin|carece de|no (?:dispone|cuenta) de) (?:una? |la )?(?:extension|plataforma|cesta)\b|\b(?:extension|plataforma|cesta)\b[^.!?;]{0,40}\b(?:opcional|no instalada|no incluida|modificada|sustituida)\b/u;
+
+const nominalLoadCenter = /\b(?:centro (?:nominal )?(?:de gravedad )?(?:de (?:la )?)?carga|baricentro (?:de (?:la )?)?carga|load cent(?:er|re))\b/u;
+const handlingCapacityKeys = /^(?:capacidad(?: nominal)?(?: de carga)?|capacidad maxima de elevacion)(?: \(kg\))?$/u;
+const energyPattern = /\b(?:glp|lpg|diesel|gasoil|gasolina|electric[oa]s?|bateria)\b/gu;
+const energyIdentifier = (value: string): EditorialEnergy => /^(?:glp|lpg)$/u.test(value) ? "GLP" :
+  /^(?:diesel|gasoil)$/u.test(value) ? "diésel" : value === "gasolina" ? "gasolina" : "eléctrica";
+
+export const recoverReviewedModelTechnicalSpecs = (
+  original: ProductRecord, specs: SpecsMap, observe?: TechnicalRecoveryObservation
+): SpecsMap => {
+  if (!original.brand || !original.model || !original.specs) return specs;
+  const claims = reusableReviewedModelClaims(original.brand, original.model);
+  if (claims.length !== 1) return specs;
+  const claim = claims[0];
+  if (!claim) return specs;
+  const facts = resolveEditorialFacts(original);
+  const expected = claim.compatibility;
+  if (!facts || facts.brand !== original.brand || facts.model !== original.model ||
+    facts.family !== expected.family) return specs;
+  const sourceText = fold([original.title, original.shortDescription, original.longDescription].filter(Boolean).join(" "));
+  const escapedModel = fold(original.model).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  if (new RegExp(`\\b${escapedModel}[-/][a-z0-9]+`, "u").test(sourceText)) return specs;
+  if (expected.family === "carretilla-elevadora") {
+    if (facts.loadCapacityKg !== expected.loadCapacityKg || !original.country ||
+      fold(original.country) !== fold(expected.marketCountry) || !original.year || !/^\d{4}$/u.test(original.year) ||
+      Number(original.year) < expected.firstYear || expected.lastYear !== undefined && Number(original.year) > expected.lastYear ||
+      facts.energy !== null && facts.energy !== expected.energy || nominalLoadCenter.test(sourceText)) return specs;
+    const energyEvidence = fold([original.title, original.shortDescription, original.longDescription,
+      ...Object.entries(original.specs).filter(([key]) => /^(?:motor|tipo (?:de )?motor|motorizacion|energia|combustible)$/u.test(fold(key)))
+        .map(([, value]) => String(value))].filter(Boolean).join(" "));
+    if (/\b(?:sin|no (?:es|usa|utiliza|funciona con)|convertid[oa] a)\s+(?:motor (?:de )?)?(?:glp|lpg|diesel|gasoil|gasolina|electric[oa]s?|bateria)\b/u.test(energyEvidence)) return specs;
+    const energies = new Set([...energyEvidence.matchAll(energyPattern)].map((match) => energyIdentifier(match[0])));
+    if (energies.size !== 1 || !expected.energy || !energies.has(expected.energy)) return specs;
+    if ([original.specs, specs].some((source) => Object.entries(source).some(([key, value]) =>
+      nominalLoadCenter.test(fold(key)) || handlingCapacityKeys.test(fold(key)) &&
+        editorialQuantityOf(source, [key], "kg") !== expected.loadCapacityKg ||
+      nominalLoadCenter.test(fold(String(value)))))) return specs;
+    if (claim.facts.length !== 1 || claim.facts[0]?.field !== "Centro de carga nominal del modelo" ||
+      editorialQuantityOf({ [claim.facts[0].field]: claim.facts[0].value }, [claim.facts[0].field], "mm") === null) return specs;
+    const fact = claim.facts[0];
+    const result = { ...specs, [fact.field]: fact.value };
+    observeDocumentedTechnicalAddition(original, specs, result, claim.url,
+      "src/preparation/technical/documented-technical-evidence.ts", observe);
+    return result;
+  }
+  if (facts.energy !== expected.energy || facts.workingHeightM !== expected.workingHeightM ||
+    facts.lengthM !== expected.lengthM || facts.widthM !== expected.widthM) return specs;
+  const capacity = editorialQuantityOf(original.specs, ["Capacidad", "Capacidad carga", "Capacidad de carga",
+    "Capacidad de carga (kg)", "Capacidad de plataforma", "Capacidad máxima de plataforma", "Capacidad de la cesta"], "kg");
+  if (capacity !== expected.loadCapacityKg || facts.loadCapacityKg !== null && facts.loadCapacityKg !== capacity) return specs;
+  if (explicitGeometry.test(sourceText) || geometryConfigurationConflict.test(sourceText)) return specs;
+  const additions: Record<string, string> = {};
+  const sources = [original.specs, specs];
+  if (sources.some((source) => Object.entries(source).some(([key, value]) =>
+    geometryConfigurationConflict.test(fold(`${key} ${String(value)}`))))) return specs;
+  for (const fact of claim.facts) {
+    const aliases = geometryAliases[fact.field];
+    if (!aliases) return specs;
+    const isDimension = fact.field === "Longitud de plataforma" || fact.field === "Anchura de plataforma";
+    if (isDimension && sources.some((source) => Object.keys(source).some((key) => combinedGeometry.test(fold(key))))) continue;
+    const expectedValue = editorialMetricOf({ [fact.field]: fact.value }, [fact.field]);
+    if (expectedValue === null) return specs;
+    const existing = sources.flatMap((source) => Object.keys(source).filter((key) => aliases.test(fold(key)))
+      .map((key) => editorialMetricOf(source, [key])));
+    if (existing.some((value) => value !== expectedValue)) return specs;
+    if (fact.field === "Altura de plataforma" && sources.some((source) =>
+      editorialMetricOf(source, ["Altura"]) === expectedValue)) continue;
+    if (existing.length === 0) additions[fact.field] = fact.value;
+  }
+  if (!Object.keys(additions).length) return specs;
+  const result = { ...specs, ...additions };
+  observeDocumentedTechnicalAddition(original, specs, result, claim.url,
+    "src/preparation/technical/documented-technical-evidence.ts", observe);
   return result;
 };

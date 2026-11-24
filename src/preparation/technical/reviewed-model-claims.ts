@@ -1,6 +1,22 @@
 import { technicalDocumentClaimSha256 } from "../../contracts/technical-provenance.js";
 import type { TechnicalDocumentReference, TechnicalDocumentVerification } from "../../contracts/technical-provenance.js";
 
+import type { EditorialFacts } from "../editorial/core/editorial-facts.js";
+
+type ReviewedModelCompatibility = (Pick<EditorialFacts, "energy" | "workingHeightM" | "lengthM" | "widthM" | "loadCapacityKg"> & {
+  readonly family: "plataforma-tijera" | "plataforma-articulada";
+}) | (Pick<EditorialFacts, "energy" | "loadCapacityKg"> & {
+  readonly family: "carretilla-elevadora";
+  readonly marketCountry: string;
+  readonly firstYear: number;
+  readonly lastYear?: number;
+});
+
+type ReviewedModelReuse = {
+  readonly compatibility: ReviewedModelCompatibility;
+  readonly fields: readonly string[];
+};
+
 type ReviewedModelFact = {
   readonly field: string;
   readonly value: string;
@@ -13,6 +29,7 @@ type ReviewedModelDocument = {
   readonly model: string;
   readonly reviewedOn: string;
   readonly facts: readonly ReviewedModelFact[];
+  readonly reuse?: ReviewedModelReuse;
 };
 
 const documents: readonly ReviewedModelDocument[] = [
@@ -1018,7 +1035,9 @@ const documents: readonly ReviewedModelDocument[] = [
   },
   {
     url: "https://www.lgmglifts.com/product/pro-detail-1028.htm",
-    brand: "LGMG", model: "SR1218D", reviewedOn: "2026-11-21", facts: [
+    brand: "LGMG", model: "SR1218D", reviewedOn: "2026-11-21",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 13.9,
+      lengthM: 3.76, widthM: 1.79, loadCapacityKg: 365 }, fields: ["Altura de plataforma", "Extensión de plataforma", "Longitud de plataforma", "Anchura de plataforma"] }, facts: [
       { field: "Altura de plataforma", value: "11,9 m", support: "LGMG SR1218D, Specifications: A-Platform Height-Raised 11.9m" },
       { field: "Anchura (mm)", value: "1,79 m", support: "LGMG SR1218D, Specifications: F-Overall Width 1.79m" },
       { field: "Capacidad máxima de plataforma", value: "365 kg", support: "LGMG SR1218D, Specifications: Platform Capacity 365kg" },
@@ -1045,7 +1064,9 @@ const documents: readonly ReviewedModelDocument[] = [
   },
   {
     url: "https://www.lgmglifts.com/product/pro-detail-616.htm",
-    brand: "LGMG", model: "A14JE", reviewedOn: "2026-11-21", facts: [
+    brand: "LGMG", model: "A14JE", reviewedOn: "2026-11-21",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 15.8,
+      lengthM: 6.66, widthM: 1.8, loadCapacityKg: 230 }, fields: ["Altura de plataforma"] }, facts: [
       { field: "Alcance horizontal (m)", value: "7,81 m", support: "LGMG A14JE, Specifications: Horizontal Outreach 7.81m" },
       { field: "Altura de plataforma", value: "13,8 m", support: "LGMG A14JE, Specifications: Platform Height 13.8m" },
       { field: "Anchura (mm)", value: "1,8 m", support: "LGMG A14JE, Specifications: B-Overall Width 1.8m" },
@@ -1054,7 +1075,9 @@ const documents: readonly ReviewedModelDocument[] = [
   },
   {
     url: "https://www.lgmglifts.com/product/pro-detail-617.htm",
-    brand: "LGMG", model: "AR16J", reviewedOn: "2026-11-21", facts: [
+    brand: "LGMG", model: "AR16J", reviewedOn: "2026-11-21",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 17.7,
+      lengthM: 7.56, widthM: 2.31, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma"] }, facts: [
       { field: "Alcance horizontal (m)", value: "9,39 m", support: "LGMG AR16J, Specifications: Horizontal Outreach 9.39m" },
       { field: "Altura de plataforma", value: "15,7 m", support: "LGMG AR16J, Specifications: Platform Height 15.7m" },
       { field: "Anchura (mm)", value: "2,31 m", support: "LGMG AR16J, Specifications: B-Stowed Width 2.31m" },
@@ -1202,6 +1225,473 @@ const documents: readonly ReviewedModelDocument[] = [
       { field: "Capacidad máxima de plataforma", value: "450 kg", support: "Rothlehner Haulotte Compact 10, Technical data: Basket load 450 kg" },
       { field: "Longitud (mm)", value: "2,45 m", support: "Rothlehner Haulotte Compact 10, Description: Overall length 2.45 m" }
     ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-1027.htm", brand: "LGMG", model: "SR1018D", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 11.7,
+      lengthM: 3.76, widthM: 1.79, loadCapacityKg: 454 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] },
+    facts: [
+      { field: "Longitud de plataforma", value: "2,79 m", support: "SR1018D, Specifications, Measurements: C-Platform Length 2.79m" },
+      { field: "Anchura de plataforma", value: "1,6 m", support: "SR1018D, Specifications, Measurements: D-Platform Width 1.6m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-2033.htm", brand: "LGMG", model: "S0812II", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 10,
+      lengthM: 2.49, widthM: 1.18, loadCapacityKg: 450 }, fields: ["Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] },
+    facts: [
+      { field: "Longitud de plataforma", value: "2,26 m", support: "S0812Ⅱ, Specifications, Measurements: B-Platform Length 2.26m" },
+      { field: "Anchura de plataforma", value: "1,12 m", support: "S0812Ⅱ, Specifications, Measurements: C-Platform Width 1.12m" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "S0812Ⅱ, Specifications, Measurements: H-Extension Deck 0.9m" }
+    ]
+  },
+  {
+    url: "https://www.hyster.com/globalassets/coms/hyster/emea/documents/trucks-literature/internal-combustion-trucks-pneumatic-tyre/h2.0-3.5ft/h2.0-3.5ft-p177-td-06-2019-lpg-eu-rev04-es.pdf",
+    brand: "HYSTER", model: "H2.5FT", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "GLP", loadCapacityKg: 2500,
+      marketCountry: "España", firstYear: 2015, lastYear: 2019 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Hyster H2.5FT GLP EU, rev. 04 (06/2019), p. 5, filas 1-5 y 1-6: 2,5 t nominales a 500 mm en las cuatro configuraciones; p. 3 distingue las capacidades por mástil, neumáticos y accesorios. Coincide con Hyster Europe 901891/01 (10/2015), pp. 2 y 4." }
+    ]
+  },
+  {
+    url: "https://www.automecaniccorbella.com/resource/B300II_ficha_t%C3%A9cnica.pdf",
+    brand: "CESAB", model: "B318LII", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1800,
+      marketCountry: "España", firstYear: 2022 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "CESAB Material Handling Europe, SPEC_B300_ES_202202 / Ucan V02, p. 2, columna B318L-II, filas 1.5 y 1.6: 1,8 t y 500 mm; especificación nominal en condiciones estándar, no capacidad residual de la unidad." }
+    ]
+  },
+  {
+    url: "https://www.hyster.com/globalassets/coms/hyster/emea/documents/trucks-literature/internal-combustion-trucks-pneumatic-tyre/h2.0-3.5ft/h2.0-3.5ft-p177-td-06-2019-lpg-eu-rev04-es.pdf",
+    brand: "HYSTER", model: "H3.5FT", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "GLP", loadCapacityKg: 3500,
+      marketCountry: "España", firstYear: 2019, lastYear: 2019 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Hyster Europe, P177 rev. 04 (06/2019), p. 7, H3.5FT GLP, filas 1-5 y 1-6: 3,5 t a 500 mm en Fortens, Advance y Advance Plus; p. 3 distingue capacidades por mástil, ruedas y accesorios." }
+    ]
+  },
+  {
+    url: "https://www.hyster.com/globalassets/coms/hyster/cismea/documents/trucks-literature/3-wheel-electric-forklift-trucks/j1.5-2.0xnt/j1.5-2.0xnt-k160-ss-05-2016-emea-rev08-en.pdf",
+    brand: "HYSTER", model: "J1.5XNT SWB", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1500,
+      marketCountry: "España", firstYear: 2016, lastYear: 2023 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Hyster Europe K160 rev. 08 (05/2016), p. 2, filas 1.5 y 1.6: J1.5XNT SWB, 1500 kg nominales a 500 mm; corroborado en rev. 09 (11/2023), pieza 3990029, p. 3. Capacidad nominal con mástil vertical estándar; no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://www.hyster.com/globalassets/coms/hyster/cismea/documents/trucks-literature/3-wheel-electric-forklift-trucks/j1.5-2.0xnt/j1.5-2.0xnt-k160-ss-05-2016-emea-rev08-en.pdf",
+    brand: "HYSTER", model: "J1.8XNT MWB", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1800,
+      marketCountry: "España", firstYear: 2016, lastYear: 2023 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Hyster Europe K160 rev. 08 (05/2016), p. 3, filas 1.5 y 1.6: J1.8XNT MWB, 1800 kg nominales a 500 mm; corroborado en rev. 09 (11/2023), pieza 3990029, p. 4. Capacidad nominal con mástil vertical estándar; no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://www.hyster.com/globalassets/coms/hyster/cismea/documents/trucks-literature/3-wheel-electric-forklift-trucks/j1.5-2.0xnt/j1.5-2.0xnt-k160-ss-05-2016-emea-rev08-en.pdf",
+    brand: "HYSTER", model: "J2.0XNT MWB", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 2000,
+      marketCountry: "España", firstYear: 2016, lastYear: 2023 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Hyster Europe K160 rev. 08 (05/2016), p. 3, filas 1.5 y 1.6: J2.0XNT MWB, 2000 kg nominales a 500 mm; corroborado en rev. 09 (11/2023), pieza 3990029, p. 4. Capacidad nominal con mástil vertical estándar; no capacidad residual." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/globalassets/coms/yale/emea/documents/4-wheel-electric-forklift-trucks/erp22-35vl/220990057-vl-series-spec-sheet-rev07-en-lowres-zmag.pdf",
+    brand: "YALE", model: "ERP35VL", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 3500,
+      marketCountry: "España", firstYear: 2019, lastYear: 2021 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "Yale Europe 220990057 rev. 07 (02/2021), p. 3, filas 1.5 y 1.6: ERP 35 VL LWB, 3500 kg nominales a 500 mm en Value y Productivity. Corroborado en edición alemana 220990059 rev. 07 (07/2019), p. 3. Valores nominales de configuración estándar, no capacidad residual con mástil o accesorios instalados." }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-1028.htm", brand: "LGMG", model: "SR1218D", reviewedOn: "2026-11-24",
+    facts: [
+      { field: "Longitud de plataforma", value: "2,79 m", support: "LGMG SR1218D, Specifications, Measurements: C-Platform Length 2.79m" },
+      { field: "Anchura de plataforma", value: "1,6 m", support: "LGMG SR1218D, Specifications, Measurements: D-Platform Width 1.6m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-617.htm", brand: "LGMG", model: "AR16J", reviewedOn: "2026-11-24",
+    facts: [
+      { field: "Longitud de plataforma", value: "1,83 m", support: "LGMG AR16J, Specifications, Measurements: D-Platform Size Length 1.83m" },
+      { field: "Anchura de plataforma", value: "0,76 m", support: "LGMG AR16J, Specifications, Measurements: E-Platform Size Width 0.76m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-1026.htm", brand: "LGMG", model: "AR14J", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 16.09,
+      lengthM: 6.77, widthM: 2.31, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "14,09 m", support: "LGMG AR14J, Specifications, Measurements: Platform Height 14.09m" },
+      { field: "Longitud de plataforma", value: "1,83 m", support: "LGMG AR14J, Specifications, Measurements: D-Platform Size Length 1.83m" },
+      { field: "Anchura de plataforma", value: "0,76 m", support: "LGMG AR14J, Specifications, Measurements: E-Platform Size Width 0.76m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-987.htm", brand: "LGMG", model: "SR1623D", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 17.9,
+      lengthM: 4.9, widthM: 2.3, loadCapacityKg: 680 }, fields: ["Altura de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "15,9 m", support: "LGMG SR1623D, Specifications, Measurements: A-Platform Height-Raised 15.9m" },
+      { field: "Anchura de plataforma", value: "1,83 m", support: "LGMG SR1623D, Specifications, Measurements: D-Platform Width 1.83m; common to both platform lengths listed in the table" }
+    ]
+  },
+  {
+    url: "https://en.lgmg.com.cn/product/623.htm", brand: "LGMG", model: "AS0808E", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 10,
+      lengthM: 2.4, widthM: 0.83, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "8 m", support: "LGMG AS0808E, Specifications, Measurements: A-Platform Height-Raised 8m" },
+      { field: "Longitud de plataforma", value: "2,26 m", support: "LGMG AS0808E, Specifications, Measurements: C-Platform Length 2.26m" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "LGMG AS0808E, Specifications, Measurements: H-Extension Deck 0.9m" }
+    ]
+  },
+  {
+    url: "https://en.lgmg.com.cn/product/624.htm", brand: "LGMG", model: "AS1012E", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 12,
+      lengthM: 2.47, widthM: 1.18, loadCapacityKg: 320 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "10 m", support: "LGMG AS1012E, Specifications, Measurements: A-Platform Height-Raised 10m" },
+      { field: "Longitud de plataforma", value: "2,26 m", support: "LGMG AS1012E, Specifications, Measurements: C-Platform Length 2.26m" },
+      { field: "Anchura de plataforma", value: "1,12 m", support: "LGMG AS1012E, Specifications, Measurements: D-Platform Width 1.12m" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "LGMG AS1012E, Specifications, Measurements: H-Extension Deck 0.9m" }
+    ]
+  },
+  {
+    url: "https://en.lgmg.com.cn/product/986.htm", brand: "LGMG", model: "AS0812", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 10,
+      lengthM: 2.42, widthM: 1.18, loadCapacityKg: 450 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "8 m", support: "LGMG AS0812, Specifications, Measurements: A-Platform Height-Raised 8m" },
+      { field: "Longitud de plataforma", value: "2,26 m", support: "LGMG AS0812, Specifications, Measurements: C-Platform Length 2.26m" },
+      { field: "Anchura de plataforma", value: "1,15 m", support: "LGMG AS0812, Specifications, Measurements: D-Platform Width 1.15m" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "LGMG AS0812, Specifications, Measurements: H-Extension Deck 0.9m" }
+    ]
+  },
+  {
+    url: "https://en.lgmg.com.cn/product/985.htm", brand: "LGMG", model: "AS0607W", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 7.8,
+      lengthM: 1.83, widthM: 0.81, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "5,8 m", support: "LGMG AS0607W, Specifications, Measurements: A-Platform Height-Raised 5.8m" },
+      { field: "Longitud de plataforma", value: "1,63 m", support: "LGMG AS0607W, Specifications, Measurements: C-Platform Length 1.63m" },
+      { field: "Anchura de plataforma", value: "0,74 m", support: "LGMG AS0607W, Specifications, Measurements: D-Platform Width 0.74m" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "LGMG AS0607W, Specifications, Measurements: H-Extension Deck 0.9m" }
+    ]
+  },
+  {
+    url: "https://en.lgmg.com.cn/product/625.htm", brand: "LGMG", model: "AS1212E", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 14,
+      lengthM: 2.47, widthM: 1.18, loadCapacityKg: 320 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "2,26 m", support: "LGMG AS1212E, Specifications, Measurements: C-Platform Length 2.26m" },
+      { field: "Anchura de plataforma", value: "1,12 m", support: "LGMG AS1212E, Specifications, Measurements: D-Platform Width 1.12m" }
+    ]
+  },
+  {
+    url: "https://en.lgmg.com.cn/product/633.htm", brand: "LGMG", model: "AS1212", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 14,
+      lengthM: 2.47, widthM: 1.18, loadCapacityKg: 320 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "12 m", support: "LGMG AS1212, Specifications, Measurements: A-Platform Height-Raised 12m" },
+      { field: "Longitud de plataforma", value: "2,26 m", support: "LGMG AS1212, Specifications, Measurements: C-Platform Length 2.26m" },
+      { field: "Anchura de plataforma", value: "1,15 m", support: "LGMG AS1212, Specifications, Measurements: D-Platform Width 1.15m" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "LGMG AS1212, Specifications, Measurements: H-Extension Deck 0.9m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-620.htm", brand: "LGMG", model: "SS0507E", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 6.3,
+      lengthM: 1.53, widthM: 0.81, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "4,3 m", support: "LGMG SS0507E, Specifications, Measurements, A: altura elevada 4.3 m" },
+      { field: "Longitud de plataforma", value: "1,35 m", support: "LGMG SS0507E, Specifications, Measurements, B: longitud de plataforma 1.35 m" },
+      { field: "Anchura de plataforma", value: "0,7 m", support: "LGMG SS0507E, Specifications, Measurements, C: anchura de plataforma 0.7 m" },
+      { field: "Extensión de plataforma", value: "0,6 m", support: "LGMG SS0507E, Specifications, Measurements, G: extensión de plataforma 0.6 m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-990.htm", brand: "LGMG", model: "SR1023D", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 12,
+      lengthM: 4.9, widthM: 2.3, loadCapacityKg: 1100 }, fields: ["Altura de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "10 m", support: "LGMG SR1023D, Specifications, Measurements, A: altura elevada 10 m, común a ambas configuraciones de plataforma" },
+      { field: "Anchura de plataforma", value: "1,83 m", support: "LGMG SR1023D, Specifications, Measurements, D: anchura 1.83 m; la tabla distingue longitudes y extensiones alternativas, no se recuperan" }
+    ]
+  },
+  {
+    url: "https://dam.jlg.com/DigizuiteCore/LegacyService/api/assetstream/143203?timestamp=2026-07-29T00%3A14%3A53.1548290", brand: "Jlg", model: "2646ES", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 9.92,
+      lengthM: 2.5, widthM: 1.17, loadCapacityKg: 450 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "7,92 m", support: "JLG Specifications 2015 CE, página 12, 2646ES, A: altura elevada 7.92 m" },
+      { field: "Longitud de plataforma", value: "2,50 m", support: "JLG Specifications 2015 CE, páginas 12-13, 2646ES, E: longitud de plataforma principal 2,50 m" },
+      { field: "Anchura de plataforma", value: "1,12 m", support: "JLG Specifications 2015 CE, páginas 12-13, 2646ES, E: anchura de plataforma principal 1,12 m" }
+    ]
+  },
+  {
+    url: "https://dam.jlg.com/DigizuiteCore/LegacyService/api/assetstream/143203?timestamp=2026-07-29T00%3A14%3A53.1548290", brand: "Jlg", model: "3246ES", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 11.68,
+      lengthM: 2.5, widthM: 1.17, loadCapacityKg: 320 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "9,68 m", support: "JLG Specifications 2015 CE, página 12, 3246ES, A: altura elevada 9.68 m" },
+      { field: "Longitud de plataforma", value: "2,50 m", support: "JLG Specifications 2015 CE, páginas 12-13, 3246ES, E: longitud de plataforma principal 2,50 m" },
+      { field: "Anchura de plataforma", value: "1,12 m", support: "JLG Specifications 2015 CE, páginas 12-13, 3246ES, E: anchura de plataforma principal 1,12 m" }
+    ]
+  },
+  {
+    url: "https://www.snorkellifts.com/sites/default/files/pdf/english-ce-met/S3970RT.pdf", brand: "Snorkel", model: "S3970RT", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 13.8,
+      lengthM: 3.4, widthM: 1.8, loadCapacityKg: 350 }, fields: ["Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "2,8 m", support: "Snorkel CE 01/2021, página 2, S3970RT, dimensiones B: plataforma principal replegada 1.6 x 2.8 m" },
+      { field: "Anchura de plataforma", value: "1,6 m", support: "Snorkel CE 01/2021, página 2, S3970RT, dimensiones B: plataforma principal replegada 1.6 x 2.8 m" },
+      { field: "Extensión de plataforma", value: "1,2 m", support: "Snorkel CE 01/2021, página 2, S3970RT: extensión 1.2 m, equipamiento estándar; plataforma extendida 1.6 x 4.0 m" }
+    ]
+  },
+  {
+    url: "https://dam.jlg.com/DigizuiteCore/LegacyService/api/assetstream/143203?timestamp=2026-07-29T00%3A14%3A53.1548290", brand: "Jlg", model: "3369LE", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 12.06,
+      lengthM: 3.07, widthM: 1.75, loadCapacityKg: 450 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "10,06 m", support: "JLG Specifications 2015 CE, página 16, 3369LE, A: altura elevada 10,06 m" },
+      { field: "Longitud de plataforma", value: "2,92 m", support: "JLG Specifications 2015 CE, página 16, 3369LE, E: longitud de plataforma principal 2,92 m" },
+      { field: "Anchura de plataforma", value: "1,65 m", support: "JLG Specifications 2015 CE, página 16, 3369LE, E: anchura de plataforma principal 1,65 m" },
+      { field: "Extensión de plataforma", value: "0,91 m", support: "JLG Specifications 2015 CE, página 16, 3369LE, F: extensión 0,91 m" }
+    ]
+  },
+  {
+    url: "https://dam.jlg.com/DigizuiteCore/LegacyService/api/assetstream/143203?timestamp=2026-07-29T00%3A14%3A53.1548290", brand: "Jlg", model: "4069LE", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 14.19,
+      lengthM: 3.07, widthM: 1.75, loadCapacityKg: 360 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "12,19 m", support: "JLG Specifications 2015 CE, página 16, 4069LE, A: altura elevada 12,19 m" },
+      { field: "Longitud de plataforma", value: "2,92 m", support: "JLG Specifications 2015 CE, página 16, 4069LE, E: longitud de plataforma principal 2,92 m" },
+      { field: "Anchura de plataforma", value: "1,65 m", support: "JLG Specifications 2015 CE, página 16, 4069LE, E: anchura de plataforma principal 1,65 m" },
+      { field: "Extensión de plataforma", value: "0,91 m", support: "JLG Specifications 2015 CE, página 16, 4069LE, F: extensión 0,91 m" }
+    ]
+  },
+  {
+    url: "https://dam.jlg.com/DigizuiteCore/LegacyService/api/assetstream/143203?timestamp=2026-07-29T00%3A14%3A53.1548290", brand: "JLG", model: "4069LE", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 14.19,
+      lengthM: 3.07, widthM: 1.75, loadCapacityKg: 360 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "12,19 m", support: "JLG Specifications 2015 CE, página 16, 4069LE, A: altura elevada 12,19 m" },
+      { field: "Longitud de plataforma", value: "2,92 m", support: "JLG Specifications 2015 CE, página 16, 4069LE, E: longitud de plataforma principal 2,92 m" },
+      { field: "Anchura de plataforma", value: "1,65 m", support: "JLG Specifications 2015 CE, página 16, 4069LE, E: anchura de plataforma principal 1,65 m" },
+      { field: "Extensión de plataforma", value: "0,91 m", support: "JLG Specifications 2015 CE, página 16, 4069LE, F: extensión 0,91 m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/es/product/pro-detail-5033.htm", brand: "LGMG", model: "A09JE", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 11,
+      lengthM: 5.46, widthM: 1.19, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "9 m", support: "LGMG A09JE, sección Medidas: altura de plataforma 9 m" },
+      { field: "Longitud de plataforma", value: "1,17 m", support: "LGMG A09JE, sección Medidas: longitud de plataforma 1,17 m" },
+      { field: "Anchura de plataforma", value: "0,76 m", support: "LGMG A09JE, sección Medidas: anchura de plataforma 0,76 m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/es/product/pro-detail-5034.htm", brand: "LGMG", model: "A13JE", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 15,
+      lengthM: 6.7, widthM: 1.5, loadCapacityKg: 200 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "13 m", support: "LGMG A13JE, sección Medidas: altura de plataforma 13 m" },
+      { field: "Longitud de plataforma", value: "1,2 m", support: "LGMG A13JE, sección Medidas: longitud de plataforma 1,2 m" },
+      { field: "Anchura de plataforma", value: "0,9 m", support: "LGMG A13JE, sección Medidas: anchura de plataforma 0,9 m" }
+    ]
+  },
+  {
+    url: "https://en.lgmg.com.cn/product/631.htm", brand: "LGMG", model: "AS0808", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 10,
+      lengthM: 2.4, widthM: 0.83, loadCapacityKg: 230 }, fields: ["Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "2,26 m", support: "LGMG AS0808, Specifications, Measurements: C-Platform Length 2.26m" },
+      { field: "Anchura de plataforma", value: "0,81 m", support: "LGMG AS0808, Specifications, Measurements: D-Platform Width 0.81m" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "LGMG AS0808, Specifications, Measurements: H-Extension Deck 0.9m; indoor-use model" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-4896.htm", brand: "LGMG", model: "AR20J", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 21.58,
+      lengthM: 9.42, widthM: 2.5, loadCapacityKg: 260 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "19,58 m", support: "LGMG AR20J, Specifications, Measurements: Platform Height 19.58m; distinct from restricted/unrestricted capacity" },
+      { field: "Longitud de plataforma", value: "2,44 m", support: "LGMG AR20J, Specifications, Measurements: Platform Length 2.44m" },
+      { field: "Anchura de plataforma", value: "0,9 m", support: "LGMG AR20J, Specifications, Measurements: Platform Width 0.9m" }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-2030.htm", brand: "LGMG", model: "S1413EII", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 15.8,
+      lengthM: 2.8, widthM: 1.3, loadCapacityKg: 320 }, fields: ["Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "2,64 m", support: "LGMG S1413EII, Specifications, Measurements: B-Platform Length 2.64m" },
+      { field: "Anchura de plataforma", value: "1,12 m", support: "LGMG S1413EII, Specifications, Measurements: C-Platform Width 1.12m" },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "LGMG S1413EII, Specifications, Measurements: H-Extension Deck 0.9m; geometry common to indoor/outdoor use, height limits differ (13.8/8m platform height)" }
+    ]
+  },
+  {
+    url: "https://www.cc-heftrucks.be/fileadmin/pdf/technical%20sheets/technical%20sheets%20hoogwerkers/Knikhoogwerkers/CC_Heftrucks_fiche_hoogwerker_knikarm_340AJ.pdf", brand: "JLG", model: "340AJ", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 12.33,
+      lengthM: 5.52, widthM: 1.93, loadCapacityKg: 230 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "10,33 m", support: "JLG 340AJ, especificaciones 2010, página 1: altura de plataforma 10,33 m; manual JLG 3121258, tabla 6-2, CE y Australia; no atribuye dimensiones de cesta opcional" }
+    ]
+  },
+  {
+    url: "https://www.afi-rentals.co.uk/pdf/specifications/afi-resale/new/articulating-boom-lifts/jlg/600AJ_EN.pdf", brand: "JLG", model: "600AJ", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 20.46,
+      lengthM: 8.82, widthM: 2.49, loadCapacityKg: 230 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "18,46 m", support: "Ficha JLG EMEA 600AJ, página 2, Performance: altura de plataforma 18,46 m; altura de trabajo 20,46 m; dimensiones de cesta opcionales no atribuidas" }
+    ]
+  },
+  {
+    url: "https://assets-eu-01.kc-usercontent.com/30405c01-b7f1-01d2-1201-2b428c3cf113/b1ef2a68-f977-4e67-9ec7-eafc5507a7e3/jlg-800aj-datasheet.pdf", brand: "JLG", model: "800AJ", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 26.38,
+      lengthM: 11.12, widthM: 2.44, loadCapacityKg: 230 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "24,38 m", support: "JLG Europe SL006-ENGLISH, página 2, columna 800AJ: altura de plataforma 24,38 m; anchura 2,44 m, longitud 11,12 m y capacidad 230 kg; corroborada por ficha JLG Italia 800AJ, sección Prestazioni: altura de trabajo 26,38 m y plataforma 24,38 m; no atribuye cestas opcionales" }
+    ]
+  },
+  {
+    url: "https://dam.jlg.com/DigizuiteCore/LegacyService/api/assetstream/143203?timestamp=2026-07-29T00%3A14%3A53.1548290", brand: "JLG", model: "E300AJP", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 10.97,
+      lengthM: 5.74, widthM: 1.22, loadCapacityKg: 230 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "8,97 m", support: "JLG Specifications 2015 CE, página 4, columna E300AJP: altura de plataforma 8,97 m; altura de trabajo 10,97 m; longitud 5,74 m, anchura 1,22 m y capacidad 230 kg; no extrapola alcance ni peso" }
+    ]
+  },
+  {
+    url: "https://dam.jlg.com/DigizuiteCore/LegacyService/api/assetstream/143203?timestamp=2026-07-29T00%3A14%3A53.1548290", brand: "JLG", model: "E400AJPN", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 14.19,
+      lengthM: 6.71, widthM: 1.5, loadCapacityKg: 230 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "12,19 m", support: "JLG Specifications 2015 CE, página 6, columna E400AJPn: altura de plataforma 12,19 m, altura de trabajo 14,19 m, longitud 6,71 m, anchura 1,50 m y capacidad 230 kg; no atribuye las dimensiones opcionales de cesta de la página 35" }
+    ]
+  },
+  {
+    url: "https://www.haulotte.com.es/es_ES/productos/ha16-rtj", brand: "HAULOTTE", model: "HA 16 RTJ", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 16,
+      lengthM: 6.75, widthM: 2.3, loadCapacityKg: 230 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "14 m", support: "Haulotte HA16 RTJ, Datos Técnicos: altura de plataforma 14 m, altura de trabajo 16 m, capacidad 230 kg, largo replegado 6,75 m y ancho 2,3 m; corroborado por ficha CE HA16 RTJ / RTJ O de abril de 2024, página 2; no atribuye dimensiones de cesta opcional" }
+    ]
+  },
+  {
+    url: "https://portalimages.blob.core.windows.net/products/pdfs/xuj041hy_Data-sheet-170-AETJ-L.pdf", brand: "MANITOU", model: "170 AETJ-L", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 16.9,
+      lengthM: 6.84, widthM: 1.75, loadCapacityKg: 200 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "14,9 m", support: "Manitou 170 AETJ-L, ficha del 22/02/2021, página 2, h7: altura de plataforma 14,9 m, h21 16,9 m, Q 200 kg, l1 6,84 m y b1 1,75 m; corroborada por ficha CE FT016EN_A_0812_170AETJL de 2012; no aplicable a Bi-Energy ni a otras variantes ni se recupera geometría de cesta" }
+    ]
+  },
+  {
+    url: "https://www.cruzaraba.es/images/pdf/plataforma-brazo-articulado-diesel/brazos-articulados-diesel-21m-haulotte.pdf", brand: "HAULOTTE", model: "HA 20 PX", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 20.65,
+      lengthM: 8.93, widthM: 2.38, loadCapacityKg: 230 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "18,65 m", support: "Haulotte HA20 PX, ficha 11/2011, página 2, Datos técnicos: altura de plataforma 18,65 m, trabajo 20,65 m, largo replegado 8,93 m, ancho 2,38 m, capacidad 230 kg; no atribuye cesta larga ni opción de 250 kg" }
+    ]
+  },
+  {
+    url: "https://rallco.se/wp-content/uploads/2020/09/HA260PX-Informationsbroschyr.pdf", brand: "HAULOTTE", model: "HA 260 PX", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 25.6,
+      lengthM: 12, widthM: 2.38, loadCapacityKg: 230 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "23,6 m", support: "Haulotte HA260 PX, ficha de 2012, página 2, Technical data: altura de plataforma 23,6 m, trabajo 25,6 m, largo 12 m, ancho 2,38 m, capacidad 230 kg; corroborado en ficha española 10/2014; no atribuye altura replegada ni cesta opcional" }
+    ]
+  },
+  {
+    url: "https://irp.cdn-website.com/18c68e09/files/uploaded/Haulotte-HA12IP-UK-BD.pdf", brand: "Haulotte", model: "HA12IP", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 12,
+      lengthM: 5.45, widthM: 1.35, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "10 m", support: "Haulotte HA12IP, ficha 03/2012, página 2, datos técnicos: altura de plataforma 10 m, trabajo 12 m, largo 5,45 m, ancho 1,35 m y capacidad 230 kg" },
+      { field: "Anchura de plataforma", value: "0,8 m", support: "Haulotte HA12IP, ficha 03/2012, página 2, cota G: 0,8 m tanto en cesta estándar 1,2 x 0,8 m como en opción 1,5 x 0,8 m; no atribuye la dimensión F variable" }
+    ]
+  },
+  {
+    url: "https://joysat.eu/wp-content/uploads/2020/09/Caracter%C2%B0stiques-Ta%CC%88cniques-HA15IP.pdf", brand: "Haulotte", model: "HA15IP", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 15,
+      lengthM: 6.6, widthM: 1.5, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "13 m", support: "Haulotte HA15IP, ficha 06/2012, página 2, datos técnicos: altura de plataforma 13 m, trabajo 15 m, largo 6,6 m, ancho 1,5 m y capacidad 230 kg" },
+      { field: "Anchura de plataforma", value: "0,8 m", support: "Haulotte HA15IP, ficha 06/2012, página 2, cota G: 0,8 m tanto en cesta estándar 1,2 x 0,8 m como en opción 1,4 x 0,8 m; no atribuye la dimensión F variable" }
+    ]
+  },
+  {
+    url: "https://joysat.eu/wp-content/uploads/2020/09/Caracter%C2%B0stiques-Ta%CC%88cniques-HA15IP.pdf", brand: "HAULOTTE", model: "HA 15 IP", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 15,
+      lengthM: 6.6, widthM: 1.5, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "13 m", support: "Haulotte HA 15 IP, ficha 06/2012, página 2, datos técnicos: altura de plataforma 13 m, trabajo 15 m, largo 6,6 m, ancho 1,5 m y capacidad 230 kg" },
+      { field: "Anchura de plataforma", value: "0,8 m", support: "Haulotte HA 15 IP, ficha 06/2012, página 2, cota G: 0,8 m tanto en cesta estándar 1,2 x 0,8 m como en opción 1,4 x 0,8 m; no atribuye la dimensión F variable" }
+    ]
+  },
+  {
+    url: "https://www.eagleplatforms.com/wp-content/uploads/HAULOTTE-COMPACT-12DX-SPEC-SHEET.pdf", brand: "HAULOTTE", model: "COMPACT 12 DX", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 12.06,
+      lengthM: 3.17, widthM: 1.78, loadCapacityKg: 450 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "10,06 m", support: "Haulotte Compact 12 DX, ficha 06/2013, ref. 400007370, página 2: altura de plataforma 10,06 m, largo 3,17 m, ancho 1,78 m, trabajo 12,06 m y capacidad 450 kg; altura corroborada en ficha 12/2024" },
+      { field: "Longitud de plataforma", value: "2,45 m", support: "Haulotte Compact 12 DX, fichas 06/2013 y 12/2024, página 2, cota F: longitud de plataforma 2,45 m" },
+      { field: "Anchura de plataforma", value: "1,45 m", support: "Haulotte Compact 12 DX, fichas 06/2013 y 12/2024, página 2, cota G: anchura de plataforma 1,45 m" },
+      { field: "Extensión de plataforma", value: "1,2 m", support: "Haulotte Compact 12 DX, fichas 06/2013 y 12/2024, página 2, datos técnicos y equipamiento estándar: una extensión de 1,2 m" }
+    ]
+  },
+  {
+    url: "https://www.coalci.es/wp-content/uploads/2020/02/HA32_RTJ_PRO_ES_BD.pdf", brand: "HAULOTTE", model: "HA 32 RTJ PRO", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 31.8,
+      lengthM: 11.7, widthM: 2.53, loadCapacityKg: 250 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "29,8 m", support: "Haulotte HA32 RTJ PRO, ficha 05/2019, página 2, datos técnicos: altura de plataforma 29,8 m, trabajo 31,8 m, largo replegado 11,7 m, ancho 2,53 m y capacidad 250 kg; corroborado en ficha técnica oficial española vigente" }
+    ]
+  },
+  {
+    url: "https://www.cc-equipment.be/fileadmin/user_upload/ES1932_2020_EN.pdf", brand: "JLG", model: "ES1932", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 7.8,
+      lengthM: 1.74, widthM: 0.81, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "5,8 m", support: "JLG EMEA ES1932, ficha 2020, página 2, Performance: altura de plataforma elevada 5,8 m; altura de trabajo 7,8 m, capacidad 230 kg interior y exterior" },
+      { field: "Longitud de plataforma", value: "1,59 m", support: "JLG EMEA ES1932, ficha 2020, página 2, cota E: longitud de plataforma 1,59 m; corroborada por ficha EMEA de dimensiones" },
+      { field: "Anchura de plataforma", value: "0,64 m", support: "JLG EMEA ES1932, ficha 2020, página 2, cota E: anchura de plataforma 0,64 m; corroborada por ficha EMEA de dimensiones" },
+      { field: "Extensión de plataforma", value: "0,86 m", support: "JLG EMEA ES1932, ficha 2020, página 1, equipamiento estándar y página 2, cota F: extensión de 0,86 m; no atribuye capacidad de extensión" }
+    ]
+  },
+  {
+    url: "https://sosequipment.ca/wp-content/uploads/2023/05/R4045-SpecSheet-English.pdf", brand: "Jlg", model: "R4045", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 13.96,
+      lengthM: 2.71, widthM: 1.14, loadCapacityKg: 350 }, fields: ["Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "2,43 m", support: "JLG EMEA R4045, página 2, Performance, cota E: longitud interior 2,43 m; capacidad de 350 kg solo interior, no se atribuyen alturas de uso" },
+      { field: "Anchura de plataforma", value: "1,05 m", support: "JLG EMEA R4045, página 2, Performance, cota E: anchura interior 1,05 m" },
+      { field: "Extensión de plataforma", value: "0,91 m", support: "JLG EMEA R4045, página 1, equipamiento estándar y página 2, cota F: extensión de 0,91 m; no atribuye capacidad de extensión" }
+    ]
+  },
+  {
+    url: "https://media.gruasestacion.com/modelos/43/documentos/Datos_T%C3%A9cnicos.pdf", brand: "HAULOTTE", model: "H15 SXL", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 15,
+      lengthM: 5.3, widthM: 2.25, loadCapacityKg: 500 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "13 m", support: "Haulotte H15 SXL, ficha 01/2016, página 2, datos técnicos: altura de plataforma 13 m, trabajo 15 m, longitud de transporte 5,3 m, ancho 2,25 m y capacidad 500 kg; no atribuye altura máxima de traslación" },
+      { field: "Longitud de plataforma", value: "5,3 m", support: "Haulotte H15 SXL, ficha 01/2016, página 2: largo de plataforma sin extender 5,3 m; no atribuye extensión doble a un campo de extensión único" },
+      { field: "Anchura de plataforma", value: "1,89 m", support: "Haulotte H15 SXL, ficha 01/2016, página 2: ancho de plataforma 1,89 m" }
+    ]
+  },
+  {
+    url: "https://www.coalci.es/wp-content/uploads/2019/07/H12_15_18SX-ES_BD.pdf", brand: "HAULOTTE", model: "H18 SX", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 18,
+      lengthM: 4.18, widthM: 2.25, loadCapacityKg: 500 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "16 m", support: "Haulotte H18 SX, ficha 03/2018, página 2, datos técnicos: altura de plataforma 16 m, trabajo 18 m, longitud de transporte 4,18 m, ancho 2,25 m y capacidad 500 kg; no atribuye altura máxima de traslación" },
+      { field: "Longitud de plataforma", value: "4 m", support: "Haulotte H18 SX, ficha 03/2018, página 2: largo de plataforma sin extender 4 m; no atribuye extensión doble a un campo de extensión único" },
+      { field: "Anchura de plataforma", value: "1,89 m", support: "Haulotte H18 SX, ficha 03/2018, página 2: ancho de plataforma 1,89 m" }
+    ]
+  },
+  {
+    url: "https://www.w-schnitger.de/fileadmin/paeusergruppe/Arbeitsbuehne/Scherenarbeitsbuehnen/Haulotte_OPTIMUM_8_AE.pdf", brand: "HAULOTTE", model: "OPTIMUM 8 AE", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 7.77,
+      lengthM: 1.9, widthM: 0.79, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "5,77 m", support: "Haulotte OPTIMUM 8, ficha alemana 05/2024, página 2: altura de plataforma 5,77 m, trabajo 7,77 m, largo 1,9 m, ancho 0,79 m y capacidad 230 kg interior y exterior; ficha enlazada por distribuidor Haulotte como Optimum 8 AE" },
+      { field: "Extensión de plataforma", value: "0,86 m", support: "Haulotte OPTIMUM 8, ficha alemana 05/2024, página 2: extensión 0,86 m; corroborada en ficha oficial española, no atribuye capacidad de la extensión" }
+    ]
+  },
+  {
+    url: "https://www.tecnorent.com/imgs-productos/plataformas-tijera-diesel/jlg530lrt.pdf", brand: "JLG", model: "530LRT", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 18.15,
+      lengthM: 4.88, widthM: 2.31, loadCapacityKg: 680 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "16,15 m", support: "JLG EMEA 530LRT, página 2, Performance: altura elevada de plataforma 16,15 m, trabajo 18,15 m, largo 4,88 m, ancho 2,31 m, capacidad 680 kg; no atribuye dimensiones de cesta ni extensiones opcionales" }
+    ]
+  },
+  {
+    url: "https://www.lejarzamaquinaria.com/wp-content/uploads/2023/07/150-AETJ-C.pdf", brand: "MANITOU", model: "150 AETJ C", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 15,
+      lengthM: 6.05, widthM: 1.5, loadCapacityKg: 200 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "13 m", support: "Manitou 150 AETJ-C, ficha del 27/02/2023, página 2, h7: altura de plataforma 13 m, h21 15 m, Q 200 kg, l1 6,05 m y b1 1,50 m; corroborada por ficha CE FT015ES_B_0912_150AETJC de 2012. No aplicable a la versión posterior de 220 kg ni se recuperan dimensiones de cesta variables" }
+    ]
+  },
+  {
+    url: "https://www.genielift.com/docs/default-source/product-specifications/articulated-boom-lift/es/2022/zboomspec_z30_20n_z30_20n_rj_es_emear_lr.pdf", brand: "GENIE", model: "Z-30-20 N", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 11.14,
+      lengthM: 5.11, widthM: 1.19, loadCapacityKg: 227 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "9,14 m", support: "Genie Z-30/20N, ficha CE EMEAR 2022, página 1, Especificaciones y Productividad: altura máxima de cesta 9,14 m, trabajo 11,14 m, largo replegado 5,11 m, ancho 1,19 m y capacidad sin restricciones 227 kg; corroborada por ficha europea 2020. No atribuye dimensiones de cestas alternativas ni peso de la unidad" }
+    ]
+  },
+  {
+    url: "https://www.genielift.com/docs/default-source/product-specifications/articulated-boom-lift/es/2022/zboomspec_z30_20n_z30_20n_rj_es_emear_lr.pdf", brand: "GENIE", model: "Z-30-20 N RJ", reviewedOn: "2026-11-24",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 10.89,
+      lengthM: 5.31, widthM: 1.19, loadCapacityKg: 227 }, fields: ["Altura de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "8,89 m", support: "Genie Z-30/20N RJ, ficha CE EMEAR 2022, página 1, Especificaciones y Productividad: altura máxima de cesta 8,89 m, trabajo 10,89 m, largo replegado 5,31 m, ancho 1,19 m y capacidad sin restricciones 227 kg; corroborada por ficha europea 2020. No atribuye dimensiones de cestas alternativas ni peso de la unidad" }
+    ]
   }
 ];
 
@@ -1232,3 +1722,13 @@ export const reviewedModelDocumentClaims = (): readonly {
   verification: { kind: "reviewed-model-fact", reviewedOn: entry.reviewedOn,
     support: fact.support, claimSha256: claimHash(entry, fact) }
 })));
+
+export const reusableReviewedModelClaims = (brand: string, model: string) => documents
+  .filter((entry) => entry.brand === brand && entry.model === model && entry.reuse !== undefined)
+  .flatMap((entry) => {
+    const reuse = entry.reuse;
+    if (!reuse) return [];
+    const facts = documents.filter((document) => document.brand === brand && document.model === model &&
+      document.url === entry.url).flatMap((document) => document.facts.filter((fact) => reuse.fields.includes(fact.field)));
+    return [{ url: entry.url, compatibility: reuse.compatibility, facts }];
+  });
