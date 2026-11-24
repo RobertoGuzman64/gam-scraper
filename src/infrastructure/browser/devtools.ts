@@ -39,50 +39,88 @@ type Pending = {
   readonly reject: (reason: Error) => void;
 };
 
+const isProtocolRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+const decodeDevtoolsResponse = (frame: string): DevtoolsResponse => {
+  let parsed: unknown;
+  try { parsed = JSON.parse(frame); }
+  catch { throw new Error("Chrome devolvió un mensaje de depuración inválido"); }
+  if (!isProtocolRecord(parsed) ||
+    (parsed.id === undefined ? typeof parsed.method !== "string" || !parsed.method :
+      typeof parsed.id !== "number" || !Number.isSafeInteger(parsed.id) || parsed.id < 1) ||
+    (parsed.error !== undefined && (!isProtocolRecord(parsed.error) || typeof parsed.error.message !== "string")) ||
+    (parsed.result !== undefined && parsed.result !== null && !isProtocolRecord(parsed.result)) ||
+    (parsed.params !== undefined && !isProtocolRecord(parsed.params)) ||
+    (parsed.sessionId !== undefined && typeof parsed.sessionId !== "string")) {
+    throw new Error("Chrome devolvió un mensaje de depuración inválido");
+  }
+  return parsed as DevtoolsResponse;
+};
+
 export class DevtoolsPipe {
   private readonly pending = new Map<number, Pending>();
   private nextId = 1;
   private buffer = "";
+  private failure: Error | null = null;
 
   constructor(
-    private readonly child: ChildProcess, private readonly input: Writable, output: Readable,
+    child: ChildProcess, private readonly input: Writable, output: Readable,
     private readonly onEvent?: (message: DevtoolsResponse) => void
   ) {
     output.setEncoding("utf8");
     output.on("data", (chunk: string) => {
+      if (this.failure) return;
       this.buffer += chunk;
       const frames = this.buffer.split("\0");
       this.buffer = frames.pop() ?? "";
       for (const frame of frames) {
         if (!frame) continue;
-        const response: DevtoolsResponse = JSON.parse(frame);
-        if (response.id === undefined) { this.onEvent?.(response); continue; }
-        const pending = this.pending.get(response.id);
-        if (!pending) continue;
-        this.pending.delete(response.id);
-        if (response.error) pending.reject(new Error(response.error.message));
-        else pending.resolve(response.result ?? {});
+        try {
+          const response = decodeDevtoolsResponse(frame);
+          if (response.id === undefined) { this.onEvent?.(response); continue; }
+          const pending = this.pending.get(response.id);
+          if (!pending) continue;
+          this.pending.delete(response.id);
+          if (response.error) pending.reject(new Error(response.error.message));
+          else pending.resolve(response.result ?? {});
+        } catch (error) {
+          this.fail(error instanceof Error ? error : new Error(String(error)));
+          return;
+        }
       }
     });
+    output.on("error", (error: Error) => this.fail(error));
+    input.on("error", (error: Error) => this.fail(error));
     child.on("error", (error) => this.fail(error));
     child.on("exit", (code) => this.fail(new Error(`Chrome finalizó durante la navegación (código ${String(code)})`)));
   }
 
   private fail(error: Error): void {
+    if (this.failure) return;
+    this.failure = error;
+    this.buffer = "";
     for (const pending of this.pending.values()) pending.reject(error);
     this.pending.clear();
   }
 
   send(method: string, params: Record<string, unknown> = {}, sessionId?: string): Promise<Record<string, unknown>> {
+    if (this.failure) return Promise.reject(this.failure);
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
       const message = { id, method, params, ...(sessionId ? { sessionId } : {}) };
-      this.input.write(`${JSON.stringify(message)}\0`, (error?: Error | null) => {
-        if (!error) return;
-        this.pending.delete(id);
-        reject(error);
-      });
+      try {
+        this.input.write(`${JSON.stringify(message)}\0`, (error?: Error | null) => {
+          if (!error) return;
+          this.pending.delete(id);
+          this.fail(error);
+          reject(error);
+        });
+      } catch (error) {
+        const failure = error instanceof Error ? error : new Error(String(error));
+        this.fail(failure);
+      }
     });
   }
 }
@@ -90,42 +128,44 @@ export class DevtoolsPipe {
 export class DevtoolsWebSocket {
   private readonly pending = new Map<number, Pending>();
   private nextId = 1;
+  private failure: Error | null = null;
 
   constructor(private readonly socket: WebSocket, private readonly onEvent?: (message: DevtoolsResponse) => void) {
     socket.addEventListener("message", (event) => {
-      if (typeof event.data !== "string") return;
-      let response: DevtoolsResponse;
+      if (this.failure) return;
       try {
-        response = JSON.parse(event.data);
-      } catch {
-        this.fail(new Error("Chrome devolvió un mensaje de depuración inválido"));
-        return;
+        if (typeof event.data !== "string") throw new Error("Chrome devolvió un mensaje de depuración inválido");
+        const response = decodeDevtoolsResponse(event.data);
+        if (response.id === undefined) { this.onEvent?.(response); return; }
+        const pending = this.pending.get(response.id);
+        if (!pending) return;
+        this.pending.delete(response.id);
+        if (response.error) pending.reject(new Error(response.error.message));
+        else pending.resolve(response.result ?? {});
+      } catch (error) {
+        this.fail(error instanceof Error ? error : new Error(String(error)));
       }
-      if (response.id === undefined) { this.onEvent?.(response); return; }
-      const pending = this.pending.get(response.id);
-      if (!pending) return;
-      this.pending.delete(response.id);
-      if (response.error) pending.reject(new Error(response.error.message));
-      else pending.resolve(response.result ?? {});
     });
     socket.addEventListener("close", () => this.fail(new Error("Chrome cerró la conexión de depuración")));
     socket.addEventListener("error", () => this.fail(new Error("Error en la conexión de depuración de Chrome")));
   }
 
   private fail(error: Error): void {
+    if (this.failure) return;
+    this.failure = error;
     for (const pending of this.pending.values()) pending.reject(error);
     this.pending.clear();
   }
 
   send(method: string, params: Record<string, unknown> = {}, sessionId?: string): Promise<Record<string, unknown>> {
+    if (this.failure) return Promise.reject(this.failure);
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
       try {
         this.socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
       } catch (error) {
-        this.pending.delete(id);
-        reject(error instanceof Error ? error : new Error(String(error)));
+        this.fail(error instanceof Error ? error : new Error(String(error)));
       }
     });
   }
@@ -163,10 +203,14 @@ export const waitForDebuggingPort = async (
   throw new Error(`Chrome no publicó DevToolsActivePort tras ${timeoutMs} ms`);
 };
 
-export const openDebugSocket = async (url: string, timeoutMs: number): Promise<WebSocket> => {
-  if (typeof WebSocket === "undefined") {
-    throw new Error("La depuración de Chrome en Windows requiere Node.js 22 o posterior");
+export const assertChromeWebSocketSupport = (): void => {
+  if (typeof WebSocket !== "function") {
+    throw new Error("La depuración de Chrome por WebSocket requiere WebSocket global (Node.js 22+ o Node compatible con esa API)");
   }
+};
+
+export const openDebugSocket = async (url: string, timeoutMs: number): Promise<WebSocket> => {
+  assertChromeWebSocketSupport();
   const socket = new WebSocket(url);
   try {
     await withTimeout(new Promise<void>((resolve, reject) => {

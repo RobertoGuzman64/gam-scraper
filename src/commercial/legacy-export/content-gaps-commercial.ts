@@ -1,13 +1,8 @@
 import { buildProductIdentity } from "../../catalog/identity.js";
-import { SPEC_KEY_NORMALIZATION } from "../../catalog/normalization/spec-rules.js";
-import { fold } from "../../preparation/classification/category-utils.js";
-import type { CanonicalCatalog } from "../../catalog/canonical-catalog.js";
-import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
 import type { ImportCatalog } from "./contracts.js";
-import type { PreparedProduct } from "../../preparation/contracts.js";
 
 import type { GapInput, GapOptions, GapAnalysis, GapGroup, GapField, GapObservation, GapCase, InternalGroup } from "../../catalog/diagnostics/content-gaps-types.js";
-import { compare, keyOf, evidenceOf, groupKey, present, specHasValue } from "../../catalog/diagnostics/content-gaps-source.js";
+import { compare, evidenceOf, groupKey, present, specHasValue } from "../../catalog/diagnostics/content-gaps-source.js";
 
 export const analyzeCatalogContentGaps = (
   inputs: readonly GapInput[], catalog: ImportCatalog, options: GapOptions = { groupBy: "categoria" }

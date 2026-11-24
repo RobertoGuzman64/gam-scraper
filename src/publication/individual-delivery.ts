@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { lstat, mkdir, open, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { publicationDirectoryForApproval } from "../infrastructure/filesystem/catalog/publication-identity.js";
 import { isDeepStrictEqual } from "node:util";
 import { sha256 } from "../catalog/editorial/campaign-accreditation.js";

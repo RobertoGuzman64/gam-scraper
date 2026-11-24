@@ -41,6 +41,19 @@ export type CampaignAccreditation = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
+export const isCampaignAccreditation = (value: unknown): value is CampaignAccreditation =>
+  isRecord(value) && value.version === 1 && typeof value.runId === "string" &&
+  typeof value.approved === "boolean" &&
+  (value.approvalReason === null || typeof value.approvalReason === "string") &&
+  Array.isArray(value.sources) && Array.isArray(value.exclusions) &&
+  value.exclusions.every((item: unknown) => isRecord(item) &&
+    typeof item.providerId === "string" && typeof item.reference === "string" &&
+    typeof item.sourceUrl === "string" && typeof item.status === "string" &&
+    Array.isArray(item.issues) &&
+    (item.decision === "incluir" || item.decision === "excluir" || item.decision === null) &&
+    (item.reason === null || typeof item.reason === "string") &&
+    Array.isArray(item.evidenceUrls) && item.evidenceUrls.every((url: unknown) => typeof url === "string"));
+
 const isSecureUrl = (value: unknown): value is string => {
   if (typeof value !== "string") return false;
   try { return new URL(value).protocol === "https:"; } catch { return false; }

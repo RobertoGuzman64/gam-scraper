@@ -1,12 +1,6 @@
-import { createHash } from "node:crypto";
-import { CAMPAIGN_PROVIDERS, isReferenceProviderSet } from "../../contracts/campaign-providers.js";
-import { readFile, readdir } from "node:fs/promises";
-import { basename, dirname, join, resolve, sep } from "node:path";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { readAppliedIntervention } from "../../infrastructure/filesystem/interventions/intervention-derived.js";
-import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
-import type { OfflinePreparation } from "../../preparation/documents/offline-document.js";
-import type { CanonicalCatalog } from "../../catalog/canonical-catalog.js";
+import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
+import { readFile } from "node:fs/promises";
+import { basename, dirname } from "node:path";
 import type { BatchReport, ProviderRun } from "../../contracts/batch-report.js";
 
 export { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";

@@ -85,7 +85,7 @@ const referenceCandidates = ($: cheerio.CheerioAPI, root: ReturnType<cheerio.Che
   return [...new Set(refs.filter((value) => value.length <= 90 && /[\p{L}\d]/u.test(value) && !/^(?:consultar|n\/a|sin referencia|no disponible)$/i.test(value)))];
 };
 
-const descriptionFrom = ($: cheerio.CheerioAPI, root: ReturnType<cheerio.CheerioAPI>, selectors: readonly string[]): string | null => {
+const descriptionFrom = (root: ReturnType<cheerio.CheerioAPI>, selectors: readonly string[]): string | null => {
   for (const selector of selectors) {
     const node = root.find(selector).first();
     if (node.length) {
@@ -204,8 +204,8 @@ export const parseManainProduct = (html: string, pageUrl: string): ParsedProduct
     horometer,
     condition: conditionOf($, root, values),
     serialNumber: firstUnambiguous(values, ["Número de serie", "Nº de serie", "Serie"]),
-    shortDescription: descriptionFrom($, root, [".woocommerce-product-details__short-description", ".product-short-description"]),
-    longDescription: descriptionFrom($, root, [".woocommerce-Tabs-panel--description", "#tab-description", ".product-description"]),
+    shortDescription: descriptionFrom(root, [".woocommerce-product-details__short-description", ".product-short-description"]),
+    longDescription: descriptionFrom(root, [".woocommerce-Tabs-panel--description", "#tab-description", ".product-description"]),
     price: price.price,
     priceText: price.priceText,
     technicalSheetUrl: technicalSheetFrom($, root, canonicalPageUrl),

@@ -13,7 +13,7 @@ import { printCommandHeader, printCommandSection, printCommandResult, printComma
 import { printCommandError } from "../../reporting/errors.js";
 import { OperationProgress } from "../../reporting/operation-progress.js";
 import { writeLocalPanel } from "../../../panel/application/write-local-panel.js";
-import { prepareExplorerTechnicalEvidence } from "../../../tools/catalog/prepare-explorer-technical-evidence.js";
+import { prepareExplorerTechnicalEvidence } from "../../../panel/evidence/prepare-explorer-technical-evidence.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 

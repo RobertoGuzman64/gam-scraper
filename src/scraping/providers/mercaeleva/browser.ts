@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { DevtoolsPipe, DevtoolsWebSocket, withTimeout, waitForDebuggingPort, openDebugSocket } from "../../../infrastructure/browser/devtools.js";
+import { DevtoolsPipe, DevtoolsWebSocket, withTimeout, waitForDebuggingPort, openDebugSocket, assertChromeWebSocketSupport } from "../../../infrastructure/browser/devtools.js";
 import type { DevtoolsResponse } from "../../../infrastructure/browser/devtools.js";
 import { extractMercaelevaLinks } from "./parsers.js";
 import { collectMercaelevaPages } from "./browser-pagination.js";
@@ -28,6 +28,7 @@ const renderWithBrowser = async (
   onProgress?: (pages: number, found: number, stage: string) => void
 ): Promise<{ readonly pages: readonly string[]; readonly expectedTotal: number }> => {
   const windows = process.platform === "win32";
+  if (windows) assertChromeWebSocketSupport();
   const flags = [
     "--headless", "--disable-gpu", "--disable-extensions", "--no-first-run", "--no-default-browser-check",
     "--disable-dev-shm-usage", "--window-size=1600,2400",

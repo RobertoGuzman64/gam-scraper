@@ -1,18 +1,12 @@
-import { randomUUID } from "node:crypto";
-import { lstat, mkdir, open, readdir, readFile, rename, rm } from "node:fs/promises";
-import { basename, dirname, join, resolve, sep } from "node:path";
+import { lstat, open, readdir, rename, rm } from "node:fs/promises";
+import { join, resolve, sep } from "node:path";
 import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
-import { acquireBatchLock } from "../../infrastructure/locking/batch-lock.js";
-import { inspectCampaignReference } from "../../infrastructure/filesystem/reference/store.js";
 import { verifyPortableCampaignRetirement, retirePortableCampaign } from "../../infrastructure/filesystem/catalog/portable-campaign.js";
 import { inspectCleanupArea, removeCleanupDirectories } from "../../infrastructure/filesystem/campaign/campaign-cleanup.js";
-import type { CleanupArea } from "../../infrastructure/filesystem/campaign/campaign-cleanup.js";
 import { discoverCampaign, listCampaignRuns } from "../discovery/search.js";
 import { readCampaignBatch } from "../discovery/report.js";
-import type { CampaignRun } from "../discovery/search.js";
 import { verifyDeliveredCampaign } from "../delivery/verification.js";
 import { writeBatchReport } from "../../scraping/batch/report.js";
-import { getProvider } from "../../scraping/registry.js";
 
 import { base, journalPath, journalStagePath, missing, validName, discardIncompleteJournal, readJournal } from "./journal.js";
 import type { RemovalJournal } from "./journal.js";

@@ -3,7 +3,7 @@ import { lstat, mkdir, open, readFile, readdir, rename, rm, writeFile } from "no
 import { join, resolve } from "node:path";
 import { isCampaignProvider } from "../../../contracts/campaign-providers.js";
 import { parseTechnicalSnapshot } from "../../../publication/technical-snapshot.js";
-import type { TechnicalProvider, TechnicalSnapshot } from "../../../publication/technical-snapshot.js";
+import type { TechnicalSnapshot } from "../../../publication/technical-snapshot.js";
 
 const sha256 = (raw: string): string => createHash("sha256").update(raw).digest("hex");
 const sha = (value: string): boolean => /^[a-f0-9]{64}$/.test(value);

@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import { createDashboardPayload } from "./dashboard-data.js";
 import { renderPanelHtml } from "./panel-html.js";
 import { readPanelSnapshot } from "../evidence/read-panel-snapshot.js";
-import { readPanelExplorer } from "../../tools/catalog/read-panel-explorer.js";
+import { readPanelExplorer } from "../explorer/read-panel-explorer.js";
 
 export const writeLocalPanel = async (workspace: string): Promise<string> => {
   const root = resolve(workspace);

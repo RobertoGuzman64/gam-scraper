@@ -5,7 +5,7 @@ import { LEGACY_CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 import type { CommercialExportFile } from "../../commercial/export/commercial-export.js";
 import type { CommercialPackageProvider } from "../../commercial/export/commercial-package-snapshot.js";
-import { digest, isRecord, recordFrom, regularText } from "./evidence-files.js";
+import { digest, isRecord, regularText } from "./evidence-files.js";
 
 const sourceIdentity = (providerId: string, item: Record<string, unknown>): string => {
   if (typeof item.sourceUrl !== "string" ||

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test, { after } from "node:test";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
@@ -9,7 +9,7 @@ import { persistAppliedIntervention } from "../../../infrastructure/filesystem/i
 import { interveneActiveCampaign } from "../../intervention.js";
 import { finalizeActiveCampaign } from "../../finalization.js";
 import { reuseCampaignTestFixture } from "../campaign-catalog-fixture.js";
-import { campaignScript, createFixture, prefixes } from "../finalization-fixture.js";
+import { campaignScript, createFixture } from "../finalization-fixture.js";
 
 const fixtureCache = reuseCampaignTestFixture(createFixture);
 const fixture = fixtureCache.fixture;

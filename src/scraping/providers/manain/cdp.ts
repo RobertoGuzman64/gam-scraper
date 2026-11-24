@@ -1,5 +1,5 @@
 import type { ScrapeOptions } from "../../../contracts/scraping.js";
-import { DevtoolsWebSocket, openDebugSocket, withTimeout } from "../../../infrastructure/browser/devtools.js";
+import { DevtoolsWebSocket, openDebugSocket, assertChromeWebSocketSupport, withTimeout } from "../../../infrastructure/browser/devtools.js";
 import { buildManainListingScript, MANAIN_LISTING_PROGRESS_BINDING } from "./listing-script.js";
 import type { DevtoolsResponse } from "../../../infrastructure/browser/devtools.js";
 import { normalizeManainSaleProductUrl, parseManainListingResult } from "./listing.js";
@@ -166,6 +166,7 @@ export const discoverManainViaCdp = async (
   port: number, options: ScrapeOptions,
   onProgress?: (pages: number, found: number, stage?: string) => void
 ): Promise<ManainListingResult> => {
+  assertChromeWebSocketSupport();
   const timeoutMs = Math.max(options.timeoutMs, 1000);
   const target = await getTarget(port, timeoutMs);
   selectedTarget = { port, id: target.id };
@@ -218,6 +219,7 @@ const readProduct = async (url: string, options: ScrapeOptions): Promise<string>
   if (port === null || !selectedTarget || selectedTarget.port !== port) {
     throw new Error("Manain: primero hay que descubrir el catálogo en la sesión CDP de Chrome");
   }
+  assertChromeWebSocketSupport();
   const timeoutMs = Math.max(options.timeoutMs, 1000);
   const target = await getTarget(port, timeoutMs, selectedTarget.id);
   return withPage(target, timeoutMs, async (send) => {

@@ -9,7 +9,6 @@ import {
 import type { CatalogSnapshot } from "../../catalog/quality.js";
 import { dedupeBy, emptyDedupeReport, mergeDedupeReports } from "../../catalog/identity.js";
 import { parseCanonicalCatalog } from "../../catalog/canonical-catalog.js";
-import type { ProductRecord } from "../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult, Summary } from "../../contracts/scraping.js";
 import { atomicWrite } from "../../infrastructure/filesystem/atomic-write.js";
 import { writeCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";

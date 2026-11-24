@@ -1,10 +1,6 @@
-import { createHash } from "node:crypto";
-import { copyFile, lstat, mkdir, open, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
-import { parseCanonicalCatalog } from "../../catalog/canonical-catalog.js";
-import { parseReferenceManifest } from "../../catalog/reference/manifest.js";
 import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
-import type { CanonicalCatalog } from "../../catalog/canonical-catalog.js";
 import type { ReferenceComparison } from "../../catalog/reference/compare.js";
 import type { ReferenceManifest } from "../../catalog/reference/manifest.js";
 

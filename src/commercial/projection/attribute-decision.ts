@@ -2,7 +2,6 @@ import type { ImportCandidate, ImportCatalog } from "../legacy-export/contracts.
 import { validateCommercialAttributeValue } from "../../preparation/classification/attribute-value-validation.js";
 export { validateCommercialAttributeValue } from "../../preparation/classification/attribute-value-validation.js";
 
-type Attribute = ImportCatalog["attributes"][number];
 type Assignment = ImportCandidate["attributes"][number];
 
 export type CommercialAttributeIssue = {

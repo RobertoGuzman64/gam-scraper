@@ -10,7 +10,6 @@ import { listCampaignRuns } from "../../discovery/search.js";
 import { createDeliveryFixtures, createFailedCampaign } from "./delivery-fixtures.js";
 
 const fixtureCache = createDeliveryFixtures();
-const fixture = fixtureCache.fixture;
 const deliveredFixture = fixtureCache.deliveredFixture;
 const successiveDeliveryFixture = fixtureCache.successiveDeliveryFixture;
 after(fixtureCache.close);

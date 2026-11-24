@@ -48,7 +48,6 @@ export const convertGamCsvToSeedTs = async (options: ConvertOptions, onProgress?
         const shortDescription = normalizeSpace(row[iShort] ?? "");
         const longDescription = ensureString(row[iLong] ?? "").trim();
         const referenceRaw = normalizeSpace(row[iReference] ?? "");
-        const url = normalizeSpace(row[iUrl] ?? "");
         const specJsonRaw = ensureString(row[iSpecJson] ?? "");
 
         if (!categoryKey || !title) continue;

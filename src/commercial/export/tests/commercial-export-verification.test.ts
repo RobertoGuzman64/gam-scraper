@@ -1,7 +1,7 @@
 import { createPortableTestSymlink } from "../../../testing/builders/portable-symlink-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { access, mkdtemp, readFile, readdir, rm, writeFile, symlink } from "node:fs/promises";
+import { access, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -10,11 +10,11 @@ import { loadImportCatalogSnapshot } from "../../../infrastructure/filesystem/le
 import { loadCommercialReference } from "../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { buildCommercialExportFiles, buildCommercialDeliveryPlan, assembleCommercialExportFiles, type CommercialExportFile } from "../commercial-export.js";
 import type { CommercialExportPlan } from "../../projection/export-projection.js";
-import { validateCommercialExportFiles, verifyCommercialExportArchive, verifyCommercialExportDirectory, verifyCommercialExportSources, verifyCommercialExportZip } from "../commercial-export-verification.js";
+import { validateCommercialExportFiles, verifyCommercialExportArchive, verifyCommercialExportDirectory, verifyCommercialExportSources } from "../commercial-export-verification.js";
 import { createZipArchive, readZipArchive } from "../../../infrastructure/archive/zip.js";
 import { assertCommercialPackageProviders, inspectCommercialPackage } from "../commercial-package-snapshot.js";
 import { renderCommercialIntegrationReport } from "../../../cli/reporting/commercial-integration-report.js";
-import { deliverCommercialPackages, publishCommercialArchivePair, verifyCommercialIntegrationArchive, verifyCommercialPackagePair } from "../../../cli/reporting/commercial-package-delivery.js";
+import { deliverCommercialPackages, publishCommercialArchivePair, verifyCommercialIntegrationArchive } from "../../../cli/reporting/commercial-package-delivery.js";
 
 const createFile = (name: string, content: string): CommercialExportFile => ({
   name, content, sha256: createHash("sha256").update(content).digest("hex"), bytes: Buffer.byteLength(content)

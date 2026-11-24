@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { mkdir, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
-import { basename, join, relative, resolve, sep } from "node:path";
+import { basename, join, relative, sep } from "node:path";
 import { applyInterventionToCatalog } from "../../../catalog/interventions/application.js";
 import { measureAppliedIntervention, type InterventionWorkSummary } from "../../../catalog/diagnostics/intervention-work.js";
 import { validateInterventionScriptSelection } from "../intervention-scripts/script-location.js";

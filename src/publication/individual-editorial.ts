@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { lstat, mkdir, open, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { inspectAccreditationDraft, sha256 } from "../catalog/editorial/campaign-accreditation.js";
+import { inspectAccreditationDraft, isCampaignAccreditation, sha256 } from "../catalog/editorial/campaign-accreditation.js";
 import { proposeIndividualExclusions } from "../catalog/editorial/individual-decision-proposals.js";
 import type { AccreditationInspection, CampaignAccreditation } from "../catalog/editorial/campaign-accreditation.js";
 import { readIndividualSelection, selectIndividualPublishable } from "./individual-selection.js";
@@ -31,19 +31,6 @@ export type IndividualEditorialDecision = {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
-
-const isAccreditation = (value: unknown): value is CampaignAccreditation =>
-  isRecord(value) && value.version === 1 && typeof value.runId === "string" &&
-  typeof value.approved === "boolean" &&
-  (value.approvalReason === null || typeof value.approvalReason === "string") &&
-  Array.isArray(value.sources) && Array.isArray(value.exclusions) &&
-  value.exclusions.every((item: unknown) => isRecord(item) &&
-    typeof item.providerId === "string" && typeof item.reference === "string" &&
-    typeof item.sourceUrl === "string" && typeof item.status === "string" &&
-    Array.isArray(item.issues) &&
-    (item.decision === "incluir" || item.decision === "excluir" || item.decision === null) &&
-    (item.reason === null || typeof item.reason === "string") &&
-    Array.isArray(item.evidenceUrls) && item.evidenceUrls.every((url: unknown) => typeof url === "string"));
 
 const draftPath = (options: IndividualEditorialOptions, context: IndividualSelectionContext): string =>
   join(resolve(options.rootDirectory), "storage", "providers", context.providerId, "editorial",
@@ -120,7 +107,7 @@ export const readIndividualEditorialState = async (
   try { parsed = JSON.parse(raw); }
   catch { throw new Error("Acreditación individual: JSON inválido"); }
   const inspection = inspectAccreditationDraft([context.preparation], context.sources, context.runId, parsed);
-  if (!isAccreditation(parsed)) throw new Error("Acreditación individual: estructura de decisiones inválida");
+  if (!isCampaignAccreditation(parsed)) throw new Error("Acreditación individual: estructura de decisiones inválida");
   return { context, draftFile, raw, accreditation: parsed, inspection };
 };
 

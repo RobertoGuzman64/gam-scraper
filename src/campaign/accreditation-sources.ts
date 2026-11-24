@@ -1,9 +1,6 @@
-import { readFile, realpath } from "node:fs/promises";
-import { isDeepStrictEqual } from "node:util";
-import { basename, dirname, join, relative, resolve, sep } from "node:path";
-import { buildProductIdentity } from "../catalog/identity.js";
+import { readFile } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import { readCanonicalCatalog } from "../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { readAppliedIntervention } from "../infrastructure/filesystem/interventions/intervention-derived.js";
 import { validateOfflinePreparation } from "../preparation/workflow/offline.js";
 import { sha256 } from "../catalog/editorial/campaign-accreditation.js";
 import type { AccreditedSource } from "../catalog/editorial/campaign-accreditation.js";

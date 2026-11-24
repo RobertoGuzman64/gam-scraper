@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { copyFile, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../../contracts/scraping.js";

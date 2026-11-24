@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { lstat, mkdir, open, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { lstat, open, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { inspectAccreditationDraft, selectAccreditedPublishable, sha256 } from "../catalog/editorial/campaign-accreditation.js";
+import { inspectAccreditationDraft, isCampaignAccreditation, selectAccreditedPublishable, sha256 } from "../catalog/editorial/campaign-accreditation.js";
 import type { AccreditationInspection, CampaignAccreditation } from "../catalog/editorial/campaign-accreditation.js";
 import { readCampaignFinalizationContext } from "./finalization.js";
 
@@ -23,20 +23,6 @@ export type EditorialDecisionRequest = {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
-const isAccreditation = (value: unknown): value is CampaignAccreditation => {
-  if (!isRecord(value) || value.version !== 1 || typeof value.runId !== "string" ||
-    typeof value.approved !== "boolean" ||
-    (value.approvalReason !== null && typeof value.approvalReason !== "string") ||
-    !Array.isArray(value.sources) || !Array.isArray(value.exclusions)) return false;
-  return value.exclusions.every((item: unknown) => isRecord(item) &&
-    typeof item.providerId === "string" && typeof item.reference === "string" &&
-    typeof item.sourceUrl === "string" && typeof item.status === "string" &&
-    Array.isArray(item.issues) &&
-    (item.decision === "incluir" || item.decision === "excluir" || item.decision === null) &&
-    (item.reason === null || typeof item.reason === "string") &&
-    Array.isArray(item.evidenceUrls) && item.evidenceUrls.every((url: unknown) => typeof url === "string"));
-};
-
 const readEditorialState = async (rootDirectory: string) => {
   const context = await readCampaignFinalizationContext(rootDirectory);
   let metadata;
@@ -54,7 +40,7 @@ const readEditorialState = async (rootDirectory: string) => {
   try { parsed = JSON.parse(raw); }
   catch { throw new Error("Acreditación editorial: JSON inválido"); }
   const inspection = inspectAccreditationDraft(context.preparations, context.sources, context.runId, parsed);
-  if (!isAccreditation(parsed)) throw new Error("Acreditación editorial: estructura de decisiones inválida");
+  if (!isCampaignAccreditation(parsed)) throw new Error("Acreditación editorial: estructura de decisiones inválida");
   return { context, raw, accreditation: parsed, inspection };
 };
 

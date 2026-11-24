@@ -13,7 +13,6 @@ import { copyCampaignTestCatalog } from "../campaign-catalog-fixture.js";
 
 const prefix = "scrape-gomariz";
 const pathFor = (root: string): string => join(root, "storage", "scraped", "gomariz", `${prefix}-catalog.json`);
-const files = [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`] as const;
 const portable = (root: string): string => join(root, "catalogs", "providers", "gomariz", "original");
 const input = (root: string): Readonly<Record<string, string>> => ({ gomariz: pathFor(root) });
 

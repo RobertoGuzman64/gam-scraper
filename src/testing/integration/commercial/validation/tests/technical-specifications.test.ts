@@ -4,7 +4,6 @@ import { resolveAccreditedPublication, readAccreditedPublication } from "../../.
 import { readCanonicalCatalog } from "../../../../../infrastructure/filesystem/catalog/canonical-catalog.js";
 import { inspectTechnicalCoherence } from "../../../../../catalog/validation/technical-specifications.js";
 import { projectCommercialPresentation } from "../../../../../commercial/projection/presentation-projection.js";
-import type { SpecValue } from "../../../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../../../../commercial/legacy-export/contracts.js";
 import { analyzePresentationConsistency } from "../../../../../commercial/diagnostics/presentation-consistency.js";
 import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../../../../../commercial/validation/technical-specifications.js";

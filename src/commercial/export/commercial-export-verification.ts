@@ -32,8 +32,6 @@ const isWebUrl = (value: unknown): boolean => {
   try { return ["http:", "https:"].includes(new URL(value).protocol); }
   catch { return false; }
 };
-const validIdentifier = (value: unknown): value is number =>
-  typeof value === "number" && Number.isSafeInteger(value) && value > 0;
 const publishedIdentity = (providerId: string, item: Record<string, unknown>): string | null => {
   const reference = item.reference;
   const sourceUrl = item.sourceUrl;

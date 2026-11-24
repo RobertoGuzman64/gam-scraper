@@ -2,8 +2,7 @@ import { join, resolve } from "node:path";
 import { isPortableExtraction } from "./portable-eligibility.js";
 import { consolidatePortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
 import { cleanConsolidatedCatalogHistory } from "../../infrastructure/filesystem/catalog/catalog-retention.js";
-import type { ScraperProvider } from "../provider.js";
-import type { CategoryConfig, CategoryScrapeResult, ScrapeOptions, Summary } from "../../contracts/scraping.js";
+import type { CategoryConfig, CategoryScrapeResult } from "../../contracts/scraping.js";
 
 import { writeCategoriesCsv, writeGroupedOutputs, writeOutputs } from "../output/publish.js";
 

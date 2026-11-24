@@ -2,17 +2,7 @@ import { readFile } from "node:fs/promises";
 import { normalizeSpace } from "./string.js";
 import { safeJsonParse } from "./json.js";
 import type { CategoryFlatRow } from "./category-path-types.js";
-
-const isCategoryFlatRow = (v: unknown): v is CategoryFlatRow => {
-    if (!v || typeof v !== "object") return false;
-    const o = v as Record<string, unknown>;
-    return (
-        typeof o["id"] === "number" &&
-        (typeof o["parentId"] === "number" || o["parentId"] === null) &&
-        typeof o["name"] === "string" &&
-        typeof o["slug"] === "string"
-    );
-};
+import { isCategoryFlatRow } from "./category-index.js";
 
 const normalizePath = (path: string): string[] =>
     normalizeSpace(path)

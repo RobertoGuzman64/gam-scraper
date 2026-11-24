@@ -1,10 +1,7 @@
 import { buildProductIdentity } from "../identity.js";
 import { SPEC_KEY_NORMALIZATION } from "../normalization/spec-rules.js";
 import { fold } from "../../preparation/classification/category-utils.js";
-import type { CanonicalCatalog } from "../canonical-catalog.js";
 import type { ProductRecord, SpecValue } from "../../contracts/catalog.js";
-import type { ImportCatalog } from "../../commercial/legacy-export/contracts.js";
-import type { PreparedProduct } from "../../preparation/contracts.js";
 
 import type { GapField, GapEvidence, GapInput, GapGroupBy, GapGroup, GapObservation, GapAnalysis, GapOptions, GapCase, InternalGroup } from "./content-gaps-types.js";
 export const present = (value: string | null | undefined): boolean => typeof value === "string" && value.trim().length > 0;

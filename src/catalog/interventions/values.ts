@@ -1,4 +1,4 @@
-import type { ProductRecord, SpecsMap, SpecValue } from "../../contracts/catalog.js";
+import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
 import type { ManualInterventionProposal } from "./contracts.js";
 import { isSpecField } from "./proposals.js";
 
