@@ -169,6 +169,55 @@ test("bloquea un nuevo narrador específico conectado al recorrido de preparaci�
   assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-ACTIVE-PROVIDER-NARRATOR"));
 });
 
+test("el árbol vigente detecta narradores conectados fuera de rutas editoriales antiguas", (t) => {
+  const { root, write } = fixture(t);
+  write("src/preparation/gam/new-general.ts", "export const generalForGam = () => 'Descripción exclusiva de un proveedor';\n");
+  write("src/preparation/prepare-product.ts",
+    "import { resolvePreparedEditorial } from './editorial/core/prepared-editorial.js'; import { generalForGam } from './gam/new-general.js'; export const prepare = () => [resolvePreparedEditorial(), generalForGam()];\n");
+  assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-ACTIVE-PROVIDER-NARRATOR"));
+});
+
+test("el guard admite adaptadores reales y detecta composición narrativa sin una carpeta editorial", (t) => {
+  const { root, write } = fixture(t);
+  const adaptor = "src/preparation/gomariz/domain-source.ts";
+  write(adaptor, "export const readSource = (record: { height: string }) => ({ workingHeight: record.height });\n");
+  write("src/preparation/prepare-product.ts",
+    "import { resolvePreparedEditorial } from './editorial/core/prepared-editorial.js'; import { readSource } from './gomariz/domain-source.js'; export const prepare = () => [resolvePreparedEditorial(), readSource({ height: '10' })];\n");
+  assert.deepEqual(inspectEditorialArchitecture(root).findings, []);
+  write(adaptor, "export const readSource = () => ({ description: 'Narración arbitraria para el proveedor' });\n");
+  assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-PROVIDER-COMPOSITION"));
+});
+
+test("detecta narradores nuevos no conectados sin bloquear evidencias técnicas aisladas", (t) => {
+  const { root, write } = fixture(t);
+  write("src/preparation/mercaeleva/new-description.ts", "export const descriptionForMercaeleva = () => 'Una descripción nueva del proveedor';\n");
+  write("src/preparation/manain/technical-evidence.ts", "export const verifiedWorkingHeight = () => 12;\n");
+  const found = inspectEditorialArchitecture(root).findings;
+  assert.ok(rules(found).has("E-LEGACY-NARRATOR"));
+  assert.ok(found.every((finding) => finding.path !== "src/preparation/manain/technical-evidence.ts"));
+});
+
+test("las evidencias declarativas y reconciliadores acreditados no son narradores nuevos", (t) => {
+  const { root, write } = fixture(t);
+  write("src/preparation/gam/identity/evidence/source-summary.ts",
+    "export const verified = { short: 'Descripción existente en la evidencia de origen', general: 'Texto contrastado del origen' };\n");
+  write("src/preparation/gam/reconciliation/identity.ts",
+    "export const reconcileVerifiedEditorialCoherence = (value: string) => value.replace('Texto antiguo', 'Texto contrastado');\n");
+  write("src/preparation/prepare-product.ts",
+    "import { resolvePreparedEditorial } from './editorial/core/prepared-editorial.js'; import { verified } from './gam/identity/evidence/source-summary.js'; import { reconcileVerifiedEditorialCoherence } from './gam/reconciliation/identity.js'; export const prepare = () => [resolvePreparedEditorial(), verified, reconcileVerifiedEditorialCoherence];\n");
+  assert.deepEqual(inspectEditorialArchitecture(root).findings, []);
+});
+
+test("el contexto editorial de origen no depende de implementaciones de proveedor", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/preparation/editorial/source/context/new-source-general.ts";
+  write("src/preparation/gam/technical/derived-unit.ts", "export const evidence = () => 5;\n");
+  write(path, "import { evidence } from '../../../gam/technical/derived-unit.js'; export const source = () => evidence();\n");
+  assert.ok(rules(inspectEditorialArchitecture(root).findings).has("E-SOURCE-CONTEXT-PROVIDER-DEPENDENCY"));
+  write(path, "import { source as common } from '../../core/editorial-source.js'; export const source = () => common(5);\n");
+  assert.deepEqual(inspectEditorialArchitecture(root).findings, []);
+});
+
 test("bloquea bifurcación por proveedor, referencia y composición posterior a preparación", (t) => {
   const { root, write } = fixture(t);
   write("src/preparation/editorial/core/editorial-composition.ts",

@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { buildProductIdentity } from "../../catalog/identity.js";
@@ -18,8 +18,8 @@ import { readVerifiedManainRecordSource } from "../../infrastructure/filesystem/
 import { manainRecordPreparationSource } from "./manain-record-source.js";
 import { readAppliedIntervention } from "../../infrastructure/filesystem/interventions/intervention-derived.js";
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation/preparation-inputs.js";
-import { offlinePreparationManifest, offlinePreparationManifestPath, readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
-import { preparedWorkspaceForOutput, withPreparedStorageWriteLock } from "../../infrastructure/filesystem/preparation/prepared-storage-lock.js";
+import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
+import { preparationArtifactPaths, writePreparationArtifacts } from "../../infrastructure/filesystem/preparation/preparation-artifacts.js";
 
 export type PrepareOptions = {
   readonly providerId: string;
@@ -39,19 +39,6 @@ export type PrepareResult = {
   readonly diagnosticsFile: string;
   readonly manifestFile: string;
   readonly comparisonFile: string | null;
-};
-
-const writeExclusive = async (files: readonly { path: string; content: string }[]): Promise<void> => {
-  const created: string[] = [];
-  try {
-    for (const file of files) {
-      await writeFile(file.path, file.content, { flag: "wx" });
-      created.push(file.path);
-    }
-  } catch (error) {
-    for (const path of created) await rm(path, { force: true });
-    throw error;
-  }
 };
 
 export const assertPreparationInputsCurrent = async (
@@ -105,22 +92,10 @@ const prepareVerifiedProducts = async (
     const previous = await readOfflinePreparation(resolve(options.compare), options.providerId);
     comparison = compareOfflinePreparations(preparation, previous);
   }
-  const diagnosticsFile = out.slice(0, -"-preparation.json".length) + "-diagnostics.json";
-  const manifestFile = offlinePreparationManifestPath(out);
-  const comparisonFile = comparison ? out.slice(0, -"-preparation.json".length) + "-comparison.json" : null;
-  const workspace = preparedWorkspaceForOutput(out, options.providerId);
+  const { diagnosticsFile, manifestFile, comparisonFile } = preparationArtifactPaths(out, comparison !== null);
   if (!options.dryRun) {
     await input.verifyCurrent(fingerprints);
-    await mkdir(dirname(out), { recursive: true });
-    const rawPreparation = JSON.stringify(preparation, null, 2);
-    const files = [
-      { path: out, content: rawPreparation },
-      { path: diagnosticsFile, content: JSON.stringify(diagnostics, null, 2) },
-      ...(comparison && comparisonFile ? [{ path: comparisonFile, content: JSON.stringify(comparison, null, 2) }] : []),
-      { path: manifestFile, content: offlinePreparationManifest(rawPreparation, preparation) }
-    ];
-    if (workspace) await withPreparedStorageWriteLock(workspace, options.providerId, () => writeExclusive(files));
-    else await writeExclusive(files);
+    await writePreparationArtifacts(out, options.providerId, preparation, diagnostics, comparison);
   }
   return { preparation, diagnostics, comparison, workSummary, preparationFile: out, diagnosticsFile, manifestFile, comparisonFile };
 };

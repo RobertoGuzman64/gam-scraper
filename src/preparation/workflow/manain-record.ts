@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { resolve } from "node:path";
+import { readManainRecordEvidence, writeManainRecordArtifact } from "../../infrastructure/filesystem/catalog/manain-record-artifact.js";
 import type { ProductRecord, SpecScalar, SpecsMap } from "../../contracts/catalog.js";
 import type { PreparedProduct } from "../contracts.js";
 import { buildProductIdentity } from "../../catalog/identity.js";
@@ -103,8 +103,6 @@ const parseProduct = (row: Readonly<Record<string, string>>): ProductRecord => {
   };
 };
 
-const jsonFile = async (path: string): Promise<unknown> => JSON.parse(await readFile(path, "utf8"));
-
 export const buildManainRecord = (
   csv: string,
   summary: unknown,
@@ -178,19 +176,10 @@ export const prepareManainRecord = async (options: ManainRecordOptions): Promise
   if (summaryPath === source || errorsPath === source) {
     throw new Error("El origen debe ser un fichero -partial-all.csv de Manain");
   }
-  const [csv, summary, errors, census] = await Promise.all([
-    readFile(source, "utf8"), jsonFile(summaryPath), jsonFile(errorsPath), jsonFile(resolve(options.census))
-  ]);
+  const [csv, summary, errors, census] = await readManainRecordEvidence(source, summaryPath, errorsPath, resolve(options.census));
   const result = buildManainRecord(csv, summary, errors, census);
   if (!options.dryRun) {
-    const out = resolve(options.out);
-    await mkdir(dirname(out), { recursive: true });
-    const content = JSON.stringify(result, null, 2) + "\n";
-    try {
-      await writeFile(out, content, { flag: "wx" });
-    } catch (error) {
-      if (!record(error) || error.code !== "EEXIST" || await readFile(out, "utf8") !== content) throw error;
-    }
+    await writeManainRecordArtifact(resolve(options.out), result);
   }
   return result;
 };

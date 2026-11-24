@@ -1,12 +1,16 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { SourceEditorialEvidence } from "../claims/source-editorial-evidence.js";
-import { hasCrossedGamEditorialIdentity } from "../../gam/identity/evidence/gam-crossed-editorial-identity.js";
-import { gamElevationIdentityConflict, gamElevationSourceIdentityConflict } from "../../gam/identity/evidence/elevation-identity.js";
+import { hasGamEditorialSourceIdentityConflict } from "../../gam/identity/evidence/gam-crossed-editorial-identity.js";
 import { resolvePreparedEditorialTitle } from "../writing/prepared-editorial-title.js";
 import { resolvePreparedEditorialSource } from "./prepared-editorial-source.js";
 import { withoutUncorroboratedMotorClaim } from "../identity/editorial-signed-motor-caution.js";
 import { resolveKnowledgeEditorial } from "./knowledge-editorial.js";
 import { resolveSourcedShortDiscrepancy } from "../claims/editorial-sourced-short-discrepancy.js";
+
+const sameEditorialOriginalIdentity = (original: ProductRecord, current: ProductRecord): boolean =>
+  original !== current && original.providerId === current.providerId &&
+  original.reference === current.reference && original.url === current.url &&
+  original.brand === current.brand && original.model === current.model;
 
 export const resolvePreparedEditorial = (
   record: ProductRecord,
@@ -15,16 +19,10 @@ export const resolvePreparedEditorial = (
   originalSource: ProductRecord = sourceUnitRecord
 ) => {
   const { descriptions, heightConflict, verifiedTitle, sourceModelConflict, sourceMotorConflict } = resolvePreparedEditorialSource(record, sourceEditorial, sourceUnitRecord);
-  const matchingOriginal = originalSource !== sourceUnitRecord &&
-    originalSource.providerId === sourceUnitRecord.providerId &&
-    originalSource.reference === sourceUnitRecord.reference && originalSource.url === sourceUnitRecord.url &&
-    originalSource.brand === sourceUnitRecord.brand && originalSource.model === sourceUnitRecord.model &&
+  const matchingOriginal = sameEditorialOriginalIdentity(originalSource, sourceUnitRecord) &&
     originalSource.specs?.["Capacidad de carga (kg)"] === sourceUnitRecord.specs?.["Capacidad de carga (kg)"] &&
     originalSource.shortDescription !== sourceUnitRecord.shortDescription;
-  const originalSummaryMatches = originalSource !== sourceUnitRecord &&
-    originalSource.providerId === sourceUnitRecord.providerId &&
-    originalSource.reference === sourceUnitRecord.reference && originalSource.url === sourceUnitRecord.url &&
-    originalSource.brand === sourceUnitRecord.brand && originalSource.model === sourceUnitRecord.model &&
+  const originalSummaryMatches = sameEditorialOriginalIdentity(originalSource, sourceUnitRecord) &&
     originalSource.condition === sourceUnitRecord.condition &&
     originalSource.shortDescription === sourceUnitRecord.shortDescription &&
     descriptions.short === originalSource.shortDescription;
@@ -43,9 +41,7 @@ export const resolvePreparedEditorial = (
     heightConflict,
     sourceModelConflict,
     sourceMotorConflict,
-    sourceIdentityConflict: hasCrossedGamEditorialIdentity(sourceUnitRecord) || gamElevationSourceIdentityConflict(sourceUnitRecord) ||
-      sourceUnitRecord.providerId === "gam" && sourceUnitRecord.brand?.toUpperCase() === "XCMG" &&
-      /^XGA[\d]/iu.test(sourceUnitRecord.model ?? "") && gamElevationIdentityConflict(sourceUnitRecord)
+    sourceIdentityConflict: hasGamEditorialSourceIdentityConflict(sourceUnitRecord)
   };
 };
 

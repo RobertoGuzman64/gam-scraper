@@ -1,9 +1,7 @@
 import type { ProductRecord } from "../../contracts/catalog.js";
 import { buildProductIdentity } from "../../catalog/identity.js";
 import { findSerialNumberCollisions } from "../../catalog/identity-conflicts.js";
-import { describeHysterH35ftStockConflict } from "../gam/identity/evidence/hyster-h35ft-serial-evidence.js";
-import { verifiedMusoshiSerialOwner, verifiedZeroMisattributedSerial } from "../gam/identity/evidence/musoshi-serial-evidence.js";
-import { verifiedYaleErp35vlCrossListing, verifiedYaleErp35vlSerialOwner } from "../gam/identity/evidence/yale-erp35vl-serial-evidence.js";
+import { gamVerifiedSerialCollision } from "../gam/identity/gam-serial-conflicts.js";
 import type { ImportCatalog } from "../../commercial/legacy-export/contracts.js";
 import type { PreparedProduct } from "../contracts.js";
 import { prepareProduct } from "../../commercial/legacy-export/prepare-product.js";
@@ -24,16 +22,14 @@ export const prepareImportBatch = (products: readonly ProductRecord[], catalog?:
   for (const collision of findSerialNumberCollisions(products)) {
     const references = collision.products.map((product) => product.reference).join(", ");
     const issue = `Número de serie ${collision.serialNumber} compartido por referencias ${references}; revisar identidad de origen`;
-    if (verifiedYaleErp35vlCrossListing(collision)) continue;
-    const verifiedOwner = verifiedMusoshiSerialOwner(collision) ?? verifiedYaleErp35vlSerialOwner(collision);
-    const correctedSerial = verifiedZeroMisattributedSerial(collision);
-    const stockConflict = describeHysterH35ftStockConflict(collision);
+    const verified = gamVerifiedSerialCollision(collision);
+    if (verified.skip) continue;
     for (const product of collision.products) {
-      if (product === verifiedOwner || product === correctedSerial) continue;
+      if (product === verified.owner || product === verified.correctedSerial) continue;
       const key = buildProductIdentity(product).key;
       const issues = warningsByIdentity.get(key) ?? [];
       issues.push(issue);
-      if (stockConflict) issues.push(stockConflict);
+      if (verified.stockConflict) issues.push(verified.stockConflict);
       warningsByIdentity.set(key, issues);
     }
   }

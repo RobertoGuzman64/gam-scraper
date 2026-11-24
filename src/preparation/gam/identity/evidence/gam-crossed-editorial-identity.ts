@@ -1,6 +1,7 @@
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { containsEditorialBrandModel, containsEditorialIdentity } from "../../../editorial/identity/editorial-identity-match.js";
 import { verifiedEditorialUrl } from "../../../editorial/source/editorial-source-url.js";
+import { gamElevationIdentityConflict, gamElevationSourceIdentityConflict } from "./elevation-identity.js";
 
 const compact = (value: string): string => value.normalize("NFD")
   .replace(/[\u0300-\u036f]/gu, "").toLocaleLowerCase("es").replace(/[^a-z0-9]/gu, "");
@@ -58,3 +59,8 @@ export const hasGamCorroboratedModelVariantConflict = (source: ProductRecord): b
     compact(slug).includes(compact(model)) && !containsEditorialIdentity(slug, model) &&
     compact(title).includes(compact(model)) && !containsEditorialBrandModel(title, brand, model));
 };
+
+export const hasGamEditorialSourceIdentityConflict = (source: ProductRecord): boolean =>
+  hasCrossedGamEditorialIdentity(source) || gamElevationSourceIdentityConflict(source) ||
+  source.providerId === "gam" && source.brand?.toUpperCase() === "XCMG" &&
+  /^XGA[\d]/iu.test(source.model ?? "") && gamElevationIdentityConflict(source);

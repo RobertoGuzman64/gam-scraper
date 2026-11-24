@@ -5,14 +5,17 @@ import {
   findIssue, uniqueFindings, optionsFrom, present, digest
 } from "./guards-architecture-core.mjs";
 
-const providerEditorial = /^src\/preparation\/(?!shared\/)[^/]+\/editorial\//u;
+const providerEditorial = /^src\/preparation\/[^/]+\/editorial\//u;
+const providerModule = /^src\/preparation\/(?!classification\/|documents\/|editorial\/|product\/|provenance\/|quality\/|technical\/|testing\/|tests\/|workflow\/)[^/]+\//u;
 const sharedEditorial = /^src\/preparation\/editorial\//u;
+const sourcedContext = /^src\/preparation\/editorial\/source\/context\/[^/]+\.ts$/u;
 const sharedDomain = /^src\/preparation\/editorial\/core\/editorial-[^/]+\.ts$/u;
 const sharedMapping = /^src\/preparation\/editorial\//u;
-const trustedSourceAdapter = /^src\/preparation\/[^/]+\/editorial\/(?:source|mapping)\/domain-source\.ts$/u;
+const trustedSourceAdapter = /^src\/preparation\/[^/]+\/(?:domain-source|editorial\/(?:source|mapping)\/domain-source)\.ts$/u;
 const dispatch = "src/preparation/editorial/core/editorial-source.ts";
 const textualFields = new Set(["description", "description_general", "short", "general"]);
 const narrativeNames = /(?:description|general|short|summary|title|editorial)/iu;
+const providerNarrativeName = /^(?:(?:general|short|description|summary)For|(?:compose|build|create|write|generate|resolve)[A-Z].*(?:General|Short|Description|Summary))/u;
 const editorialFields = new Set(["description", "description_general", "shortDescription", "longDescription", "title"]);
 const matchesMember = (node, name) =>
   ts.isPropertyAccessExpression(node) && node.name.text === name ||
@@ -49,6 +52,25 @@ const narrativeLiteral = (node) => {
   if (ts.isObjectLiteralExpression(node)) return node.properties.some((property) =>
     ts.isPropertyAssignment(property) && editorialFields.has(nameOf(property.name)) && narrativeLiteral(property.initializer));
   return false;
+};
+const runtimeComposition = (node) => {
+  for (let parent = node.parent; parent; parent = parent.parent) {
+    if (ts.isFunctionLike(parent)) return true;
+    if (ts.isSourceFile(parent)) return false;
+  }
+  return false;
+};
+const providerNarrator = (source) => {
+  let narrative = null;
+  visitNodes(source, (node) => {
+    if (narrative) return;
+    if (ts.isFunctionDeclaration(node) && node.name && providerNarrativeName.test(node.name.text) &&
+      node.body && narrativeLiteral(node.body)) narrative = node.name;
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && providerNarrativeName.test(node.name.text) &&
+      node.initializer && (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer)) &&
+      narrativeLiteral(node.initializer.body)) narrative = node.name;
+  });
+  return narrative;
 };
 const referenceAliases = (source) => {
   const aliases = new Set();
@@ -117,23 +139,35 @@ export const inspectEditorialArchitecture = (root) => {
   for (const [path, source] of project.files) {
     if (isTest(path) || !path.startsWith("src/")) continue;
     const connected = active.has(path);
-    if (connected && providerEditorial.test(path) && !trustedSourceAdapter.test(path)) {
-      push("E-ACTIVE-PROVIDER-NARRATOR", path, undefined,
-        "Módulo editorial específico alcanzable desde preparación/exportación; revisar propiedad de redacción");
+    const narrative = providerModule.test(path) ? providerNarrator(source) : null;
+    if (connected && providerModule.test(path) && !trustedSourceAdapter.test(path) &&
+      (providerEditorial.test(path) || narrative)) {
+      push("E-ACTIVE-PROVIDER-NARRATOR", path, narrative,
+        "Módulo narrativo específico alcanzable desde preparación/exportación; revisar propiedad de redacción");
     }
-    if (!connected && providerEditorial.test(path)) {
-      let narrative = null;
-      visitNodes(source, (node) => {
-        if (!narrative && ts.isFunctionDeclaration(node) && node.name && narrativeNames.test(node.name.text)) narrative = node.name;
-        if (!narrative && ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && narrativeNames.test(node.name.text) &&
-          node.initializer && (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer))) narrative = node.name;
-      });
-      if (narrative) push("E-LEGACY-NARRATOR", path, narrative,
+    if (!connected && providerModule.test(path)) {
+      let legacy = narrative;
+      if (!legacy && providerEditorial.test(path)) {
+        visitNodes(source, (node) => {
+          if (!legacy && ts.isFunctionDeclaration(node) && node.name && narrativeNames.test(node.name.text)) legacy = node.name;
+          if (!legacy && ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && narrativeNames.test(node.name.text) &&
+            node.initializer && (ts.isArrowFunction(node.initializer) || ts.isFunctionExpression(node.initializer))) legacy = node.name;
+        });
+      }
+      if (legacy) push("E-LEGACY-NARRATOR", path, legacy,
         "Módulo narrativo específico aislado: clasificar conocimiento/evidencia antes de retirarlo",
-        `legacy:${narrative.getText(source)}:${digest(source.text)}`);
+        `legacy:${legacy.getText(source)}:${digest(source.text)}`);
+    }
+    if (sourcedContext.test(path)) {
+      const providerImports = [...project.dependencies.get(path) ?? []].filter((dependency) =>
+        providerModule.test(dependency));
+      if (providerImports.length > 0) push("E-SOURCE-CONTEXT-PROVIDER-DEPENDENCY", path, undefined,
+        `El contexto editorial reutilizable depende directamente de un proveedor: ${providerImports.join(", ")}`);
     }
     if (sharedDomain.test(path) && path !== dispatch) {
-      const vendorImports = (project.dependencies.get(path) ?? []).filter((dep) => providerEditorial.test(dep));
+      const vendorImports = (project.dependencies.get(path) ?? []).filter((dep) =>
+        providerEditorial.test(dep) || project.files.has(dep) && providerModule.test(dep) &&
+        providerNarrator(project.files.get(dep)));
       if (vendorImports.length > 0) push("E-DOMAIN-DEPENDENCY", path, undefined,
         `El dominio general depende de adaptadores editoriales: ${vendorImports.join(", ")}`);
     }
@@ -176,8 +210,8 @@ export const inspectEditorialArchitecture = (root) => {
         push("E-HARDCODED-REFERENCE", path, node,
           "La lógica editorial identifica una unidad mediante referencia literal, directa o indirecta");
       }
-      if (connected && providerEditorial.test(path) && ts.isPropertyAssignment(node) &&
-        textualFields.has(nameOf(node.name)) &&
+      if (connected && providerModule.test(path) && ts.isPropertyAssignment(node) &&
+        (providerEditorial.test(path) || runtimeComposition(node)) && textualFields.has(nameOf(node.name)) &&
         (ts.isStringLiteralLike(node.initializer) || ts.isTemplateExpression(node.initializer) ||
           ts.isBinaryExpression(node.initializer) ||
           (ts.isCallExpression(node.initializer) && narrativeNames.test(node.initializer.expression.getText(source))))) {

@@ -10,3 +10,12 @@ export const energy = (value: string): "electric" | "diesel" | null => {
   return electric === diesel ? null : electric ? "electric" : "diesel";
 };
 
+
+export const verifiedSourceHost = (url: string, host: string): boolean => {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" && parsed.hostname === host && !parsed.search && !parsed.hash;
+  } catch {
+    return false;
+  }
+};

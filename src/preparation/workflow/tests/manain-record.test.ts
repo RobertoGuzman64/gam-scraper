@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 import { discardedManainProductUrls } from "../../manain/discarded-urls.js";
 import { toCsv } from "../../../shared/csv.js";
 import { baseProductHeaders } from "../../../scraping/output/csv-serializer.js";
-import { buildManainRecord } from "../manain-record.js";
+import { buildManainRecord, prepareManainRecord } from "../manain-record.js";
 
 const productUrl = "https://manain.com/producto/venta-elevacion-tijera-prueba/";
 const rows: readonly Record<string, string>[] = [{
@@ -49,4 +52,32 @@ test("Manain: el registro rechaza CSV alterado y descartes no autorizados", () =
     ]
   };
   assert.throws(() => buildManainRecord(csv, summary, otherErrors, census), /no conciliadas/);
+});
+
+test("Manain: dry-run, escritura exclusiva e idempotencia conservan el registro parcial", async () => {
+  const root = await mkdtemp(join(tmpdir(), "equipzilla-manain-record-"));
+  try {
+    const source = join(root, "manain-partial-all.csv");
+    const censusFile = join(root, "census.json");
+    const out = join(root, "records", "manain-record.json");
+    await Promise.all([
+      writeFile(source, csv),
+      writeFile(join(root, "manain-summary.json"), JSON.stringify(summary)),
+      writeFile(join(root, "manain-errors.json"), JSON.stringify(errors)),
+      writeFile(censusFile, JSON.stringify(census))
+    ]);
+    const options = { source, census: censusFile, out, dryRun: true };
+    const preview = await prepareManainRecord(options);
+    await assert.rejects(readFile(out, "utf8"), { code: "ENOENT" });
+    const persisted = await prepareManainRecord({ ...options, dryRun: false });
+    assert.deepEqual(persisted, preview);
+    const expected = JSON.stringify(preview, null, 2) + "\n";
+    assert.equal(await readFile(out, "utf8"), expected);
+    await prepareManainRecord({ ...options, dryRun: false });
+    assert.equal(await readFile(out, "utf8"), expected);
+    await writeFile(out, "{}");
+    await assert.rejects(prepareManainRecord({ ...options, dryRun: false }), { code: "EEXIST" });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

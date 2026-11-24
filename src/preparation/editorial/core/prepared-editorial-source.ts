@@ -7,26 +7,17 @@ import { hasCorroboratedEditorialDistinctWorkHeights } from "./editorial-source.
 import { resolveReusableEditorial } from "./editorial-composition.js";
 import { hasEditorialMillimetreUnit } from "../measurements/editorial-measurements.js";
 import { resolveSourceEditorialClaims } from "../claims/editorial-source-claims.js";
-import { resolveHeaderOnlyEditorialGeneral } from "../source/context/editorial-header-only-general.js";
-import { resolveSourcedUnitMeasuresGeneral } from "../measurements/sourced/editorial-sourced-unit-measures.js";
-import { resolveSourcedTechnicalContext } from "../measurements/sourced/editorial-sourced-technical-context.js";
 import { resolveSourcedConciseShort } from "../writing/editorial-sourced-concise-short.js";
 import { resolveSourcedShortSummary } from "../source/context/editorial-source-short-summary.js";
-import { resolveSourcedOperationalSpecs } from "../source/details/editorial-sourced-operational-specs.js";
-import { resolveSourcedShortContext } from "../source/context/editorial-source-short-context.js";
-import { resolveSourcedShortClaimsGeneral } from "../claims/editorial-sourced-short-claims.js";
-import { resolveSourcedLongEvidence } from "../claims/editorial-sourced-long-evidence.js";
-import { synthesizeSourcedLongGeneral } from "../source/context/editorial-source-general-synthesis.js";
-import { resolveSourcedOperationalFeatures } from "../source/details/editorial-sourced-operational-features.js";
 import { structureSourcedLongGeneral } from "../writing/editorial-sourced-long-structure.js";
 import { resolveSourcedAmbiguousWidth } from "../measurements/sourced/editorial-sourced-ambiguous-dimension.js";
-import { removeSourcedPromotionalClosing } from "../writing/editorial-sourced-commercial-tail.js";
 import { resolveSourcedShortDiscrepancy } from "../claims/editorial-sourced-short-discrepancy.js";
-import { resolveSourcedFamilyContext } from "../source/context/editorial-sourced-family-context.js";
 import { resolveUnbrandedEditorial } from "../identity/editorial-unbranded-equipment.js";
-import { resolveVerifiedEditorialUnitContext } from "../identity/editorial-unit-context.js";
 import { cleanAuthenticatedSourceEditorial } from "../writing/editorial-text-hygiene.js";
 import { resolveKnowledgeEditorial } from "./knowledge-editorial.js";
+import { resolvePreparedSourceGeneral } from "../source/context/prepared-source-general.js";
+import { removeSourcedPromotionalClosing } from "../writing/editorial-sourced-commercial-tail.js";
+import { isGamDocumentedYaleDimensionsSource } from "../../gam/identity/evidence/model-dimensions-source.js";
 import { conciseVerifiedUnitGeneral, conciseSignedUnitGeneral, resolveEditorialIdentitySummary, unresolvedEditorialModelVariantShort, unresolvedEditorialModelVariantGeneral } from "../identity/editorial-identity-summary.js";
 import { compressVerifiedSourceShort, expandVerifiedSourceShort } from "../source/editorial-source-brief.js";
 import { corroboratedSourceUnitBrief } from "../source/editorial-source-unit-brief.js";
@@ -36,10 +27,8 @@ import { resolveVerifiedSourceEditorialExcerpt } from "../source/editorial-sourc
 import { resolveMissingTechnicalEditorialGeneral } from "../source/context/editorial-missing-technical-general.js";
 import { resolveDocumentedAccessoryEditorial } from "../source/details/documented-accessory.js";
 import { withoutContradictoryFamilyGeneral } from "../source/context/editorial-source-family-general.js";
-import { resolveDocumentedModelDimensions } from "../measurements/editorial-model-dimensions.js";
 import { hasUncorroboratedSignedMotor, withoutUncorroboratedMotorClaim } from "../identity/editorial-signed-motor-caution.js";
 import { hasCrossedGamEditorialIdentity, hasGamCorroboratedModelVariantConflict, hasGamModelTitleDisagreement } from "../../gam/identity/evidence/gam-crossed-editorial-identity.js";
-import { isGamDocumentedYaleDimensionsSource } from "../../gam/identity/evidence/model-dimensions-source.js";
 
 export const resolvePreparedEditorialSource = (
   record: ProductRecord,
@@ -102,45 +91,11 @@ export const resolvePreparedEditorialSource = (
       (verified ? resolveVerifiedSourceEditorialExcerpt(sourceUnitRecord) : null) ??
       (verified ? resolveVerifiedTechnicalBrief(sourceUnitRecord, record) : null) ??
       resolveEditorialIdentitySummary(record, familyOverride) : null;
-  const familyGuidance = general?.includes("compactación de contenedores") &&
-    knowledge?.familyGuidance?.includes("La compactadora se emplea en tareas de compactación del terreno o del firme.") ?
-    knowledge.familyGuidance.replace("La compactadora se emplea en tareas de compactación del terreno o del firme.", "").trim() :
-    knowledge?.familyGuidance;
-  const narrative = general && !signedGeneral ? [familyGuidance, knowledge?.modelReference]
-    .filter((part): part is string => Boolean(part)).join(" ") : "";
-  const assembledGeneral = general ? `${general}${narrative ? ` ${narrative}` : ""}` :
-    !crossedIdentity && !variantConflict && !sourceModelConflict && authenticatedOrigin ?
-      resolveHeaderOnlyEditorialGeneral(editorialSourceUnit, editorialRecord) ?? editorialRecord.longDescription :
-      editorialRecord.longDescription;
-  const sourcedMeasures = verified && !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict ?
-    resolveSourcedUnitMeasuresGeneral(editorialSourceUnit, editorialRecord, assembledGeneral, authenticatedOrigin) : null;
-  const contextualGeneral = verified && !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict ?
-    resolveSourcedFamilyContext(editorialSourceUnit, editorialRecord, sourcedMeasures ?? assembledGeneral, authenticatedOrigin) : null;
-  const contextualSource = contextualGeneral ?? sourcedMeasures ?? assembledGeneral;
-  const technicalSource = verified && !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict ?
-    resolveSourcedTechnicalContext(editorialSourceUnit, editorialRecord, contextualSource, authenticatedOrigin) : null;
-  const extendedSource = verified && !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict ?
-    resolveSourcedLongEvidence(editorialSourceUnit, editorialRecord, technicalSource ?? contextualSource) : null;
-  const sourceGeneral = extendedSource ?? technicalSource ?? contextualSource;
-  const operationalGeneral = !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict ?
-    resolveSourcedOperationalSpecs(editorialSourceUnit, editorialRecord, sourceGeneral, authenticatedOrigin) : null;
-  const shortContext = !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict ?
-    resolveSourcedShortContext(editorialSourceUnit, editorialRecord, operationalGeneral ?? sourceGeneral, authenticatedOrigin) : null;
-  const sourcedGeneral = shortContext ?? operationalGeneral ?? sourceGeneral;
-  const sourcedShortClaims = !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict ?
-    resolveSourcedShortClaimsGeneral(editorialSourceUnit, editorialRecord, sourcedGeneral, authenticatedOrigin) : null;
-  const claimsGeneral = sourcedShortClaims ?? sourcedGeneral;
-  const modelDimensions = verified && !signedGeneral && isGamDocumentedYaleDimensionsSource(editorialSourceUnit) ?
-    resolveDocumentedModelDimensions(editorialSourceUnit, editorialRecord, claimsGeneral) : null;
-  const completedGeneral = modelDimensions ? `${modelDimensions}${claimsGeneral ? `\n\n${claimsGeneral}` : ""}` : claimsGeneral;
-  const hardwareGeneral = authenticatedOrigin && !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict && !modelDimensions ?
-    resolveSourcedOperationalFeatures(editorialSourceUnit, editorialRecord, completedGeneral, authenticatedOrigin) : null;
-  const conciseGeneral = authenticatedOrigin && !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict && !modelDimensions ?
-    (synthesizeSourcedLongGeneral(editorialSourceUnit, editorialRecord, completedGeneral, authenticatedOrigin) ??
-      removeSourcedPromotionalClosing(editorialSourceUnit, editorialRecord, completedGeneral, authenticatedOrigin) ??
-      hardwareGeneral) : null;
-  const long = signedGeneral ? assembledGeneral :
-    resolveVerifiedEditorialUnitContext(editorialSourceUnit, conciseGeneral ?? completedGeneral, editorialRecord);
+  const { long, modelDimensions } = resolvePreparedSourceGeneral(
+    editorialSourceUnit, editorialRecord, general, knowledge, verified, signedGeneral,
+    crossedIdentity || variantConflict || sourceModelConflict, authenticatedOrigin,
+    () => isGamDocumentedYaleDimensionsSource(editorialSourceUnit)
+  );
   const conservedShort = verified && signedGeneral &&
     (hasEditorialMillimetreUnit(sourceUnitRecord.specs?.["Altura máxima de elevación"]) || technicalListing) ?
       sourceUnitRecord.shortDescription?.trim() || recoveredShort : null;

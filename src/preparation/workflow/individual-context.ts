@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { lstat, mkdir, readFile, readdir } from "node:fs/promises";
+import { lstat, readFile, readdir } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import type { OfflinePreparation, PreparationFingerprints, PreparationSource } from "../documents/offline-document.js";
@@ -16,6 +16,7 @@ import { manainRecordPreparationSource } from "./manain-record-source.js";
 import { validateCanonicalSource } from "./offline.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation/preparation-inputs.js";
+import { verifyPreparedDirectory, ensurePreparedDirectory } from "../../infrastructure/filesystem/preparation/prepared-storage-directories.js";
 import { validateManainRecordPreparation, validateOfflinePreparation } from "./offline.js";
 
 export type IndividualCatalogProvider = typeof CAMPAIGN_PROVIDERS[number];
@@ -42,21 +43,6 @@ const missing = (error: unknown): boolean =>
   error instanceof Error && "code" in error && error.code === "ENOENT";
 const record = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
-
-const verifyPreparedDirectory = async (workspace: string, providerId: IndividualPreparationProvider): Promise<string> => {
-  const root = resolve(workspace);
-  const directory = join(root, "storage", "prepared", providerId);
-  for (const path of [root, join(root, "storage"), join(root, "storage", "prepared"), directory]) {
-    try {
-      const stat = await lstat(path);
-      if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error(`Directorio de preparación no regular: ${path}`);
-    } catch (error) {
-      if (missing(error)) continue;
-      throw error;
-    }
-  }
-  return directory;
-};
 
 const readExistingPreparations = async (
   workspace: string, directory: string, providerId: IndividualPreparationProvider,
@@ -204,24 +190,7 @@ export const requireIndividualPreparationContext = async (
 
 export const ensureIndividualPreparationDirectory = async (
   workspace: string, providerId: IndividualPreparationProvider
-): Promise<void> => {
-  const root = resolve(workspace);
-  const path = [join(root, "storage"), join(root, "storage", "prepared"), join(root, "storage", "prepared", providerId)];
-  for (const directory of path) {
-    try {
-      const stat = await lstat(directory);
-      if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error(`Directorio de preparación no regular: ${directory}`);
-    } catch (error) {
-      if (!missing(error)) throw error;
-      try { await mkdir(directory); }
-      catch (creationError) {
-        if (!(creationError instanceof Error && "code" in creationError && creationError.code === "EEXIST")) throw creationError;
-      }
-      const stat = await lstat(directory);
-      if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error(`Directorio de preparación no regular: ${directory}`);
-    }
-  }
-};
+): Promise<void> => ensurePreparedDirectory(workspace, providerId);
 
 export type IndividualPreparationSummary = {
   readonly providerId: IndividualPreparationProvider;
