@@ -8,7 +8,7 @@ const root = process.cwd();
 const knowledge = loadEditorialKnowledge();
 const summary = { version: 1, kind: 'diagnostico_sin_publicacion', providers: {}, total: {
   records: 0, ready: 0, review: 0, exceptions: 0, verifiedUnitGeneralApplied: 0,
-  verifiedUnitShortApplied: 0, verifiedUnitTitlesApplied: 0, modelReferencesApplied: 0, familyGuidanceApplied: 0,
+  verifiedUnitShortApplied: 0, verifiedUnitTitlesApplied: 0, familyGuidanceApplied: 0,
   emptyShort: 0, emptyGeneral: 0, signedUnits: 0, signedUnitsWithoutExactMatch: 0,
   signedFields: 0, signedFieldsWithoutExactMatch: 0
 }, problems: [], signedDifferences: [],
@@ -26,7 +26,7 @@ for (const provider of ['gam', 'gomariz', 'mercaeleva']) {
   const { records: products, prepared, provenance } = population;
   summary.provenance.sources[provider] = provenance;
   const counters = { records: products.length, ready: 0, review: 0, exceptions: 0,
-    verifiedUnitGeneralApplied: 0, verifiedUnitShortApplied: 0, verifiedUnitTitlesApplied: 0, modelReferencesApplied: 0,
+    verifiedUnitGeneralApplied: 0, verifiedUnitShortApplied: 0, verifiedUnitTitlesApplied: 0,
     familyGuidanceApplied: 0, emptyShort: 0, emptyGeneral: 0, signedUnits: 0,
     signedUnitsWithoutExactMatch: 0, signedFields: 0, signedFieldsWithoutExactMatch: 0 };
   for (const [index, record] of products.entries()) {
@@ -38,7 +38,6 @@ for (const provider of ['gam', 'gomariz', 'mercaeleva']) {
       if (reference.general && result.product.description_general === reference.general) counters.verifiedUnitGeneralApplied++;
       if (reference.short && result.product.description === reference.short) counters.verifiedUnitShortApplied++;
       if (reference.title && result.product.title === reference.title) counters.verifiedUnitTitlesApplied++;
-      if (reference.modelReference && result.product.description_general?.includes(reference.modelReference)) counters.modelReferencesApplied++;
       if (reference.familyGuidance && result.product.description_general?.includes(reference.familyGuidance)) counters.familyGuidanceApplied++;
       const signedFields = [
         ['short', reference.short, result.product.description],

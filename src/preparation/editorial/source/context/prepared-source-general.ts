@@ -29,8 +29,7 @@ export const resolvePreparedSourceGeneral = (
     knowledge?.familyGuidance?.includes("La compactadora se emplea en tareas de compactación del terreno o del firme.") ?
     knowledge.familyGuidance.replace("La compactadora se emplea en tareas de compactación del terreno o del firme.", "").trim() :
     knowledge?.familyGuidance;
-  const narrative = general && !signedGeneral ? [familyGuidance, knowledge?.modelReference]
-    .filter((part): part is string => Boolean(part)).join(" ") : "";
+  const narrative = general && !signedGeneral ? familyGuidance : null;
   const assembledGeneral = general ? `${general}${narrative ? ` ${narrative}` : ""}` :
     !blockedIdentity && authenticatedOrigin ?
       resolveHeaderOnlyEditorialGeneral(sourceUnit, record) ?? record.longDescription :

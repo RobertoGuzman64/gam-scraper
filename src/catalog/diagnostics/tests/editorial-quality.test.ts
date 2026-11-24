@@ -69,6 +69,29 @@ test("localiza explicaciones de acreditación de specs sin confundirlas con pres
   }
 });
 
+test("distingue justificaciones residuales de advertencias de configuración y seguridad", () => {
+  const prohibited = [
+    "Son características documentadas en el anuncio, cuya disponibilidad debe comprobarse.",
+    "La fuente documenta acero para el chasis de las horquillas.",
+    "Estas cifras son prestaciones de catálogo, sujetas a la configuración.",
+    "La documentación del fabricante describe otras configuraciones de la familia.",
+    "Para la familia MARCA MODELO10 la documentación técnica diferencia dos alturas.",
+    "El texto técnico común de esta gama describe el regulador."
+  ];
+  const allowed = [
+    "La altura de plataforma no equivale a la altura de trabajo; consultar el manual del fabricante.",
+    "La configuración con cepillo lateral de 520 mm requiere comprobar la anchura de barrido.",
+    "Conviene comprobar la disponibilidad y configuración del frenado en la unidad ofrecida.",
+    "El vendedor anuncia un buen estado general; compruebe la máquina antes de comprarla."
+  ];
+  const inputs = [...prohibited.map((long, index) => entry(`prohibida-${index}`, { long })),
+    ...allowed.map((long, index) => entry(`permitida-${index}`, { long }))];
+  for (const result of [analyzeEditorialQuality(inputs), analyzePublishedEditorialQuality(inputs.map((item) => item.prepared.product))]) {
+    const detected = result.cases.filter((item) => item.issues.some((issue) => issue.code === "general_justificacion_documental"));
+    assert.deepEqual(detected.map((item) => item.reference), prohibited.map((_, index) => `prohibida-${index}`));
+  }
+});
+
 test("detecta equivalencia, general menor que corta y título reutilizado sin afirmar datos inventados", () => {
   const common = "Plataforma LGMG modelo";
   const result = analyzeEditorialQuality([

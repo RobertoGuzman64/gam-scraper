@@ -3,7 +3,6 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { resolveEditorialFacts } from "../core/editorial-facts.js";
-import { resolveTechnicalModelReference } from "./editorial-model-technical-reference.js";
 import { resolveVerifiedEditorialUnitContext } from "../identity/editorial-unit-context.js";
 import { loadEditorialKnowledge } from "../../../infrastructure/filesystem/editorial/knowledge.js";
 import { resolveKnowledgeEditorial } from "../core/knowledge-editorial.js";
@@ -53,35 +52,32 @@ test("el texto comercial conserva la altura acreditada sin explicar documentaci�
     /documentación técnica (?:de referencia )?del modelo|otras fichas del catálogo|no acreditan la configuración ni las prestaciones de esta unidad/iu);
 });
 
-test("la referencia técnica se reutiliza entre proveedores sin atribuir sus capacidades a la unidad", () => {
-  const mercaeleva = documentedMercaeleva();
-  const gomariz = documentedGomariz();
-  const initial = [JSON.stringify(mercaeleva), JSON.stringify(gomariz)];
-  const referenceMercaeleva = resolveKnowledgeEditorial(mercaeleva).modelReference;
-  const referenceGomariz = resolveKnowledgeEditorial(gomariz).modelReference;
-  const technical = (value: string | null): string =>
-    value?.slice(value.indexOf("La documentación técnica de referencia")) ?? "";
-  assert.ok(technical(referenceMercaeleva));
-  assert.equal(technical(referenceMercaeleva), technical(referenceGomariz));
-  assert.match(referenceMercaeleva ?? "", /modelo LGMG AS1212E.*altura de trabajo de 14 m.*altura de plataforma de 12 m.*capacidad nominal de 320 kg/u);
-  assert.match(referenceMercaeleva ?? "", /no acreditan la configuración ni las prestaciones de esta unidad/u);
-  for (const record of [mercaeleva, gomariz]) {
-    const output = prepareSourceProduct(record).product;
-    assert.match(output.description_general ?? "", /La documentación técnica de referencia del modelo LGMG AS1212E/u);
-    assert.doesNotMatch(output.description_general ?? "", /horómetro de 10000 horas/u);
+const documentaryNarrative = /documentación técnica (?:de referencia )?del modelo|otras fichas del catálogo|no acreditan la configuración ni las prestaciones de esta unidad|las magnitudes corresponden al modelo o versión documentada/iu;
+
+test("el conocimiento de modelo permanece interno y no atribuye sus capacidades a unidades de distintos proveedores", () => {
+  const records = [documentedMercaeleva(), documentedGomariz()];
+  const initial = records.map((record) => JSON.stringify(record));
+  for (const record of records) {
+    const result = prepareSourceProduct(record);
+    assert.equal(result.status, "ready");
+    assert.deepEqual(result.product.spec, record.specs);
+    assert.ok(result.technicalProvenance);
+    assert.deepEqual(result.technicalProvenance.entries, []);
+    assert.match(result.product.description_general ?? "", /altura de trabajo de 14 m/u);
+    assert.doesNotMatch(result.product.description_general ?? "", documentaryNarrative);
+    assert.doesNotMatch(result.product.description_general ?? "", /altura de plataforma de 12 m|horómetro de 10000 horas/u);
   }
-  assert.deepEqual([JSON.stringify(mercaeleva), JSON.stringify(gomariz)], initial);
+  assert.deepEqual(records.map((record) => JSON.stringify(record)), initial);
 });
 
 test("una ficha entrante conserva el modelo pero no hereda atributos exclusivos de otra unidad", () => {
   const incoming = newlyArrived();
   assert.equal(resolveEditorialFacts(incoming)?.workingHeightM, 14);
-  const knowledge = resolveKnowledgeEditorial(incoming);
-  assert.match(knowledge.modelReference ?? "", /altura de plataforma de 12 m/u);
-  assert.equal(knowledge.general, null);
-  const result = prepareSourceProduct(incoming).product;
-  assert.match(result.description_general ?? "", /Las magnitudes corresponden al modelo o versión documentada/u);
-  assert.doesNotMatch(result.description_general ?? "", /CONTROL-01\b/u);
+  assert.equal(resolveKnowledgeEditorial(incoming).general, null);
+  const result = prepareSourceProduct(incoming);
+  assert.deepEqual(result.product.spec, incoming.specs);
+  assert.doesNotMatch(result.product.description_general ?? "", documentaryNarrative);
+  assert.doesNotMatch(result.product.description_general ?? "", /CONTROL-01\b|altura de plataforma de 12 m/u);
 });
 
 test("familia, altura, motorización, identidad y variantes incompatibles impiden la extrapolación", () => {
@@ -91,19 +87,22 @@ test("familia, altura, motorización, identidad y variantes incompatibles impide
     { ...source, specs: { ...source.specs, Capacidad: "450 kg" } },
     { ...source, title: "Plataforma de tijera diésel LGMG AS1212E", specs: { ...source.specs, Motor: "Diésel" } },
     { ...source, model: "AS1212E-OTRA", title: "Plataforma de tijera eléctrica LGMG AS1212E-OTRA" },
-    { ...source, title: "Plataforma articulada eléctrica LGMG AS1212E" }
+    { ...source, title: "Plataforma articulada eléctrica LGMG AS1212E" },
+    { ...source, reference: null }
   ];
   for (const incompatible of variants) {
-    assert.equal(Boolean(resolveKnowledgeEditorial(incompatible).modelReference?.includes("La documentación técnica de referencia")), false);
+    const result = prepareSourceProduct(incompatible);
+    assert.doesNotMatch(result.product.description_general ?? "", documentaryNarrative);
+    assert.doesNotMatch(result.product.description_general ?? "", /altura de plataforma de 12 m|0,9 m de extensión de plataforma/u);
   }
-  assert.equal(resolveKnowledgeEditorial({ ...source, reference: null }).modelReference, null);
 });
 
-test("documentaciones contradictorias para el mismo modelo y variante no se fusionan arbitrariamente", () => {
+test("documentaciones contradictorias para el mismo modelo y variante permanecen separadas del texto", () => {
   const knowledge = loadEditorialKnowledge();
   const entries = knowledge.technicalReferences.get("haulotte|optimum 8");
   if (!entries || entries.length < 2) throw new Error("Faltan variantes documentadas del modelo");
   assert.notEqual(entries[0]?.documentedWorkHeight, entries[1]?.documentedWorkHeight);
+  const snapshot = JSON.stringify(entries);
   const record: ProductRecord = {
     ...documentedGomariz(), brand: "Haulotte", model: "Optimum 8",
     title: "Plataforma de tijera eléctrica Haulotte Optimum 8",
@@ -111,9 +110,11 @@ test("documentaciones contradictorias para el mismo modelo y variante no se fusi
     longDescription: "Plataforma de tijera eléctrica Haulotte Optimum 8 para trabajos en altura.",
     specs: { "Altura de trabajo": "8 m", Capacidad: "230 kg", Motor: "Eléctrico" }
   };
-  const facts = resolveEditorialFacts(record);
-  if (!facts) throw new Error("La familia de la ficha de prueba no es verificable");
-  assert.equal(resolveTechnicalModelReference(facts, knowledge), null);
+  const result = prepareSourceProduct(record);
+  assert.deepEqual(result.product.spec, record.specs);
+  assert.match(result.product.description_general ?? "", /altura de trabajo de 8 m/u);
+  assert.doesNotMatch(result.product.description_general ?? "", documentaryNarrative);
+  assert.equal(JSON.stringify(entries), snapshot);
 });
 
 test("referencia de vendedor, horas y etiquetas comerciales requieren concordancia de la misma unidad", () => {
@@ -135,7 +136,7 @@ test("referencia de vendedor, horas y etiquetas comerciales requieren concordanc
 });
 
 
-test("acredita la documentación de fabricante para unidades nuevas sin copiar la configuración individual", () => {
+test("las unidades nuevas conservan la identidad y sus valores sin narrar documentación de fabricante", () => {
   const originals = [documentedGomariz(), documentedMercaeleva()];
   for (const source of originals) {
     const incoming: ProductRecord = {
@@ -148,12 +149,10 @@ test("acredita la documentación de fabricante para unidades nuevas sin copiar l
       serialNumber: "SERIE-PRUEBA"
     };
     const snapshot = JSON.stringify(incoming);
-    const reference = resolveKnowledgeEditorial(incoming).modelReference;
-    assert.match(reference ?? "", /La documentación técnica de referencia del modelo LGMG AS1212E/u);
-    assert.match(reference ?? "", /no acreditan la configuración ni las prestaciones de esta unidad/u);
     const result = prepareSourceProduct(incoming);
-    assert.match(result.product.description_general ?? "", /La documentación técnica de referencia del modelo LGMG AS1212E/u);
-    assert.doesNotMatch(reference ?? "", /145 horas|SERIE-PRUEBA/u);
+    assert.match(result.product.description_general ?? "", /altura de trabajo de 14 m/u);
+    assert.doesNotMatch(result.product.description_general ?? "", documentaryNarrative);
+    assert.doesNotMatch(result.product.description_general ?? "", /altura de plataforma de 12 m/u);
     assert.equal(JSON.stringify(incoming), snapshot);
     for (const invalid of [
       { ...incoming, brand: "OTRA MARCA" },
@@ -161,8 +160,7 @@ test("acredita la documentación de fabricante para unidades nuevas sin copiar l
       { ...incoming, title: "Plataforma articulada eléctrica LGMG AS1212E" },
       { ...incoming, url: "https://example.invalid/unidad" }
     ]) {
-      assert.doesNotMatch(resolveKnowledgeEditorial(invalid).modelReference ?? "", /La documentación técnica de referencia/u);
-      assert.doesNotMatch(prepareSourceProduct(invalid).product.description_general ?? "", /La documentación técnica de referencia del modelo LGMG AS1212E/u);
+      assert.doesNotMatch(prepareSourceProduct(invalid).product.description_general ?? "", documentaryNarrative);
     }
   }
 });

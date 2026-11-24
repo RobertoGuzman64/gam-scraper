@@ -1,5 +1,3 @@
-import type { ProductTechnicalProvenance } from "../../../contracts/technical-provenance.js";
-import { resolveReviewedModelGeneral } from "../claims/editorial-sourced-long-evidence.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { SourceEditorialEvidence } from "../claims/source-editorial-evidence.js";
 import { verifiedMercaelevaMbCapacityProposal } from "../../../catalog/interventions/verified-mercaeleva-capacity.js";
@@ -37,8 +35,7 @@ export const resolvePreparedEditorialSource = (
   record: ProductRecord,
   evidence: SourceEditorialEvidence,
   sourceUnitRecord: ProductRecord = record,
-  originalSource: ProductRecord = sourceUnitRecord,
-  technicalProvenance?: ProductTechnicalProvenance
+  originalSource: ProductRecord = sourceUnitRecord
 ) => {
   const heightConflict = hasEditorialSourceWorkHeightConflict(record, hasCorroboratedEditorialDistinctWorkHeights(record));
   const editorialRecord = withoutContradictoryFamilyGeneral(record);
@@ -137,10 +134,7 @@ export const resolvePreparedEditorialSource = (
   const finalGeneral = structuredGeneral ?? widthGeneral ?? sourceClean.general;
   const variantGeneral = !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict && !heightConflict && !modelDimensions ?
     resolveCorroboratedEditorialVariantGeneral(sourceUnitRecord, record, finalGeneral, authenticatedOrigin) : null;
-  const reviewedGeneral = verified && !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict && !modelDimensions &&
-    !sourceMotorConflict && authenticatedOrigin && technicalProvenance ?
-    resolveReviewedModelGeneral(originalSource, record, variantGeneral ?? finalGeneral, technicalProvenance) : null;
-  const completeGeneral = reviewedGeneral ?? variantGeneral ?? finalGeneral;
+  const completeGeneral = variantGeneral ?? finalGeneral;
   const batteryGeneral = verified && !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict && !modelDimensions &&
     !sourceMotorConflict && authenticatedOrigin ? resolveSourcedCombinedBatteryGeneral(originalSource, editorialRecord, completeGeneral) : null;
   return {

@@ -1,6 +1,5 @@
 import type { EditorialFacts } from "./editorial-facts.js";
 import type { EditorialFamily } from "./editorial-families.js";
-import { formatEditorialQuantity } from "../measurements/editorial-measurements.js";
 
 export type EditorialUnitKnowledge = {
   readonly key: string;
@@ -74,42 +73,6 @@ export const editorialIdentityKey = (brand: string, model: string): string =>
 
 export const editorialModelKey = (brand: string, model: string, family: EditorialFamily): string =>
   [fold(brand), fold(model), family].join("|");
-
-const labels: Readonly<Record<EditorialConsensusMetric, readonly [string, string]>> = {
-  workingHeightM: ["altura de trabajo", "m"],
-  platformHeightM: ["altura de plataforma", "m"],
-  lateralReachM: ["alcance lateral", "m"],
-  liftingHeightM: ["altura de elevación", "m"],
-  loadCapacityKg: ["capacidad de carga", "kg"],
-  voltageV: ["voltaje", "V"],
-  powerKva: ["potencia aparente", "kVA"],
-  gradeabilityPercent: ["pendiente superable", "%"],
-  energy: ["energía", ""]
-};
-
-const metrics: readonly EditorialConsensusMetric[] = [
-  "workingHeightM", "platformHeightM", "lateralReachM", "liftingHeightM", "loadCapacityKg",
-  "voltageV", "powerKva", "gradeabilityPercent", "energy"
-];
-
-export const resolveModelReference = (
-  facts: EditorialFacts,
-  knowledge: EditorialKnowledge
-): string | null => {
-  const entry = knowledge.models.get(editorialModelKey(facts.brand, facts.model, facts.family));
-  if (!entry || entry.samples < 2 || entry.catalogReferences.length < 2) return null;
-  const unknown: string[] = [];
-  for (const key of metrics) {
-    const value = entry.stable[key];
-    if (value === undefined || facts[key] !== null) continue;
-    const [label, unit] = labels[key];
-    if (typeof value === "number") unknown.push(`${label} de ${formatEditorialQuantity(value)} ${unit}`);
-    else if (key === "energy") unknown.push(`motorización ${value}`);
-    if (unknown.length === 2) break;
-  }
-  if (unknown.length === 0) return null;
-  return `Como referencia, otras fichas del catálogo del modelo ${facts.brand} ${facts.model} publican ${unknown.join(" y ")}; estos datos no acreditan por sí solos la configuración de esta unidad.`;
-};
 
 export const resolveFamilyGuidance = (facts: EditorialFacts, knowledge: EditorialKnowledge): string | null => {
   const guidance = knowledge.families[facts.family];

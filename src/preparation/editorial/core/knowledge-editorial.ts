@@ -2,10 +2,8 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { loadEditorialKnowledge, editorialSourceDigest } from "../../../infrastructure/filesystem/editorial/knowledge.js";
 import { reconcileInitialTechnicalEvidence } from "../../technical/preparation-technical-stages.js";
 import { resolveEditorialFacts } from "./editorial-facts.js";
-import { resolveTechnicalModelReference } from "../measurements/editorial-model-technical-reference.js";
 import { hasCorroboratedEditorialCapacityReconciliation, sameEditorialUnit, verifiedEditorialIdentity } from "./editorial-source-contract.js";
-import { editorialFamilyOf } from "./editorial-families.js";
-import { editorialIdentityKey, resolveFamilyGuidance, resolveModelReference, selectUnitKnowledge, selectIdentityOverrideKnowledge } from "./editorial-knowledge.js";
+import { editorialIdentityKey, resolveFamilyGuidance, selectUnitKnowledge, selectIdentityOverrideKnowledge } from "./editorial-knowledge.js";
 
 const sameEditorialOrigin = (source: ProductRecord, prepared: ProductRecord): boolean =>
   Boolean(source.reference?.trim()) && source.providerId === prepared.providerId &&
@@ -47,20 +45,6 @@ export const resolveKnowledgeEditorial = (record: ProductRecord, sourceUnitRecor
     ? selectIdentityOverrideKnowledge(matchingIdentity, knowledge, originalDigest) : null;
   const unit = sameIdentity && matchingIdentity && originalDigest ? selectUnitKnowledge(matchingIdentity, knowledge, originalDigest) :
     exception ?? { short: null, general: null, fallbackGeneral: null, title: null };
-  const originalFacts = sameEditorialOrigin(sourceUnitRecord, record) &&
-    sameEditorialUnit(sourceUnitRecord, record) && verifiedEditorialIdentity(sourceUnitRecord)
-    ? resolveEditorialFacts(sourceUnitRecord, rule?.family ?? null) : null;
-  const titledFamily = editorialFamilyOf(record.title ?? "");
-  const originalTitledFamily = editorialFamilyOf(sourceUnitRecord.title ?? "");
-  const documentedReference = facts && originalFacts &&
-    (!titledFamily || titledFamily === facts.family) &&
-    (!originalTitledFamily || originalTitledFamily === facts.family) &&
-    facts.family === originalFacts.family &&
-    facts.workingHeightM === originalFacts.workingHeightM && facts.energy === originalFacts.energy
-    ? resolveTechnicalModelReference(facts, knowledge) : null;
-  const consensusReference = facts ? resolveModelReference(facts, knowledge) : null;
-  const modelReference = [consensusReference, documentedReference]
-    .filter((entry): entry is string => entry !== null).join(" ") || null;
   return {
     familyOverride: rule?.family ?? null,
     short: unit.short,
@@ -68,7 +52,6 @@ export const resolveKnowledgeEditorial = (record: ProductRecord, sourceUnitRecor
     fallbackGeneral: unit.fallbackGeneral,
     title: unit.title,
     identityOverride: Boolean(exception),
-    familyGuidance: facts ? resolveFamilyGuidance(facts, knowledge) : null,
-    modelReference
+    familyGuidance: facts ? resolveFamilyGuidance(facts, knowledge) : null
   };
 };

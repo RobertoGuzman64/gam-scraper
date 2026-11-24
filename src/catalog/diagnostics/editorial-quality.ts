@@ -146,7 +146,12 @@ const documentaryNarrative = (value: Measured): string | null => {
     /\b(?:la\s+)?documentaci[oó]n\s+t[eé]cnica\s+(?:de\s+referencia\s+)?del\s+modelo\s+[^.!?;]{1,140}?\b(?:recoge|documenta|acredita|indica|especifica)\b/iu,
     /\b(?:como\s+referencia,?\s+)?otras\s+fichas\s+del\s+cat[aá]logo\s+del\s+modelo\b/iu,
     /\bson\s+prestaciones\s+de\s+referencia\s+del\s+modelo;\s*deben\s+contrastarse\s+con\s+la\s+configuraci[oó]n\s+concreta\s+de\s+la\s+unidad\b/iu,
-    /\blas\s+magnitudes\s+corresponden\s+al\s+modelo\s+o\s+versi[oó]n\s+documentada\s+y\s+no\s+acreditan\s+la\s+configuraci[oó]n\b/iu
+    /\blas\s+magnitudes\s+corresponden\s+al\s+modelo\s+o\s+versi[oó]n\s+documentada\s+y\s+no\s+acreditan\s+la\s+configuraci[oó]n\b/iu,
+    /\bson\s+caracter[ií]sticas\s+documentadas\s+en\s+el\s+anuncio\b/iu,
+    /\b(?:estas\s+cifras\s+son\s+prestaciones\s+de\s+cat[aá]logo|estas\s+caracter[ií]sticas\s+proceden\s+de\s+la\s+descripci[oó]n\s+del\s+proveedor)\b/iu,
+    /\b(?:la\s+fuente\s+documenta|el\s+fabricante\s+menciona\s+el\s+modo\s+de\s+rendimiento|la\s+composici[oó]n\s+de\s+la\s+carrocer[ií]a\s+corresponde\s+a\s+la\s+descripci[oó]n\s+del\s+producto)\b/iu,
+    /\b(?:el\s+texto\s+t[eé]cnico\s+com[uú]n\s+de\s+esta\s+gama\s+describe|esa\s+referencia\s+de\s+gama\s+no\s+permite\s+certificar|la\s+documentaci[oó]n\s+del\s+fabricante\s+describe\s+otras\s+configuraciones)\b/iu,
+    /\bpara\s+la\s+familia\s+[^.!?;]{1,100}?\s+la\s+documentaci[oó]n\s+t[eé]cnica\s+diferencia\b/iu
   ];
   const starts = signals.flatMap((signal) => {
     const match = signal.exec(value.text);

@@ -165,7 +165,7 @@ const documentaryBoundary = (project, path, source, push) => {
 };
 
 const documentaryTestExpectation = (source, path, push) => {
-  const knownJustification = /documentaci[oó]n t[eé]cnica (?:de referencia )?del modelo|otras fichas del cat[aá]logo|prestaciones de referencia del modelo|no acreditan la configuraci[oó]n ni las prestaciones de esta unidad|las magnitudes corresponden al modelo o versi[oó]n documentada/iu;
+  const knownJustification = /documentaci[oó]n t[eé]cnica (?:de referencia )?del modelo|otras fichas del cat[aá]logo|prestaciones de referencia del modelo|no acreditan la configuraci[oó]n ni las prestaciones de esta unidad|las magnitudes corresponden al modelo o versi[oó]n documentada|caracter[ií]sticas documentadas en el anuncio|estas cifras son prestaciones de cat[aá]logo|estas caracter[ií]sticas proceden de la descripci[oó]n del proveedor/iu;
   visitNodes(source, (node) => {
     if (!ts.isCallExpression(node) || !ts.isPropertyAccessExpression(node.expression) ||
       node.expression.expression.getText(source) !== "assert" || node.expression.name.text !== "match") return;

@@ -13,7 +13,7 @@ const knowledge = loadEditorialKnowledge();
 const keys = ['records','ready','review','exceptions','facts','loadCenters','turningRadii',
   'cleaningWidths','baskets','drawbarPulls','verifiedUnbranded','sourceClaimEligible',
   'sourceClaimApplied','signedShortApplied','signedGeneralApplied','signedTitlesApplied',
-  'signedIdentityExceptionsApplied','unitContextApplied','modelReferencesApplied',
+  'signedIdentityExceptionsApplied','unitContextApplied',
   'emptyShort','emptyGeneral'];
 const counters = () => Object.fromEntries(keys.map((key) => [key, 0]));
 const report = { version: 1, mode: 'lectura_sin_publicacion', providers: {}, total: counters(), errors: [],
@@ -62,7 +62,6 @@ for (const provider of ['gam','gomariz','mercaeleva']) {
       if (signed.title && signed.title === result.product.title) stats.signedTitlesApplied++;
       if (signed.identityOverride && signed.short === result.product.description) stats.signedIdentityExceptionsApplied++;
       if (/Ubicación declarada para esta unidad|Número de serie declarado para esta unidad/u.test(result.product.description_general ?? '')) stats.unitContextApplied++;
-      if (signed.modelReference && result.product.description_general?.includes(signed.modelReference)) stats.modelReferencesApplied++;
       if (!result.product.description?.trim()) stats.emptyShort++;
       if (!result.product.description_general?.trim()) stats.emptyGeneral++;
     } catch (error) {

@@ -83,7 +83,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const presentedSpecs = normalizeOriginalEnergyPresentation(normalizeOriginalLengthPresentation(
     normalizeOriginalMassPresentation(handledSpecs, originalRecord.specs ?? {}), originalRecord.specs ?? {}), originalRecord.specs ?? {});
   const editorialProvenance = technicalProvenance.finalize(presentedSpecs, recoverySource);
-  const editorial = resolvePreparedEditorial(editorialRecord, restoredFamily ? originalRecord : sourceUnitRecord, sourceEditorial, originalRecord, editorialProvenance);
+  const editorial = resolvePreparedEditorial(editorialRecord, restoredFamily ? originalRecord : sourceUnitRecord, sourceEditorial, originalRecord);
   const descriptions = { short: editorial.preparedShort, general: editorial.preparedLong };
   const product: ImportCandidate = {
     providerId: record.providerId,

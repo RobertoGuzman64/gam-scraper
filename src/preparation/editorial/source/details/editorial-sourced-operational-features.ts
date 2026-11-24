@@ -84,5 +84,5 @@ export const resolveSourcedOperationalFeatures = (
     !documented.some((feature) => feature.name === "motor eléctrico sin escobillas")).slice(0, 3).map(({ name }) => name);
   const detail = named.length === 1 ? named[0] : named.length === 2 ? named.join(" y ") :
     `${named[0]}, ${named[1]} y ${named[2]}`;
-  return `${current} La descripción del proveedor menciona ${detail} para este modelo. Son características documentadas en el anuncio, cuya disponibilidad y configuración deben comprobarse en la unidad ofrecida.`;
+  return `${current} En este modelo, conviene comprobar la disponibilidad y configuración de ${detail} en la unidad ofrecida.`;
 };

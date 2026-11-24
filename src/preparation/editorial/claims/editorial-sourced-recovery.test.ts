@@ -1,8 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import type { ProductTechnicalProvenance, TechnicalSpecEvidence } from "../../../contracts/technical-provenance.js";
-import { technicalDocumentClaimSha256 } from "../../../contracts/technical-provenance.js";
 import { originalRecordFingerprint } from "../../../catalog/identity-fingerprint.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { resolvePreparedEditorial } from "../core/prepared-editorial.js";
@@ -10,8 +8,8 @@ import { captureSourceEditorialEvidence } from "./source-editorial-evidence.js";
 import { matchesTechnicalDocumentVerification } from "../../../contracts/technical-provenance.js";
 import { resolveSourcedTechnicalContext } from "../measurements/sourced/editorial-sourced-technical-context.js";
 import { resolveSourcedConciseShort } from "../writing/editorial-sourced-concise-short.js";
-import { resolveSourcedLongEvidence, resolveReviewedModelGeneral } from "./editorial-sourced-long-evidence.js";
-import { controlledGamForklift, controlledGomarizPlatform, controlledMercaelevaPlatform, controlledMercaelevaForklift } from "../core/editorial-contract-records.js";
+import { resolveSourcedLongEvidence } from "./editorial-sourced-long-evidence.js";
+import { controlledGamForklift, controlledGomarizPlatform, controlledMercaelevaPlatform } from "../core/editorial-contract-records.js";
 
 const technicalSource = (): ProductRecord => ({
   ...controlledGamForklift(),
@@ -90,7 +88,8 @@ test("recupera sistemas constructivos documentados en cualquier grupo compatible
   const result = resolveSourcedLongEvidence(source, source, generatorGeneral) ?? "";
   assert.match(result, /carrocería insonora formada por paneles modulares/u);
   assert.match(result, /soportes antivibración/u);
-  assert.match(result, /debe contrastarse/u);
+  assert.match(result, /Debe contrastarse el estado y la composición/u);
+  assert.doesNotMatch(result, /(?:el proveedor describe|corresponde a la descripción del producto)/iu);
   assert.equal(resolveSourcedLongEvidence(source, source, result), null);
 });
 
@@ -152,38 +151,20 @@ test("la atribución técnica requiere identidad corroborada en ambos registros"
   assert.doesNotMatch(resolveSourcedTechnicalContext(source, source, otherVariant, true) ?? "", /identificada como/u);
 });
 
-const reviewedFixture = (source: ProductRecord, field: string, value: string): TechnicalSpecEvidence => {
-  const document = { url: "https://example.com/technical-sheet.pdf", brand: source.brand, model: source.model };
-  const reviewedOn = "2026-01-01";
-  const support = `${field}: ${value}`;
-  return { field, value, mechanism: "src/preparation/technical/documented-technical-evidence.ts",
-    scope: "model-document", document, sourceField: null, sourceValue: null,
-    verification: { kind: "reviewed-model-fact", reviewedOn, support,
-      claimSha256: technicalDocumentClaimSha256(document, field, value, reviewedOn, support) } };
-};
-
-const reviewedProvenance = (source: ProductRecord, entries: readonly TechnicalSpecEvidence[]): ProductTechnicalProvenance => ({
-  originalRecordSha256: originalRecordFingerprint(source), entries
-});
-
-test("la acreditación documental de una prestación no altera la redacción cuando los hechos son idénticos", () => {
+test("la redacción conserva prestaciones de unidad y no convierte cotas de modelo en una justificación documental", () => {
   for (const source of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
     const field = "Extensión de plataforma";
     const value = "0,9 m";
     const prepared: ProductRecord = { ...source, specs: { ...source.specs, [field]: value } };
-    const claim = reviewedFixture(source, field, value);
-    assert.ok(claim.document && claim.verification);
-    assert.ok(matchesTechnicalDocumentVerification(claim.document, field, value, claim.verification));
-    const provenance = reviewedProvenance(source, [claim]);
-    const before = JSON.stringify({ source, prepared, provenance });
+    const before = structuredClone({ source, prepared });
     const evidence = captureSourceEditorialEvidence(prepared);
-    const plain = resolvePreparedEditorial(prepared, source, evidence, source);
-    const accredited = resolvePreparedEditorial(prepared, source, evidence, source, provenance);
-    assert.match(plain.preparedLong ?? "", /altura de trabajo de 10 m/u);
-    assert.match(plain.preparedLong ?? "", /verificar la capacidad de cesta/u);
+    const editorial = resolvePreparedEditorial(prepared, source, evidence, source);
+    assert.match(editorial.preparedLong ?? "", /altura de trabajo de 10 m/u);
+    assert.match(editorial.preparedLong ?? "", /verificar la capacidad de cesta/u);
+    assert.doesNotMatch(editorial.preparedLong ?? "", /documentación técnica (?:de referencia )?del modelo|prestaciones de referencia del modelo/iu);
+    assert.doesNotMatch(editorial.preparedLong ?? "", /extensión de plataforma de 0,9 m/iu);
     assert.equal(prepared.specs?.[field], value);
-    assert.equal(JSON.stringify({ source, prepared, provenance }), before);
-    assert.deepEqual(accredited, plain, source.providerId);
+    assert.deepEqual({ source, prepared }, before);
   }
 });
 
@@ -210,85 +191,6 @@ test("la recuperación acreditada conserva specs y procedencia sin narrar su acr
   assert.doesNotMatch(prepared.product.description_general ?? "", /documentación técnica (?:de referencia )?del modelo|otras fichas del catálogo|prestaciones de referencia del modelo/iu);
 });
 
-const reviewedGeneralFixture = "La plataforma de tijera eléctrica MARCA MODELO10 declara una altura de trabajo de 10 m. La altura de trabajo no equivale a la altura de plataforma.";
-
-test("incorpora cotas de modelo acreditadas a la general de unidades compatibles, sin afirmar instalación", () => {
-  const sources = [controlledGomarizPlatform(), controlledMercaelevaPlatform()];
-  for (const source of sources) {
-    const prepared: ProductRecord = { ...source, specs: { ...source.specs,
-      "Altura de plataforma": "8 m", "Extensión de plataforma": "0,9 m" } };
-    const entries = [reviewedFixture(source, "Altura de plataforma", "8 m"), reviewedFixture(source, "Extensión de plataforma", "0,9 m")];
-    const provenance = reviewedProvenance(source, entries);
-    const general = resolveReviewedModelGeneral(source, prepared, reviewedGeneralFixture, provenance) ?? "";
-    assert.match(general, /extensión de plataforma de 0,9 m y altura de plataforma de 8 m/u, source.providerId);
-    assert.match(general, /prestaciones de referencia del modelo/u);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, general, provenance), null);
-  }
-});
-
-test("protege la identidad, los valores contradictorios y las procedencias no acreditadas", () => {
-  const source = controlledGomarizPlatform();
-  const field = "Extensión de plataforma";
-  const prepared: ProductRecord = { ...source, specs: { ...source.specs, [field]: "0,9 m" } };
-  const claim = reviewedFixture(source, field, "0,9 m");
-  const provenance = reviewedProvenance(source, [claim]);
-  const other: readonly ProductRecord[] = [
-    { ...prepared, providerId: "mercaeleva" },
-    { ...prepared, reference: "OTRA-UNIDAD" },
-    { ...prepared, model: "MODELO11" },
-    { ...prepared, title: "Carretilla elevadora MARCA MODELO10" },
-    { ...prepared, specs: { ...prepared.specs, [field]: "1,2 m" } },
-    { ...prepared, specs: { ...prepared.specs, Modelo: "MODELO11" } }
-  ];
-  for (const candidate of other) assert.equal(resolveReviewedModelGeneral(source, candidate, reviewedGeneralFixture, provenance), null);
-  assert.equal(resolveReviewedModelGeneral(source, prepared, `${reviewedGeneralFixture} La extensión de plataforma es de 1,2 m.`, provenance), null);
-  assert.equal(resolveReviewedModelGeneral(source, prepared, `${reviewedGeneralFixture} Se indican 0,9 m de extensión.`, provenance), null);
-  assert.equal(resolveReviewedModelGeneral(source, prepared, reviewedGeneralFixture, reviewedProvenance(source, [])), null);
-  assert.equal(resolveReviewedModelGeneral(source, prepared, reviewedGeneralFixture, reviewedProvenance(source, [{
-    field, value: "0,9 m", mechanism: claim.mechanism, scope: "unknown", sourceField: null, sourceValue: null
-  }])), null);
-  const otherOriginal = { ...source, reference: "CONTROL-OTRO" };
-  assert.equal(resolveReviewedModelGeneral(otherOriginal, { ...prepared, reference: otherOriginal.reference }, reviewedGeneralFixture, provenance), null);
-  assert.equal(resolveReviewedModelGeneral(source, prepared, reviewedGeneralFixture.replace("MODELO10", "MODELO11"), provenance), null);
-  assert.equal(resolveReviewedModelGeneral(source, prepared, reviewedGeneralFixture, reviewedProvenance(source, [claim, claim])), null);
-});
-
-test("distingue las prestaciones de desplazamiento del recogepedidos de la capacidad de carga", () => {
-  const source: ProductRecord = { ...controlledGomarizPlatform(), title: "Recogepedidos eléctrico MARCA MODELO10",
-    specs: { Capacidad: "1200 kg", Motor: "Eléctrico" } };
-  const prepared: ProductRecord = { ...source, specs: { ...source.specs,
-    "Velocidad máxima de desplazamiento": "9,6 km/h", Dirección: "Eléctrica" } };
-  const provenance = reviewedProvenance(source, [reviewedFixture(source, "Velocidad máxima de desplazamiento", "9,6 km/h"),
-    reviewedFixture(source, "Dirección", "Eléctrica")]);
-  const general = "El recogepedidos MARCA MODELO10 tiene capacidad de carga declarada de 1.200 kg.";
-  const result = resolveReviewedModelGeneral(source, prepared, general, provenance) ?? "";
-  assert.match(result, /velocidad máxima de desplazamiento de 9,6 km\/h y dirección eléctrica/u);
-  assert.equal(resolveReviewedModelGeneral(source, prepared, result, provenance), null);
-});
-
-test("distingue las dimensiones de plataforma documentadas de las dimensiones exteriores de la unidad", () => {
-  for (const source of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
-    const prepared: ProductRecord = { ...source, specs: { ...source.specs,
-      "Anchura de plataforma": "760 mm", "Longitud de plataforma": "1,83 m" } };
-    const provenance = reviewedProvenance(source, [reviewedFixture(source, "Anchura de plataforma", "760 mm"),
-      reviewedFixture(source, "Longitud de plataforma", "1,83 m")]);
-    const general = `${reviewedGeneralFixture} La unidad declara longitud de 2,4 m y anchura de 0,83 m.`;
-    const result = resolveReviewedModelGeneral(source, prepared, general, provenance) ?? "";
-    assert.match(result, /anchura de plataforma de 0,76 m y longitud de plataforma de 1,83 m/u);
-    assert.ok(result.startsWith(general));
-    assert.equal(resolveReviewedModelGeneral(source, prepared, result, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, `${general} Las dimensiones de la cesta están declaradas.`, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, `${general} Cesta de 1,83 × 0,76 m.`, provenance), null);
-    const existing = resolveReviewedModelGeneral(source, prepared, `${general} La cesta tiene una anchura de 0,76 m.`, provenance) ?? "";
-    assert.doesNotMatch(existing, /anchura de plataforma de/u);
-    assert.match(existing, /longitud de plataforma de 1,83 m/u);
-    const contradictory: ProductRecord = { ...prepared, specs: { ...prepared.specs, "Anchura de plataforma": "1 m" } };
-    assert.doesNotMatch(resolveReviewedModelGeneral(source, contradictory, general, provenance) ?? "", /anchura de plataforma de/u);
-    assert.equal(resolveReviewedModelGeneral(source, { ...prepared, model: "MODELO11" }, general, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, general, reviewedProvenance(source, [])), null);
-  }
-});
-
 test("la torre de iluminación reconciliada recupera altura y potencia originales sin mezclar unidades", () => {
   const source: ProductRecord = { ...controlledGomarizPlatform(), brand: "MARCA", model: null, title: "MARCA MODELO10",
     subcategory: null, categoryName: "Iluminación", url: "https://www.gomarizrent.com/energia-electrica-e-iluminacion/torre-de-luz/marca-modelo10/",
@@ -301,121 +203,4 @@ test("la torre de iluminación reconciliada recupera altura y potencia originale
   assert.match(result, /4 × 120 W/u);
   assert.equal(resolveSourcedTechnicalContext(source, { ...prepared, model: "MODELO11" }, text, true), null);
   assert.equal(resolveSourcedTechnicalContext(source, { ...prepared, reference: "OTRA" }, text, true), null);
-});
-
-
-test("recupera dimensiones documentadas de bandejas sin confundirlas con el tamaño exterior del almacén", () => {
-  for (const factory of [controlledGomarizPlatform, controlledMercaelevaPlatform]) {
-    const source: ProductRecord = { ...factory(), title: "Almacén automático vertical MARCA MODELO10",
-      specs: { Marca: "MARCA", Modelo: "MODELO10", Altura: "2500 mm" } };
-    const prepared: ProductRecord = { ...source, specs: { ...source.specs,
-      "Anchura de bandeja": "2500 mm", "Profundidad de bandeja": "850 mm", "Anchura exterior del almacén": "2900 mm" } };
-    const claims = [reviewedFixture(source, "Anchura de bandeja", "2500 mm"),
-      reviewedFixture(source, "Profundidad de bandeja", "850 mm")];
-    const provenance = reviewedProvenance(source, claims);
-    const general = "El almacén automático vertical MARCA MODELO10 declara una altura de 2,5 m.";
-    const result = resolveReviewedModelGeneral(source, prepared, general, provenance) ?? "";
-    assert.ok(result.startsWith(general));
-    assert.match(result, /anchura de bandeja de 2,5 m y profundidad de bandeja de 0,85 m/u);
-    assert.doesNotMatch(result, /2,9 m/u);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, result, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, `${general} Bandeja de 2,5 × 0,85 m.`, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, general, reviewedProvenance(source, claims.slice(0, 1))), null);
-    assert.equal(resolveReviewedModelGeneral(source, { ...prepared, specs: { ...prepared.specs, "Profundidad de bandeja": "900 mm" } }, general, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, { ...prepared, model: "MODELO11" }, general, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, { ...prepared, reference: "OTRA" }, general, provenance), null);
-  }
-});
-
-test("diferencia propulsión y accionamiento de elevación documentados en manutención", () => {
-  for (const base of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
-    const source: ProductRecord = { ...base, title: "Apilador MARCA MODELO10", specs: { Capacidad: "1200 kg" } };
-    const general = "El apilador MARCA MODELO10 declara una capacidad de carga de 1.200 kg.";
-    const fields = { "Propulsión": "Manual", "Accionamiento de elevación": "Eléctrico" };
-    const prepared: ProductRecord = { ...source, specs: { ...source.specs, ...fields } };
-    const claims = Object.entries(fields).map(([key, value]) => reviewedFixture(source, key, value));
-    const provenance = reviewedProvenance(source, claims);
-    const result = resolveReviewedModelGeneral(source, prepared, general, provenance);
-    assert.match(result ?? "", /propulsión manual y accionamiento eléctrico de elevación/u);
-    assert.match(result ?? "", /prestaciones de referencia del modelo/u);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, result, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, { ...prepared, reference: "OTRA" }, general, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, { ...prepared, model: "OTRO" }, general, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, general, reviewedProvenance(source, [])), null);
-    assert.doesNotMatch(resolveReviewedModelGeneral(source, { ...prepared, specs: { ...prepared.specs, Propulsión: "Eléctrica" } }, general, provenance) ?? "", /propulsión manual/u);
-    assert.doesNotMatch(resolveReviewedModelGeneral(source, prepared, `${general} Propulsión manual.`, provenance) ?? "", /recoge propulsión manual/u);
-  }
-});
-
-test("conserva el significado de recorrido de elevación y altura de trabajo con carga inclinada", () => {
-  const source: ProductRecord = { ...controlledGomarizPlatform(), title: "Transpaleta MARCA MODELO10", specs: { Capacidad: "1000 kg" } };
-  const general = "La transpaleta MARCA MODELO10 declara una capacidad de carga de 1.000 kg.";
-  const fields = { "Recorrido de elevación": "300 mm", "Altura de trabajo con caja inclinada": "700–900 mm" };
-  const prepared: ProductRecord = { ...source, specs: { ...source.specs, ...fields } };
-  const provenance = reviewedProvenance(source, Object.entries(fields).map(([key, value]) => reviewedFixture(source, key, value)));
-  const result = resolveReviewedModelGeneral(source, prepared, general, provenance);
-  assert.match(result ?? "", /recorrido de elevación de 0,3 m y altura de trabajo con caja inclinada de 0,7 a 0,9 m/u);
-  assert.equal(resolveReviewedModelGeneral(source, prepared, result, provenance), null);
-  assert.doesNotMatch(resolveReviewedModelGeneral(source, prepared, `${general} Altura de trabajo de 0,8 m.`, provenance) ?? "", /recoge.*altura de trabajo/u);
-});
-
-test("distingue el centro de carga nominal documentado de la capacidad efectiva de cada carretilla", () => {
-  for (const source of [controlledGamForklift(), controlledMercaelevaForklift()]) {
-    const field = "Centro de carga nominal del modelo";
-    const prepared: ProductRecord = { ...source, specs: { ...source.specs, [field]: "600 mm" } };
-    const claim = reviewedFixture(source, field, "600 mm");
-    const provenance = reviewedProvenance(source, [claim]);
-    const general = "La carretilla elevadora MARCA MODELO10 declara 2.500 kg. La capacidad efectiva depende del centro de carga y los implementos reales.";
-    const result = resolveReviewedModelGeneral(source, prepared, general, provenance);
-    assert.ok(result?.startsWith(general), source.providerId);
-    assert.match(result ?? "", /centro de carga nominal de 600 mm/u);
-    assert.match(result ?? "", /prestaciones de referencia del modelo/u);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, result, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, `${general} El centro de carga es de 500 mm.`, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, { ...prepared, specs: { ...prepared.specs, "Centro de carga": "500 mm" } }, general, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, { ...prepared, specs: { ...prepared.specs, [field]: "500 mm" } }, general, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, { ...prepared, reference: "OTRA" }, general, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, general, reviewedProvenance(source, [])), null);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, general, reviewedProvenance(source, [{
-      field, value: "600 mm", mechanism: claim.mechanism, scope: "model-document", sourceField: null, sourceValue: null,
-      document: { url: "https://example.com/technical-sheet.pdf", brand: source.brand, model: source.model }
-    }])), null);
-    const other = { ...source, longDescription: "Centro de carga de 500 mm." };
-    assert.equal(resolveReviewedModelGeneral(other, { ...prepared, longDescription: other.longDescription }, general,
-      reviewedProvenance(other, [reviewedFixture(other, field, "600 mm")])), null);
-  }
-});
-
-test("aprovecha el plumín documentado sin confundirlo con alcance ni equipamiento instalado", () => {
-  for (const base of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
-    const source: ProductRecord = { ...base, title: "Plataforma articulada eléctrica MARCA MODELO10", specs: { "Altura de trabajo": "10 m" } };
-    const field = "Longitud de plumín";
-    const prepared: ProductRecord = { ...source, specs: { ...source.specs, [field]: "1,24 m" } };
-    const provenance = reviewedProvenance(source, [reviewedFixture(source, field, "1,24 m")]);
-    const general = "La plataforma articulada eléctrica MARCA MODELO10 declara altura de trabajo de 10 m y alcance horizontal de 5 m.";
-    const result = resolveReviewedModelGeneral(source, prepared, general, provenance);
-    assert.ok(result?.startsWith(general));
-    assert.match(result ?? "", /longitud de plumín de 1,24 m/u);
-    assert.match(result ?? "", /prestaciones de referencia del modelo/u);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, result, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, `${general} Plumín opcional.`, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, { ...prepared, model: "OTRO" }, general, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, { ...prepared, specs: { ...prepared.specs, [field]: "2 m" } }, general, provenance), null);
-    assert.equal(resolveReviewedModelGeneral(source, prepared, general, reviewedProvenance(source, [])), null);
-  }
-});
-
-
-test("integra el plumín en la referencia documental existente sin repetir la advertencia", () => {
-  const source: ProductRecord = { ...controlledMercaelevaPlatform(), title: "Plataforma articulada eléctrica MARCA MODELO10", specs: { "Altura de trabajo": "10 m" } };
-  const field = "Longitud de plumín";
-  const prepared: ProductRecord = { ...source, specs: { ...source.specs, [field]: "1,24 m" } };
-  const provenance = reviewedProvenance(source, [reviewedFixture(source, field, "1,24 m")]);
-  const prefix = "La plataforma articulada eléctrica MARCA MODELO10 se destina a trabajos en altura. ";
-  const reference = "La documentación técnica de referencia del modelo MARCA MODELO10 recoge altura de plataforma de 8 m. Las magnitudes corresponden al modelo o versión documentada y no acreditan la configuración ni las prestaciones de esta unidad.";
-  const general = `${prefix.repeat(8)}${reference}`;
-  const result = resolveReviewedModelGeneral(source, prepared, general, provenance);
-  assert.equal(result, general.replace("8 m. Las magnitudes", "8 m, longitud de plumín de 1,24 m. Las magnitudes"));
-  assert.equal(resolveReviewedModelGeneral(source, prepared, result, provenance), null);
-  assert.equal(resolveReviewedModelGeneral(source, prepared, general.replace("modelo MARCA MODELO10 recoge", "modelo MARCA MODELO11 recoge"), provenance), null);
 });

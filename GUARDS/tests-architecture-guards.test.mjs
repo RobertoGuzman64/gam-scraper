@@ -61,11 +61,12 @@ test("detecta el acceso a documentos y consensos y su canal de redacción aunque
 test("diagnostica tests que exigen una justificación documental, no los que impiden su emisión", (t) => {
   const { root, write } = fixture(t);
   const path = "src/preparation/editorial/core/tests/contract.test.ts";
-  write(path, "import assert from 'node:assert/strict'; import test from 'node:test'; test('expectativa indebida', () => { assert.match('texto', /prestaciones de referencia del modelo/u); }); test('prestación legítima', () => { assert.match('10 m', /10 m/u); assert.doesNotMatch('texto', /prestaciones de referencia del modelo/u); });\n");
+  write(path, "import assert from 'node:assert/strict'; import test from 'node:test'; test('expectativa indebida', () => { assert.match('texto', /prestaciones de referencia del modelo/u); }); test('expectativa residual indebida', () => { assert.match('texto', /características documentadas en el anuncio/u); }); test('prestación legítima', () => { assert.match('10 m', /10 m/u); assert.match('Consultar el manual del fabricante', /manual del fabricante/u); assert.doesNotMatch('texto', /prestaciones de referencia del modelo/u); assert.doesNotMatch('texto', /características documentadas en el anuncio/u); });\n");
   const violations = inspectEditorialArchitecture(root).findings.filter((item) => item.rule === "E-DOCUMENTARY-TEST-EXPECTATION");
-  assert.equal(violations.length, 1);
-  assert.equal(violations[0].path, path);
-  assert.ok(violations[0].detail.includes("expectativa indebida"));
+  assert.equal(violations.length, 2);
+  assert.ok(violations.every((item) => item.path === path));
+  assert.ok(violations.some((item) => item.detail.includes("expectativa indebida")));
+  assert.ok(violations.some((item) => item.detail.includes("expectativa residual indebida")));
 });
 
 test("permite redactar prestaciones acreditadas, identidad y advertencias comerciales sin consumir su expediente", (t) => {

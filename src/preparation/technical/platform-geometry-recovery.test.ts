@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../contracts/catalog.js";
+import { matchesTechnicalDocumentVerification } from "../../contracts/technical-provenance.js";
 import { controlledGomarizPlatform, controlledMercaelevaPlatform } from "../editorial/core/editorial-contract-records.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 import { recoverSourcePlatformGeometry } from "./platform-geometry-recovery.js";
@@ -192,6 +193,11 @@ test("reutiliza geometría documental acreditada sin depender de la referencia c
   assert.equal(prepared.product.spec["Extensión de plataforma"], "1,52 m");
   const entry = prepared.technicalProvenance?.entries.find((item) => item.field === "Extensión de plataforma");
   assert.equal(entry?.scope, "model-document");
+  assert.ok(entry?.document && entry.verification);
+  assert.ok(matchesTechnicalDocumentVerification(entry.document, entry.field, entry.value, entry.verification));
+  assert.match(prepared.product.description_general ?? "", /altura de trabajo de 11,7 m/u);
+  assert.match(prepared.product.description_general ?? "", /verificar la capacidad de cesta/u);
+  assert.doesNotMatch(prepared.product.description_general ?? "", /documentación técnica del modelo|prestaciones de referencia del modelo/iu);
 });
 
 test("reutiliza evidencia entre proveedores sin duplicar alias de origen", () => {

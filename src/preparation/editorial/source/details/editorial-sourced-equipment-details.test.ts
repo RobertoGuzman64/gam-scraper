@@ -469,7 +469,8 @@ test("recupera equipamiento operativo declarado sin certificar la configuración
     assert.ok(result, base.providerId);
     assert.ok(result.startsWith(operationalGeneral));
     assert.match(result, /freno automático, alarma de inclinación y sistema de diagnóstico/u);
-    assert.match(result, /disponibilidad y configuración deben comprobarse/u);
+    assert.match(result, /conviene comprobar la disponibilidad y configuración/u);
+    assert.doesNotMatch(result, /(?:documentadas en el anuncio|descripción del proveedor menciona)/iu);
     assert.equal(resolveSourcedOperationalFeatures(source, source, result, true), null);
     assert.equal(resolveSourcedOperationalFeatures(source, source, operationalGeneral, false), null);
     assert.equal(resolveSourcedOperationalFeatures(source, { ...source, reference: "OTRA" }, operationalGeneral, true), null);
@@ -495,7 +496,7 @@ test("recupera protecciones y frenos declarados con identidad y energía corrobo
     const source = { ...base, specs: { ...base.specs, "Tipo de motor": "Eléctrico" },
       longDescription: operationalDescription("El equipo dispone de protección contra sobrecarga y frenos en baño de aceite.") };
     const result = resolveSourcedOperationalFeatures(source, source, operationalGeneral, true);
-    assert.ok(result?.includes("menciona protección contra sobrecarga y frenos en baño de aceite para este modelo"), base.providerId);
+    assert.ok(result?.includes("disponibilidad y configuración de protección contra sobrecarga y frenos en baño de aceite"), base.providerId);
     assert.equal(resolveSourcedOperationalFeatures(source, source, result, true), null);
     assert.equal(resolveSourcedOperationalFeatures(source, { ...source, reference: "OTRA" }, operationalGeneral, true), null);
   }
@@ -556,7 +557,7 @@ test("recupera el asiento regulable y el cargador integrado con familia, identid
       const source = { ...base, specs: { ...base.specs, "Tipo de motor": "Eléctrico" },
         longDescription: operationalDescription(`Dispone de asiento ajustable y ${charger}.`) };
       const result = resolveSourcedOperationalFeatures(source, source, operationalGeneral, true);
-      assert.ok(result?.includes("menciona asiento regulable y cargador integrado para este modelo"), base.providerId);
+      assert.ok(result?.includes("disponibilidad y configuración de asiento regulable y cargador integrado"), base.providerId);
       assert.equal(resolveSourcedOperationalFeatures(source, source, result, true), null);
       assert.equal(resolveSourcedOperationalFeatures(source, { ...source, reference: "OTRA" }, operationalGeneral, true), null);
       assert.equal(resolveSourcedOperationalFeatures(source, source, operationalGeneral, false), null);
