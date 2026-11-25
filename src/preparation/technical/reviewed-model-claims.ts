@@ -16,6 +16,7 @@ type ReviewedModelCompatibility = (Pick<EditorialFacts, "energy" | "workingHeigh
 }) | (Pick<EditorialFacts, "energy" | "loadCapacityKg"> & {
   readonly family: "carretilla-elevadora";
   readonly marketCountry: string;
+  readonly invariantUsedLoadCenter?: true;
   readonly firstYear: number;
   readonly lastYear?: number;
   readonly lengthM?: number;
@@ -33,7 +34,16 @@ type ReviewedModelCompatibility = (Pick<EditorialFacts, "energy" | "workingHeigh
   readonly identityWeightKg?: number;
   readonly lengthM?: number;
   readonly voltageV?: number;
-});
+}) | {
+  readonly family: "grupo-electrogeno" | "torre-iluminacion" | "fregadora" | "barredora" | "compactadora" | "transpaleta" | "plataforma-articulada";
+  readonly firstYear: number | null;
+  readonly lastYear: number | null;
+  readonly anchoredCatalogOffer?: true;
+  readonly familyFromSourcePath?: true;
+  readonly corroboratingText?: RegExp;
+  readonly sourceAnchors: Readonly<Record<string, string>>;
+  readonly conflictingEvidence: RegExp;
+};
 
 type ReviewedModelReuse = {
   readonly compatibility: ReviewedModelCompatibility;
@@ -56,6 +66,132 @@ type ReviewedModelDocument = {
 };
 
 const documents: readonly ReviewedModelDocument[] = [
+  {
+    url: "https://pramac.com/file/96662", brand: "Pramac", model: "P18000 (STAGE V)", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "grupo-electrogeno", firstYear: 2023, lastYear: 2023,
+      sourceAnchors: {"Altura": "1.03 metros", "Longitud": "1.50 m", "Anchura": "0.75 m", "Peso": "475 kg", "Motor": "Diésel", "Potencia": "18 kva"},
+      conflictingEvidence: /\b(?:deposito|frecuencia|regimen nominal|velocidad nominal)\b|\b(?:modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Capacidad del depósito de combustible", "Frecuencia nominal", "Régimen nominal del motor"] },
+    facts: [
+      { field: "Capacidad del depósito de combustible", value: "51 L", support: "Pramac catálogo Serie P, tabla Datos técnicos diésel 50 Hz, p. 3, P18000: depósito 51 l para ambas versiones; dimensiones 1500 × 754 × 1032 mm y peso 475 kg de la trifásica. No se modifica la potencia anunciada." },
+      { field: "Frecuencia nominal", value: "50 Hz", support: "Misma tabla, ambas versiones, corroborada en https://www.pramac.com/es_ES/product?folder=291&product=208063." },
+      { field: "Régimen nominal del motor", value: "3000 rpm", support: "Misma tabla, velocidad nominal de funcionamiento, P18000 Stage V." }
+    ]
+  },
+  {
+    url: "https://pramac.com/es_ES/product?folder=264&product=11366", brand: "Pramac", model: "GPW45P", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "grupo-electrogeno", firstYear: 2023, lastYear: 2023,
+      sourceAnchors: {"Altura": "1.31 metros", "Longitud": "2.20 m", "Anchura": "1.02 m", "Peso": "1017 KG", "Motor": "Diésel", "Potencia": "45 kva"},
+      conflictingEvidence: /\b(?:frecuencia|factor de potencia|potencia (?:de emergencia|continua|activa))\b|\b(?:modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Potencia de emergencia ESP", "Factor de potencia nominal", "Frecuencia nominal"] },
+    facts: [
+      { field: "Potencia de emergencia ESP", value: "49,5 kVA", support: "Pramac GPW45P/FNE, principales características, ESP 49,5 kVA y PRP 45 kVA; cotejada ficha GPW45P en https://es.scribd.com/document/1026285494/PRAMAC-Generador-GPW45P y dimensiones 2200 × 1020 × 1313 mm y peso 1017 kg en https://www.macfarlanegenerators.com.au/products/49-5kva-pramac-perkins-generator-set-gpw45p-fne." },
+      { field: "Factor de potencia nominal", value: "0,8", support: "Mismas tablas GPW45P, factor nominal." },
+      { field: "Frecuencia nominal", value: "50 Hz", support: "Mismas tablas GPW45P, frecuencia; no se atribuye tensión." }
+    ]
+  },
+  {
+    url: "https://dynadocweb.dynapac.com/idc/groups/product_doc/documents/product_documentation/ilp6500en.pdf", brand: "Dynapac", model: "LP6500", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "compactadora", firstYear: 2003, lastYear: 2003,
+      sourceAnchors: {"Altura almacenaje": "1.04 m", "Longitud": "2.52 m", "Anchura": "0.72 m", "Peso": "696 kg", "Motor": "Diésel"},
+      conflictingEvidence: /\b(?:frecuencia|fuerza centrifuga|amplitud)\b|\b(?:modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Frecuencia de vibración", "Fuerza centrífuga", "Amplitud de vibración"] },
+    facts: [
+      { field: "Frecuencia de vibración", value: "61 Hz", support: "Dynapac LP6500 ILP6500EN3, p. 11, Compaction data; ambas variantes de arranque. No se atribuye variante de arranque por discrepancia entre peso y texto." },
+      { field: "Fuerza centrífuga", value: "20 kN", support: "Misma tabla de ambas variantes." },
+      { field: "Amplitud de vibración", value: "0,45 mm", support: "Misma tabla de ambas variantes." }
+    ]
+  },
+  {
+    url: "https://www.nilfisk.com/media/jldbb1zr/nilfisk-grey-line-catalogue-2020-uki.pdf", brand: "Nilfisk", model: "BR850-S", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "fregadora", firstYear: null, lastYear: null, familyFromSourcePath: true,
+      sourceAnchors: {"Altura": "1.35 m", "Longitud": "1.55 m", "Anchura": "0.88 m", "Peso": "705 kg", "Motor": "Eléctrico", "Anchura limpieza": "0.81 m"},
+      conflictingEvidence: /\b(?:deposito|tanque|tension|voltaje)\b|\b(?:modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Capacidad del depósito de solución", "Capacidad del depósito de recuperación", "Tensión nominal"] },
+    facts: [
+      { field: "Capacidad del depósito de solución", value: "157 L", support: "Nilfisk Grey Line Catalogue 2020, p. 63, BR850S, Solution/recovery tank 157/157 l; ancho 810 mm, dimensiones 1550 × 880 × 1350 mm, peso bruto 705 kg. Sin atribuir Ecoflex ni accesorios." },
+      { field: "Capacidad del depósito de recuperación", value: "157 L", support: "Misma tabla, recuperación, distinta del depósito de solución." },
+      { field: "Tensión nominal", value: "36 V", support: "Misma tabla, Voltage; sin atribuir tipo ni capacidad de batería." }
+    ]
+  },
+  {
+    url: "https://www.srsclean.co.uk/wp-content/uploads/2017/02/501bd27cdaf6f5.93582338.pdf", brand: "Eureka", model: "Compact 1150", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "barredora", firstYear: 2005, lastYear: 2005, familyFromSourcePath: true,
+      sourceAnchors: {"Altura almacenaje": "1.25 m", "Longitud": "1.54 m", "Anchura": "1.15 m", "Peso": "396 kg", "Motor": "Eléctrico", "Anchura limpieza": "1.15 m"},
+      conflictingEvidence: /\b(?:tolva|contenedor|cepillo principal|deposito)\b|\b(?:modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Anchura de barrido con cepillo principal", "Capacidad de la tolva"] },
+    facts: [
+      { field: "Anchura de barrido con cepillo principal", value: "700 mm", support: "Eureka s.r.l., folleto Compact 1150, Technical specifications, COMPACT EB y SH: sweeping path only main brush 700 mm. EB eléctrico coincide con peso 396 kg, 1150 × 1545 × 1250 mm y barrido 1150 mm." },
+      { field: "Capacidad de la tolva", value: "72 L", support: "Misma tabla, capacity of dirt container, ambas variantes." }
+    ]
+  },
+  {
+    url: "https://www.friggeraker.se/se/userfiles/files/teknisk-specifikation/CN201-150602.pdf", brand: "Johnston", model: "CN201", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "barredora", firstYear: 2015, lastYear: 2015, familyFromSourcePath: true,
+      sourceAnchors: {"Altura almacenaje": "1.98 m", "Longitud": "4.27 m", "Anchura": "1.31 m", "Peso": "2700 kg", "Motor": "Diésel", "Anchura limpieza": "2.30 m"},
+      conflictingEvidence: /\b(?:diametro de cepillo|velocidad de barrido)\b|\b(?:modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Diámetro de cepillos", "Velocidad de barrido"] },
+    facts: [
+      { field: "Diámetro de cepillos", value: "850 mm", support: "Johnston CN201, Specification Sheet 02/06/2015, Sweeping Equipment, Brush diameter 850 mm; común a variantes de motor." },
+      { field: "Velocidad de barrido", value: "0–16 km/h", support: "Misma ficha, Performance, Sweeping speed; no velocidad de transporte." }
+    ]
+  },
+  {
+    url: "https://www.hyster.com/es-es/emea/transpaletas-y-apiladores-con-conductor-a-bordo-y-acompanante/p1.6-2.2/", brand: "HYSTER", model: "P2.0", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "transpaleta", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: {"Marca": "HYSTER", "Modelo": "P2.0", "Peso": "632 KG", "Altura de elevación (m)": "0,13 metros", "Capacidad de carga (kg)": "2000 KG", "Capacidad de la batería": "24V / 150-375Ah | Li-ion 24V / 50-100Ah(V/Ah)"},
+      corroboratingText: /\bhyster p2[.]0(?![a-z0-9.-])/u,
+      conflictingEvidence: /\b(?:motor de traccion|posicion de conduccion)\b|\b(?:modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Tipo de motor de tracción", "Posición de conducción"] },
+    facts: [
+      { field: "Tipo de motor de tracción", value: "Corriente alterna (CA)", support: "Hyster P1.6-2.2, mantenimiento: motor de tracción CA cerrado de montaje vertical; tabla P2.0 coincide en 2000 kg, 130 mm, 632 kg y alternativas 24 V 150–375 Ah / 50–100 Ah." },
+      { field: "Posición de conducción", value: "Operador a pie", support: "Misma página, familia de operario a pie." }
+    ]
+  },
+  {
+    url: "https://ctelift.com/es/plataforma-aerea-pick-up-az14/", brand: "CTE", model: "AZ14 PICKUP", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: {"Marca": "CTE", "Modelo": "AZ14 PICKUP", "Longitud": "5900 mm", "Altura": "2700 mm", "Altura de elevación (m)": "13,5 metros", "Capacidad de carga (kg)": "230 KG"},
+      corroboratingText: /(?=.*\balcance lateral (?:de )?7[,.]1\s*(?:m\b|metros\b))(?=.*\bhidraulico h\+h\b)/u,
+      conflictingEvidence: /^(?:alcance(?: horizontal| lateral)?(?: \(m\))?|sistema de estabilizacion)$|\balcance (?:horizontal|lateral)(?: maximo)?(?: de|:)?\s+(?!7[,.]10?\s*(?:m\b|metros\b))\d+(?:[,.]\d+)?\s*(?:m\b|metros\b)|\b(?:sin estabilizadores|estabilizacion opcional|modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Alcance horizontal (m)", "Sistema de estabilización"] },
+    facts: [
+      { field: "Alcance horizontal (m)", value: "7,1 m", support: "CTE AZ14 PICK-UP, tabla Alcance máx. 7,10 m, altura máx. 13,50 m y capacidad 230 kg. Anuncio identifica AZ14 en tabla, título y URL, pero menciona ZED 14 en descripción; solo se recupera el alcance explícito coincidente." },
+      { field: "Sistema de estabilización", value: "H+H", support: "Misma ficha AZ14 PICK-UP, estabilizadores H+H, corroborados en descripción del anuncio. No se traslada otra prestación de ZED 14." }
+    ]
+  },
+  {
+    url: "https://www.helichina.net/product/1-5-3-8t-h4-series-four-wheel-electric-forklift/", brand: "HELI", model: "CPD18", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "carretilla-elevadora", energy: "eléctrica", loadCapacityKg: 1800,
+      marketCountry: "España", invariantUsedLoadCenter: true, firstYear: 2023, lastYear: 2023 }, fields: ["Centro de carga nominal del modelo"] },
+    facts: [
+      { field: "Centro de carga nominal del modelo", value: "500 mm", support: "HELI H4, tabla Parameter, CPD18 1800 kg y 500 mm; ficha H4 de abril 2023 (https://www.heliheftruck.nl/wp-content/uploads/2023/04/H4-series-1.5-3.8t-electric-forklift.pdf), filas 1.04 y 1.05, configuraciones M y S. Coincide con H4 LI-ION (https://www.helichina.net/product/1-5-3-8t-h4-series-four-wheel-li-ion-forklift/) y G2 LI-ION (https://www.helichina.net/product/1-5-3-8t-g2-series-four-wheel-li-ion-forklift/). Solo centro nominal de las variantes de 1800 kg, no capacidad residual ni tipo de batería, tensión, mástil o geometría." }
+    ]
+  },
+  {
+    url: "https://breezemount.net/wp-content/uploads/2019/06/TL-90-Metal-Halide-Lighting-Tower-Spec-sheet.pdf", brand: "Smc", model: "TL90", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "torre-iluminacion", firstYear: 2012, lastYear: 2012,
+      sourceAnchors: { "Altura almacenaje": "2.10 m", Longitud: "2.50 m", Anchura: "1.32 m", Peso: "1050 kg", Potencia: "4x1000 W" },
+      conflictingEvidence: /\b(?:deposito|frecuencia|potencia (?:continua|del generador)|alternador|modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Capacidad del depósito de combustible", "Potencia continua del generador", "Frecuencia nominal"] },
+    facts: [
+      { field: "Capacidad del depósito de combustible", value: "130 L", support: "Morris Site Machinery SMC TL-90, ficha Metal Halide, p. 2, Fuel tank capacity; coincide con el manual Telelight TL90, §3.5 (https://www.manualslib.com/manual/3019074/Smc-Networks-Telelight-Tl90.html?page=12). Versión 4 x 1000 W, transporte 2500 x 1320 x 2100 mm y peso con combustible 1050 kg." },
+      { field: "Potencia continua del generador", value: "5 kW", support: "Misma ficha TL-90 Metal Halide, p. 2, Continuous power, corroborada en manual Telelight TL90 §3.5. Potencia del generador, no potencia de lámparas ni potencia de emergencia." },
+      { field: "Frecuencia nominal", value: "50 Hz", support: "Misma ficha TL-90 Metal Halide, p. 2, Alternator, 50 Hz; corroborada en manual Telelight TL90 §3.5. No se atribuyen altura opcional de mástil ni autonomía." }
+    ]
+  },
+  {
+    url: "https://pramac.com/es_ES/product?folder=264&product=17958", brand: "Pramac", model: "GPW100I_FS2", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "grupo-electrogeno", firstYear: 2023, lastYear: 2023,
+      sourceAnchors: { Altura: "1.85 metros", Longitud: "2.76 m", Anchura: "1.12 m", Peso: "1489 kg", Motor: "Diésel", Potencia: "100 kva" },
+      conflictingEvidence: /\b(?:frecuencia|factor de potencia|potencia (?:de emergencia|continua|activa)|modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Potencia de emergencia ESP", "Factor de potencia nominal", "Frecuencia nominal"] },
+    facts: [
+      { field: "Potencia de emergencia ESP", value: "110 kVA", support: "Pramac GPW100I/FS2, Principales características, ESP 110 kVA y PRP 100 kVA; coincide en la versión 400/230 V (https://www.pramac.com/product?folder=264&product=17959). No se añade una segunda potencia PRP equivalente a la declarada." },
+      { field: "Factor de potencia nominal", value: "0,8", support: "Pramac GPW100I/FS2, Principales características, cos φ 0,8 en las versiones 230 V y 400/230 V." },
+      { field: "Frecuencia nominal", value: "50 Hz", support: "Pramac GPW100I/FS2, Principales características, frecuencia 50 Hz en las versiones 230 V y 400/230 V. No se atribuye tensión ni opciones de configuración." }
+    ]
+  },
   {
     url: "https://snorkellifts.com/german-debut-for-new-snorkel-electric-scissor-lifts-at-platformers-days/", brand: "SNORKEL", model: "S3219E", reviewedOn: "2026-11-24",
     reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 7.79, advertisedHeightClassM: 8,

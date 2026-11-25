@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
+import type { EditorialKnowledge, EditorialUnitKnowledge } from "../core/editorial-knowledge.js";
+import { editorialSourceDigest } from "../../../infrastructure/filesystem/editorial/knowledge.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { resolveCorroboratedTitleBrand, resolveDocumentedFamilyTitle, resolveManufacturerFamilyTitle } from "./editorial-documented-title.js";
 import { editorialFamilyOf } from "../core/editorial-families.js";
@@ -363,4 +365,70 @@ test("la familia de camión admite la inversión reconciliada de marca y chasis 
   const prepared = { ...source, brand: "MARCA", model: "CHASIS MODELO10" };
   assert.equal(resolveDocumentedFamilyTitle(source, prepared), "Camión cesta MARCA CHASIS MODELO10");
   assert.equal(resolveDocumentedFamilyTitle(source, { ...prepared, model: "CHASIS MODELO11" }), null);
+});
+
+
+test("la errata repetida en el enlace solo se corrige con resumen e identidad técnica concordantes", () => {
+  for (const providerId of ["gam", "gomariz"] as const) {
+    const source: ProductRecord = {
+      ...controlledGomarizPlatform(), providerId, brand: "MARCAINDUSTRIAL", model: "MODELO10",
+      url: providerId === "gam" ? "https://online.gamrentals.com/es/maquinaria/CONTROL-01-marcaindustial-modelo10" :
+        "https://www.gomarizrent.com/producto/marcaindustial-modelo10/",
+      title: "Equipo MARCAINDUSTIAL MODELO10", shortDescription: "Equipo MARCAINDUSTIAL MODELO10",
+      longDescription: "Equipo matriculado.", specs: { Marca: "MARCAINDUSTRIAL", Modelo: "MODELO10" }
+    };
+    const expected = "Equipo MARCAINDUSTRIAL MODELO10";
+    assert.equal(resolveCorroboratedTitleBrand(source, source), expected);
+    const prepared = prepareSourceProduct(source);
+    assert.equal(prepared.product.title, expected);
+    assert.equal(prepared.product.description_title, expected);
+    assert.equal(resolveCorroboratedTitleBrand({ ...source, title: expected }, { ...source, title: expected }), null);
+    for (const invalid of [
+      { ...source, shortDescription: null },
+      { ...source, shortDescription: "Equipo MARCAINDUSTIAL MODELO11" },
+      { ...source, url: source.url.replace("marcaindustial", "marcaindustral") },
+      { ...source, url: source.url.replace("modelo10", "modelo11") },
+      { ...source, specs: { ...source.specs, Marca: "OTRA" } }
+    ]) assert.equal(resolveCorroboratedTitleBrand(invalid, invalid), null);
+    assert.equal(resolveCorroboratedTitleBrand(source, { ...source, reference: "OTRA" }), null);
+    assert.equal(resolveCorroboratedTitleBrand(source, { ...source, specs: { Modelo: "MODELO10" } }), null);
+  }
+});
+
+test("la movilidad eléctrica aprovecha una corrección editorial firmada sin heredar datos de otra variante", () => {
+  for (const providerId of ["gam", "gomariz"] as const) {
+    const source: ProductRecord = {
+      ...controlledGomarizPlatform(), providerId,
+      url: providerId === "gam" ? "https://online.gamrentals.com/es/bicicletas-electricas/CONTROL-01-marca-modelo10" :
+        "https://www.gomarizrent.com/venta/movilidad/bicicletas-electricas/marca-modelo10/",
+      title: "MARCA MODELO10", shortDescription: "MARCA MODELO11 es una bicicleta eléctrica de ocasión.",
+      longDescription: "MARCA MODELO11 es una bicicleta eléctrica con otra configuración.",
+      specs: { Marca: "MARCA", Modelo: "MODELO10" }
+    };
+    const entry: EditorialUnitKnowledge = {
+      key: `${providerId}:${source.reference}`, brand: "MARCA", model: "MODELO10", sourceUrl: source.url,
+      sourceDigest: editorialSourceDigest(source), identityOverride: true, priority: 1, title: null,
+      short: "Bicicleta eléctrica MARCA MODELO10 de ocasión.",
+      general: "La ficha del proveedor identifica una bicicleta eléctrica MARCA MODELO10 de segunda mano."
+    };
+    const knowledge = (unit: EditorialUnitKnowledge): EditorialKnowledge => ({
+      units: new Map([[unit.key, [unit]]]), models: new Map(), families: {}, modelRules: new Map(), technicalReferences: new Map()
+    });
+    const expected = "Bicicleta eléctrica MARCA MODELO10";
+    assert.equal(resolveDocumentedFamilyTitle(source, source, knowledge(entry)), expected);
+    assert.equal(resolveDocumentedFamilyTitle(source, source, knowledge({ ...entry,
+      general: "MARCA MODELO10 es una bicicleta eléctrica de ocasión." })), expected);
+    for (const invalid of [
+      { ...entry, identityOverride: false },
+      { ...entry, sourceDigest: "0".repeat(64) },
+      { ...entry, sourceUrl: "https://example.invalid/otra-unidad" },
+      { ...entry, short: "Bicicleta eléctrica MARCA MODELO11 de ocasión." },
+      { ...entry, general: "MARCA MODELO10 es una motocicleta eléctrica de ocasión." },
+      { ...entry, general: null }
+    ]) assert.equal(resolveDocumentedFamilyTitle(source, source, knowledge(invalid)), null);
+    assert.equal(resolveDocumentedFamilyTitle(source, { ...source, reference: "OTRA" }, knowledge(entry)), null);
+    assert.equal(resolveDocumentedFamilyTitle(source, { ...source, specs: { ...source.specs, Motor: "Gasolina" } }, knowledge(entry)), null);
+    const changed = { ...source, longDescription: `${source.longDescription} Cambio posterior.` };
+    assert.equal(resolveDocumentedFamilyTitle(changed, changed, knowledge(entry)), null);
+  }
 });

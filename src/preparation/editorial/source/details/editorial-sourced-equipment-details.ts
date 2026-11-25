@@ -1,7 +1,11 @@
+import { parseDimension, parseMeasuredLength } from "../../../../catalog/normalization/spec-parsers.js";
 import type { ProductRecord, SpecValue } from "../../../../contracts/catalog.js";
 import { editorialFamilyOf } from "../../core/editorial-families.js";
 import type { EditorialFamily } from "../../core/editorial-families.js";
 import { editorialMetricOf, editorialQuantity, formatEditorialQuantity } from "../../measurements/editorial-measurements.js";
+import { hasUnconditionalEditorialClaim } from "../../claims/editorial-claim-evidence.js";
+import { verifiedEditorialIdentity } from "../../core/editorial-source-contract.js";
+import { containsEditorialBrandModel } from "../../identity/editorial-identity-match.js";
 import { resolvedEditorialUnitFamilies } from "../../identity/editorial-unit-provenance.js";
 
 const equalSpec = (source: ProductRecord, prepared: ProductRecord, key: string): string | null => {
@@ -50,6 +54,20 @@ const hammerCompatibility = (source: ProductRecord, prepared: ProductRecord): st
     "y el montaje deben verificarse antes de utilizar el implemento.";
 };
 
+const dumperGeometryAndTraction = (source: ProductRecord, prepared: ProductRecord): readonly string[] => {
+  const details: string[] = [];
+  const hasAny = (keys: readonly string[]): boolean => keys.some((key) =>
+    source.specs?.[key] !== undefined || prepared.specs?.[key] !== undefined);
+  if (!hasAny(["Altura", "Alto", "Altura exterior", "Altura almacenaje", "Altura replegada"])) {
+    const height = metres(source, prepared, "Altura total", 0.5, 8);
+    if (height !== null) details.push(`altura total declarada de ${height}`);
+  }
+  const traction = equalSpec(source, prepared, "Tracción");
+  if (traction && /^4[x×]4(?:\s+hidrost[aá]tic[ao])?$/iu.test(traction) &&
+    !hasAny(["Tracción 4x4"])) details.push(`tracción declarada ${/hidrost/iu.test(traction) ? "4×4 hidrostática" : "4×4"}`);
+  return details;
+};
+
 const equipmentDetails = (source: ProductRecord, prepared: ProductRecord, family: EditorialFamily): readonly string[] => {
   const details: string[] = [];
   const add = (label: string, value: string | null): void => {
@@ -87,13 +105,7 @@ const equipmentDetails = (source: ProductRecord, prepared: ProductRecord, family
     const litres = flowMatch?.[1] ? Number(flowMatch[1].replace(",", ".")) : null;
     if (litres !== null && litres >= 0.5 && litres <= 100) add("caudal nominal indicado", `${formatEditorialQuantity(litres)} l/min`);
   }
-  if (family === "dumper") {
-    add("altura total", metres(source, prepared, "Altura total", 0.5, 8));
-    const traction = equalSpec(source, prepared, "Tracción");
-    if (traction && /^4[x×]4(?:\s+hidrost[aá]tic[ao])?$/iu.test(traction)) {
-      details.push(`tracción declarada ${traction}`);
-    }
-  }
+  if (family === "dumper") details.push(...dumperGeometryAndTraction(source, prepared));
   if (family === "transpaleta") add("dimensiones de horquillas declaradas", forkDimensions(source, prepared));
   return details;
 };
@@ -159,6 +171,17 @@ export const resolvePlatformOperationalDetails = (
     }
   }
   const work = matchingMetric(source, prepared, ["Altura trabajo", "Altura de trabajo", "Altura de trabajo (m)"]);
+  if (family === "plataforma-mastil" && work !== null && work >= 3 && work <= 60) {
+    const platformLength = matchingMetric(source, prepared, ["Longitud plataforma", "Longitud de plataforma"]);
+    const keys = ["Alcance horizontal", "Alcance horizontal max.", "Alcance lateral", "Alcance Lateral"];
+    const reach = matchingMetric(source, prepared, keys);
+    if (platformLength !== null && platformLength >= 0.4 && platformLength <= 5 &&
+      reach !== null && reach > platformLength && reach <= work &&
+      !["Longitud extensión", "Extensión de plataforma"].some((key) =>
+        source.specs?.[key] !== undefined || prepared.specs?.[key] !== undefined)) {
+      addMetric(keys, "alcance horizontal declarado", /\b(?:alcance|radio de trabajo)\b/iu, platformLength, work);
+    }
+  }
   if (family === "plataforma-tijera") {
     const retracted = matchingMetric(source, prepared, ["Altura replegada", "Altura almacenaje"]);
     if (retracted !== null && work !== null && work >= 3 && work <= 60 && retracted <= Math.min(work, 30)) {
@@ -261,7 +284,7 @@ export const resolveHandlingOperationalDetails = (
   }
   if (!/\b(?:horquillas?|tenedores?)\b/iu.test(text)) {
     const keys = ["Largo horquillas", "Longitud de horquillas", "Longitud de tenedor"];
-    const combinedKeys = ["Dimensiones Horquillas", "Dimensiones de horquillas", "Horquillas"];
+    const combinedKeys = ["Dimensiones Horquillas", "Dimensiones de horquillas", "Dimensiones horquillas (mm)", "Horquillas", "Dim horquillas", "Medidas horquillas", "Dimensión horquillas", "Dimensiones horquilla"];
     const hasFields = (fields: readonly string[]): boolean => fields.some((key) => source.specs?.[key] !== undefined || prepared.specs?.[key] !== undefined);
     if (hasFields(keys) && !hasFields(combinedKeys)) {
       const length = matchingMetric(source, prepared, keys);
@@ -273,6 +296,10 @@ export const resolveHandlingOperationalDetails = (
     } else if (!hasFields(keys) && !hasFields(["Ancho horquillas", "Anchura de horquillas", "Grosor horquillas", "Grosor de horquillas"])) {
       const present = combinedKeys.filter((key) => source.specs?.[key] !== undefined || prepared.specs?.[key] !== undefined);
       const raw = present.length === 1 && present[0] !== undefined ? equalSpec(source, prepared, present[0]) : null;
+      const single = raw && /^\d{3,4}\s*mm$/iu.test(raw) ? parseDimension(raw) : null;
+      if (single && single.largo !== null && single.ancho === null && single.grosor === null && single.largo >= 400 && single.largo <= 4000) {
+        details.push(`longitud de horquillas declarada de ${formatEditorialQuantity(single.largo)} mm`);
+      }
       const triple = raw ? /^(\d{3,4})\s*[x×]\s*(\d{2,3})\s*[x×]\s*(\d{2,3})\s*mm$/iu.exec(raw) : null;
       const values = triple?.slice(1).map(Number);
       if (values && values[0] !== undefined && values[1] !== undefined && values[2] !== undefined &&
@@ -285,8 +312,47 @@ export const resolveHandlingOperationalDetails = (
   if (mastFamily && !/\bdesplaza(?:dor|miento)\s+lateral\b/iu.test(text) &&
     affirmativeSpecs(source, ["Desplazador lateral", "Desplazamiento lateral"]) &&
     affirmativeSpecs(prepared, ["Desplazador lateral", "Desplazamiento lateral"])) details.push("desplazador lateral declarado");
-  if (mastFamily && !/\belevaci[oó]n libre\b/iu.test(text) &&
-    affirmativeSpecs(source, ["Elevación libre"]) && affirmativeSpecs(prepared, ["Elevación libre"])) details.push("elevación libre declarada");
+  if (mastFamily && !/\belevaci[oó]n libre\b/iu.test(text)) {
+    const keys = ["Elevación libre", "Elevación libre (mm)"];
+    const availability = ["Elevación libre disponible", "Elevación libre (sí/no)"];
+    const unavailable = [source, prepared].some((record) => availability.some((key) =>
+      record.specs?.[key] !== undefined && declaredBoolean(record.specs[key]) !== true));
+    const values = keys.flatMap((key) => source.specs?.[key] === undefined && prepared.specs?.[key] === undefined ? [] :
+      [equalSpec(source, prepared, key)]);
+    const heights = values.map((value) => parseMeasuredLength(value, "Elevación libre (mm)", "mm"));
+    const free = heights[0];
+    const lift = matchingMetric(source, prepared, ["Altura de elevación (mm)", "Altura máxima de elevación", "Altura de elevación", "Altura elevacion"]);
+    const mast = matchingMetric(source, prepared, ["Altura mástil replegado", "Altura de mástil replegado", "Altura max. replegada"]);
+    if (!unavailable && free !== undefined && free !== null && Number.isInteger(free) && free >= 50 &&
+      lift !== null && mast !== null && free < lift * 1000 && free < mast * 1000 && heights.every((value) => value === free)) {
+      details.push(`elevación libre declarada de ${formatEditorialQuantity(free)} mm`);
+    } else if (!unavailable && affirmativeSpecs(source, keys) && affirmativeSpecs(prepared, keys)) details.push("elevación libre declarada");
+  }
+  if (family !== "manipulador-telescopico") {
+    const raw = equalSpec(source, prepared, "Radio de giro");
+    const aliases = ["Radio de giro (mm)", "Radio de giro (m)", "Radio de giro exterior", "Radio giro"];
+    if (raw && /^\d{3,4}$/u.test(raw) && !aliases.some((key) => source.specs?.[key] !== undefined || prepared.specs?.[key] !== undefined)) {
+      const radius = parseMeasuredLength(raw, "Radio de giro (mm)", "mm");
+      const mention = /\bradio\s+(?:(?:m[ií]nimo|exterior)\s+)?(?:de\s+)?(?:giro|viraje)\b/giu;
+      const explicit = /\bradio\s+(?:(?:m[ií]nimo|exterior)\s+)?(?:de\s+)?(?:giro|viraje)\s*(?:reducido\s+)?(?:(?:es\s+)?de\s+|:\s*)?(?:solo\s+)?(\d{1,4}(?:[.,]\d{1,3})?\s*(?:mm|m|metros?))\b/giu;
+      const corroborated = mastFamily && Boolean(source.brand && source.model &&
+        verifiedEditorialIdentity(source) && verifiedEditorialIdentity(prepared) &&
+        containsEditorialBrandModel(source.longDescription ?? "", source.brand, source.model)) &&
+        [source.longDescription, prepared.longDescription].every((description) => {
+          const value = description ?? "";
+          const claims = [...value.matchAll(explicit)];
+          return claims.length > 0 && claims.length === [...value.matchAll(mention)].length &&
+            claims.every((claim) => parseMeasuredLength(claim[1], "", "mm") === radius &&
+              !/^\s*(?:[-–/]|a\s+\d|o\s+\d|seg[uú]n\b)/iu.test(value.slice((claim.index ?? 0) + claim[0].length))) &&
+            hasUnconditionalEditorialClaim(value, explicit);
+        }) && [source.title, source.shortDescription, prepared.title, prepared.shortDescription].every((description) =>
+          !/\bradio\s+(?:(?:m[ií]nimo|exterior)\s+)?(?:de\s+)?(?:giro|viraje)\b/iu.test(description ?? ""));
+      if (radius !== null && radius >= 750 && radius <= 7500 &&
+        (!/\bradio\s+(?:(?:m[ií]nimo|exterior)\s+)?(?:de\s+)?(?:giro|viraje)\b/iu.test(text) || corroborated)) {
+        details.push(`radio de giro declarado de ${formatEditorialQuantity(radius)} mm`);
+      }
+    }
+  }
   if (mastFamily && source.condition === "Segunda mano") {
     if (!/\b(?:mandos?|controles?|palancas?|minipalancas?|minilevers|joystick|hidr[aá]ulic[oa]s?)\b/iu.test(text)) {
       const controls = declaredConfiguration(source, prepared,
@@ -359,6 +425,18 @@ export const resolveEquipmentConfigurationDetails = (
     prepared.title, prepared.shortDescription, prepared.longDescription].join(" ");
   const details: string[] = [];
   if (family === "dumper") {
+    const capacityAliases = ["Capacidad de carga (kg)", "Capacidad de carga", "Capacidad"];
+    const hasAny = (keys: readonly string[]): boolean => keys.some((key) =>
+      source.specs?.[key] !== undefined || prepared.specs?.[key] !== undefined);
+    if (!hasAny(capacityAliases) && !/\b(?:capacidad|carga|tolva)\b[^.!?;\n]{0,40}\d+\s*(?:kg|t)\b/iu.test(text)) {
+      const capacity = editorialQuantity(equalSpec(source, prepared, "Capacidad carga") ?? undefined, "kg");
+      if (capacity !== null && capacity >= 100 && capacity <= 50000) {
+        details.push(`capacidad de carga declarada de ${formatEditorialQuantity(capacity)} kg`);
+      }
+    }
+    details.push(...dumperGeometryAndTraction(source, prepared).filter((detail) =>
+      !(/^altura total\b/u.test(detail) && /\b(?:altura|alto)\b/iu.test(text)) &&
+      !(/^tracción declarada\b/u.test(detail) && /\b(?:tracci[oó]n|4\s*[x×]\s*[24]|[24]wd)\b/iu.test(text))));
     const configurations = [
       { key: "Giratorio", label: "tolva giratoria declarada", mention: /\b(?:giratori[oa]s?|giro\s+de\s+(?:la\s+)?tolva|tolva\s+(?:es\s+)?fija)\b/iu },
       { key: "Autocargable", label: "configuración autocargable declarada", mention: /\b(?:autocarg\p{L}*|auto[ -]carg\p{L}*|carga\s+autom[aá]tica|carga\s+manual)\b/iu },
@@ -371,6 +449,15 @@ export const resolveEquipmentConfigurationDetails = (
       }
     }
   } else if (family === "grupo-electrogeno") {
+    if (!/\b(?:stage|emisiones|homologaci[oó]n|normativa)\b/iu.test(text)) {
+      const classification = declaredConfiguration(source, prepared,
+        ["Stage", "Normativa de emisiones", "Nivel de emisiones"], (value) => {
+          const match = /^(?:stage\s+)?(i|ii|iiia|iiib|iv|v)(\s+flex)?$/u.exec(value);
+          if (!match?.[1] || match[2] && match[1] !== "v") return null;
+          return `${match[1].toUpperCase()}${match[2] ? " Flex" : ""}`;
+        });
+      if (classification !== null) details.push(`clasificación de emisiones declarada Stage ${classification}`);
+    }
     const competingVoltageKeys = ["Voltaje", "Voltaje de la batería"];
     if (!/\b(?:voltios?|voltaje|tensi[oó]n|bater[ií]as?)\b|\b\d+\s*v\b/iu.test(text) &&
       competingVoltageKeys.every((key) => source.specs?.[key] === undefined && prepared.specs?.[key] === undefined)) {
@@ -442,7 +529,9 @@ export const resolveSourcedEquipmentDetails = (
     return compatibility;
   }
   const details = equipmentDetails(source, prepared, family).filter((detail) =>
-    !(/^altura exterior\b/u.test(detail) && /\baltura exterior declarada\b/iu.test(general)));
+    !(/^altura exterior\b/u.test(detail) && /\baltura exterior declarada\b/iu.test(general)) &&
+    !(/^altura total\b/u.test(detail) && /\baltura total declarada\b/iu.test(general)) &&
+    !(/^tracción declarada\b/u.test(detail) && /\btracci[oó]n declarada\b/iu.test(general)));
   if (details.length === 0) return null;
   const listed = details.length === 1 ? details[0] :
     `${details.slice(0, -1).join(", ")} y ${details[details.length - 1]}`;

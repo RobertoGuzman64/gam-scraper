@@ -78,6 +78,70 @@ const batteryVoltageContext = (source: ProductRecord, prepared: ProductRecord, g
   return `${general.trim()} La tabla técnica indica un voltaje de batería de ${voltage} V; el dato de capacidad presenta una unidad incompleta y no permite confirmar los amperios-hora.`;
 };
 
+const catalogBatteryContext = (source: ProductRecord, prepared: ProductRecord, general: string): string | null => {
+  if (source.condition !== "Nuevo" || prepared.condition !== "Nuevo" ||
+    /\bbater[ií]as?\b|\bacumuladores?\b|\b\d+\s*(?:V|Ah)\b/iu.test(general)) return null;
+  if (!source.model || (source.longDescription?.trim() && !containsEditorialIdentity(source.longDescription, source.model))) return null;
+  const raw = source.specs?.["Capacidad de la batería"];
+  const current = prepared.specs?.["Capacidad de la batería"];
+  const normalized = (value: string): string => value.trim().replace(/\s*\(V\/Ah\)$/iu, "").replace(/\s+/gu, "").toLowerCase();
+  if (typeof raw !== "string" || typeof current !== "string" || !/\(V\/Ah\)$/iu.test(raw.trim()) ||
+    normalized(raw) !== normalized(current)) return null;
+  const single = /^(Li-ion\s+)?(\d{2,3})\s*V\s*\/\s*(\d{2,4})\s*Ah\s*\(V\/Ah\)$/iu.exec(raw.trim());
+  const options = /^(\d{2,3})\s*V\s*\/\s*(\d{2,4})(?:\s*[-–]\s*(\d{2,4}))?\s*Ah\s*\|\s*Li-ion\s+(\d{2,3})\s*V\s*\/\s*(\d{2,4})(?:\s*[-–]\s*(\d{2,4}))?\s*Ah\s*\(V\/Ah\)$/iu.exec(raw.trim());
+  if (!single && !options) return null;
+  const voltage = Number(single ? single[2] : options?.[1]);
+  const minimum = Number(single ? single[3] : options?.[2]);
+  const maximum = options?.[3] ? Number(options[3]) : minimum;
+  const lithiumMin = options ? Number(options[5]) : minimum;
+  const lithiumMax = options?.[6] ? Number(options[6]) : lithiumMin;
+  if (voltage < 12 || voltage > 120 || minimum < 50 || maximum > 2000 || lithiumMin < 50 || lithiumMax > 2000 ||
+    (options && (Number(options[4]) !== voltage || maximum < minimum || lithiumMax < lithiumMin ||
+      (options[3] && maximum === minimum) || (options[6] && lithiumMax === lithiumMin)))) return null;
+  const texts = [source.title, source.shortDescription, source.longDescription, prepared.title, prepared.shortDescription, prepared.longDescription];
+  const capacities = new Set([minimum, maximum, lithiumMin, lithiumMax]);
+  if (texts.some((text) => /\b(?:MWB|LWB|batalla\s+(?:media|larga)|sin\s+bater[ií]as?|di[eé]sel|gasoil|gasolina|GLP|h[ií]brid[ao]s?|hasta\s+\d+\s*Ah)\b/iu.test(text ?? "") ||
+    [...(text ?? "").matchAll(/\b(\d+(?:[.,]\d+)?)\s*(V|Ah)\b/giu)].some((entry) => {
+      const value = Number(entry[1]?.replace(",", "."));
+      return entry[2]?.toLowerCase() === "v" ? value !== voltage : !capacities.has(value);
+    }))) return null;
+  if ([source, prepared].some((record) => ["Voltaje de la batería", "Voltaje batería (V)", "Voltaje", "Voltios"].some((key) =>
+    record.specs?.[key] !== undefined && editorialQuantity(record.specs[key], "V") !== voltage) ||
+    ["Tipo de Batería", "Tipo de batería", "Capacidad de la batería (Ah)"].some((key) => record.specs?.[key] !== undefined))) return null;
+  if (single && texts.some((text) => /\b(?:opcional(?:mente)?|alternativas?|opciones?|puede\s+incorporar)\b[^.!?;]{0,65}\bbater[ií]as?\b|\bbater[ií]as?\b[^.!?;]{0,65}\b(?:opcional(?:mente)?|alternativas?|opciones?)\b/iu.test(text ?? ""))) return null;
+  const capacityText = (from: number, to: number): string => from === to ?
+    `${formatEditorialQuantity(from)} Ah` : `entre ${formatEditorialQuantity(from)} y ${formatEditorialQuantity(to)} Ah`;
+  const stated = options ? `dos alternativas de batería a ${voltage} V: ${capacityText(minimum, maximum)} y ${capacityText(lithiumMin, lithiumMax)} en ion-litio` :
+    `batería${single?.[1] ? " de ion-litio" : ""} a ${voltage} V con ${capacityText(minimum, maximum)}`;
+  return `${general.trim()} La tabla técnica de esta referencia declara ${stated}. La configuración suministrada debe confirmarse para la unidad ofertada.`;
+};
+
+const platformBatteryChemistryContext = (source: ProductRecord, prepared: ProductRecord, general: string): string | null => {
+  if (/\b(?:bater[ií]as?|acumuladores?|plomo|litio|li-ion)\b/iu.test(general)) return null;
+  const parse = (value: string | null): "plomo" | "litio" | null => {
+    const normalized = value?.normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toLowerCase() ?? "";
+    if (/^(?:bateria de )?plomo(?:[ -]acido)?$/u.test(normalized)) return "plomo";
+    if (/^(?:bateria de )?(?:litio|ion[ -]litio|li-ion)$/u.test(normalized)) return "litio";
+    return null;
+  };
+  const keys = ["Tipo de batería", "Tipo de Batería", "Tecnología de batería"];
+  const values = keys.flatMap((key) => source.specs?.[key] === undefined && prepared.specs?.[key] === undefined ? [] :
+    [parse(matchingSpecs(source, prepared, key))]);
+  const battery = values[0];
+  if (!battery || !values.every((value) => value === battery)) return null;
+  const texts = [source.title, source.shortDescription, source.longDescription, prepared.title, prepared.shortDescription, prepared.longDescription];
+  if (!texts.some((text) => /\bel[eé]ctric[oa]s?\b/iu.test(text ?? ""))) return null;
+  const chemistry = battery === "plomo" ? /\bplomo(?:[ -][aá]cido)?\b/giu : /\b(?:litio|li-ion)\b/giu;
+  const competing = battery === "plomo" ? /\b(?:litio|li-ion|gel|agm)\b/iu : /\b(?:plomo|gel|agm)\b/iu;
+  if (texts.some((text) => {
+    const value = text ?? "";
+    return competing.test(value) || /\b(?:di[eé]sel|gasoil|gasolina|GLP|h[ií]brid[oa]s?|sin\s+bater[ií]as?)\b/iu.test(value) ||
+      /\b(?:opcional(?:mente)?|alternativas?|opciones?|puede\s+incorporar)\b[^.!?;]{0,65}\bbater[ií]as?\b|\bbater[ií]as?\b[^.!?;]{0,65}\b(?:opcional(?:mente)?|alternativas?|opciones?|no\s+incluid[oa]s?|pendientes?\s+de\s+confirmar)\b/iu.test(value) ||
+      Boolean(value.match(chemistry) && !hasUnconditionalEditorialClaim(value, chemistry));
+  })) return null;
+  return `${general.trim()} La tabla técnica de esta referencia declara batería de ${battery}.`;
+};
+
 export const resolveSourcedCombinedBatteryGeneral = (source: ProductRecord, prepared: ProductRecord, general: string | null): string | null => {
   if (!general || !sameProductProvider(source, prepared)) return null;
   if (!source.brand || !source.model || !verifiedEditorialUnitPair(source, prepared) ||
@@ -86,33 +150,37 @@ export const resolveSourcedCombinedBatteryGeneral = (source: ProductRecord, prep
     general.trim().split(/\s+/u).length > 180) return null;
   const original = resolveEditorialFacts(source);
   const reconciled = resolveEditorialFacts(prepared);
-  if (!original || !reconciled || original.family !== reconciled.family ||
-    !["carretilla-elevadora", "carretilla-retractil", "apilador", "transpaleta", "recogepedidos"].includes(original.family) ||
-    editorialFamilyOf(general) !== original.family) return null;
+  if (!original || !reconciled || original.family !== reconciled.family || editorialFamilyOf(general) !== original.family) return null;
+  if (["plataforma-tijera", "plataforma-articulada", "plataforma-telescopica", "plataforma-mastil", "plataforma-unipersonal", "plataforma-oruga"].includes(original.family)) {
+    return [original.energy, reconciled.energy].every((energy) => energy === null || energy === "eléctrica") ?
+      platformBatteryChemistryContext(source, prepared, general) : null;
+  }
+  if (!["carretilla-elevadora", "carretilla-retractil", "apilador", "transpaleta", "recogepedidos"].includes(original.family)) return null;
   const compatibleRangeEnergy = [original.energy, reconciled.energy].every((energy) => energy === null || energy === "eléctrica");
   const range = compatibleRangeEnergy ? batteryRangeContext(source, prepared, general) : null;
   if (range !== null) return range;
-  if (original.energy !== "eléctrica" || reconciled.energy !== "eléctrica") return null;
+  const catalog = compatibleRangeEnergy ? catalogBatteryContext(source, prepared, general) : null;
+  if (original.energy !== "eléctrica" || reconciled.energy !== "eléctrica") return catalog;
   const voltageContext = batteryVoltageContext(source, prepared, general);
   if (voltageContext !== null) return voltageContext;
   const value = matchingSpecs(source, prepared, "Capacidad de la batería");
   const match = value && /^(\d{2,3})\s*V\s*\/\s*(\d{2,4})\s*Ah\s*\(V\/Ah\)$/iu.exec(value);
-  if (!match?.[1] || !match[2]) return null;
+  if (!match?.[1] || !match[2]) return catalog;
   const voltage = Number(match[1]);
   const capacity = Number(match[2]);
-  if (voltage < 12 || voltage > 120 || capacity < 50 || capacity > 2000) return null;
-  if (/\bbater[ií]as?\b|\bacumuladores?\b|\b\d+\s*(?:V|Ah)\b/iu.test(general)) return null;
+  if (voltage < 12 || voltage > 120 || capacity < 50 || capacity > 2000) return catalog;
+  if (/\bbater[ií]as?\b|\bacumuladores?\b|\b\d+\s*(?:V|Ah)\b/iu.test(general)) return catalog;
   const originalLong = source.longDescription ?? "";
-  if (!containsEditorialBrandModel(originalLong, source.brand, source.model)) return null;
+  if (!containsEditorialBrandModel(originalLong, source.brand, source.model)) return catalog;
   const texts = [source.shortDescription, originalLong, prepared.shortDescription, prepared.longDescription];
   const pair = new RegExp(`\\b${voltage}\\s*V\\s*(?:/|y)\\s*${capacity}\\s*Ah\\b`, "giu");
-  if (!hasUnconditionalEditorialClaim(originalLong, pair)) return null;
+  if (!hasUnconditionalEditorialClaim(originalLong, pair)) return catalog;
   if (texts.some((text) => /\b(?:MWB|LWB|batalla\s+(?:media|larga)|hasta\s+\d+\s*Ah|sin\s+bater[ií]as?)\b/iu.test(text ?? "") ||
     [...(text ?? "").matchAll(/\b(\d+)\s*(V|Ah)\b/giu)].some((entry) =>
-      Number(entry[1]) !== (entry[2]?.toLocaleLowerCase("es") === "v" ? voltage : capacity)))) return null;
+      Number(entry[1]) !== (entry[2]?.toLocaleLowerCase("es") === "v" ? voltage : capacity)))) return catalog;
   const electricalKeys = ["Voltaje de la batería", "Voltaje batería (V)", "Voltaje"];
   if ([source, prepared].some((record) => electricalKeys.some((key) =>
-    record.specs?.[key] !== undefined && editorialQuantity(record.specs[key], "V") !== voltage))) return null;
+    record.specs?.[key] !== undefined && editorialQuantity(record.specs[key], "V") !== voltage))) return catalog;
   return `${general.trim()} El campo de batería de esta referencia consigna ${voltage} V y ${formatEditorialQuantity(capacity)} Ah. Es un dato del catálogo técnico, no una comprobación del estado ni de la configuración de la batería de la unidad entregada.`;
 };
 

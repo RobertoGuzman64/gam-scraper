@@ -4,6 +4,7 @@ import { reconcileInitialTechnicalEvidence } from "../../technical/preparation-t
 import { resolveEditorialFacts } from "./editorial-facts.js";
 import { hasCorroboratedEditorialCapacityReconciliation, sameEditorialUnit, verifiedEditorialIdentity } from "./editorial-source-contract.js";
 import { editorialIdentityKey, resolveFamilyGuidance, selectUnitKnowledge, selectIdentityOverrideKnowledge } from "./editorial-knowledge.js";
+import type { EditorialUnitIdentity } from "./editorial-knowledge.js";
 
 const sameEditorialOrigin = (source: ProductRecord, prepared: ProductRecord): boolean =>
   Boolean(source.reference?.trim()) && source.providerId === prepared.providerId &&
@@ -27,6 +28,12 @@ const hasCorroboratedEditorialModelReconciliation = (
     reconciled.specs?.Modelo === prepared.specs?.Modelo;
 };
 
+export const resolveEditorialUnitIdentity = (record: ProductRecord): EditorialUnitIdentity | null =>
+  record.reference?.trim() ? {
+    key: `${record.providerId}:${record.reference}`,
+    sourceUrl: record.url, brand: record.brand ?? "", model: record.model ?? ""
+  } : null;
+
 export const resolveKnowledgeEditorial = (record: ProductRecord, sourceUnitRecord: ProductRecord = record) => {
   const knowledge = loadEditorialKnowledge();
   const rule = record.brand && record.model ? knowledge.modelRules.get(editorialIdentityKey(record.brand, record.model)) : null;
@@ -36,10 +43,7 @@ export const resolveKnowledgeEditorial = (record: ProductRecord, sourceUnitRecor
       (record.title === sourceUnitRecord.title ||
         hasCorroboratedEditorialCapacityReconciliation(sourceUnitRecord, record)) ||
       hasCorroboratedEditorialModelReconciliation(sourceUnitRecord, record));
-  const matchingIdentity = sourceUnitRecord.reference?.trim() ? {
-    key: `${sourceUnitRecord.providerId}:${sourceUnitRecord.reference}`,
-    sourceUrl: sourceUnitRecord.url, brand: sourceUnitRecord.brand ?? "", model: sourceUnitRecord.model ?? ""
-  } : null;
+  const matchingIdentity = resolveEditorialUnitIdentity(sourceUnitRecord);
   const originalDigest = matchingIdentity ? editorialSourceDigest(sourceUnitRecord) : null;
   const exception = sameEditorialOrigin(sourceUnitRecord, record) && matchingIdentity && originalDigest
     ? selectIdentityOverrideKnowledge(matchingIdentity, knowledge, originalDigest) : null;

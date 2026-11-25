@@ -10,9 +10,10 @@ import { containsEditorialBrandModel, containsEditorialIdentity } from "../ident
 import { containsEditorialSourceSlugModel } from "../source/editorial-source-url.js";
 import { findBrandTypo } from "../../../catalog/normalization/technical-title-identity.js";
 import { verifiedEditorialLiteralUnitPair, verifiedEditorialUnitPair } from "../identity/editorial-unit-provenance.js";
-import { loadEditorialKnowledge } from "../../../infrastructure/filesystem/editorial/knowledge.js";
-import { editorialIdentityKey } from "../core/editorial-knowledge.js";
-import type { EditorialVerifiedModelRule } from "../core/editorial-knowledge.js";
+import { editorialSourceDigest, loadEditorialKnowledge } from "../../../infrastructure/filesystem/editorial/knowledge.js";
+import { editorialIdentityKey, selectIdentityOverrideKnowledge } from "../core/editorial-knowledge.js";
+import { resolveEditorialUnitIdentity } from "../core/knowledge-editorial.js";
+import type { EditorialKnowledge, EditorialVerifiedModelRule } from "../core/editorial-knowledge.js";
 
 const fold = (value: string): string => value.normalize("NFD").replace(/[\u0300-\u036f]/gu, "")
   .toLocaleLowerCase("es").trim().replace(/\s+/gu, " ");
@@ -47,8 +48,15 @@ export const resolveCorroboratedTitleBrand = (source: ProductRecord, prepared: P
   if (!verifiedEditorialUnitPair({ ...source, title: candidate }, { ...prepared, title: candidate })) return null;
   const url = new URL(source.url);
   const slug = url.pathname.split("/").filter(Boolean).at(-1) ?? "";
-  if (!containsEditorialSourceSlugModel(slug, model, undefined) ||
-    !containsEditorialIdentity(url.pathname, brand)) return null;
+  if (!containsEditorialSourceSlugModel(slug, model, undefined)) return null;
+  if (!containsEditorialIdentity(url.pathname, brand)) {
+    if (typo === null) return null;
+    const misspelling = title.slice(typo.index, typo.index + typo.length);
+    if (!containsEditorialIdentity(slug, misspelling) ||
+      !containsEditorialBrandModel(source.shortDescription ?? "", misspelling, model) ||
+      fold(String(prepared.specs?.Marca ?? "")) !== fold(brand) ||
+      fold(String(prepared.specs?.Modelo ?? "")) !== fold(model)) return null;
+  }
   if (typo === null) {
     const short = source.shortDescription?.slice(0, 550) ?? "";
     const general = source.longDescription?.slice(0, 550) ?? "";
@@ -149,7 +157,9 @@ const corroboratedHeadingFamily = (
     (original.platformHeightM === null || original.platformHeightM < original.workingHeightM);
 };
 
-const documentedElectricMobilityTitle = (record: ProductRecord, prepared: ProductRecord, clues: string): string | null => {
+const documentedElectricMobilityTitle = (
+  record: ProductRecord, prepared: ProductRecord, clues: string, knowledge: EditorialKnowledge
+): string | null => {
   const brand = record.brand?.trim();
   const model = record.model?.trim();
   if (!brand || !model || !verifiedEditorialUnitPair(record, prepared) ||
@@ -159,7 +169,7 @@ const documentedElectricMobilityTitle = (record: ProductRecord, prepared: Produc
     record.specs?.["Título adicional"] !== undefined || prepared.specs?.["Título adicional"] !== undefined) return null;
   const short = record.shortDescription ?? "";
   const general = record.longDescription ?? "";
-  const texts = [fold(short), fold(general)];
+  const originalTexts = [fold(short), fold(general)];
   const motors = [record, prepared].flatMap((item) => [item.specs?.Motor, item.specs?.["Tipo motor"],
     item.specs?.["Tipo de motor"], item.specs?.Motorización]).filter((value) => value !== undefined);
   if (motors.some((value) => typeof value !== "string" || !/^electric[oa]$/u.test(fold(value)))) return null;
@@ -170,13 +180,24 @@ const documentedElectricMobilityTitle = (record: ProductRecord, prepared: Produc
     { name: "Motocicleta eléctrica", route: /\bmotocicletas?[-\s]+electricas?\b/u, text: /\bmotocicleta\s+electrica\b/u, claim: /\bes\s+una\s+motocicleta\s+electrica\b/u },
     { name: "Ciclomotor eléctrico", route: /\bciclomotores?[-\s]+electricos?\b/u, text: /\bciclomotor\s+electrico\b/u, claim: /\bes\s+un\s+ciclomotor\s+electrico\b/u }
   ];
-  const matching = families.filter((family) => family.route.test(fold(clues)) &&
+  const matches = (texts: readonly string[], authenticated: boolean) => families.filter((family) => family.route.test(fold(clues)) &&
     texts.every((text) => {
       const heading = text.replace(/^cambio de titularidad y transporte no incluidos\s+/u, "").slice(0, 180);
       const match = family.claim.exec(heading);
-      return match !== null && !/\bno\s+es\b/u.test(heading) &&
-        containsEditorialBrandModel(heading.slice(0, match.index), brand, model);
+      if (/\bno\s+es\b/u.test(heading)) return false;
+      if (match !== null && containsEditorialBrandModel(heading.slice(0, match.index), brand, model)) return true;
+      const prefix = fold(family.name);
+      const identified = heading.replace(/^la ficha del proveedor identifica (?:un|una)\s+/u, "");
+      const identity = fold(`${brand} ${model}`);
+      return authenticated && identified.startsWith(`${prefix} ${identity}`) &&
+        /^(?:$|[\s,.;:])/u.test(identified.slice(prefix.length + identity.length + 1));
     }));
+  const originalMatching = matches(originalTexts, false);
+  const identity = originalMatching.length === 0 ? resolveEditorialUnitIdentity(record) : null;
+  const signed = identity ? selectIdentityOverrideKnowledge(identity, knowledge, editorialSourceDigest(record)) : null;
+  const signedTexts = signed?.short && signed.general ? [fold(signed.short), fold(signed.general)] : null;
+  const texts = originalMatching.length === 0 && signedTexts ? signedTexts : originalTexts;
+  const matching = texts === originalTexts ? originalMatching : matches(texts, true);
   const family = matching[0];
   if (!family || matching.length !== 1 || texts.some((text) => /\b(?:motos?|scooters?|cuatriciclos?)\b/u.test(text) ||
     (family.name !== "Motocicleta eléctrica" && /\bmotocicletas?\b/u.test(text)) ||
@@ -282,7 +303,9 @@ const literalSourceFamilyTitle = (source: ProductRecord, prepared: ProductRecord
   return titleWithFamily(family, title);
 };
 
-export const resolveDocumentedFamilyTitle = (record: ProductRecord, prepared: ProductRecord = record): string | null => {
+export const resolveDocumentedFamilyTitle = (
+  record: ProductRecord, prepared: ProductRecord = record, knowledge?: EditorialKnowledge
+): string | null => {
   const literal = literalSourceFamilyTitle(record, prepared);
   if (literal !== null) return literal;
   const source = resolveEditorialSource(record);
@@ -291,10 +314,11 @@ export const resolveDocumentedFamilyTitle = (record: ProductRecord, prepared: Pr
   const title = record.title?.trim();
   if (!source || !verifiedEditorialIdentity(record) || !brand || !model || !title ||
     fold(title) !== fold(`${brand} ${model}`)) return null;
-  const rule = loadEditorialKnowledge().modelRules.get(editorialIdentityKey(brand, model));
+  const availableKnowledge = knowledge ?? loadEditorialKnowledge();
+  const rule = availableKnowledge.modelRules.get(editorialIdentityKey(brand, model));
   const manufacturer = resolveManufacturerFamilyTitle(record, prepared, rule);
   if (manufacturer !== null) return manufacturer;
-  const mobility = documentedElectricMobilityTitle(record, prepared, source.familyClues);
+  const mobility = documentedElectricMobilityTitle(record, prepared, source.familyClues, availableKnowledge);
   if (mobility !== null) return mobility;
   const equipment = documentedEquipmentTitle(record, prepared);
   if (equipment !== null) return equipment;

@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
+import { matchesTechnicalDocumentVerification } from "../../contracts/technical-provenance.js";
+import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js";
 import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
-import type { DocumentedTechnicalSource as ProvenanceSource } from "../../contracts/technical-provenance.js";
+import type { DocumentedTechnicalSource as ProvenanceSource, ProductTechnicalProvenance } from "../../contracts/technical-provenance.js";
 import type { TechnicalRecoveryObservation } from "../provenance/technical-recovery-observation.js";
 import { reviewedCatalogModelIdentity, matchesDocumentedTechnicalIdentity } from "./reviewed-catalog-model-identity.js";
 import { reusableReviewedModelClaims, reviewedModelDocumentVerification } from "./reviewed-model-claims.js";
@@ -198,6 +200,39 @@ export const recoverReviewedModelTechnicalSpecs = (
   const claim = claims[0];
   if (!claim) return specs;
   const expected = claim.compatibility;
+  if ("sourceAnchors" in expected) {
+    const year = Number(original.year);
+    const anchoredOffer = expected.anchoredCatalogOffer === true;
+    const sourceText = fold([original.shortDescription, original.longDescription].filter(Boolean).join(" "));
+    const validYear = expected.firstYear === null && expected.lastYear === null
+      ? original.year === null : /^\d{4}$/u.test(original.year ?? "") &&
+        expected.firstYear !== null && expected.lastYear !== null && year >= expected.firstYear && year <= expected.lastYear;
+    const validIdentity = anchoredOffer
+      ? original.condition === "Nuevo" && !original.serialNumber && !original.horometer &&
+        containsEditorialBrandModel(original.title ?? "", original.brand, original.model) &&
+        containsEditorialBrandModel(original.shortDescription ?? "", original.brand, original.model)
+      : original.condition === "Segunda mano" &&
+        comparableIdentifier(original.title ?? "") === comparableIdentifier(`${original.brand} ${original.model}`);
+    const generalFamily = editorialFamilyFromSourceGeneral(original.longDescription);
+    const sourceFamily = generalFamily ?? (expected.familyFromSourcePath ? editorialFamilyOf(new URL(original.url).pathname) : null);
+    if (!validYear || !validIdentity ||
+      !containsEditorialBrandModel(new URL(original.url).pathname, original.brand, original.model) ||
+      sourceFamily !== expected.family ||
+      Object.keys(original.specs).length !== Object.keys(expected.sourceAnchors).length ||
+      Object.entries(expected.sourceAnchors).some(([key, value]) =>
+        typeof original.specs?.[key] !== "string" || fold(String(original.specs[key])) !== fold(value)) ||
+      expected.corroboratingText && !expected.corroboratingText.test(fold(original.longDescription ?? "")) ||
+      expected.conflictingEvidence.test(sourceText)) return specs;
+    const result = { ...specs };
+    for (const fact of claim.facts) {
+      if (Object.keys(specs).some((key) => comparableIdentifier(key) === comparableIdentifier(fact.field) ||
+        expected.conflictingEvidence.test(fold(key)))) return specs;
+      result[fact.field] = fact.value;
+    }
+    observeDocumentedTechnicalAddition(original, specs, result, claim.url,
+      "src/preparation/technical/documented-technical-evidence.ts", observe);
+    return result;
+  }
   const source = resolveEditorialSource(original);
   const generalFamily = editorialFamilyFromSourceGeneral(original.longDescription);
   const shortFamily = editorialFamilyOf(original.shortDescription ?? "");
@@ -242,7 +277,12 @@ export const recoverReviewedModelTechnicalSpecs = (
         if (facts.lengthM === null || expected.lengthM === null || Math.abs(facts.lengthM - expected.lengthM) > 0.005 ||
           widths.length === 0 || widths.some((value) => value === null || !expected.widthsM.includes(value))) return specs;
       }
-    } else if (!original.country || fold(original.country) !== fold(expected.marketCountry) ||
+    } else if (("invariantUsedLoadCenter" in expected && expected.invariantUsedLoadCenter === true
+      ? original.condition !== "Segunda mano" || original.country !== null && fold(original.country) !== fold(expected.marketCountry) ||
+        comparableIdentifier(original.title ?? "") !== comparableIdentifier(`${original.brand} ${original.model}`) ||
+        !containsEditorialBrandModel(new URL(original.url).pathname, original.brand, original.model) ||
+        Object.keys(original.specs).some((key) => !/^(?:altura de trabajo|capacidad|motor)$/u.test(fold(key)))
+      : !original.country || fold(original.country) !== fold(expected.marketCountry)) ||
       !original.year || !/^\d{4}$/u.test(original.year) || Number(original.year) < expected.firstYear ||
       expected.lastYear !== undefined && Number(original.year) > expected.lastYear ||
       expected.lengthM !== undefined && facts.lengthM !== expected.lengthM ||
@@ -358,4 +398,14 @@ export const recoverReviewedModelTechnicalSpecs = (
   observeDocumentedTechnicalAddition(original, specs, result, claim.url,
     "src/preparation/technical/documented-technical-evidence.ts", observe);
   return result;
+};
+
+export const reviewedModelEditorialSpecs = (
+  original: ProductRecord, provenance: ProductTechnicalProvenance
+): SpecsMap => {
+  if (!original.brand || !original.model || provenance.originalRecordSha256 !== originalRecordFingerprint(original)) return {};
+  return Object.fromEntries(provenance.entries.flatMap((entry) =>
+    entry.scope === "model-document" && entry.document.brand === original.brand && entry.document.model === original.model &&
+    matchesTechnicalDocumentVerification(entry.document, entry.field, entry.value, entry.verification) ?
+      [[entry.field, entry.value]] : []));
 };

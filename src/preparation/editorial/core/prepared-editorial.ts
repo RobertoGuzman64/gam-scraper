@@ -1,4 +1,4 @@
-import type { ProductRecord } from "../../../contracts/catalog.js";
+import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 import type { SourceEditorialEvidence } from "../claims/source-editorial-evidence.js";
 import { hasGamEditorialSourceIdentityConflict } from "../../gam/identity/evidence/gam-crossed-editorial-identity.js";
 import { resolvePreparedEditorialTitle } from "../writing/prepared-editorial-title.js";
@@ -16,9 +16,10 @@ export const resolvePreparedEditorial = (
   record: ProductRecord,
   sourceUnitRecord: ProductRecord,
   sourceEditorial: SourceEditorialEvidence,
-  originalSource: ProductRecord = sourceUnitRecord
+  originalSource: ProductRecord = sourceUnitRecord,
+  reviewedModelSpecs?: SpecsMap
 ) => {
-  const { descriptions, heightConflict, verifiedTitle, sourceModelConflict, sourceMotorConflict } = resolvePreparedEditorialSource(record, sourceEditorial, sourceUnitRecord, originalSource);
+  const { descriptions, heightConflict, verifiedTitle, sourceModelConflict, sourceMotorConflict } = resolvePreparedEditorialSource(record, sourceEditorial, sourceUnitRecord, originalSource, reviewedModelSpecs);
   const matchingOriginal = sameEditorialOriginalIdentity(originalSource, sourceUnitRecord) &&
     originalSource.specs?.["Capacidad de carga (kg)"] === sourceUnitRecord.specs?.["Capacidad de carga (kg)"] &&
     originalSource.shortDescription !== sourceUnitRecord.shortDescription;

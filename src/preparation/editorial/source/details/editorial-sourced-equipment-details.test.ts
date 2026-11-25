@@ -91,7 +91,7 @@ test("potencia y cotas técnicas mantienen unidades y magnitudes específicas de
       family: "movimiento-tierra-dumper",
       specs: { "Altura total": "2245 mm", "Tracción": "4×4 hidrostatico", Motor: "Diésel" },
       general: "La ficha técnica de dúmper diésel MARCA MODELO indica peso declarado de 1.800 kg.",
-      matches: [/altura total de 2,245 m/u, /tracción declarada 4×4 hidrostatico/u]
+      matches: [/altura total declarada de 2,245 m/u, /tracción declarada 4×4 hidrostática/u]
     }
   ] as const;
   for (const item of cases) {
@@ -753,4 +753,189 @@ test("reconstruye una general de transpaleta con otro modelo sin transferir sus 
   assert.equal(compose(inconsistent, general), null);
   const wrongUrl = { ...source, url: source.url.replace("modelo10", "modelo20") };
   assert.equal(compose(wrongUrl, general), null);
+});
+
+test("aprovecha capacidad, altura total y tracción corroboradas del dúmper únicamente en la descripción general", () => {
+  const source = original("movimiento-tierra-dumper", {
+    Peso: "1800 kg", Motor: "Diésel", "Capacidad carga": "2500 kg", "Altura total": "2245 mm", "Tracción": "4×4 hidrostatico"
+  });
+  const expected = ["capacidad de carga declarada de 2.500 kg", "altura total declarada de 2,245 m", "tracción declarada 4×4 hidrostática"];
+  assert.deepEqual(resolveEquipmentConfigurationDetails(source, source, "dumper"), expected);
+  const output = resolveReusableEditorial(source);
+  for (const detail of expected) assert.ok(output.general?.includes(detail));
+  assert.doesNotMatch(output.short ?? "", /tracción|altura total/u);
+  assert.deepEqual(resolveEquipmentConfigurationDetails(source, { ...source, specs: { ...source.specs,
+    "Capacidad carga": "3000 kg", "Altura total": "3 m", "Tracción": "4×2" } }, "dumper"), []);
+  assert.deepEqual(resolveEquipmentConfigurationDetails(source, { ...source, reference: "OTRA" }, "dumper"), []);
+  const contradictory = { ...source, specs: { ...source.specs, "Capacidad de carga": "3000 kg", Altura: "3 m", "Tracción 4x4": false } };
+  assert.deepEqual(resolveEquipmentConfigurationDetails(contradictory, contradictory, "dumper"), []);
+  const alreadyMentioned = { ...source, longDescription: "Capacidad de carga 2500 kg. Altura total 2245 mm. Tracción 4×4." };
+  assert.deepEqual(resolveEquipmentConfigurationDetails(alreadyMentioned, alreadyMentioned, "dumper"), []);
+});
+
+test("las configuraciones de batería de catálogo conservan las alternativas y no acreditan su instalación", () => {
+  const general = "La ficha técnica de carretilla elevadora eléctrica MARCA MODELO10 indica capacidad de carga de 2.500 kg.";
+  for (const base of [controlledGamForklift(), controlledMercaelevaForklift()]) {
+    const source: ProductRecord = { ...base, condition: "Nuevo", title: "Carretilla elevadora eléctrica MARCA MODELO10",
+      longDescription: "La carretilla MARCA MODELO10 utiliza accionamiento eléctrico.",
+      specs: { ...base.specs, "Tipo de motor": "Eléctrico", "Capacidad de la batería": "48V / 420Ah(V/Ah)" } };
+    const prepared = { ...source, specs: { ...source.specs, "Capacidad de la batería": "48 V / 420 Ah" } };
+    const result = resolveSourcedCombinedBatteryGeneral(source, prepared, general);
+    assert.match(result ?? "", /48 V con 420 Ah\. La configuración suministrada debe confirmarse/u);
+    assert.equal(resolveSourcedCombinedBatteryGeneral(source, prepared, result), null);
+    const alternatives = { ...source, specs: { ...source.specs, "Capacidad de la batería": "24V / 210-375Ah | Li-ion 24V / 200-300Ah(V/Ah)" } };
+    assert.match(resolveSourcedCombinedBatteryGeneral(alternatives, alternatives, general) ?? "", /dos alternativas de batería a 24 V: entre 210 y 375 Ah y entre 200 y 300 Ah en ion-litio/u);
+    for (const candidate of [{ ...prepared, reference: "OTRA" }, { ...prepared, model: "OTRO" },
+      { ...prepared, specs: { ...prepared.specs, "Capacidad de la batería": "48 V / 450 Ah" } },
+      { ...prepared, specs: { ...prepared.specs, "Voltaje batería (V)": "80 V" } },
+      { ...prepared, longDescription: "Batería de 80 V." }, { ...prepared, longDescription: "Se entrega sin batería." },
+      { ...prepared, longDescription: "Batería opcional." }]) {
+      assert.equal(resolveSourcedCombinedBatteryGeneral(source, candidate, general), null);
+    }
+    for (const raw of ["24V / 375-210Ah | Li-ion 24V / 200Ah(V/Ah)", "24V / 210-375Ah | Li-ion 48V / 200Ah(V/Ah)", "24V / 210-375Ah | 24V / 200Ah(V/Ah)"]) {
+      const invalid = { ...source, specs: { ...source.specs, "Capacidad de la batería": raw } };
+      assert.equal(resolveSourcedCombinedBatteryGeneral(invalid, invalid, general), null);
+    }
+    const crossed = { ...source, longDescription: "La carretilla MARCA MODELO20 utiliza accionamiento eléctrico." };
+    assert.equal(resolveSourcedCombinedBatteryGeneral(crossed, crossed, general), null);
+    const used: ProductRecord = { ...source, condition: "Segunda mano" };
+    assert.equal(resolveSourcedCombinedBatteryGeneral(used, used, general), null);
+  }
+});
+
+test("la elevación libre numérica y el radio de giro aprovechan las cotas del contrato en milímetros", () => {
+  for (const base of [controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift()]) {
+    const source = { ...base, specs: { ...base.specs, "Altura de elevación (mm)": "4500 mm",
+      "Altura mástil replegado": "2200 mm", "Elevación libre": "1600", "Radio de giro": "1800" } };
+    const result = resolveHandlingOperationalDetails(source, source, "carretilla-elevadora");
+    assert.ok(result.includes("elevación libre declarada de 1.600 mm"));
+    assert.ok(result.includes("radio de giro declarado de 1.800 mm"));
+    assert.equal(resolveReusableEditorial(source).short, resolveReusableEditorial({ ...base, specs: { ...base.specs, "Altura de elevación (mm)": "4500 mm" } }).short);
+    for (const specs of [{ "Elevación libre": "2300" }, { "Elevación libre disponible": "No" }, { "Elevación libre (mm)": "1500 mm" }]) {
+      const variant = { ...source, specs: { ...source.specs, ...specs } };
+      assert.doesNotMatch(resolveHandlingOperationalDetails(variant, variant, "carretilla-elevadora").join(" "), /elevación libre/u);
+    }
+    const competing = { ...source, specs: { ...source.specs, "Radio de giro exterior": "1900 mm" } };
+    assert.doesNotMatch(resolveHandlingOperationalDetails(competing, competing, "carretilla-elevadora").join(" "), /radio de giro/u);
+    const described = { ...source, longDescription: "Radio de giro de 2 m. Elevación libre opcional." };
+    assert.doesNotMatch(resolveHandlingOperationalDetails(described, described, "carretilla-elevadora").join(" "), /radio de giro|elevación libre/u);
+    const altered = { ...source, specs: { ...source.specs, "Radio de giro": "2000", "Elevación libre": "1500" } };
+    assert.doesNotMatch(resolveHandlingOperationalDetails(source, altered, "carretilla-elevadora").join(" "), /radio de giro|elevación libre/u);
+    assert.deepEqual(resolveHandlingOperationalDetails(source, { ...source, reference: "OTRA" }, "carretilla-elevadora"), []);
+  }
+});
+
+test("el mástil vertical conserva el alcance horizontal declarado cuando no se confunde con una extensión", () => {
+  const specs = { "Altura trabajo": "10 m", "Longitud plataforma": "1 m", "Alcance horizontal": "3,2 m", "Capacidad carga": "200 kg", Motor: "Eléctrico" };
+  const sources = [original("elevacion-mastil", specs),
+    { ...controlledGomarizPlatform(), title: "Equipo de mástil vertical eléctrico MARCA MODELO10", specs: { ...specs, "Altura de trabajo": "10 m", Capacidad: "200 kg" } }];
+  for (const source of sources) {
+    const details = (record: ProductRecord, prepared: ProductRecord = record) =>
+      resolvePlatformOperationalDetails(record, prepared, "plataforma-mastil");
+    assert.deepEqual(details(source), ["alcance horizontal declarado de 3,2 m"]);
+    const baselineSpecs: Record<string, SpecsMap[string]> = { ...source.specs };
+    delete baselineSpecs["Alcance horizontal"];
+    const baseline = { ...source, specs: baselineSpecs };
+    assert.equal(resolveReusableEditorial(source).short, resolveReusableEditorial(baseline).short);
+    assert.match(resolveReusableEditorial(source).general ?? "", /alcance horizontal declarado de 3,2 m/u);
+    for (const value of ["0 m", "0,5 m", "1 m", "11 m", "3,2 kg"]) {
+      assert.deepEqual(details({ ...source, specs: { ...source.specs, "Alcance horizontal": value } }), []);
+    }
+    assert.deepEqual(details({ ...source, specs: { ...source.specs, "Extensión de plataforma": "0,5 m" } }), []);
+    assert.deepEqual(details({ ...source, specs: { ...source.specs, "Alcance lateral": "2 m" } }), []);
+    assert.deepEqual(details(source, { ...source, specs: { ...source.specs, "Alcance horizontal": "2 m" } }), []);
+    assert.deepEqual(details(source, { ...source, reference: "OTRA" }), []);
+    assert.deepEqual(details({ ...source, longDescription: "Alcance pendiente de confirmación." }), []);
+  }
+});
+
+test("los grupos electrógenos conservan las clasificaciones de emisiones explícitas sin acreditar homologación", () => {
+  const specs = { Potencia: "35 kVA", Motor: "Diésel", Stage: "v flex" };
+  const sources = [original("energia-grupo-electrogeno", specs),
+    { ...controlledGomarizPlatform(), title: "Grupo electrógeno diésel MARCA MODELO10", specs }];
+  for (const source of sources) {
+    const details = (record: ProductRecord, prepared: ProductRecord = record) =>
+      resolveEquipmentConfigurationDetails(record, prepared, "grupo-electrogeno");
+    assert.deepEqual(details(source), ["clasificación de emisiones declarada Stage V Flex"]);
+    const baselineSpecs: Record<string, SpecsMap[string]> = { ...source.specs };
+    delete baselineSpecs.Stage;
+    const baseline = { ...source, specs: baselineSpecs };
+    assert.equal(resolveReusableEditorial(source).short, resolveReusableEditorial(baseline).short);
+    assert.match(resolveReusableEditorial(source).general ?? "", /clasificación de emisiones declarada Stage V Flex/u);
+    assert.deepEqual(details({ ...source, specs: { ...source.specs, Stage: "iiia" } }), ["clasificación de emisiones declarada Stage IIIA"]);
+    for (const value of ["2", "2a", "no emisionado", "IIIA o V", "IIA", "III Flex", "V / IV"]) {
+      assert.deepEqual(details({ ...source, specs: { ...source.specs, Stage: value } }), []);
+    }
+    assert.deepEqual(details({ ...source, specs: { ...source.specs, "Normativa de emisiones": "IV" } }), []);
+    assert.deepEqual(details(source, { ...source, specs: { ...source.specs, Stage: "v" } }), []);
+    assert.deepEqual(details(source, { ...source, reference: "OTRA" }), []);
+    assert.deepEqual(details({ ...source, longDescription: "Homologación pendiente de confirmación." }), []);
+  }
+});
+
+
+test("la geometría unidimensional de horquillas utiliza el largo del contrato de normalización", () => {
+  for (const base of [controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift()]) {
+    const source = { ...base, specs: { ...base.specs, "Dimensiones Horquillas": "1180 mm" } };
+    const details = (original: ProductRecord, prepared: ProductRecord = original): readonly string[] =>
+      resolveHandlingOperationalDetails(original, prepared, "carretilla-elevadora");
+    assert.deepEqual(details(source), ["longitud de horquillas declarada de 1.180 mm"]);
+    const output = resolveReusableEditorial(source);
+    assert.match(output.general ?? "", /longitud de horquillas declarada de 1.180 mm/u);
+    assert.equal(output.short, resolveReusableEditorial(base).short);
+    for (const raw of ["1180", "1180 kg", "200 mm", "5000 mm", "1180 / 1200 mm", "1180 x 1500 x 40 mm"]) {
+      const invalid = { ...source, specs: { ...source.specs, "Dimensiones Horquillas": raw } };
+      assert.deepEqual(details(invalid), []);
+    }
+    const alias = { ...source, specs: { ...source.specs, "Dimensiones horquillas (mm)": "1200 mm" } };
+    assert.deepEqual(details(alias), []);
+    const split = { ...source, specs: { ...source.specs, "Largo horquillas": "1200 mm" } };
+    assert.deepEqual(details(split), []);
+    const described = { ...source, longDescription: "Horquillas opcionales, sin longitud confirmada." };
+    assert.deepEqual(details(described), []);
+    assert.deepEqual(details(source, { ...source, specs: { ...source.specs, "Dimensiones Horquillas": "1200 mm" } }), []);
+    assert.deepEqual(details(source, { ...source, reference: "OTRA" }), []);
+  }
+});
+
+test("la descripción de plataformas conserva la química declarada solo si la identidad original es inequívoca", () => {
+  const general = "La ficha técnica de plataforma de tijera eléctrica MARCA MODELO10 indica altura de trabajo de 10 m.";
+  for (const base of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const source = { ...base, specs: { ...base.specs, "Tipo de batería": "Batería de plomo" } };
+    const details = (original: ProductRecord, prepared: ProductRecord = original): string | null =>
+      resolveSourcedCombinedBatteryGeneral(original, prepared, general);
+    const output = details(source);
+    assert.equal(output, `${general} La tabla técnica de esta referencia declara batería de plomo.`);
+    assert.equal(resolveSourcedCombinedBatteryGeneral(source, source, output), null);
+    const lithium = { ...source, specs: { ...base.specs, "Tipo de batería": "Batería de litio" } };
+    assert.match(details(lithium) ?? "", /batería de litio/u);
+    assert.equal(details(source, lithium), null);
+    assert.equal(details({ ...source, specs: { ...source.specs, "Tipo de Batería": "Li-ion" } }), null);
+    for (const text of ["Batería de litio.", "Batería de plomo opcional.", "Equipo sin baterías.", "Batería no incluida."]) {
+      assert.equal(details({ ...source, longDescription: text }), null);
+    }
+    assert.equal(details({ ...source, title: "Plataforma de tijera eléctrica MARCA OTRO10" }, source), null);
+    assert.equal(details(source, { ...source, reference: "OTRA" }), null);
+    assert.equal(details({ ...source, specs: { ...source.specs, Modelo: "OTRO" } }), null);
+  }
+});
+
+test("el radio de giro textual concordante recupera la cota de la tabla sin propagar alternativas ni discrepancias", () => {
+  for (const base of [controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift()]) {
+    const source = { ...base, longDescription: "La carretilla MARCA MODELO10 tiene un radio de giro reducido de 1.800 mm.",
+      specs: { ...base.specs, "Radio de giro": "1800" } };
+    const details = (record: ProductRecord, prepared: ProductRecord = record) =>
+      resolveHandlingOperationalDetails(record, prepared, "carretilla-elevadora");
+    assert.ok(details(source).includes("radio de giro declarado de 1.800 mm"));
+    for (const longDescription of ["La carretilla MARCA MODELO10 tiene un radio de giro de 1900 mm.",
+      "La carretilla MARCA MODELO10 tiene un radio de giro de 1800 mm o 2000 mm.",
+      "La carretilla MARCA MODELO10 tiene un radio de giro de 1800 mm opcional.",
+      "La carretilla MARCA MODELO10 tiene un radio de giro de 1800 mm. Radio de giro de 2000 mm.",
+      "La carretilla MARCA MODELO20 tiene un radio de giro de 1800 mm.",
+      "La carretilla MARCA MODELO10 tiene un radio de giro de 1800 mm. Radio de giro sin confirmar."]) {
+      assert.doesNotMatch(details({ ...source, longDescription }).join(" "), /radio de giro/u);
+    }
+    assert.doesNotMatch(details(source, { ...source, specs: { ...source.specs, "Radio de giro": "1900" } }).join(" "), /radio de giro/u);
+    assert.doesNotMatch(details(source, { ...source, reference: "OTRA" }).join(" "), /radio de giro/u);
+  }
 });

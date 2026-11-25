@@ -1,4 +1,5 @@
-import type { ProductRecord } from "../../../contracts/catalog.js";
+import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
+import { resolveDocumentedModelGeneral } from "../measurements/sourced/editorial-sourced-technical-context.js";
 import type { SourceEditorialEvidence } from "../claims/source-editorial-evidence.js";
 import { verifiedMercaelevaMbCapacityProposal } from "../../../catalog/interventions/verified-mercaeleva-capacity.js";
 import { distinguishDescriptions } from "../../../catalog/normalization/descriptions.js";
@@ -35,7 +36,8 @@ export const resolvePreparedEditorialSource = (
   record: ProductRecord,
   evidence: SourceEditorialEvidence,
   sourceUnitRecord: ProductRecord = record,
-  originalSource: ProductRecord = sourceUnitRecord
+  originalSource: ProductRecord = sourceUnitRecord,
+  reviewedModelSpecs?: SpecsMap
 ) => {
   const heightConflict = hasEditorialSourceWorkHeightConflict(record, hasCorroboratedEditorialDistinctWorkHeights(record));
   const editorialRecord = withoutContradictoryFamilyGeneral(record);
@@ -137,9 +139,17 @@ export const resolvePreparedEditorialSource = (
   const completeGeneral = variantGeneral ?? finalGeneral;
   const batteryGeneral = verified && !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict && !modelDimensions &&
     !sourceMotorConflict && authenticatedOrigin ? resolveSourcedCombinedBatteryGeneral(originalSource, editorialRecord, completeGeneral) : null;
+  const documentedGeneral = verified && !signedGeneral && !crossedIdentity && !variantConflict && !sourceModelConflict &&
+    !sourceMotorConflict && !modelDimensions && authenticatedOrigin ?
+    resolveDocumentedModelGeneral(originalSource, editorialRecord, batteryGeneral ?? completeGeneral, reviewedModelSpecs) : null;
+  const preservedDocumentedGeneral = batteryGeneral && !documentedGeneral ?
+    resolveDocumentedModelGeneral(originalSource, editorialRecord, completeGeneral, reviewedModelSpecs) : null;
+  const combinedGeneral = preservedDocumentedGeneral ?
+    resolveSourcedCombinedBatteryGeneral(originalSource, editorialRecord, preservedDocumentedGeneral) ?? preservedDocumentedGeneral :
+    documentedGeneral ?? batteryGeneral ?? completeGeneral;
   return {
     verifiedTitle: knowledge?.title ?? null,
-    descriptions: distinguishDescriptions(reconciledShort ?? enrichedShort ?? finalShort, batteryGeneral ?? completeGeneral),
+    descriptions: distinguishDescriptions(reconciledShort ?? enrichedShort ?? finalShort, combinedGeneral),
     sourceModelConflict,
     sourceMotorConflict,
     heightConflict
