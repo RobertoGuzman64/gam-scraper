@@ -15,8 +15,11 @@ const missingAccreditedSource = (message: string): boolean =>
   message.startsWith("No se conserva el original acreditado de ") ||
   message.startsWith("Falta el original canónico para ") ||
   message.startsWith("Falta original portátil: ") ||
+  message.startsWith("Falta almacén portátil: ") ||
+  message.startsWith("Falta registro parcial de ") ||
+  message.startsWith("No existe publicación acreditada de ") ||
   message.startsWith("No existe original canónico para comparar ") ||
-  (/ENOENT/u.test(message) && /[\\/]original[\\/]|[\\/]\.history[\\/]/u.test(message));
+  (/ENOENT/u.test(message) && /[\\/]original[\\/]|[\\/]\.history[\\/]|[\\/]manain[\\/]records(?:[\\/]|['"]|$)/u.test(message));
 
 export const collectAuditProviderResults = async <T>(
   sources: readonly string[], inspect: (source: string) => Promise<{ readonly providerId: string; readonly value: T }>,

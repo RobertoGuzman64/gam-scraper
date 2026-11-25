@@ -128,6 +128,7 @@
     "manain:muestra": "node scripts/tooling.mjs manain:muestra",
     "medir:ejecucion": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/operations/measure-execution.ps1",
     "migrar:catalogos": "node scripts/tooling.mjs migrar:catalogos",
+    "normalizar:auditar": "node scripts/tooling.mjs normalizar:auditar",
     "normalizar:gam": "node scripts/tooling.mjs normalizar:gam",
     "normalizar:gam:base": "node scripts/tooling.mjs normalizar:gam:base",
     "preparar": "node scripts/tooling.mjs preparar",

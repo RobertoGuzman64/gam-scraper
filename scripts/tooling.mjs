@@ -11,7 +11,8 @@ const definitions = {
   "contrato:comercial": { entry: "GUARDS/tests-commercial-contract-guard.mjs", usage: "contrato:comercial", description: "Verificar el contrato comercial v2 sin compilar ni generar catálogos" },
   "exportar:comercial": { entry: "cli/commands/catalog/commercial-export.js", usage: "exportar:comercial [-- --entorno develop|production] [--simular] [--salida <directorio-nuevo>]", description: "Entregar ZIP comercial en Escritorio y actualizar informe interno, o JSON mediante --salida, sin publicar" },
   "auditar:comercial": { entry: "cli/commands/catalog/commercial-audit.js", usage: "auditar:comercial [-- --detalle|--acreditacion|--json|--verificar=RUTA [--informe=ZIP]]", description: "Auditar sin escrituras las propuestas de categoría, atributos y cobertura comercial de publicaciones acreditadas" },
-  huecos: { entry: "cli/commands/catalog/catalog-content-gaps.js", usage: "huecos [-- --finales | --tecnicas | --catalogo ruta/-catalog.json | --publicacion ruta/-publishable.json] [--agrupar categoria|marca|modelo] [--min-grupo 8] [--min-ausentes 3] [--top 20] [--detalle] [--json] [--comparar --titulos]", description: "Consultar huecos canónicos o calidad editorial de publicaciones acreditadas; solo lectura" },
+  huecos: { entry: "cli/commands/catalog/catalog-content-gaps.js", usage: "huecos [-- --finales | --tecnicas | --catalogo ruta/-catalog.json | --publicacion ruta/-publishable.json] [--agrupar categoria|marca|modelo] [--min-grupo 8] [--min-ausentes 3] [--top 20] [--detalle] [--json] [--comparar --titulos]", description: "Diagnóstico de desarrollo bajo demanda: huecos canónicos o calidad editorial de publicaciones acreditadas; solo lectura" },
+  "normalizar:auditar": { entry: "cli/commands/catalog/normalization-audit.js", usage: "normalizar:auditar [-- --top 20] [--detalle] | [-- --json]", description: "Diagnóstico de desarrollo bajo demanda: normalización técnica de originales, preparación actual y publicaciones acreditadas; solo lectura" },
   estado: { entry: "cli/commands/campaign/campaign-status.js", usage: "estado [-- --detalle]", description: "Consultar sin escrituras el estado de campaña, entrega, referencia y próximos comandos" },
   extraer: { entry: "cli/commands/campaign/campaign-extract.js", usage: "extraer [-- --nueva]", description: "Extraer los cuatro proveedores y preparar/revisar el lote aislado" },
   revisar: { entry: "cli/commands/campaign/campaign-review.js", usage: "revisar", description: "Revisar Ready y Review; puede crear preparaciones que todavía falten" },
@@ -29,7 +30,7 @@ const definitions = {
   "intervenir:preparar": { entry: "cli/commands/interventions/prepare-intervention.js", usage: "intervenir:preparar -- gam --derivado <catalog-derived.json> --origen <original-catalog.json> [--simular]", description: "Preparar manualmente un catálogo intervenido", requiresProvider: true },
   "intervenir:validar": { entry: "cli/commands/interventions/validate-intervention.js", usage: "intervenir:validar -- gam --derivado <catalog-derived.json> --origen <original-catalog.json> --preparacion <preparation.json>", description: "Validar preparación intervenida y su procedencia", requiresProvider: true },
   "catalogo:acreditar": { entry: "cli/commands/catalog/accredit-individual.js", usage: "catalogo:acreditar [-- --proveedor gam|gomariz|mercaeleva] [--simular]", description: "Comando opcional: acreditar automáticamente exclusiones históricas idénticas; el FINISH ya lo hace" },
-  "catalogo:publicar": { entry: "cli/commands/catalog/publish-individual.js", usage: "catalogo:publicar [-- --proveedor gam|gomariz|mercaeleva] [--simular] [--detalle]", description: "Paso 2/2: FINISH, preflight conjunto, entrega interna, activación verificada, diario de recuperación, retención y auditor" },
+  "catalogo:publicar": { entry: "cli/commands/catalog/publish-individual.js", usage: "catalogo:publicar [-- --proveedor gam|gomariz|mercaeleva] [--simular] [--detalle]", description: "Paso 2/2: FINISH, preflight conjunto, entrega interna, activación verificada, diario de recuperación, retención e informe interno" },
   "catalogo:preparar": { entry: "cli/commands/catalog/prepare-individual.js", usage: "catalogo:preparar [-- --proveedor gam|gomariz|mercaeleva] [--simular] [--detalle]", description: "Paso 1/2: preparar offline los tres proveedores individuales desde originales portátiles, con diagnóstico y reutilización segura" },
   preparar: { entry: "cli/commands/catalog/prepare.js", usage: "preparar -- gam --origen <catalog.json> | manain --origen <partial-all.csv> --censo <censo.json> [--simular]", description: "Preparar un catálogo completo o un registro parcial verificado de Manain", requiresProvider: true },
   validar: { entry: "cli/index.js", prefix: ["validate"], usage: "validar -- gam [--etapa catalogo --origen <catalog.json>]", description: "Validar catálogo o preparación", requiresProvider: true },
@@ -89,7 +90,8 @@ const printHelp = (requested) => {
     console.log("\nEJEMPLOS\n");
     console.log("  npm run iniciar  (crea carpetas de trabajo si faltan)");
     console.log("  npm run estado  (consulta sin escrituras)");
-    console.log("  npm run huecos -- --finales --top 50  (publicaciones finales de catalogs/, sin rutas manuales)");
+    console.log("  npm run huecos -- --finales --top 50  (diagnóstico de desarrollo independiente sobre publicaciones finales de catalogs/)");
+    console.log("  npm run normalizar:auditar -- --top 20 --detalle  (diagnóstico de desarrollo independiente)");
     console.log("  npm run extraer");
     console.log("  npm run comparar");
     console.log("  npm run referencia  (consulta de la referencia legada)");
@@ -121,7 +123,7 @@ const printHelp = (requested) => {
     console.log("  npm run catalogo:preparar  (paso 1/2, original portátil y sin rutas manuales)");
     console.log("  npm run catalogo:preparar -- --proveedor gam --simular  (solo lectura)");
     console.log("  npm run catalogo:publicar -- --simular  (preflight sin escrituras)");
-    console.log("  npm run catalogo:publicar  (paso 2/2 FINISH: simula, genera, verifica, activa, archiva y audita)");
+    console.log("  npm run catalogo:publicar  (paso 2/2 FINISH: simula, genera, verifica, activa, retiene y actualiza el informe interno)");
     console.log("  npm run catalogo:publicar -- --proveedor gam --simular  (consulta sin escrituras)");
     console.log("  npm run preparar -- gam --origen storage/scraped/gam/archivo-catalog.json --simular");
     console.log("  npm run validar -- gam --etapa catalogo --origen archivo-catalog.json");

@@ -29,15 +29,13 @@ test("exportación humana es copia exacta sin escrituras en el expediente", asyn
   });
 });
 
-test("FINISH persiste etapas, reanuda el informe y no repite auditoría ni retención", async () => {
+test("FINISH persiste etapas, reanuda el informe y no repite retención", async () => {
   await withWorkspace(async (root, desktop) => {
     let retained = 0;
-    let audited = 0;
     const args = ["--proveedor", "gam"];
     const hooks = {
       desktopDirectory: desktop,
-      retention: () => { retained += 1; },
-      auditor: async () => { audited += 1; }
+      retention: () => { retained += 1; }
     };
     await assert.rejects(runPublishIndividual(args, root, {
       ...hooks, retention: () => { retained += 1; throw new Error("retención interrumpida"); }
@@ -45,28 +43,33 @@ test("FINISH persiste etapas, reanuda el informe y no repite auditoría ni reten
     assert.equal((await listIndividualFinishJournals(root))[0]?.journal.status, "complete");
     assert.equal((await listIndividualFinishJournals(root))[0]?.journal.closure, undefined);
     await assert.rejects(runPublishIndividual(args, root, {
-      ...hooks, auditor: async () => { audited += 1; throw new Error("auditor interrumpido"); }
-    }), /AUDITOR PENDIENTE.*auditor interrumpido/s);
-    assert.equal((await listIndividualFinishJournals(root))[0]?.journal.closure?.phase, "retained");
-    await assert.rejects(runPublishIndividual(args, root, {
       ...hooks, reporter: async () => { throw new Error("cierre interrumpido"); }
     }), /INFORME PENDIENTE.*cierre interrumpido/s);
     assert.equal(retained, 2);
-    assert.equal(audited, 2);
-    assert.equal((await listIndividualFinishJournals(root))[0]?.journal.closure?.phase, "audited");
+    assert.equal((await listIndividualFinishJournals(root))[0]?.journal.closure?.phase, "retained");
+    const [pending] = await listIndividualFinishJournals(root);
+    assert.ok(pending);
     const result = await runPublishIndividual(args, root, hooks);
     assert.ok(result);
     const [closed] = await listIndividualFinishJournals(root);
     assert.equal(closed?.journal.closure?.phase, "reported");
     assert.equal(closed?.journal.closure?.report?.kind, "internal");
+    await writeFile(pending.path, JSON.stringify({ ...pending.journal, closure: { phase: "audited", report: null } }));
+    const legacyBefore = await readFile(pending.path, "utf8");
+    await runPublishIndividual(["--estado"], root);
+    assert.equal(await readFile(pending.path, "utf8"), legacyBefore);
+    const legacyRecovered = await completeIndividualFinishClosure(root, result, {
+      retention: async () => { throw new Error("retención repetida"); },
+      reporter: () => retainPublishedWorkReport(root, result)
+    });
+    assert.deepEqual(legacyRecovered.executed, ["reported"]);
+    assert.deepEqual((await listIndividualFinishJournals(root))[0]?.journal, closed.journal);
     assert.equal(retained, 2);
-    assert.equal(audited, 2);
     const count = (await readdir(desktop)).length;
     assert.equal(count, 0);
     await runPublishIndividual(args, root, {
       ...hooks,
       retention: () => { throw new Error("retención repetida"); },
-      auditor: async () => { throw new Error("auditor repetido"); },
       reporter: async () => { throw new Error("informe repetido"); }
     });
     assert.equal((await readdir(desktop)).length, count);
@@ -76,11 +79,9 @@ test("FINISH persiste etapas, reanuda el informe y no repite auditoría ni reten
     await writeFile(file, "alterado");
     await assert.rejects(runPublishIndividual(args, root, hooks), /Informe FINISH alterado|Huella del artefacto/);
     assert.equal(retained, 2);
-    assert.equal(audited, 2);
     await writeFile(file, original);
     const actions = {
       retention: async () => { throw new Error("retención repetida"); },
-      auditor: async () => { throw new Error("auditoría repetida"); },
       reporter: async () => { throw new Error("informe repetido"); }
     };
     const legacyZip = join(desktop, "informe-anterior.zip");

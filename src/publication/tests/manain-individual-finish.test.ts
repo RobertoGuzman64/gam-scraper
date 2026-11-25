@@ -46,7 +46,7 @@ test("Manain: FINISH requiere acreditación expresa y conserva la procedencia pa
       return delivery;
     };
     const finish = await runPublishIndividual(["--proveedor", "manain"], root, {
-      desktopDirectory: desktop, retention: async () => {}, auditor: async () => {}, reporter
+      desktopDirectory: desktop, retention: async () => {}, reporter
     });
     assert.equal(finish?.mode, "complete");
     assert.equal(finish?.providers[0]?.status, "ACTIVADA Y VERIFICADA");

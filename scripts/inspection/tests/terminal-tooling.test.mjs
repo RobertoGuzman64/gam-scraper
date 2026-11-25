@@ -37,3 +37,15 @@ test("ayuda nativa del comando conserva UTF-8, stderr vacío y cierre", () => {
   assert.match(result.stdout, /calidad editorial de publicaciones acreditadas/);
   assert.equal(result.stdout.includes("\u001b"), false);
 });
+
+test("normalización se expone como diagnóstico independiente y no como paso de FINISH", () => {
+  const result = run("ayuda", "normalizar:auditar");
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /Diagnóstico de desarrollo bajo demanda/u);
+  assert.match(result.stdout, /--top 20/u);
+  assert.match(result.stdout, /--json/u);
+  assert.equal(result.stderr, "");
+  const finish = run("ayuda", "catalogo:publicar");
+  assert.equal(finish.status, 0, finish.stderr);
+  assert.doesNotMatch(finish.stdout, /normalizar:auditar|huecos/u);
+});

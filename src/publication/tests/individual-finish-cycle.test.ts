@@ -5,6 +5,9 @@ import { dirname, join } from "node:path";
 import test from "node:test";
 import { resolveAccreditedPublication, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
 import { publicationApprovalSha } from "../../infrastructure/filesystem/catalog/publication-identity.js";
+import { buildNormalizationAudit } from "../../infrastructure/filesystem/preparation/normalization-audit.js";
+import { formatNormalizationAudit } from "../../cli/reporting/normalization-audit.js";
+import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { publishIndividualCatalogs } from "../individual-finish.js";
 import { createIndividualFinishWorkspace, finishProviders, publishIndividualTestWorkspace } from "../../testing/builders/individual-finish-fixture.js";
 
@@ -31,6 +34,15 @@ test("ciclo completo: simular sin escrituras, 3 activaciones sin ZIP, SHA, y rep
     assert.ok(dry.providers.every((item) => item.activeSha256 === null));
     assert.deepEqual(await readdir(desktop), []);
     await assert.rejects(lstat(join(root, "storage", "publication")), { code: "ENOENT" });
+    const beforeAudit = await buildNormalizationAudit(root);
+    assert.equal(beforeAudit.complete, false);
+    assert.deepEqual(beforeAudit.provenance.population.processed, []);
+    assert.deepEqual(beforeAudit.provenance.population.unavailable, CAMPAIGN_PROVIDERS);
+    for (const providerId of finishProviders) {
+      assert.match(beforeAudit.auditCoverage.failures.find((failure) => failure.providerId === providerId)?.detail ?? "", /No existe publicación acreditada/u);
+    }
+    assert.deepEqual(await readdir(desktop), []);
+    await assert.rejects(lstat(join(root, "storage", "publication")), { code: "ENOENT" });
     const published = await publishIndividualTestWorkspace(root, desktop);
     assert.equal(published.mode, "complete");
     assert.deepEqual(published.providers.map((item) => item.status), Array(3).fill("ACTIVADA Y VERIFICADA"));
@@ -54,6 +66,20 @@ test("ciclo completo: simular sin escrituras, 3 activaciones sin ZIP, SHA, y rep
     const journal: { status: string; completed: readonly string[] } = JSON.parse(await readFile(join(root, "storage", "publication", "individual-finish", journals[0]!), "utf8"));
     assert.equal(journal.status, "complete");
     assert.deepEqual(journal.completed, finishProviders);
+    const audit = await buildNormalizationAudit(root);
+    assert.equal(audit.complete, false);
+    assert.deepEqual(audit.provenance.population.processed, finishProviders);
+    assert.deepEqual(audit.provenance.population.unavailable, CAMPAIGN_PROVIDERS.filter((provider) => !finishProviders.some((id) => id === provider)));
+    assert.equal(audit.auditCoverage.evaluated, finishProviders.length);
+    for (const provider of audit.providers) {
+      assert.ok(provider.publishedProducts);
+      assert.equal(provider.publicationSha256[0], audit.provenance.sources.find((item) => item.providerId === provider.providerId)?.publication.sha256);
+    }
+    const lines = formatNormalizationAudit(audit, { limit: 20, detailed: true }).join("\n");
+    assert.match(lines, /COBERTURA PARCIAL/u);
+    assert.match(lines, /Origen .*publicación/u);
+    assert.deepEqual(await readdir(desktop), zips);
+    assert.equal(await fileSha(source), sourceSha);
     const second = await publishIndividualTestWorkspace(root, desktop);
     assert.ok(second.providers.every((item) => item.status === "YA VIGENTE"));
     assert.deepEqual(await readdir(desktop), zips);

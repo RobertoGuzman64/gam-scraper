@@ -12,7 +12,6 @@ import { individualFinishClosurePhase, listIndividualFinishJournals } from "../.
 import { inspectIndividualFinishPreflight } from "../../../publication/finish-preflight.js";
 import type { IndividualFinishResult, IndividualFinishProgress } from "../../../publication/individual-finish.js";
 import type { IndividualCatalogProvider } from "../../../preparation/workflow/individual-context.js";
-import { runCatalogContentGaps } from "./catalog-content-gaps.js";
 import { retainPublishedWorkReport } from "../../reporting/published-work-archive.js";
 import { formatPublishedWorkTerminal } from "../../reporting/published-work.js";
 
@@ -27,10 +26,10 @@ export const publishIndividualHelp = `Uso:
 
 Paso 2/2: FINISH. Reutiliza automáticamente exclusiones históricas idénticas y acredita antes de publicar.
 Verifica la publicación interna acreditada antes de activar; activa proveedores individuales con diario de recuperación,
-comprueba integridad, ejecuta retención, auditor e informe de trabajo original → publicado. --simular no escribe ni activa.
+comprueba integridad, ejecuta retención e informe de trabajo original → publicado. --simular no escribe ni activa.
 Repetir el comando recupera un conjunto parcial sin sobrescribir entregas.
 No sustituye una campaña global de cuatro proveedores. --detalle muestra diferencias. FINISH no genera ZIP externos.
---estado consulta sin escritura el diario de activación, retención, auditoría e informe.`;
+--estado consulta sin escritura el diario de activación, retención e informe.`;
 
 export const consolidate = async (workspace: string): Promise<void> => {
   const progress = new LiveStatus();
@@ -101,7 +100,6 @@ export const runPublishIndividual = async (
   hooks: {
     readonly desktopDirectory?: string;
     readonly retention?: () => void | Promise<void>;
-    readonly auditor?: () => Promise<void>;
     readonly reporter?: typeof retainPublishedWorkReport;
   } = {}
 ): Promise<IndividualFinishResult | null> => {
@@ -118,8 +116,7 @@ export const runPublishIndividual = async (
       const phase = journal.status === "pending" ?
         journal.candidatesVerified ? "CANDIDATO VERIFICADO · ACTIVACIÓN PENDIENTE" : "CANDIDATO PENDIENTE" :
         individualFinishClosurePhase(journal) === "activated" ? "ACTIVADA · RETENCIÓN PENDIENTE" :
-        individualFinishClosurePhase(journal) === "retained" ? "RETENIDA · AUDITOR PENDIENTE" :
-        individualFinishClosurePhase(journal) === "audited" ? "AUDITADA · INFORME PENDIENTE" : "CIERRE COMPLETO";
+        individualFinishClosurePhase(journal) === "retained" ? "RETENIDA · INFORME PENDIENTE" : "CIERRE COMPLETO";
       printStatus(journal.status === "complete" && phase === "CIERRE COMPLETO" ? "PASS" : "WARN",
         `${phase} | ${journal.completed.length}/${journal.targets.length} activaciones | ${journal.targets.map((item) => item.providerId).join(", ")}`);
       printReportLine(`  Diario: ${path}`);
@@ -200,7 +197,6 @@ export const runPublishIndividual = async (
   };
   const closure = await completeIndividualFinishClosure(root, result, {
     retention: async () => { await closeStep("RETENCIÓN", async () => { await (hooks.retention ?? (() => consolidate(root)))(); }); },
-    auditor: async () => { await closeStep("AUDITORÍA", async () => { await (hooks.auditor ?? (() => runCatalogContentGaps(["--comparar", "--specs", "--top", "5"])))(); }); },
     reporter: async () => {
       const startedAt = Date.now();
       printStatus("RUN", "FINISH | INFORME | actualizando informe técnico interno");
@@ -212,12 +208,11 @@ export const runPublishIndividual = async (
     }
   });
   printStatus("PASS", closure.executed.includes("retained") ? "RETENCIÓN | COMPLETA" : "RETENCIÓN | CIERRE PREVIO CONSERVADO");
-  printStatus("PASS", closure.executed.includes("audited") ? "AUDITORÍA | COMPLETADA" : "AUDITORÍA | CIERRE PREVIO CONSERVADO");
   printCommandDeliverable(closure.executed.includes("reported") ? "INFORME TÉCNICO · versión interna verificada" : "INFORME TÉCNICO · RECIBO YA CERRADO", closure.reportFile);
   if (detailed) printReportLine(`  Diario de cierre: ${closure.journalPath}`);
   printCommandResult(result.providers.every((item) => item.status === "YA VIGENTE")
     ? "FINISH COMPLETO · YA VIGENTE, sin nuevas publicaciones ni ZIP externos"
-    : "FINISH COMPLETO · Publicaciones activadas y verificadas, retención completada; consultar cierre del auditor por separado");
+    : "FINISH COMPLETO · Publicaciones activadas y verificadas, retención e informe completados");
   return result;
 };
 

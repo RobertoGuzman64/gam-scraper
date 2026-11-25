@@ -50,11 +50,10 @@ test("diario conserva cierre por etapas, recibo y compatibilidad histórica", as
     assert.equal(individualFinishClosurePhase(activated), "activated");
     await assert.rejects(advanceIndividualFinishClosure(path, activated, "reported"), /Transición/);
     const retained = await advanceIndividualFinishClosure(path, activated, "retained");
-    const audited = await advanceIndividualFinishClosure(path, retained, "audited");
     const file = join(root, "report.zip");
     await writeFile(file, "Informe de prueba");
     const receipt = { path: file, sha256: createHash("sha256").update(await readFile(file)).digest("hex") };
-    const closed = await advanceIndividualFinishClosure(path, audited, "reported", receipt);
+    const closed = await advanceIndividualFinishClosure(path, retained, "reported", receipt);
     assert.equal(individualFinishClosurePhase(closed), "reported");
     assert.deepEqual((await listIndividualFinishJournals(root))[0]?.journal.closure?.report, receipt);
     await assert.rejects(advanceIndividualFinishClosure(path, closed, "retained"), /Transición/);

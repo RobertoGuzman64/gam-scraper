@@ -1,29 +1,11 @@
-import { createHash } from 'node:crypto';
-import { readPortableOriginalArtifacts } from '../../dist/infrastructure/filesystem/catalog/portable-original.js';
-import { loadPreparationInputs } from '../../dist/infrastructure/filesystem/preparation/preparation-inputs.js';
-import { prepareImportBatch } from '../../dist/preparation/product/batch-identity.js';
+import { CAMPAIGN_PROVIDERS } from '../../dist/contracts/campaign-providers.js';
+export { readEditorialAuditSource, loadEditorialAuditPopulation, editorialAuditFingerprints } from '../../dist/infrastructure/filesystem/preparation/editorial-audit-population.js';
 
-export const loadEditorialAuditPopulation = async (workspace, providerId, fingerprints) => {
-  const { catalog, files } = await readPortableOriginalArtifacts(workspace, providerId);
-  const original = files.find((file) => file.name.endsWith('-catalog.json'));
-  if (!original) throw new Error(`Original canónico ausente: ${providerId}`);
-  const prepared = prepareImportBatch(catalog.products);
-  return {
-    records: catalog.products,
-    prepared: prepared.products,
-    provenance: {
-      source: {
-        providerId: catalog.providerId,
-        prefix: catalog.prefix,
-        scope: catalog.scope,
-        catalogSha256: createHash('sha256').update(original.content).digest('hex'),
-        productCount: catalog.productCount
-      },
-      fingerprints,
-      startedAt: catalog.startedAt,
-      endedAt: catalog.endedAt
-    }
-  };
+export const editorialAuditCoverage = (providers) => {
+  const expected = [...CAMPAIGN_PROVIDERS];
+  const selected = [...expected];
+  const processed = selected.filter((provider) => providers[provider]?.exceptions === 0);
+  const unavailable = selected.filter((provider) => !Object.hasOwn(providers, provider));
+  const incomplete = selected.filter((provider) => Object.hasOwn(providers, provider) && !processed.includes(provider));
+  return { expected, selected, processed, unavailable, incomplete };
 };
-
-export const editorialAuditFingerprints = async () => (await loadPreparationInputs()).fingerprints;

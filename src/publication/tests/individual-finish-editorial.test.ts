@@ -11,29 +11,26 @@ const withWorkspace = createIndividualFinishWorkspace();
 
 test("FINISH reutiliza una publicación para comprobar cierre y reacreditación", async (context) => {
   await withWorkspace(async (root, desktop) => {
-    await context.test("CLI FINISH conserva selección, retención, auditor e informe idempotente", async () => {
+    await context.test("CLI FINISH conserva selección, retención e informe idempotente", async () => {
       let retentionCount = 0;
-      let auditorCount = 0;
       const dry = await runPublishIndividual(["--proveedor", "gomariz", "--simular"], root, {
-        retention: () => { retentionCount++; }, auditor: async () => { auditorCount++; }
+        retention: () => { retentionCount++; }
       });
       assert.equal(dry?.mode, "simulation");
       assert.equal(retentionCount, 0);
       assert.equal((await readdir(desktop)).filter((name) => name.startsWith("equipzilla-informe-")).length, 0);
       const finished = await runPublishIndividual([], root, {
-        desktopDirectory: desktop, retention: () => { retentionCount++; }, auditor: async () => { auditorCount++; }
+        desktopDirectory: desktop, retention: () => { retentionCount++; }
       });
       assert.equal(finished?.mode, "complete");
       assert.equal(retentionCount, 1);
-      assert.equal(auditorCount, 1);
       assert.deepEqual(await readdir(desktop), []);
       assert.ok((await lstat(join(root, "catalogs", "reports", "individual-finish", "active.json"))).isFile());
       const second = await runPublishIndividual([], root, {
-        desktopDirectory: desktop, retention: () => { retentionCount++; }, auditor: async () => { auditorCount++; }
+        desktopDirectory: desktop, retention: () => { retentionCount++; }
       });
       assert.ok(second?.providers.every((item) => item.status === "YA VIGENTE"));
       assert.equal(retentionCount, 1);
-      assert.equal(auditorCount, 1);
       assert.deepEqual(await readdir(desktop), []);
       assert.ok((await lstat(join(root, "catalogs", "reports", "individual-finish", "active.json"))).isFile());
     });
@@ -75,13 +72,13 @@ test("FINISH muestra actividad mientras espera la poda y conserva su código de 
 test("FINISH conserva publicaciones si falla el informe y permite reintentar sin republicar", async () => {
   await withWorkspace(async (root, desktop) => {
     await assert.rejects(runPublishIndividual([], root, {
-      desktopDirectory: desktop, retention: () => undefined, auditor: async () => undefined,
+      desktopDirectory: desktop, retention: () => undefined,
       reporter: async () => { throw new Error("Informe interno sin permiso"); }
     }), /INFORME PENDIENTE.*Informe interno sin permiso/);
     const archives = (await readdir(desktop)).filter((name) => /^equipzilla-(gam|gomariz|mercaeleva)-/.test(name));
     assert.equal(archives.length, 0);
     const recovered = await runPublishIndividual([], root, {
-      desktopDirectory: desktop, retention: () => undefined, auditor: async () => undefined
+      desktopDirectory: desktop, retention: () => undefined
     });
     assert.ok(recovered?.providers.every((item) => item.status === "YA VIGENTE"));
     assert.deepEqual(await readdir(desktop), []);

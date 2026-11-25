@@ -145,6 +145,29 @@ export const inspectPublicationOriginals = async (root, candidate = null) => {
   }
   const items = [];
   for (const { providerId, manifestFile, expected: source } of sources) {
+    if (providerId === "manain") {
+      const { readVerifiedManainRecordSource } = await import("../../dist/infrastructure/filesystem/catalog/manain-record-source.js");
+      const { accreditedPublicationOriginalSources } = await import("../../dist/infrastructure/filesystem/catalog/accredited-publication-original.js");
+      const path = join(root, "catalogs", "providers", providerId, "records", "manain-record.json");
+      let current;
+      try {
+        const verified = await readVerifiedManainRecordSource(root);
+        const matches = verified.recordSha256 === source.catalogSha256;
+        if (matches) await accreditedPublicationOriginalSources(root, join(dirname(manifestFile), "manain-publishable.json"), providerId);
+        current = { state: matches ? "COINCIDE" : "OTRO_CORTE", path, sha256: verified.recordSha256,
+          productCount: verified.originalProducts.length, quality: "partial" };
+      } catch (error) {
+        current = { state: missing(error) ? "AUSENTE" : "INVALIDO", path,
+          reason: error instanceof Error ? error.message : String(error) };
+      }
+      const available = current.state === "COINCIDE";
+      items.push({ providerId, manifestFile, expected: source, current,
+        archives: { directory: null, entries: [] },
+        candidate: candidateSource?.providerId === providerId ? { state: "INVALIDO", path: candidate,
+          reason: "El registro Manain requiere su corte técnico acreditado" } : null,
+        available, diagnosis: available ? "ORIGINAL_DISPONIBLE" : "REGISTRO_NO_DISPONIBLE" });
+      continue;
+    }
     const currentPath = await currentCatalogPath(root, providerId, source.prefix ?? `scrape-${providerId}`);
     const currentRaw = await optionalReadRegular(currentPath);
     const currentPrefix = currentRaw === null ? null : JSON.parse(currentRaw).prefix;
@@ -172,7 +195,7 @@ const present = (report) => {
     console.log(`${item.providerId} | ${item.diagnosis} | ${item.expected.productCount} productos | SHA ${item.expected.catalogSha256}`);
     console.log(`  Publicación: ${item.manifestFile}`);
     console.log(`  Vigente: ${item.current.state} ${item.current.sha256 ?? ""}`.trimEnd());
-    console.log(`  Archivo histórico: ${item.archives.directory} | ${item.archives.entries.length} cortes`);
+    if (item.archives.directory !== null) console.log(`  Archivo histórico: ${item.archives.directory} | ${item.archives.entries.length} cortes`);
     for (const archive of item.archives.entries) {
       console.log(`    ${archive.state}: ${archive.path}${archive.reason ? ` (${archive.reason})` : ""}`);
     }

@@ -20,7 +20,6 @@ export type IndividualFinishClosureResult = {
 
 type ClosureActions = {
   readonly retention: () => Promise<void>;
-  readonly auditor: () => Promise<void>;
   readonly reporter: () => Promise<{ readonly reportFile: string }>;
 };
 
@@ -103,15 +102,6 @@ export const completeIndividualFinishClosure = async (
       executed.push("retained");
     }
     if (individualFinishClosurePhase(journal) === "retained") {
-      try { await actions.auditor(); }
-      catch (error) {
-        throw new Error(`AUDITOR PENDIENTE | Publicaciones activas conservadas. Diario: ${path}. ${error instanceof Error ? error.message : String(error)}`, { cause: error });
-      }
-      await assertActive(root, journal);
-      journal = await advanceIndividualFinishClosure(path, journal, "audited");
-      executed.push("audited");
-    }
-    if (individualFinishClosurePhase(journal) === "audited") {
       let receipt: IndividualFinishReportReceipt;
       try {
         receipt = await retainReportReceipt(root, actions);

@@ -63,3 +63,15 @@ test("la salida conserva la severidad y el código de fallo público", () => {
     process.exitCode = previousExit;
   }
 });
+
+
+test("el registro Manain ausente se distingue de una procedencia parcial inválida", async () => {
+  const absent = await collectAuditProviderResults(["manain"], async () => {
+    throw new Error("ENOENT: no such file or directory, lstat '/workspace/catalogs/providers/manain/records/manain-record.json'");
+  }, (source) => source);
+  assert.equal(auditProviderCoverage(absent).incompleteSource, 1);
+  const invalid = await collectAuditProviderResults(["manain"], async () => {
+    throw new Error("Procedencia parcial de Manain no coincide con su publicación técnica acreditada");
+  }, (source) => source);
+  assert.equal(auditProviderCoverage(invalid).errors, 1);
+});

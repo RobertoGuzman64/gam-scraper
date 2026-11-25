@@ -4,9 +4,9 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
-**Regla de alcance.** No cambiar originales, reglas de calidad, publicaciones ni estados para mejorar contadores. Las estadísticas de huecos son diagnósticos, no defectos confirmados. Una `review` sin evidencia suficiente sigue pendiente, sin bloquear artificialmente la publicación técnica ni justificar una inclusión comercial.
+**Regla de alcance.** No cambiar originales, reglas de calidad, publicaciones ni estados para mejorar contadores. Las estadísticas de huecos y normalización son diagnósticos de desarrollo, no defectos confirmados ni puertas de publicación. Una `review` sin evidencia suficiente sigue pendiente, sin bloquear artificialmente la publicación técnica ni justificar una inclusión comercial.
 
-**Propietario:** resolver defectos reales de contenido y preparación, evaluar `ready`/`review`, ejecutar auditores de huecos y mejorar fichas por causas reutilizables. Los mecanismos del motor están en [Motor editorial](EDITORIAL_ENGINE.md), los datos en [Contratos](DATA_CONTRACTS.md) y la aceptación final en [Validación](VALIDATION.md).
+**Propietario:** resolver defectos reales de contenido y preparación, evaluar `ready`/`review`, ejecutar los auditores de huecos y normalización técnica y mejorar fichas por causas reutilizables. Los mecanismos del motor están en [Motor editorial](EDITORIAL_ENGINE.md), los datos en [Contratos](DATA_CONTRACTS.md) y la aceptación final en [Validación](VALIDATION.md).
 
 ## Propósito de cada frente: resultado primero, herramientas después
 
@@ -181,7 +181,7 @@ npm run auditar:comercial -- --revision
 npm run exportar:comercial -- --simular
 ```
 
-Sustituir `gam` por el proveedor **realmente afectado**. FINISH puede reutilizar exclusiones acreditadas idénticas; no inventa aprobaciones humanas. Si el preflight detecta casos distintos, corresponde la acreditación editorial explícita. Si se activa una publicación pero falla el archivado, auditoría o informe posterior, consultar el diario `storage/publication/individual-finish/` y **reanudar el mismo FINISH**, sin editar selectores ni volver a publicar ciegamente. El derivado comercial puede generarse y verificarse aparte; `--simular` no equivale a la exportación real ni a una integración en BD.
+Sustituir `gam` por el proveedor **realmente afectado**. FINISH puede reutilizar exclusiones acreditadas idénticas; no inventa aprobaciones humanas. Si el preflight detecta casos distintos, corresponde la acreditación editorial explícita. Si se activa una publicación pero falla la retención o el informe posterior, consultar el diario `storage/publication/individual-finish/` y **reanudar el mismo FINISH**, sin editar selectores ni volver a publicar ciegamente. El derivado comercial puede generarse y verificarse aparte; `--simular` no equivale a la exportación real ni a una integración en BD.
 
 ## Precedentes del código: aprender de las correcciones existentes
 
@@ -199,7 +199,10 @@ Son **ejemplos de mecanismos y límites**, no reglas para reutilizar sus datos t
 
 ## Diagnóstico y significado de los avisos
 
+Elegir el diagnóstico por el objetivo de desarrollo autorizado: `normalizar:auditar` investiga el tratamiento de prestaciones disponibles; `huecos` investiga carencias, cobertura, diferenciación y semántica de contenido. Son consultas independientes del cierre operativo.
+
 ```powershell
+npm run normalizar:auditar
 npm run huecos -- --comparar --json
 npm run huecos -- --comparar --specs --json
 npm run huecos -- --comparar --titulos --json
@@ -224,6 +227,38 @@ npm run auditar:comercial -- --acreditacion
 6. **Cierre demostrado:** auditor correspondiente sin defecto reproducible, ausencia de regresiones, `npm test`, `npm run build`, guard de rendimiento y `npm run estado` en el entorno disponible. Señalar expresamente lo no ejecutado; código corregido **no significa** dato publicado.
 
 No modificar umbrales, silenciar avisos por ID, editar reconocimientos, originales, manifests o publicaciones a mano para conseguir contadores estéticos. Un reconocimiento vigente puede permanecer visible como controlado; una contradicción genuina del proveedor no autoriza inventar su solución.
+
+## Diagnóstico de normalización técnica
+
+El núcleo de diagnóstico en `src/catalog/diagnostics/normalization-audit.ts` es una herramienta de desarrollo, independiente de huecos y del cierre operativo. Inspecciona las especificaciones existentes mediante `normalizeSpecsObject` y sus reglas reales, conserva clave y valor originales, identifica la etapa y mantiene la identidad, familia y procedencia de la preparación cuando está disponible. No modifica la fuente ni el resultado productivo.
+
+La interpretación acreditada se refiere al resultado del normalizador consultado, no a una equivalencia técnica universal ni a una corrección pendiente. Los rechazos no triviales son hipótesis; las claves no reconocidas y los descartes por ausencia de valor no se consideran defectos. El diccionario consultado no cubre toda la preparación multiproveedor. Los conflictos de alias no seleccionan un valor, y la igualdad numérica no permite fusionar prestaciones diferentes. Las diferencias legítimas requieren contraste contextual.
+
+El descubrimiento en `src/catalog/diagnostics/normalization-patterns.ts` reúne observaciones por etapa, prestación y familia resuelta. Sin familia acreditada conserva el ámbito de proveedor y categoría original, sin inferir equivalencia entre familias. Distingue alias reconocidos, variantes de unidades y formatos numéricos, valores categóricos, rechazos del normalizador y claves no reconocidas. Las firmas de formato y unidad describen la escritura, no implementan conversiones ni sustituyen los parsers; los valores compuestos se mantienen íntegros. Las variantes de claves desconocidas por semejanza ortográfica son hipótesis, y las claves aisladas no evaluables no son defectos.
+
+Las coincidencias exactas del resultado interpretado (o de presentación técnica existente para categorías reconocidas) se conservan junto a las variantes que las respaldan. Las diferencias de representación entre resultados distintos son hipótesis; se distinguen las estructuras de listas y dimensiones, y no se mezclan prestaciones de significado diferente. Los rechazos conservan su motivo, estructura y evidencia original, sin convertir ausencias explícitas en oportunidades ni resolver conflictos. Los patrones pueden solaparse: no son un recuento de fichas incorrectas ni una autorización de cambio. El contraste entre etapas y la cuantificación de impacto se consultan con el auditor independiente. La publicación solo se incorpora a una ficha cuando el lector acreditado aporta el original correspondiente y coinciden identidad, proveedor, URL, referencia y huella del registro; no se sustituye por un original vigente distinto ni por una reconstrucción de la publicación. La preparación actual y la publicación acreditada son observaciones independientes. Las fichas sin publicación se identifican, separando `ready` y `review`, sin convertir su ausencia en un defecto de normalización.
+
+`src/catalog/diagnostics/normalization-contrast.ts` contrasta original con preparación, original con publicación y preparación con publicación. Solo compara prestaciones reconocidas de correspondencia unívoca para acreditar una representación equivalente según el resultado del parser existente; esa diferencia legítima de representación no garantiza equivalencia técnica universal. Un valor interpretado distinto requiere investigación. Una ausencia de correspondencia, una clave no interpretable o una asociación ambigua no acredita pérdida ni corrección pendiente. Cuando una entrada de procedencia de la preparación enlaza exactamente el campo y valor originales con el campo y valor de destino, se conserva la transformación trazada sin inferir equivalencia ni atribuir esa traza a una publicación anterior. Las prestaciones nuevas no se contabilizan como oportunidades por su sola ausencia en el origen.
+
+`src/catalog/diagnostics/normalization-impact.ts` reúne patrones de las tres etapas por tipo, ámbito de familia (o proveedor y categoría si no se conoce), prestación, regla y firma; conserva las variantes, referencias y clasificación de cada etapa y resume el contraste asociado a sus ocurrencias. Los recuentos de impacto diferencian fichas únicas, ocurrencias únicas por etapa, identidad y clave original, y pertenencias a patrones. Una misma ficha se cuenta una sola vez en el total, aunque aparezca en varias etapas o patrones; las ocurrencias de diferentes etapas son observaciones distintas y los subtotales pueden solaparse. El impacto potencial se limita a señales acreditadas por el normalizador o hipótesis presentes en preparación actual o publicación, excluyendo las claves no evaluables aisladas y las señales exclusivas del original; no es un recuento de defectos ni de fichas que necesariamente deban cambiar. Se distingue la evidencia de cada patrón y se mantienen disponibles sus contrastes y sus señales originales para investigación. La ejecución bajo demanda, comprobación de cobertura de proveedores y presentación de resultados están integradas en el tooling de desarrollo, fuera de FINISH.
+
+### Ejecución bajo demanda
+
+```powershell
+npm run normalizar:auditar
+npm run normalizar:auditar -- --top 10 --detalle
+npm run --silent normalizar:auditar -- --json
+```
+
+El comando inspecciona los proveedores definidos por `CAMPAIGN_PROVIDERS`. Reutiliza el lector acreditado de originales y del registro parcial de Manain, recalcula en memoria con `prepareImportBatch` y concilia cada publicación comercial vigente con su original acreditado. No sustituye una fuente no disponible por datos reconstruidos. La salida declara proveedores esperados, seleccionados, procesados, no disponibles e incompletos, huellas de origen y publicación y reglas de preparación. Si un proveedor no puede conciliarse, se omite del cálculo, se identifica la causa y se devuelve código 1 con cobertura parcial; las cifras restantes no representan el universo completo. Las fichas sin publicación se distinguen de los proveedores ausentes. Las observaciones no bloquean por sí mismas el comando ni la publicación.
+
+La salida habitual resume población, impacto, evidencia y contrastes; muestra los 20 primeros grupos ordenados por fichas candidatas únicas, ocurrencias potenciales e impacto observado. `--top N` cambia ese límite de presentación, no la población ni los recuentos. `--detalle` añade las huellas, regla, etapa y ejemplos (hasta tres variantes y tres ocurrencias por variante); `--json` devuelve el informe completo por stdout, con todas las referencias, patrones y contrastes, y no se combina con `--top` ni `--detalle`. Para JSON limpio usar `npm run --silent`. No se generan archivos, ZIP, históricos, preparaciones persistidas ni informes internos. Los únicos archivos que el tooling puede actualizar son los de la compilación habitual cuando el build no está vigente. El diagnóstico no forma parte de FINISH, de la exportación comercial ni de las tareas programadas.
+
+### Uso de los resultados para mejorar el motor
+
+El orden por impacto de la terminal sirve para navegar el diagnóstico, no determina por sí solo el orden de intervención. Ante una campaña de normalización autorizada, contrastar primero las divergencias de significado técnico y los rechazos de interpretación con identidad, familia, condiciones de medida y evidencia. Priorizar después patrones reutilizables por impacto único, solidez de evidencia, riesgo semántico y coste de mantenimiento. Una representación equivalente puede ser legítima; una hipótesis o una clave no evaluable no autoriza corregir la ficha. No perseguir la eliminación de todas las señales ni introducir excepciones por referencia.
+
+Conservar una línea base comparable de población, fuentes y reglas; repetir el diagnóstico tras cada intervención para medir fichas únicas realmente modificadas, cambios de valor y oportunidades pendientes, sin confundirlas con el impacto potencial ni sumar subtotales solapados. No atribuir una reducción al motor si ha cambiado el universo sin conciliarlo. Si hay un cambio productivo, aplicar las pruebas y el contraste de preparaciones previstos en [Validación](VALIDATION.md) antes de una publicación autorizada. Retomar el enriquecimiento con huecos recalculados una vez concluido el frente de normalización, cuando el propietario lo autorice. El auditor no abre campañas automáticamente.
 
 ## Auditor de huecos de contenido
 

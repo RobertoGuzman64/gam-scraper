@@ -151,14 +151,15 @@ Si existe un caso nuevo o una exclusión distinta, resolverlo mediante el proced
 Tras una activación comprobada, FINISH ejecuta por separado:
 
 1. La retirada definitiva de históricos elegibles con `scripts/maintenance/consolidate-local-artifacts.mjs --aplicar`.
-2. El auditor de huecos (`--comparar --specs`, limitado a un resumen en consola).
-3. El informe de trabajo sobre el conjunto original → publicado, con informe interno versionado y verificable.
+2. El informe de trabajo sobre el conjunto original → publicado, con informe interno versionado y verificable.
 
-El informe se conserva en `catalogs/reports/individual-finish/versions/<sha256>/INFORME.txt`, con selección activa y recibo de cierre vinculado a su huella. Los recibos previos basados en ZIP siguen verificándose. Si una versión interna ya no está retenida legítimamente, repetir FINISH verifica el conjunto activo y renueva el recibo sin repetir la retención ni la auditoría. Resume por proveedor y en total fichas originales/publicadas/excluidas, transformaciones, textos, títulos, campos y valores de specs, precios, condiciones, categorías y galerías. Se calcula al contrastar las publicaciones acreditadas con sus originales, no mediante estimaciones de trabajo previo ni copias de una publicación anterior. Su huella identifica los bytes del informe, que contiene la trazabilidad de orígenes, aprobaciones y publicaciones. **No sustituye un JSON publicable**, un expediente de calidad, ni una validación de completitud externa.
+El informe se conserva en `catalogs/reports/individual-finish/versions/<sha256>/INFORME.txt`, con selección activa y recibo de cierre vinculado a su huella. Los recibos previos basados en ZIP siguen verificándose. Si una versión interna ya no está retenida legítimamente, repetir FINISH verifica el conjunto activo y renueva el recibo sin repetir la retención. Resume por proveedor y en total fichas originales/publicadas/excluidas, transformaciones, textos, títulos, campos y valores de specs, precios, condiciones, categorías y galerías. Se calcula al contrastar las publicaciones acreditadas con sus originales, no mediante estimaciones de trabajo previo ni copias de una publicación anterior. Su huella identifica los bytes del informe, que contiene la trazabilidad de orígenes, aprobaciones y publicaciones. **No sustituye un JSON publicable**, un expediente de calidad, ni una validación de completitud externa.
 
-FINISH conserva un diario en `storage/publication/individual-finish/` para recuperar activaciones parciales. Si falla retención, auditor o informe **después** de activar, las publicaciones ya comprobadas se conservan: el error identifica el paso pendiente y se puede repetir `npm run catalogo:publicar` tras corregir la causa. Con las mismas aprobaciones ya vigentes, el comando no crea ZIP externos ni vuelve a publicar; verifica o completa las operaciones posteriores. No borrar manualmente el diario, originales, recibos o publicaciones. Si se interrumpe la retirada, resolver primero la transacción conforme a [Mantenimiento](OPERATIONS_AND_MAINTENANCE.md#publicación-y-recuperación).
+FINISH conserva un diario en `storage/publication/individual-finish/` para recuperar activaciones parciales. Si falla retención o informe **después** de activar, las publicaciones ya comprobadas se conservan: el error identifica el paso pendiente y se puede repetir `npm run catalogo:publicar` tras corregir la causa. Con las mismas aprobaciones ya vigentes, el comando no crea ZIP externos ni vuelve a publicar; verifica o completa las operaciones posteriores. No borrar manualmente el diario, originales, recibos o publicaciones. Si se interrumpe la retirada, resolver primero la transacción conforme a [Mantenimiento](OPERATIONS_AND_MAINTENANCE.md#publicación-y-recuperación).
 
-**Estados observables distintos:** (a) preparación correcta y preflight conforme, pero publicación aún no activa; (b) publicación activada y verificada, con un paso posactivación pendiente; (c) FINISH completo, incluidos retención, auditor e informe. Acreditar cada afirmación con su recibo, selector activo y diario. En un fallo tardío no restaurar ni sobrescribir una publicación verificada; resolver el paso pendiente y repetir FINISH de forma idempotente. Una exportación comercial posterior no sustituye la retención. La mejora continua del catálogo sigue el [manual de mejora](CATALOG_QUALITY.md).
+**Estados observables distintos:** (a) preparación correcta y preflight conforme, pero publicación aún no activa; (b) publicación activada y verificada, con un paso posactivación pendiente; (c) FINISH completo, incluidos retención e informe. Acreditar cada afirmación con su recibo, selector activo y diario. En un fallo tardío no restaurar ni sobrescribir una publicación verificada; resolver el paso pendiente y repetir FINISH de forma idempotente. Una exportación comercial posterior no sustituye la retención. La mejora continua del catálogo sigue el [manual de mejora](CATALOG_QUALITY.md).
+
+Los auditores de huecos (`npm run huecos -- --comparar --specs`) y normalización técnica (`npm run normalizar:auditar`) son herramientas de desarrollo de solo lectura, ejecutadas bajo demanda y fuera de FINISH. Sus resultados o fallos no condicionan el cierre operativo. Los diarios anteriores con etapa `retained` o `audited` se recuperan directamente desde el informe pendiente; no se repite la retención ni se exige ejecutar el auditor. `--estado` consulta esos diarios sin modificarlos.
 
 Una campaña global de cuatro proveedores mantiene su propio flujo y retención; no se debe confundir con este FINISH individual. Para su operación consultar [Campañas](CAMPAIGNS.md) y [Acreditación de campaña](CAMPAIGNS.md).
 
@@ -168,10 +169,16 @@ Una campaña global de cuatro proveedores mantiene su propio flujo y retención;
 npm test
 npm run build
 npm run estado
-npm run huecos -- --comparar --specs
 ```
 
-Un build verde y un FINISH completo prueban contratos distintos. `estado` inspecciona integridad y publicaciones vigentes, pero no garantiza cobertura web; `huecos` es de solo lectura. La preparación, los cambios editoriales y la acreditación requieren verificar los casos reales según [Validación](VALIDATION.md), [Arquitectura](ARCHITECTURE.md) y [Reglas de datos](DATA_CONTRACTS.md).
+Diagnósticos de desarrollo opcionales, separados del cierre:
+
+```powershell
+npm run huecos -- --comparar --specs
+npm run normalizar:auditar
+```
+
+Un build verde y un FINISH completo prueban contratos distintos. `estado` inspecciona integridad y publicaciones vigentes, pero no garantiza cobertura web; `huecos` y `normalizar:auditar` son de solo lectura. La preparación, los cambios editoriales y la acreditación requieren verificar los casos reales según [Validación](VALIDATION.md), [Arquitectura](ARCHITECTURE.md) y [Reglas de datos](DATA_CONTRACTS.md).
 
 ### Entrega agrupada de públicos bajo demanda
 

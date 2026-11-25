@@ -20,7 +20,7 @@ En cambios productivos comparar todas las máquinas originales relevantes y las 
 
 ## Validación de publicaciones técnicas independientes
 
-`publicacion:tecnica` acepta `review` para que la incorporación del proveedor y el trabajo editorial avancen en frentes distintos. Sus garantías son **integridad, identidad, procedencia, estados/diagnósticos preservados y retención máxima de dos versiones**; no exige convertir artificialmente las incidencias en `ready`. Manain mantiene el registro `partial`, mientras Gomariz exige original `complete` y preparación vigente. Se valida con una simulación sin escrituras, activación explícita, lectura de `--ver/--listar`, `npm run estado` y `huecos --tecnicas`; ninguna de estas operaciones implica aprobación comercial.
+`publicacion:tecnica` acepta `review` para que la incorporación del proveedor y el trabajo editorial avancen en frentes distintos. Sus garantías son **integridad, identidad, procedencia, estados/diagnósticos preservados y retención máxima de dos versiones**; no exige convertir artificialmente las incidencias en `ready`. Manain mantiene el registro `partial`, mientras Gomariz exige original `complete` y preparación vigente. Se valida con una simulación sin escrituras, activación explícita, lectura de `--ver/--listar` y `npm run estado`. `huecos --tecnicas` puede ejecutarse después, bajo demanda, para diagnosticar contenido; no forma parte de la activación. Ninguna de estas operaciones implica aprobación comercial.
 
 El guard del contrato comercial v2 se ejecuta con `npm run contrato:comercial`, con `npm test` y antes de la exportación. Las auditorías de publicaciones individuales históricas pueden pasar con el origen acreditado por SHA mientras la **exportación comercial del inventario obsoleto debe seguir bloqueada**. En el corte de noviembre de 2026 se constataron once bajas de Gomariz por «Sin existencias» frente a la publicación comercial anterior; requieren reconciliación, no restaurar los originales por conveniencia. Consultar [Publicaciones técnicas](PUBLICATIONS.md).
 
@@ -34,15 +34,25 @@ Si después de un parche quedan reviews, no repetir el diagnóstico como si fuer
 
 No basta con que un test del resolutor pase: comprobar **en qué etapa está** el dato. Seleccionar la publicación activa por el mecanismo oficial; comparar original canónico, preparación recalculada, publicación vigente y derivado comercial por proveedor, referencia y `sourceUrl`, no por orden ni por un identificador visible compartido. Para incidencias de extracción, validar la captura completa antes de promover el original; no activar un canónico construido con un subconjunto de URLs.
 
+Para investigar y medir una mejora autorizada, seleccionar las consultas de desarrollo pertinentes. No son pasos de FINISH ni sustituyen las comprobaciones formales de acreditación, integridad o contrato comercial.
+
 ```powershell
+npm run normalizar:auditar
 npm run huecos -- --comparar --specs --json
 npm run huecos -- --comparar --titulos --json
 npm run huecos -- --finales --json
 npm run auditar:comercial -- --coherencia
 npm run auditar:comercial -- --revision
 npm run auditar:comercial -- --acreditacion
+```
+
+Cuando el cambio afecte a la salida comercial, comprobar además su preflight:
+
+```powershell
 npm run exportar:comercial -- --simular
 ```
+
+En `normalizar:auditar`, verificar la cobertura y procedencia de las tres etapas antes de comparar resultados. El código 1 por fuentes ausentes o incompletas impide declarar completa esa auditoría, no altera la publicación vigente. La igualdad del parser no demuestra equivalencia técnica universal; los grupos y sus fichas candidatas son oportunidades de investigación. Comparar el impacto antes/después sobre poblaciones conciliadas y comprobar valores, condiciones y procedencias, no solo contadores. Consultar [Diagnóstico de normalización técnica](CATALOG_QUALITY.md#diagnóstico-de-normalización-técnica).
 
 Interpretar `technicalSpecs.cases[].stage`: `pendiente_publicacion` indica un cambio preparado no publicado; `perdida_tras_publicacion` exige investigar antes de activar; `diferencia_origen_preparacion` requiere una causa; `reconciliacion_acreditada` documenta una diferencia justificada; `normalizacion_ambigua` exige fuente; `sin_evidencia_directa` es orientativa. `technicalSemantics` observa el significado de valores publicados, no solo presencia de claves. Las señales comerciales **heredadas/controladas** no equivalen a las **introducidas/pendientes**.
 

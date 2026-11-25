@@ -1,8 +1,10 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { editorialAuditFingerprints, loadEditorialAuditPopulation } from './editorial-audit-population.mjs';
+import { editorialAuditCoverage, editorialAuditFingerprints, loadEditorialAuditPopulation } from './editorial-audit-population.mjs';
 import { resolveKnowledgeEditorial } from '../../dist/preparation/editorial/core/knowledge-editorial.js';
 import { loadEditorialKnowledge } from '../../dist/infrastructure/filesystem/editorial/knowledge.js';
+
+import { CAMPAIGN_PROVIDERS } from '../../dist/contracts/campaign-providers.js';
 
 const root = process.cwd();
 const knowledge = loadEditorialKnowledge();
@@ -12,10 +14,10 @@ const summary = { version: 1, kind: 'diagnostico_sin_publicacion', providers: {}
   emptyShort: 0, emptyGeneral: 0, signedUnits: 0, signedUnitsWithoutExactMatch: 0,
   signedFields: 0, signedFieldsWithoutExactMatch: 0
 }, problems: [], signedDifferences: [],
-  provenance: { stage: 'preparacion_offline', universe: 'originales_canonicos', analyzedAt: new Date().toISOString(),
+  provenance: { stage: 'preparacion_offline', universe: 'originales_verificados', analyzedAt: new Date().toISOString(),
     sources: {}, complete: true } };
 const fingerprints = await editorialAuditFingerprints();
-for (const provider of ['gam', 'gomariz', 'mercaeleva']) {
+for (const provider of CAMPAIGN_PROVIDERS) {
   let population;
   try {
     population = await loadEditorialAuditPopulation(root, provider, fingerprints);
@@ -68,14 +70,18 @@ for (const provider of ['gam', 'gomariz', 'mercaeleva']) {
   summary.providers[provider] = counters;
   for (const [key, value] of Object.entries(counters)) summary.total[key] += value;
 }
-summary.provenance.complete = summary.problems.length === 0;
+summary.provenance.population = editorialAuditCoverage(summary.providers);
+summary.provenance.complete = summary.problems.length === 0 &&
+  summary.provenance.population.processed.length === CAMPAIGN_PROVIDERS.length;
+const { expected, processed, unavailable, incomplete } = summary.provenance.population;
+console.log(`POBLACIÓN | ${processed.length}/${expected.length} proveedores | ${processed.join(', ')} | ausentes: ${unavailable.join(', ') || 'ninguno'} | incompletos: ${incomplete.join(', ') || 'ninguno'}`);
 summary.evidence = { verifiedUnits: knowledge.units.size, consensusModels: knowledge.models.size,
   familyProfiles: Object.keys(knowledge.families).length, verifiedManufacturerRules: knowledge.modelRules.size };
 const target = resolve(root, 'catalogs/reports/editorial-knowledge');
 mkdirSync(target, { recursive: true });
 writeFileSync(resolve(target, 'audit.json'), JSON.stringify(summary, null, 2) + '\n');
 console.log('AUDITORÍA EDITORIAL | REUTILIZACIÓN SIN PUBLICACIÓN | ' + JSON.stringify(summary.total));
-if (summary.problems.length) {
+if (!summary.provenance.complete) {
   console.error(`AUDITORÍA EDITORIAL INCOMPLETA | ${summary.problems.map((item) => `${item.provider}: ${item.error}`).join('; ')}`);
   process.exitCode = 1;
 }

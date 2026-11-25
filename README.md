@@ -38,7 +38,7 @@ Una consulta o un plan no equivalen a permiso para editar; una intervención pro
 
 La autorización para mejorar fichas alcanza **los módulos productivos necesarios dentro de `src/`**, no una reforma general del proyecto. Para cambiar Markdown, scripts, guards, comandos npm, carpetas protegidas, datos acreditados, contratos o publicaciones se necesita autorización explícita para el cambio concreto. **No crear documentación ni scripts temporales**, tampoco como paso intermedio, y no incorporar nombres de fases a rutas o ficheros. Reutilizar código, herramientas, tests y documentos existentes; una consulta o planificación no autoriza editar.
 
-El guard de gobernanza protege **17 rutas Markdown y 57 rutas de scripts**, además de los **57 comandos npm**; permite editar el contenido de los archivos inventariados, pero la política anterior exige permiso humano. Los guards de integridad, arquitectura editorial y tests protegen las fronteras del código. Consultar [Gobernanza](docs/REPOSITORY_GOVERNANCE.md), [Arquitectura](docs/ARCHITECTURE.md), [Pruebas](docs/TESTING.md) y [Calidad del catálogo](docs/CATALOG_QUALITY.md) antes de intervenir. No confundir un PASS de guards con permiso para cambiar contratos o datos.
+El guard de gobernanza protege **17 rutas Markdown y 57 rutas de scripts**, además de los **58 comandos npm**; permite editar el contenido de los archivos inventariados, pero la política anterior exige permiso humano. Los guards de integridad, arquitectura editorial y tests protegen las fronteras del código. Consultar [Gobernanza](docs/REPOSITORY_GOVERNANCE.md), [Arquitectura](docs/ARCHITECTURE.md), [Pruebas](docs/TESTING.md) y [Calidad del catálogo](docs/CATALOG_QUALITY.md) antes de intervenir. No confundir un PASS de guards con permiso para cambiar contratos o datos.
 
 ## Instalaciones existentes
 
@@ -175,7 +175,7 @@ npm run catalogo:publicar -- --proveedor gam
 npm run catalogo:publicar -- --simular
 ```
 
-FINISH realiza el preflight del conjunto, contrasta diferencias y pérdidas, crea y verifica las candidatas internas acreditadas sin ZIP, y solo después activa y comprueba las publicaciones individuales. Un diario en `storage/publication/individual-finish/` permite recuperar activaciones parciales repitiendo el mismo comando. Después de activar, FINISH ejecuta retención, auditor (`huecos --comparar --specs`) y actualiza el `INFORME.txt` interno versionado y verificable que resume el trabajo sobre los originales hasta las publicaciones vigentes. Un fallo posterior a la activación se informa por separado: repetir FINISH completa los pasos pendientes sin republicar las mismas acreditaciones. Cuando ya están vigentes no genera nuevas publicaciones ni ZIP externos; el informe se vuelve a comprobar o crear si corresponde. Siguen existiendo las campañas globales de cuatro proveedores. Si hay bloqueo previo a la activación, se preservan las publicaciones anteriores. Ver [Publicación individual](docs/PUBLICATIONS.md).
+FINISH realiza el preflight del conjunto, contrasta diferencias y pérdidas, crea y verifica las candidatas internas acreditadas sin ZIP, y solo después activa y comprueba las publicaciones individuales. Un diario en `storage/publication/individual-finish/` permite recuperar activaciones parciales repitiendo el mismo comando. Después de activar, FINISH ejecuta retención y actualiza el `INFORME.txt` interno versionado y verificable que resume el trabajo sobre los originales hasta las publicaciones vigentes. Un fallo posterior a la activación se informa por separado: repetir FINISH completa los pasos pendientes sin republicar las mismas acreditaciones. Cuando ya están vigentes no genera nuevas publicaciones ni ZIP externos; el informe se vuelve a comprobar o crear si corresponde. Los auditores de huecos y normalización técnica se ejecutan bajo demanda, fuera de FINISH. Siguen existiendo las campañas globales de cuatro proveedores. Si hay bloqueo previo a la activación, se preservan las publicaciones anteriores. Ver [Publicación individual](docs/PUBLICATIONS.md).
 
 ### Acreditación editorial individual explícita (casos que no se pueden reutilizar)
 
@@ -205,7 +205,6 @@ La entrega se guarda en `catalogs/providers/<proveedor>/publications/<alias-o-sh
 
 - `npm run ayuda` y `npm run ayuda -- <comando>`: ayuda desde la terminal; distingue lectura, preparación, escritura y autorización destructiva.
 - `npm run estado`: inventario de fuentes operativas, originales de `catalogs/`, JSON finales acreditados, integridad y discrepancias, sin escritura.
-- `npm run huecos`: auditor de descripciones, títulos y specs; `--comparar` contrasta publicaciones y preparación, `--comparar --specs` añade diagnóstico de claves y semántica técnica, `--comparar --titulos` compara títulos, `--finales` consulta textos, densidad y semántica técnica publicados y `--catalogo <ruta>` analiza canónicos explícitos. Ver [Auditor de huecos](docs/CATALOG_QUALITY.md).
 - `npm run build` y `npm test`: compilación y pruebas del repositorio.
 - `npm run extraer:proveedor`, `extraer:todos`, `intervenir:manual`, `preparar`, `validar`, `seleccionar`, `seleccionar:proveedor`, `acreditar:proveedor`, `entregar:proveedor` y `cobertura`: operaciones avanzadas con finalidades distintas del flujo principal.
 - `npm run manain:muestra` y `npm run manain:censo`: herramientas de diagnóstico específicas de Manain; no acreditan por sí solas una extracción completa.
@@ -215,9 +214,17 @@ La entrega se guarda en `catalogs/providers/<proveedor>/publications/<alias-o-sh
 - `npm run limpiar:almacen`: mantenimiento separado de extracciones individuales, no cierre ni rotación de campañas globales.
 - `npm run limpiar:versionados`: simulación de retirada del índice Git de históricos rastreados; solo actúa con `-- --aplicar`.
 
-### Auditor de huecos de contenido
+### Herramientas de desarrollo: huecos y normalización técnica
 
-`npm run huecos` permite seleccionar el trabajo editorial o técnico por **carencia real**. Con `--comparar` analiza por identidad las descripciones publicadas y la preparación recalculada, muestra vacíos recuperados, pendientes, extremos, diferencias familiares y posibles pérdidas. Con `--comparar --specs` añade un informe separado de claves técnicas del original, la preparación y el final: sus ausencias familiares son **observaciones, no datos obligatorios**. `--finales` mide contenido editorial, densidad y semántica técnica de las publicaciones seleccionadas. `--comparar --titulos` es un modo alternativo a `--comparar --specs`. Para originales de campaña/referencia o canónicos explícitos mantiene el diagnóstico agrupado por proveedor y categoría original.
+Ambos auditores se ejecutan explícitamente, antes o después de una intervención de desarrollo. No son pasos de preparación, FINISH, entrega o exportación; tampoco sustituyen `validar`, la acreditación ni el contrato comercial. Sus resultados se consultan por separado y no requieren regenerar publicaciones.
+
+#### Auditor de normalización técnica
+
+`npm run normalizar:auditar` contrasta las representaciones de las prestaciones disponibles entre origen, preparación actual en memoria y publicación acreditada. Ejecuta los cuatro proveedores bajo demanda, con `--top N`, `--detalle` o `--json` (salida completa, usar `npm run --silent` para JSON limpio). Las señales no son defectos confirmados ni bloqueos de publicación. No escribe catálogos ni informes y no forma parte de FINISH. Ver [Diagnóstico de normalización técnica](docs/CATALOG_QUALITY.md#diagnóstico-de-normalización-técnica).
+
+#### Auditor de huecos de contenido
+
+`npm run huecos` es un diagnóstico de desarrollo independiente de la publicación, la retención y la entrega comercial. Permite seleccionar el trabajo editorial o técnico por **carencia real**. Con `--comparar` analiza por identidad las descripciones publicadas y la preparación recalculada, muestra vacíos recuperados, pendientes, extremos, diferencias familiares y posibles pérdidas. Con `--comparar --specs` añade un informe separado de claves técnicas del original, la preparación y el final: sus ausencias familiares son **observaciones, no datos obligatorios**. `--finales` mide contenido editorial, densidad y semántica técnica de las publicaciones seleccionadas. `--comparar --titulos` es un modo alternativo a `--comparar --specs`. Para originales de campaña/referencia o canónicos explícitos mantiene el diagnóstico agrupado por proveedor y categoría original.
 
 ```powershell
 npm run huecos -- --comparar
@@ -298,7 +305,7 @@ Cada procedimiento y contrato tiene un documento propietario. Para producir un c
 - [Arquitectura](docs/ARCHITECTURE.md): capas y responsabilidades.
 - [Campañas](docs/CAMPAIGNS.md): campañas globales, acreditación y entrega.
 - [Operativa de catálogos](docs/CATALOG_OPERATIONS.md): producción desde scraping hasta JSON comerciales.
-- [Calidad del catálogo](docs/CATALOG_QUALITY.md): `review`, auditor de huecos, evidencia y mejora por causas.
+- [Calidad del catálogo](docs/CATALOG_QUALITY.md): `review`, auditores de huecos y normalización técnica, evidencia y mejora por causas.
 - [Gobernanza del repositorio](docs/REPOSITORY_GOVERNANCE.md): autorización e inventario de scripts, Markdown y comandos; reglas de continuidad.
 - [Exportación comercial](docs/COMMERCIAL_EXPORT.md): proyección, auditoría, contratos y frontera del backend.
 - [Contratos de datos](docs/DATA_CONTRACTS.md): originales, normalización, identidades y procedencias.

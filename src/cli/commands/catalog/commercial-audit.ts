@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { fileURLToPath } from "node:url";
 import { auditCommercialCatalogWithCoverage } from "../../../commercial/export/commercial-audit.js";
 import { observePreparationCoherenceFindings } from "../../../commercial/diagnostics/audited-findings.js";
@@ -87,7 +88,7 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
   }
   if (args[0] === "--coherencia") {
     const catalog = await loadImportCatalog();
-    const inspected = await collectAuditProviderResults(["gam", "gomariz", "mercaeleva"], async (providerId) => {
+    const inspected = await collectAuditProviderResults(CAMPAIGN_PROVIDERS, async (providerId) => {
       const sources = await originalSources(root, providerId);
       if (!sources) throw new Error(`Falta el original canónico para ${providerId}`);
       const originals = [...sources.values()];
@@ -106,6 +107,7 @@ export const runCommercialAudit = async (args: readonly string[]): Promise<void>
       return;
     }
     const evidence = inspected.evaluated.flat();
+    printReportLine(`POBLACIÓN | ${sourceCoverage.evaluated}/${sourceCoverage.requested} proveedores | ${[...new Set(evidence.map((item) => item.source.providerId))].join(", ")}`);
     const products = evidence.map((item) => item.product);
     const result = analyzePresentationConsistency(products);
     const registry = await loadFindingRecognitionRegistry(root);

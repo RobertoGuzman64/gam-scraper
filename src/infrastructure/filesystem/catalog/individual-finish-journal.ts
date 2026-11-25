@@ -10,7 +10,7 @@ export type IndividualFinishTarget = {
   readonly previousSha256: string | null;
 };
 
-export type IndividualFinishClosurePhase = "activated" | "retained" | "audited" | "reported";
+export type IndividualFinishClosurePhase = "activated" | "retained" | "reported";
 
 export type IndividualFinishReportReceipt = { readonly path: string; readonly sha256: string; readonly kind?: "internal" };
 
@@ -21,7 +21,7 @@ export type IndividualFinishJournal = {
   readonly status: "pending" | "complete";
   readonly candidatesVerified?: boolean;
   readonly closure?: {
-    readonly phase: IndividualFinishClosurePhase;
+    readonly phase: IndividualFinishClosurePhase | "audited";
     readonly report: IndividualFinishReportReceipt | null;
   };
 };
@@ -33,14 +33,14 @@ const missing = (error: unknown): boolean => error instanceof Error && "code" in
 const journalName = (targets: readonly IndividualFinishTarget[]): string =>
   `${hash(JSON.stringify(targets.map(({ providerId, approvalSha256 }) => ({ providerId, approvalSha256 }))))}.json`;
 
-const phases: readonly IndividualFinishClosurePhase[] = ["activated", "retained", "audited", "reported"];
+const phases: readonly IndividualFinishClosurePhase[] = ["activated", "retained", "reported"];
 
 export const individualFinishClosurePhase = (journal: IndividualFinishJournal): IndividualFinishClosurePhase =>
-  journal.closure?.phase ?? "activated";
+  journal.closure?.phase === "audited" ? "retained" : journal.closure?.phase ?? "activated";
 
 const validClosure = (value: unknown): boolean => {
   if (!value || typeof value !== "object" || Array.isArray(value) ||
-    !("phase" in value) || !phases.some((phase) => phase === value.phase) || !("report" in value)) return false;
+    !("phase" in value) || !(value.phase === "audited" || phases.some((phase) => phase === value.phase)) || !("report" in value)) return false;
   if (value.phase !== "reported") return value.report === null;
   const report = value.report;
   return report !== null && typeof report === "object" && !Array.isArray(report) &&

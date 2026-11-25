@@ -1,10 +1,9 @@
-import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
-import { readPortableOriginalArtifacts } from '../../dist/infrastructure/filesystem/catalog/portable-original.js';
+import { readEditorialAuditSource } from '../operations/editorial-audit-population.mjs';
 import { discoverAccreditedPublications, readAccreditedPublication } from '../../dist/infrastructure/filesystem/catalog/accredited-publication.js';
 import { readActiveTechnicalPublication } from '../../dist/infrastructure/filesystem/catalog/technical-publication.js';
-import { LEGACY_CAMPAIGN_PROVIDERS, CAMPAIGN_PROVIDERS } from '../../dist/contracts/campaign-providers.js';
+import { CAMPAIGN_PROVIDERS } from '../../dist/contracts/campaign-providers.js';
 import { loadPreparationInputs } from '../../dist/infrastructure/filesystem/preparation/preparation-inputs.js';
 
 export const comparablePopulation = (left, right) =>
@@ -16,13 +15,12 @@ export const readEditorialPopulations = async (workspace) => {
   const root = resolve(workspace);
   const { fingerprints } = await loadPreparationInputs();
   const originals = [];
-  for (const providerId of LEGACY_CAMPAIGN_PROVIDERS) {
-    const { catalog, files } = await readPortableOriginalArtifacts(root, providerId);
-    const original = files.find((item) => item.name.endsWith('-catalog.json'));
-    if (!original) throw new Error(`Falta catálogo validado: ${providerId}`);
-    originals.push({ stage: 'originales_canonicos', providerId, products: catalog.productCount,
-      sourceSha256: createHash('sha256').update(original.content).digest('hex'),
-      sourceCut: catalog.endedAt, scope: catalog.scope, prefix: catalog.prefix,
+  for (const providerId of CAMPAIGN_PROVIDERS) {
+    const { source, endedAt } = await readEditorialAuditSource(root, providerId);
+    originals.push({ stage: 'originales_canonicos', providerId, products: source.productCount,
+      sourceSha256: source.catalogSha256, sourceCut: endedAt ?? source.catalogSha256,
+      scope: source.scope, prefix: source.prefix,
+      ...(source.record ? { sourceKind: 'manain-record', sourceQuality: source.record.quality } : {}),
       rulesSha256: fingerprints.rulesSha256, complete: true });
   }
   const final = [];

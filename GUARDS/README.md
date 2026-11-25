@@ -10,7 +10,7 @@ Esta guía describe los **controles actuales**, no un histórico de suites. La e
 
 `GUARDS/tests-domain-tests-guard.mjs` admite actualmente **dos dependencias transitivas exactas de tests hacia una fixture de Manain** y `accreditedCatalogIntegrations` admite **dos lecturas directas en una suite**. No existen excepciones activas de recuentos por cohorte. Son contratos verificables, no un baseline de errores ni permisos generales para acoplar nuevos tests a catálogos. La referencia exacta está en los mapas y las comprobaciones del guard, no en contadores históricos.
 
-El inventario de gobernanza `GUARDS/repository-governance.json` protege **17 rutas Markdown, 57 rutas de scripts y 57 comandos npm**. Bloquea rutas no autorizadas, cuotas y cambios de comandos o `bin`, pero no comprueba autorizaciones humanas ni hashes de contenido Markdown. Cualquier edición o baja de un archivo protegido requiere permiso expreso aun cuando el guard no pueda reconocerla.
+El inventario de gobernanza `GUARDS/repository-governance.json` protege **17 rutas Markdown, 57 rutas de scripts y 58 comandos npm**. Bloquea rutas no autorizadas, cuotas y cambios de comandos o `bin`, pero no comprueba autorizaciones humanas ni hashes de contenido Markdown. Cualquier edición o baja de un archivo protegido requiere permiso expreso aun cuando el guard no pueda reconocerla.
 
 ## Ejecutar los controles
 
