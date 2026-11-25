@@ -9,7 +9,7 @@ type ReviewedModelCompatibility = (Pick<EditorialFacts, "energy" | "workingHeigh
   readonly lastYear?: number;
   readonly advertisedHeightClassM?: number;
 }) | (Pick<EditorialFacts, "energy" | "workingHeightM"> & {
-  readonly family: "plataforma-articulada";
+  readonly family: "plataforma-articulada" | "plataforma-tijera";
   readonly invariantGeometry: true;
   readonly firstYear: number;
   readonly lastYear: number;
@@ -35,10 +35,11 @@ type ReviewedModelCompatibility = (Pick<EditorialFacts, "energy" | "workingHeigh
   readonly lengthM?: number;
   readonly voltageV?: number;
 }) | {
-  readonly family: "grupo-electrogeno" | "torre-iluminacion" | "fregadora" | "barredora" | "compactadora" | "transpaleta" | "plataforma-articulada";
+  readonly family: "grupo-electrogeno" | "torre-iluminacion" | "fregadora" | "barredora" | "maquina-limpieza" | "compactadora" | "transpaleta" | "plataforma-articulada" | "almacen-vertical" | "martillo-miniexcavadora" | "apilador";
   readonly firstYear: number | null;
   readonly lastYear: number | null;
   readonly anchoredCatalogOffer?: true;
+  readonly verifiedStructuredIdentity?: true;
   readonly familyFromSourcePath?: true;
   readonly corroboratingText?: RegExp;
   readonly sourceAnchors: Readonly<Record<string, string>>;
@@ -46,9 +47,14 @@ type ReviewedModelCompatibility = (Pick<EditorialFacts, "energy" | "workingHeigh
 };
 
 type ReviewedModelReuse = {
-  readonly compatibility: ReviewedModelCompatibility;
   readonly fields: readonly string[];
-};
+} & ({
+  readonly compatibility: ReviewedModelCompatibility;
+  readonly fallback?: never;
+} | {
+  readonly compatibility: Extract<ReviewedModelCompatibility, { readonly invariantGeometry: true }>;
+  readonly fallback: true;
+});
 
 type ReviewedModelFact = {
   readonly field: string;
@@ -65,7 +71,579 @@ type ReviewedModelDocument = {
   readonly reuse?: ReviewedModelReuse;
 };
 
+const manualTravelConflict = /\b(?:propulsion|traccion|desplazamiento (?:manual|electrico|motorizado)|transporte (?:manual|electrico|motorizado)|conduccion (?:manual|electrica)|autopropulsad[oa]s?|motor de (?:traccion|desplazamiento)|motorizad[oa]s? para (?:el )?(?:transporte|desplazamiento)|convertid[oa]s?|modificad[oa]s?)\b/u;
+
 const documents: readonly ReviewedModelDocument[] = [
+  {
+    url: "https://www.tennantco.com/es_es/1/machines/scrubbers/product.t7%2B.fregadora-de-suelo-de-conductor-sentado.m-t7.html", brand: "Tennant", model: "FCS T7+ D65", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "fregadora", firstYear: null, lastYear: null, anchoredCatalogOffer: true, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "Tennant", Modelo: "FCS T7+ D65", Peso: "471 KG", "RPM cepillo": "260" },
+      corroboratingText: /^(?=[\s\S]*\bdeposito de recuperacion de 110 litros\b)(?=[\s\S]*\b67 dba\b)la fregadora\b/u,
+      conflictingEvidence: /\b(?:deposito de solucion|capacidad de solucion|tanque de solucion)|\b(?:modificad[oa]|convertid[oa])\b/u }, fields: ["Capacidad del depósito de solución"] }, facts: [
+      { field: "Capacidad del depósito de solución", value: "110 L", support: "Tennant T7+, especificaciones oficiales para trayectorias de 650 y 800 mm: depósito de solución 110 l y recuperación 110 l. Capacidad común; no se atribuye batería, velocidad ni peso de otra edición." }
+    ]
+  },
+  {
+    url: "https://www.tennantco.com/es_es/1/machines/scrubbers/product.t7%2B.fregadora-de-suelo-de-conductor-sentado.m-t7.html", brand: "Tennant", model: "FCS T7+ D80", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "fregadora", firstYear: null, lastYear: null, anchoredCatalogOffer: true, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "Tennant", Modelo: "FCS T7+ D80", Peso: "471 KG", "RPM cepillo": "260" },
+      corroboratingText: /^(?=[\s\S]*\bdeposito de recuperacion de 110 litros\b)(?=[\s\S]*\b67 dba\b)la fregadora\b/u,
+      conflictingEvidence: /\b(?:deposito de solucion|capacidad de solucion|tanque de solucion)|\b(?:modificad[oa]|convertid[oa])\b/u }, fields: ["Capacidad del depósito de solución"] }, facts: [
+      { field: "Capacidad del depósito de solución", value: "110 L", support: "Tennant T7+, especificaciones oficiales para trayectorias de 650 y 800 mm: depósito de solución 110 l y recuperación 110 l. Capacidad común; no se atribuye batería, velocidad ni peso de otra edición." }
+    ]
+  },
+  {
+    url: "https://www.tennantco.com/es_es/1/machines/scrubbers/product.m-t17.html", brand: "Tennant", model: "FCS T17 C", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "fregadora", firstYear: null, lastYear: null, anchoredCatalogOffer: true, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "Tennant", Modelo: "FCS T17 C", "Anchura trabajo": "1,1 metros", "RPM cepillo": "500" },
+      corroboratingText: /^(?=[\s\S]*\b500 rpm\b)(?=[\s\S]*\b250 kg\b)la fregadora\b/u,
+      conflictingEvidence: /\b(?:deposito de recuperacion|tanque de recuperacion|modificad[oa]|convertid[oa])\b/u }, fields: ["Capacidad del depósito de recuperación"] }, facts: [
+      { field: "Capacidad del depósito de recuperación", value: "346 L", support: "Tennant T17, especificaciones oficiales: depósito de recuperación 346 l, cabezal cilíndrico hasta 500 rpm. No se asigna depósito de solución, variable con ES." }
+    ]
+  },
+  {
+    url: "https://csapps.jlg.com/OnlineManuals/Manuals/LiftLux%20Scissors/180-12_153-12/Operation_3122640_06-27-08_CE_Spanish.pdf", brand: "JLG", model: "153-12", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 17,
+      invariantGeometry: true, firstYear: 2006, lastYear: 2006 }, fields: ["Extensión de plataforma"] }, facts: [
+      { field: "Extensión de plataforma", value: "1,5 m", support: "Manual JLG 3122640, tabla 6-2, p. 6-3: plataforma retraída 4 m y extendida 5,5 m; recorrido nominal 1,5 m. Manual 3121336, tabla 6-2, confirma el recorrido con 3,9 y 5,4 m. Ficha JLG LSL-0805-3000-3378 de 2005, extensión manual estándar y cotas 3,91 y 5,40 m redondeadas a décimas. Se conserva la altura anunciada de 17 m como clase comercial." }
+    ]
+  },
+  {
+    url: "https://www.tennantco.com/content/dam/tennant/tennantco/products/machines/vacuums/Shared/vacuum-family-brochure-es-es.pdf", brand: "Tennant", model: "AP V-CAN-10", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "maquina-limpieza", firstYear: null, lastYear: null, anchoredCatalogOffer: true, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "Tennant", Modelo: "AP V-CAN-10" },
+      corroboratingText: /^(?=[\s\S]*\b4,1\s*kg\b)(?=[\s\S]*\b68\s*dba\b)\b(?:la )?aspiradora\b/u,
+      conflictingEvidence: /\b(?:caudal de aire|flujo de aire|potencia electrica maxima|potencia maxima (?:del motor|de aspiracion)|potencia de succion|convertid[oa]|modificad[oa]|capacidad (?:del|de) deposito|deposito de \d+)\b/u }, fields: ["Caudal de aire de aspiración", "Potencia eléctrica máxima del equipo", "Capacidad del depósito"] }, facts: [
+      { field: "Caudal de aire de aspiración", value: "29 l/s", support: "Folleto Tennant Familia de Aspiradores, p. 7, columna V-CAN-10, velocidad de flujo de aire 29 l/s." },
+      { field: "Potencia eléctrica máxima del equipo", value: "900 W", support: "Misma tabla, potencia máxima del conjunto de motores 900 W; no es potencia de succión." },
+      { field: "Capacidad del depósito", value: "10 l", support: "Misma tabla, capacidad del depósito 10 l." }
+    ]
+  },
+  {
+    url: "https://www.tennantco.com/content/dam/tennant/tennantco/products/machines/vacuums/Shared/vacuum-family-brochure-es-es.pdf", brand: "Tennant", model: "AP V-CAN-12", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "maquina-limpieza", firstYear: null, lastYear: null, anchoredCatalogOffer: true, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "Tennant", Modelo: "AP V-CAN-12" },
+      corroboratingText: /^(?=[\s\S]*\b6,1\s*kg\b)(?=[\s\S]*\b63\s*dba\b)\b(?:la )?aspiradora\b/u,
+      conflictingEvidence: /\b(?:caudal de aire|flujo de aire|potencia electrica maxima|potencia maxima (?:del motor|de aspiracion)|potencia de succion|convertid[oa]|modificad[oa]|capacidad (?:del|de) deposito|deposito de \d+)\b/u }, fields: ["Caudal de aire de aspiración", "Potencia eléctrica máxima del equipo", "Capacidad del depósito"] }, facts: [
+      { field: "Caudal de aire de aspiración", value: "44 l/s", support: "Folleto Tennant Familia de Aspiradores, p. 7, columna V-CAN-12, velocidad de flujo de aire 44 l/s." },
+      { field: "Potencia eléctrica máxima del equipo", value: "900 W", support: "Misma tabla, potencia máxima del conjunto de motores 900 W; no es potencia de succión." },
+      { field: "Capacidad del depósito", value: "12 l", support: "Misma tabla, capacidad del depósito 12 l." }
+    ]
+  },
+  {
+    url: "https://www.tennantco.com/content/dam/tennant/tennantco/products/machines/vacuums/Shared/vacuum-family-brochure-es-es.pdf", brand: "Tennant", model: "APL V-WD-27", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "maquina-limpieza", firstYear: null, lastYear: null, anchoredCatalogOffer: true, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "Tennant", Modelo: "APL V-WD-27" },
+      corroboratingText: /^(?=[\s\S]*\b7,8\s*kg\b)(?=[\s\S]*\b70\s*dba\b)\b(?:la )?aspiradora\b/u,
+      conflictingEvidence: /\b(?:caudal de aire|flujo de aire|potencia electrica maxima|potencia maxima (?:del motor|de aspiracion)|potencia de succion|convertid[oa]|modificad[oa]|capacidad (?:del|de) deposito|deposito de \d+)\b/u }, fields: ["Caudal de aire de aspiración", "Potencia eléctrica máxima del equipo", "Capacidad del depósito"] }, facts: [
+      { field: "Caudal de aire de aspiración", value: "55,6 l/s", support: "Folleto Tennant Familia de Aspiradores, p. 7, columna V-WD-27, velocidad de flujo de aire 55,6 l/s." },
+      { field: "Potencia eléctrica máxima del equipo", value: "1300 W", support: "Misma tabla, potencia máxima del conjunto de motores 1300 W; no es potencia de succión." },
+      { field: "Capacidad del depósito", value: "27 l", support: "Misma tabla, capacidad del depósito 27 l." }
+    ]
+  },
+  {
+    url: "https://www.tennantco.com/content/dam/tennant/tennantco/products/machines/vacuums/Shared/vacuum-family-brochure-es-es.pdf", brand: "Tennant", model: "APL V-WD-62", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "maquina-limpieza", firstYear: null, lastYear: null, anchoredCatalogOffer: true, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "Tennant", Modelo: "APL V-WD-62" },
+      corroboratingText: /^(?=[\s\S]*\b18,5\s*kg\b)(?=[\s\S]*\b74\s*dba\b)\b(?:la )?aspiradora\b/u,
+      conflictingEvidence: /\b(?:caudal de aire|flujo de aire|potencia electrica maxima|potencia maxima (?:del motor|de aspiracion)|potencia de succion|convertid[oa]|modificad[oa]|capacidad (?:del|de) deposito|deposito de \d+)\b/u }, fields: ["Caudal de aire de aspiración", "Potencia eléctrica máxima del equipo", "Capacidad del depósito"] }, facts: [
+      { field: "Caudal de aire de aspiración", value: "111,1 l/s", support: "Folleto Tennant Familia de Aspiradores, p. 7, columna V-WD-62, velocidad de flujo de aire 111,1 l/s." },
+      { field: "Potencia eléctrica máxima del equipo", value: "2600 W", support: "Misma tabla, potencia máxima del conjunto de motores 2600 W; no es potencia de succión." },
+      { field: "Capacidad del depósito", value: "62 l", support: "Misma tabla, capacidad del depósito 62 l." }
+    ]
+  },
+  {
+    url: "https://www.tennantco.com/content/dam/tennant/tennantco/products/machines/vacuums/Shared/vacuum-family-brochure-es-es.pdf", brand: "Tennant", model: "APL V-WD-72", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "maquina-limpieza", firstYear: null, lastYear: null, anchoredCatalogOffer: true, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "Tennant", Modelo: "APL V-WD-72" },
+      corroboratingText: /^(?=[\s\S]*\b23,4\s*kg\b)(?=[\s\S]*\b76\s*dba\b)\b(?:la )?aspiradora\b/u,
+      conflictingEvidence: /\b(?:caudal de aire|flujo de aire|potencia electrica maxima|potencia maxima (?:del motor|de aspiracion)|potencia de succion|convertid[oa]|modificad[oa])\b/u }, fields: ["Caudal de aire de aspiración", "Potencia eléctrica máxima del equipo"] }, facts: [
+      { field: "Caudal de aire de aspiración", value: "166,7 l/s", support: "Folleto Tennant Familia de Aspiradores, p. 7, columna V-WD-72, velocidad de flujo de aire 166,7 l/s." },
+      { field: "Potencia eléctrica máxima del equipo", value: "3600 W", support: "Misma tabla, potencia máxima del conjunto de motores 3600 W; no es potencia de succión." }
+    ]
+  },
+  {
+    url: "https://logitrans.com/electric-logiflex-stacker-with-straddle-legs-inox-ehssi/", brand: "LOGITRANS", model: "EHSS", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "apilador", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "EHSS", País: "ESPAÑA", "Capacidad de carga (kg)": "1000 KG" },
+      conflictingEvidence: manualTravelConflict }, fields: ["Propulsión"] }, facts: [
+      { field: "Propulsión", value: "Manual", support: "Ficha de fabricante EHSSI, sección Product information: electric lift and manual transport. Misma identidad documental que la elevación eléctrica de EHSS." }
+    ]
+  },
+  {
+    url: "https://malarlift.se/wp-content/uploads/2018/10/268388639-Manitou-Man-go-12-EN.pdf", brand: "Manitou", model: "MAN GO 12", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 12,
+      invariantGeometry: true, firstYear: 2017, lastYear: 2017 }, fields: ["Rotación de torreta"] }, facts: [
+      { field: "Rotación de torreta", value: "350°", support: "Ficha MAN GO 12, p. 2, Turret rotation 350°, corroborada en https://www.manitou.com/en-GW/our-machines/mobile-elevating-work-platforms/mango-12. Se omite giro de cesta por diferencias entre ediciones." }
+    ]
+  },
+  {
+    url: "https://assets-global.website-files.com/6076df67e862471f3868ae5f/6107c525a4c12a6946856f3b_OPERATOR%20MANUAL%20-%20NIFTY%20LIFT%20HR21%20DIESEL.pdf", brand: "Niftylift", model: "HR21D 4X4", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 21,
+      invariantGeometry: true, firstYear: 2015, lastYear: 2015 }, fields: ["Rotación de torreta"] }, facts: [
+      { field: "Rotación de torreta", value: "355°", support: "Manual Nifty HR21 4x4 diésel, 09/12, apartado 1.5 p. 4: turret rotation 355°, capacidad europea 225 kg." }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/english/133540.pdf", brand: "Genie", model: "Z-45/25J", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 16,
+      invariantGeometry: true, firstYear: 2014, lastYear: 2014 }, fields: ["Rotación de torreta", "Rotación de cesta"] }, facts: [
+      { field: "Rotación de torreta", value: "355°", support: "Genie PN 133540, quinta edición, p. 48, Z-45/25J: turntable rotation 355°." },
+      { field: "Rotación de cesta", value: "160°", support: "Misma tabla, platform rotation 160°." }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/english/133540.pdf", brand: "Genie", model: "Z-51/30J", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 18,
+      invariantGeometry: true, firstYear: 2013, lastYear: 2013 }, fields: ["Rotación de torreta", "Rotación de cesta"] }, facts: [
+      { field: "Rotación de torreta", value: "359°", support: "Genie PN 133540, quinta edición, p. 49, Z-51/30J: turntable rotation 359°." },
+      { field: "Rotación de cesta", value: "160°", support: "Misma tabla, platform rotation 160°." }
+    ]
+  },
+  {
+    url: "https://www.genielift.com/docs/default-source/product-specifications/articulated-boom-lift/en/z-3422ic_spec_2019.pdf", brand: "Genie", model: "Z-34/22", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 12,
+      invariantGeometry: true, firstYear: 2019, lastYear: 2019 }, fields: ["Rotación de torreta", "Rotación de cesta"] }, facts: [
+      { field: "Rotación de torreta", value: "355°", support: "Ficha Genie Z-34/22 IC 2019, p. 1, 2WD y 4WD: turntable rotation 355° no continuo." },
+      { field: "Rotación de cesta", value: "180°", support: "Misma tabla, platform rotation 180° en ambas variantes." }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/english/35531.pdf", brand: "Genie", model: "Z-30/20N", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 11,
+      invariantGeometry: true, firstYear: 2007, lastYear: 2007 }, fields: ["Rotación de torreta"] }, facts: [
+      { field: "Rotación de torreta", value: "359°", support: "Genie PN 35531, Specifications, giro de torreta 359°; mismo valor en manual 43651GR, segunda edición novena impresión. Se omite giro de cesta por diferencias entre generaciones." }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/english/227521.pdf", brand: "Genie", model: "Z-30/20NRJ", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 11,
+      invariantGeometry: true, firstYear: 2010, lastYear: 2010 }, fields: ["Rotación de torreta"] }, facts: [
+      { field: "Rotación de torreta", value: "359°", support: "Genie PN 227521, sexta edición tercera impresión, Specifications Z-30/20N with rotating jib: turntable rotation 359°, corroborado en PN 43651GR. No se atribuye giro de cesta ni plumín." }
+    ]
+  },
+  {
+    url: "https://universalplataformas.com/wp-content/uploads/2022/10/TD15-TD18-Genie-GS3390R_4390RT_5390RT.pdf", brand: "Genie", model: "GS4390RT", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 15,
+      invariantGeometry: true, firstYear: 2016, lastYear: 2016 }, fields: ["Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "3,98 m", support: "Genie B109352SP 04/2017, p. 1, GS-4390 RT, longitud exterior sin extensión C y anchura exterior G; corroborado en ficha Genie GS-4390 RT / GS-5390 RT 2012. No se atribuyen extensiones opcionales." },
+      { field: "Anchura de plataforma", value: "1,83 m", support: "Genie B109352SP 04/2017, p. 1, GS-4390 RT, longitud exterior sin extensión C y anchura exterior G; corroborado en ficha Genie GS-4390 RT / GS-5390 RT 2012. No se atribuyen extensiones opcionales." }
+    ]
+  },
+  {
+    url: "https://universalplataformas.com/wp-content/uploads/2022/10/TD15-TD18-Genie-GS3390R_4390RT_5390RT.pdf", brand: "Genie", model: "GS5390RT", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 18,
+      invariantGeometry: true, firstYear: 2013, lastYear: 2015 }, fields: ["Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "3,98 m", support: "Genie B109352SP 04/2017, p. 1, GS-5390 RT, longitud exterior sin extensión C y anchura exterior G; corroborado en ficha Genie GS-4390 RT / GS-5390 RT 2012. No se atribuyen extensiones opcionales." },
+      { field: "Anchura de plataforma", value: "1,83 m", support: "Genie B109352SP 04/2017, p. 1, GS-5390 RT, longitud exterior sin extensión C y anchura exterior G; corroborado en ficha Genie GS-4390 RT / GS-5390 RT 2012. No se atribuyen extensiones opcionales." }
+    ]
+  },
+  {
+    url: "https://www.conger.com/wp-content/uploads/Scissor_Lifts/GS_3232/B_GS-2032_GS-2632_GS-3232_SpecSheet_2015.pdf", brand: "Genie", model: "GS2632", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 10,
+      invariantGeometry: true, firstYear: 2016, lastYear: 2017 }, fields: ["Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "2,26 m", support: "Genie GS-2032/2632/3232, ficha 2015, p. 1, columna GS-2632, cotas C y D exteriores de plataforma sin extensión; incluye configuración CE." },
+      { field: "Anchura de plataforma", value: "0,81 m", support: "Genie GS-2032/2632/3232, ficha 2015, p. 1, columna GS-2632, cotas C y D exteriores de plataforma sin extensión; incluye configuración CE." }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/it/upload/file/2021/10/26/fb2440684c9e40fbb1a2a2814dd37fe7.pdf", brand: "LGMG", model: "SR1018D", reviewedOn: "2026-11-25",
+    reuse: { fallback: true, compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 12,
+      invariantGeometry: true, firstYear: 2022, lastYear: 2022 }, fields: ["Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "2,79 m", support: "LGMG SR18D 2020 V1, p. 2, columna SR1018D, cotas C y D; corroborado en ficha actual del fabricante. Altura comercial 12 m." },
+      { field: "Anchura de plataforma", value: "1,6 m", support: "LGMG SR18D 2020 V1, p. 2, columna SR1018D, cotas C y D; corroborado en ficha actual del fabricante. Altura comercial 12 m." }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/it/upload/file/2021/10/26/fb2440684c9e40fbb1a2a2814dd37fe7.pdf", brand: "LGMG", model: "SR1218D", reviewedOn: "2026-11-25",
+    reuse: { fallback: true, compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 14,
+      invariantGeometry: true, firstYear: 2022, lastYear: 2023 }, fields: ["Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "2,79 m", support: "LGMG SR18D 2020 V1, p. 2, columna SR1218D, cotas C y D; corroborado en ficha actual del fabricante. Altura comercial 14 m." },
+      { field: "Anchura de plataforma", value: "1,6 m", support: "LGMG SR18D 2020 V1, p. 2, columna SR1218D, cotas C y D; corroborado en ficha actual del fabricante. Altura comercial 14 m." }
+    ]
+  },
+  {
+    url: "https://en.lgmg.com.cn/upload/file/2020/10/12/fb7fe17b8e8a4b29b24e70bc68ef09e8.pdf", brand: "LGMG", model: "AS1212E", reviewedOn: "2026-11-25",
+    reuse: { fallback: true, compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 14,
+      invariantGeometry: true, firstYear: 2022, lastYear: 2023 }, fields: ["Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "2,26 m", support: "LGMG serie E 2020 V1, p. 2, columna AS1212E, cotas C y D; corroborado en ficha oficial AS1212E." },
+      { field: "Anchura de plataforma", value: "1,12 m", support: "LGMG serie E 2020 V1, p. 2, columna AS1212E, cotas C y D; corroborado en ficha oficial AS1212E." }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/upload/file/2022/06/09/21274abc959a44d68dc06a8d28265ff3.pdf", brand: "LGMG", model: "S0808EII", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 10,
+      invariantGeometry: true, firstYear: 2023, lastYear: 2024 }, fields: ["Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "2,26 m", support: "LGMG Generation II 2022, p. 2, tabla Electric Motor Drive, columna S0808EII, cotas B y C; corroborado en ficha oficial S0808EII." },
+      { field: "Anchura de plataforma", value: "0,79 m", support: "LGMG Generation II 2022, p. 2, tabla Electric Motor Drive, columna S0808EII, cotas B y C; corroborado en ficha oficial S0808EII." }
+    ]
+  },
+  {
+    url: "https://documentacionqr.com/sat/objects/955052/HAULOTTE_COMPACT%2010_FICHA_TECNICA_2018.pdf", brand: "Haulotte", model: "Compact 12", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 12,
+      invariantGeometry: true, firstYear: 2018, lastYear: 2018 }, fields: ["Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "2,31 m", support: "Haulotte Compact 8 W/10/12, 03/2018, p. 2, columna Compact 12, cotas A y C." },
+      { field: "Anchura de plataforma", value: "1,2 m", support: "Haulotte Compact 8 W/10/12, 03/2018, p. 2, columna Compact 12, cotas A y C." }
+    ]
+  },
+  {
+    url: "https://www.myrlandkran.no/file/58611b104685/Brosjyre%20Skyjack%20SJ6832RTE%20(Engelsk).pdf", brand: "Skyjack", model: "SJ6832RT", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 12,
+      invariantGeometry: true, firstYear: 2014, lastYear: 2015 }, fields: ["Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "2,44 m", support: "Skyjack Compact Series 11/2010, p. 2, SJ6832 RT: I 96 in y H 56 in; corroborados en ficha fabricante KC 04/2020 (2,44 m y 1,42 m)." },
+      { field: "Anchura de plataforma", value: "1,42 m", support: "Skyjack Compact Series 11/2010, p. 2, SJ6832 RT: I 96 in y H 56 in; corroborados en ficha fabricante KC 04/2020 (2,44 m y 1,42 m)." }
+    ]
+  },
+  {
+    url: "https://www.atirent.com/wp-content/uploads/2022/11/HA16RTJ.pdf", brand: "Haulotte", model: "HA16RTJ", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 16,
+      invariantGeometry: true, firstYear: 2016, lastYear: 2018 }, fields: ["Rotación de torreta", "Rotación de cesta"] }, facts: [
+      { field: "Rotación de torreta", value: "355°", support: "Ficha HA16 RTJ / RTJ O 06/2016, p. 2: 355° no continuo; corroborada en ficha 08/2018. No aplicable a PRO." },
+      { field: "Rotación de cesta", value: "165°", support: "Mismas fichas, recorrido total -75°/+90°. No acredita dimensiones de cesta opcional." }
+    ]
+  },
+  {
+    url: "https://www.grupogalindoalquiler.es/wp-content/uploads/2017/06/haulotte-ha32px-es_1.pdf", brand: "Haulotte", model: "HA32PX", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 32,
+      invariantGeometry: true, firstYear: 2004, lastYear: 2013 }, fields: ["Rotación de torreta"] }, facts: [
+      { field: "Rotación de torreta", value: "360°", support: "Ficha HA32 PX 07/2013, p. 2: 360°; corroborada en ficha 03/2004 (https://gruaslozano.com/wp-content/uploads/2020/11/HA32PX-n.pdf). Se omite giro de cesta por diferencia entre ediciones." }
+    ]
+  },
+  {
+    url: "https://www.grarasulin.com/wp-content/uploads/2023/05/ha20px_uk_bda0a.pdf", brand: "Haulotte", model: "HA20PX", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 20,
+      invariantGeometry: true, firstYear: 2011, lastYear: 2016 }, fields: ["Rotación de torreta", "Rotación de cesta"] }, facts: [
+      { field: "Rotación de torreta", value: "360°", support: "Ficha HA20 PX 11/2011, p. 2, giro continuo 360°." },
+      { field: "Rotación de cesta", value: "180°", support: "Misma tabla, recorrido total +90°/-90°; no modifica altura comercial declarada." }
+    ]
+  },
+  {
+    url: "https://tankrent.cl/wp-content/uploads/2024/07/HA260PX.pdf", brand: "Haulotte", model: "HA260PX", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 26,
+      invariantGeometry: true, firstYear: 2005, lastYear: 2016 }, fields: ["Rotación de torreta", "Rotación de cesta"] }, facts: [
+      { field: "Rotación de torreta", value: "360°", support: "Ficha HA260PX 06/2005, p. 2, giro continuo 360°; corroborado en manual HA20/260 2016 (https://www.sico.cz/wp-content/uploads/2021/05/Haulotte-HA-20-PX.pdf), características." },
+      { field: "Rotación de cesta", value: "180°", support: "Mismas tablas, giro hidráulico de cesta 180° totales. No se atribuye cesta opcional." }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/english/133094.pdf", brand: "Genie", model: "Z-80/60", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 26,
+      invariantGeometry: true, firstYear: 2015, lastYear: 2015 }, fields: ["Rotación de torreta", "Rotación de cesta"] }, facts: [
+      { field: "Rotación de torreta", value: "360°", support: "Manual Genie Z-80/60 133094, cuarta edición segunda impresión, p. 54: 360° continuo." },
+      { field: "Rotación de cesta", value: "160°", support: "Mismo manual, p. 54, giro total 160°; corroborado por manual de servicio de febrero de 2015. No se atribuyen dimensiones opcionales." }
+    ]
+  },
+  {
+    url: "https://documentacionqr.com/sat/objects/919708/GENIE_Z62-40_MANUAL_OPERARIO_ES.pdf", brand: "Genie", model: "Z-62/40", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 20,
+      invariantGeometry: true, firstYear: 2017, lastYear: 2019 }, fields: ["Rotación de torreta", "Rotación de cesta"] }, facts: [
+      { field: "Rotación de torreta", value: "360°", support: "Manual Genie Z-62/40 CE 1257653SP, primera edición, p. 59: 360° continuos." },
+      { field: "Rotación de cesta", value: "180°", support: "Mismo manual, p. 59: giro de plataforma 180°. No acredita cesta opcional ni versión TRAX." }
+    ]
+  },
+  {
+    url: "https://manuals.genielift.com/operators/english/82597.pdf", brand: "Genie", model: "Z-34/22N", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 12,
+      invariantGeometry: true, firstYear: 2012, lastYear: 2012 }, fields: ["Rotación de torreta"] }, facts: [
+      { field: "Rotación de torreta", value: "355°", support: "Manual Genie Z-34/22N 82597, tercera edición cuarta impresión, p. 32: giro de torreta 355°. No se atribuye giro de cesta por diferencias entre ediciones." }
+    ]
+  },
+  {
+    url: "https://www.powerplant.ie/wp-content/uploads/2016/12/haulotte_optimum8.pdf", brand: "Haulotte", model: "Optimum 8", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 8,
+      invariantGeometry: true, firstYear: 2017, lastYear: 2020 }, fields: ["Extensión de plataforma"] }, facts: [
+      { field: "Extensión de plataforma", value: "0,86 m", support: "Haulotte Optimum 8, ficha 10/2016, p. 2, Length - extension 0,86 m; corroborada en ficha 06/2020 (https://portalimages.blob.core.windows.net/products/pdfs/skoluend_Haulotte-Optimum-8-Scissor-Lift-Specifications-United.pdf), p. 2, generación 7,77 m y anchura total 0,79 m. Se excluye 2016 y anteriores por coexistencia de generaciones; no se modifica la altura comercial declarada." }
+    ]
+  },
+  {
+    url: "https://www.yale.com/es-es/emea/apiladores-de-pales/msc12/", brand: "YALE", model: "MSC12", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "apilador", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "YALE", Modelo: "MSC12", Longitud: "1800 mm", Anchura: "2270 mm", Altura: "3500 mm", Peso: "600 KG", "Capacidad de carga (kg)": "1200 KG" },
+      conflictingEvidence: /\b(?:elevacion proporcional|control proporcional|convertid[oa]|modificad[oa])\b/u }, fields: ["Elevación proporcional"] }, facts: [
+      { field: "Elevación proporcional", value: "Sí", support: "Ficha MSC12, apartado de características: control proporcional de elevación. No se acreditan dimensiones ni opciones de mástil." }
+    ]
+  },
+  {
+    url: "https://logitrans.com/solutions/pallet-tansportation/panther-maxi-fully-powered-pallet-truck/", brand: "LOGITRANS", model: "Panther Maxi", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "transpaleta", firstYear: null, lastYear: null, anchoredCatalogOffer: true, familyFromSourcePath: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "Panther Maxi", País: "ESPAÑA", "Capacidad de carga (kg)": "1800 KG", Motorización: "Eléctrico" },
+      conflictingEvidence: /\b(?:freno|cargador|convertid[oa]|modificad[oa])\b/u }, fields: ["Freno de motor", "Cargador"] }, facts: [
+      { field: "Freno de motor", value: "Incorporado", support: "Panther Maxi, Product information: Motor brake." },
+      { field: "Cargador", value: "Integrado", support: "Panther Maxi, Product information: integrated charger." }
+    ]
+  },
+  {
+    url: "https://logitrans.com/logiq-200-quarter-pallet-lifter/", brand: "LOGITRANS", model: "LogiQ 200/300", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "transpaleta", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "LogiQ 200/300", País: "ESPAÑA", "Capacidad de carga (kg)": "200/300 KG" },
+      conflictingEvidence: /\b(?:proteccion de pies|protectores? (?:de|para) (?:los )?pies|convertid[oa]|modificad[oa])\b/u }, fields: ["Protección de pies"] }, facts: [
+      { field: "Protección de pies", value: "Protectores en ruedas de dirección", support: "LogiQ 200 y LogiQ 300, Product information: foot protection on steering wheels." }
+    ]
+  },
+  {
+    url: "https://logitrans.com/fully-powered-logiflex-stacker-mini-self-mini/", brand: "LOGITRANS", model: "Self Mini", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "apilador", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "Self Mini", País: "ESPAÑA", "Capacidad de carga (kg)": "1000 KG", Motorización: "Eléctrico" },
+      conflictingEvidence: /\b(?:accionamiento de elevacion|motor de elevacion|bomba de elevacion|elevacion manual|bombeo manual|convertid[oa]|modificad[oa])\b/u }, fields: ["Accionamiento de elevación"] }, facts: [
+      { field: "Accionamiento de elevación", value: "Eléctrico", support: "SELF MINI, Product information: electrical propulsion and pumping (for lifting and lowering)." }
+    ]
+  },
+  {
+    url: "https://logitrans.com/fully-powered-logiflex-stacker-with-straddle-legs-selfs-mini/", brand: "LOGITRANS", model: "Self Mini S", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "apilador", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "Self Mini S", País: "ESPAÑA", "Capacidad de carga (kg)": "1000 KG", Motorización: "Eléctrico" },
+      conflictingEvidence: /\b(?:accionamiento de elevacion|motor de elevacion|bomba de elevacion|elevacion manual|bombeo manual|convertid[oa]|modificad[oa])\b/u }, fields: ["Accionamiento de elevación"] }, facts: [
+      { field: "Accionamiento de elevación", value: "Eléctrico", support: "SELFS MINI, Product information: electrical propulsion and pumping (for lifting and lowering)." }
+    ]
+  },
+  {
+    url: "https://logitrans.com/fully-powered-logiflex-stacker-self-maxi/", brand: "LOGITRANS", model: "Self Maxi", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "apilador", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "Self Maxi", País: "ESPAÑA", "Capacidad de carga (kg)": "1000 KG", Motorización: "Eléctrico" },
+      conflictingEvidence: /\b(?:accionamiento de elevacion|motor de elevacion|bomba de elevacion|elevacion manual|bombeo manual|convertid[oa]|modificad[oa])\b/u }, fields: ["Accionamiento de elevación"] }, facts: [
+      { field: "Accionamiento de elevación", value: "Eléctrico", support: "SELF MAXI, Product information: electrical propulsion and pumping (lifting and lowering)." }
+    ]
+  },
+  {
+    url: "https://logitrans.com/fully-powered-logiflex-stacker-with-straddle-legs-selfs-maxi/", brand: "LOGITRANS", model: "Self Maxi S", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "apilador", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "Self Maxi S", País: "ESPAÑA", "Capacidad de carga (kg)": "1000 KG", Motorización: "Eléctrico" },
+      conflictingEvidence: /\b(?:accionamiento de elevacion|motor de elevacion|bomba de elevacion|elevacion manual|bombeo manual|convertid[oa]|modificad[oa])\b/u }, fields: ["Accionamiento de elevación"] }, facts: [
+      { field: "Accionamiento de elevación", value: "Eléctrico", support: "SELFS MAXI, Product information: electrical propulsion and pumping (lifting and lowering)." }
+    ]
+  },
+  {
+    url: "https://logitrans.com/electric-logiflex-stacker-elf/", brand: "LOGITRANS", model: "Logiflex SE", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "apilador", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "Logiflex SE", País: "ESPAÑA", "Capacidad de carga (kg)": "1000 KG", Motorización: "Eléctrico" },
+      conflictingEvidence: /\b(?:accionamiento de elevacion|motor de elevacion|bomba de elevacion|elevacion manual|bombeo manual|convertid[oa]|modificad[oa])\b/u }, fields: ["Accionamiento de elevación"] }, facts: [
+      { field: "Accionamiento de elevación", value: "Eléctrico", support: "ELF, Product information: manual propulsion and electrical pumping (for lifting and lowering)." }
+    ]
+  },
+  {
+    url: "https://logitrans.com/manual-logiflex-stacker-lf/", brand: "LOGITRANS", model: "Logiflex M", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "apilador", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "Logiflex M", País: "ESPAÑA", "Capacidad de carga (kg)": "1000 KG" },
+      conflictingEvidence: /\b(?:direccion|convertid[oa]|modificad[oa])\b/u }, fields: ["Dirección"] }, facts: [
+      { field: "Dirección", value: "Asistida", support: "LF, Product information: assisted steering on the wheels for easy operation." }
+    ]
+  },
+  {
+    url: "https://logitrans.com/manual-logiflex-stacker-with-straddle-legs-lfs/", brand: "LOGITRANS", model: "Logiflex MS", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "apilador", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "Logiflex MS", País: "ESPAÑA", "Capacidad de carga (kg)": "1000 KG" },
+      conflictingEvidence: /\b(?:direccion|convertid[oa]|modificad[oa])\b/u }, fields: ["Dirección"] }, facts: [
+      { field: "Dirección", value: "Asistida", support: "LFS, Product information: assisted steering on the wheels for easy operation." }
+    ]
+  },
+  {
+    url: "https://logitrans.com/manual-logiflex-stacker-inox-hsi-and-manual-logiflex-stacker-with-straddle-legs-inox-hssi/", brand: "LOGITRANS", model: "HSI HSSI", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "apilador", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "HSI HSSI", País: "ESPAÑA", "Capacidad de carga (kg)": "1000 KG" },
+      conflictingEvidence: manualTravelConflict }, fields: ["Propulsión"] }, facts: [
+      { field: "Propulsión", value: "Manual", support: "HSI / HSSI, Product information: manual lifting and transport capabilities." }
+    ]
+  },
+  {
+    url: "https://www.grupomaenar.com/imagenes/pdf/564976673-Manual%20Pison%20Husqvarna.pdf", brand: "HUSQVARNA", model: "LT 6005", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "compactadora", firstYear: 2021, lastYear: 2021, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "HUSQVARNA", Modelo: "LT 6005", "Ancho bandeja": "230 mm", Motor: "Gasolina" },
+      conflictingEvidence: /\b(?:frecuencia|amplitud|modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Frecuencia de vibración del modelo", "Amplitud nominal de vibración"] }, facts: [
+      { field: "Frecuencia de vibración del modelo", value: "11,9 Hz", support: "Manual Husqvarna LT 5005 / LT 6005, 957-002, 14/10/2019, p. 17, Technical data: LT 6005, 230 mm, 11,9 Hz; corroborado por manual con declaración CE 18/08/2021 (https://manuals.plus/m/5cd75efc04f842b82e1c7847b28df6409e883b8144e3eea357c0e857f76f33d8), Technical Data. Parámetro nominal, no exposición del operario." },
+      { field: "Amplitud nominal de vibración", value: "67,7 mm", support: "Mismas tablas LT 6005, amplitud 67,7 mm en ambas anchuras de pisón. No se modifica potencia ni peso declarados." }
+    ]
+  },
+  {
+    url: "https://beavervalleysupply.com/wp-content/uploads/2022/09/Epiroc-SB-Rock-Concrete-Breaker-Brochure.pdf", brand: "EPIROC", model: "SB 202", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "martillo-miniexcavadora", firstYear: 2022, lastYear: 2022, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "EPIROC", Modelo: "SB 202", Peso: "200 kg" },
+      conflictingEvidence: /\b(?:presion|diametro|caudal|modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Presión de aceite de trabajo del modelo", "Diámetro nominal de herramienta compatible", "Caudal de aceite del modelo"] }, facts: [
+      { field: "Presión de aceite de trabajo del modelo", value: "100–150 bar", support: "Epiroc SB range, tabla de especificaciones SB 202, Operating pressure: 100–150 bar; valor de diseño del implemento, no presión medida de la unidad." },
+      { field: "Diámetro nominal de herramienta compatible", value: "65 mm", support: "Misma tabla SB 202, Tool diameter 65 mm; no acredita herramienta instalada." },
+      { field: "Caudal de aceite del modelo", value: "35–65 l/min", support: "Misma tabla SB 202, Oil flow rate 35–65 l/min; requisito nominal del implemento, no caudal medido de la portadora." }
+    ]
+  },
+  {
+    url: "https://vamenoleggio.it/images/mezzi/Piattaforme-Aeree/schede-tecniche/24-Scheda-tecnica-Haulotte-ha12ip-it.pdf", brand: "Haulotte", model: "HA12IP", reviewedOn: "2026-11-25",
+    reuse: { fallback: true, compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 12,
+      invariantGeometry: true, firstYear: 2012, lastYear: 2018 }, fields: ["Anchura de plataforma"] }, facts: [
+      { field: "Anchura de plataforma", value: "0,8 m", support: "Haulotte HA12 IP, ficha 09/2016, p. 2, cota G 0,8 m en cesta estándar y ancha; corroborada en ficha 03/2012 (https://irp.cdn-website.com/18c68e09/files/uploaded/Haulotte-HA12IP-UK-BD.pdf). No se atribuye capacidad ni dimensión F de la cesta opcional." }
+    ]
+  },
+  {
+    url: "https://www.coalci.es/wp-content/uploads/2021/07/haulotte-ha15ip.pdf", brand: "Haulotte", model: "HA15IP", reviewedOn: "2026-11-25",
+    reuse: { fallback: true, compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 15,
+      invariantGeometry: true, firstYear: 2016, lastYear: 2018 }, fields: ["Anchura de plataforma"] }, facts: [
+      { field: "Anchura de plataforma", value: "0,8 m", support: "Haulotte HA15 IP, ficha 01/2017, p. 2, cota G 0,8 m estándar y opcional; corroborada en ficha 06/2012 (https://joysat.eu/wp-content/uploads/2020/09/Caracter%C2%B0stiques-Ta%CC%88cniques-HA15IP.pdf). La altura comercial redondeada de 15 m identifica la clase; no se modifica la altura declarada ni se atribuye dimensión F." }
+    ]
+  },
+  {
+    url: "https://alphapub.blob.core.windows.net/arena/documents/7805236.pdf", brand: "JLG", model: "E300AJP", reviewedOn: "2026-11-25",
+    reuse: { fallback: true, compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 11,
+      invariantGeometry: true, firstYear: 2006, lastYear: 2006 }, fields: ["Anchura de plataforma"] }, facts: [
+      { field: "Anchura de plataforma", value: "0,76 m", support: "JLG Europe SL094-ENGLISH, p. 2, E300AJP: dimensión corta de plataforma 0,76 m; corroborada en ficha E300AJP (https://www.plataformasnoain.com/wp-content/uploads/2021/10/JLG-E300AJP.pdf). No se atribuyen altura, capacidad, alcance ni longitud de plumín de otra edición." }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/es/upload/file/2023/08/02/36d9540227f143e49d0421bb7c7ac093.pdf", brand: "LGMG", model: "A14JE", reviewedOn: "2026-11-25",
+    reuse: { fallback: true, compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 16,
+      invariantGeometry: true, firstYear: 2022, lastYear: 2023 }, fields: ["Anchura de plataforma"] }, facts: [
+      { field: "Anchura de plataforma", value: "0,76 m", support: "LGMG A14JE, folleto 05/2023, tabla Especificaciones y Opciones, anchura de plataforma 0,76 m; corroborada en manual A14JE, sección 4.2 (https://lgmgau.com.au/wp-content/uploads/2022/02/A14JE-Operation-Manual.pdf). Altura comercial 16 m; no se atribuye tipo de batería ni versión de litio." }
+    ]
+  },
+  {
+    url: "https://www.cc-equipment.be/fileadmin/pdf/technical%20sheets/technical%20sheets%20hoogwerkers/Knikhoogwerkers/CC_Heftrucks_fiche_hoogwerker_knikarm_450AJ.pdf", brand: "JLG", model: "450 AJ SII", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 16,
+      invariantGeometry: true, firstYear: 2013, lastYear: 2013 }, fields: ["Anchura de plataforma"] }, facts: [
+      { field: "Anchura de plataforma", value: "0,76 m", support: "JLG 450AJ Series II, ficha CE, tabla de dimensiones: cota corta 0,76 m; no atribuye longitud de cesta opcional ni longitud de plumín de otra edición." }
+    ]
+  },
+  {
+    url: "https://www.eagleplatforms.com/wp-content/uploads/HAULOTTE-COMPACT-12DX-SPEC-SHEET.pdf", brand: "Haulotte", model: "COMPACT-12DX", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 12,
+      invariantGeometry: true, firstYear: 2018, lastYear: 2018 }, fields: ["Extensión de plataforma"] }, facts: [
+      { field: "Extensión de plataforma", value: "1,2 m", support: "Haulotte Compact 12 DX, ficha 07/2013, p. 2, Platform extension length 1,2 m y equipamiento estándar; corroborada en ficha oficial (https://www.haulotte.co.uk/en_GB/product/compact-12-dx). Altura de trabajo comercial 12 m, no se altera." }
+    ]
+  },
+  {
+    url: "https://gtmpoweredaccess.co.uk/media/hollandlift-n-120-140-165-195el12-gtm-operator-manual.pdf", brand: "Hollandlift", model: "N-165EL12", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 18.5,
+      invariantGeometry: true, firstYear: 2011, lastYear: 2011 }, fields: ["Extensión de plataforma", "Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      { field: "Extensión de plataforma", value: "1,5 m", support: "Holland Lift N-120/140/165/195EL12 Rev. A, 21/11/2007, apartado 2.4.3, p. 11, N-165EL12: extensión de plataforma 1,50 m, altura 18,5 m y capacidad 500 kg; corroborada en manual HL-190 E12/N-165EL12 Rev. F 2018, apartado 10.3, p. 52. No altera capacidad ni altura." },
+      { field: "Longitud de plataforma", value: "3,38 m", support: "Holland Lift N-120/140/165/195EL12 Rev. A, 21/11/2007, apartado 2.4.3, p. 11, N-165EL12: Platform (retracted), 3,38 x 1,16 m." },
+      { field: "Anchura de plataforma", value: "1,16 m", support: "Misma tabla, Platform (retracted), 3,38 x 1,16 m; anchura constante con plataforma extendida." }
+    ]
+  },
+  {
+    url: "https://logitrans.com/electric-highlifter-ehl/", brand: "LOGITRANS", model: "EHL", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "transpaleta", firstYear: null, lastYear: null, anchoredCatalogOffer: true, familyFromSourcePath: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "EHL", País: "ESPAÑA", "Capacidad de carga (kg)": "1500 KG", Motorización: "Eléctrico" }, conflictingEvidence: manualTravelConflict }, fields: ["Propulsión", "Accionamiento de elevación"] },
+    facts: [{ field: "Propulsión", value: "Manual", support: "Ficha EHL, sección Product information y gama Highlifters (https://logitrans.com/solutions/pallet-lifters-stackers/): elevación eléctrica y transporte manual; no acredita tracción eléctrica." }, { field: "Accionamiento de elevación", value: "Eléctrico", support: "Ficha EHL, Product information: electrical lifting." }]
+  },
+  {
+    url: "https://logitrans.com/manual-highlifter-hl/", brand: "LOGITRANS", model: "HL", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "transpaleta", firstYear: null, lastYear: null, anchoredCatalogOffer: true, familyFromSourcePath: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "HL", País: "ESPAÑA", "Capacidad de carga (kg)": "1500 KG" }, conflictingEvidence: manualTravelConflict }, fields: ["Propulsión", "Accionamiento de elevación"] },
+    facts: [{ field: "Propulsión", value: "Manual", support: "Ficha HL, Product information: bombeo manual; gama Highlifters (https://logitrans.com/solutions/pallet-lifters-stackers/), transporte manual. No se atribuye configuración opcional." }, { field: "Accionamiento de elevación", value: "Manual", support: "Ficha HL, Product information: manual pumping." }]
+  },
+  {
+    url: "https://logitrans.com/manual-highlifter-inox-hli/", brand: "LOGITRANS", model: "HLI", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "transpaleta", firstYear: null, lastYear: null, anchoredCatalogOffer: true, familyFromSourcePath: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "HLI", País: "ESPAÑA", "Capacidad de carga (kg)": "1500 KG" }, conflictingEvidence: manualTravelConflict }, fields: ["Propulsión"] },
+    facts: [{ field: "Propulsión", value: "Manual", support: "Ficha HLI, Facts and features: elevación y transporte manuales." }]
+  },
+  {
+    url: "https://logitrans.com/manual-highlifter-inox-plus-hlip/", brand: "LOGITRANS", model: "HLI Plus", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "transpaleta", firstYear: null, lastYear: null, anchoredCatalogOffer: true, familyFromSourcePath: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "HLI Plus", País: "ESPAÑA", "Capacidad de carga (kg)": "1500 KG" }, conflictingEvidence: manualTravelConflict }, fields: ["Propulsión"] },
+    facts: [{ field: "Propulsión", value: "Manual", support: "Ficha HLIP, Facts: elevación y transporte manuales; variante Inox Plus." }]
+  },
+  {
+    url: "https://logitrans.com/electric-highlifter-inox-ehli/", brand: "LOGITRANS", model: "EHLI", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "transpaleta", firstYear: null, lastYear: null, anchoredCatalogOffer: true, familyFromSourcePath: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "EHLI", País: "ESPAÑA", "Capacidad de carga (kg)": "1500 KG", Motorización: "Eléctrico" }, conflictingEvidence: manualTravelConflict }, fields: ["Propulsión"] },
+    facts: [{ field: "Propulsión", value: "Manual", support: "Ficha EHLI, Key features: elevación eléctrica y transporte manual." }]
+  },
+  {
+    url: "https://logitrans.com/electric-highlifter-inox-plus-ehlip/", brand: "LOGITRANS", model: "EHLI Plus", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "transpaleta", firstYear: null, lastYear: null, anchoredCatalogOffer: true, familyFromSourcePath: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "EHLI Plus", País: "ESPAÑA", "Capacidad de carga (kg)": "1500 KG", Motorización: "Eléctrico" }, conflictingEvidence: manualTravelConflict }, fields: ["Propulsión"] },
+    facts: [{ field: "Propulsión", value: "Manual", support: "Ficha EHLIP, Facts: elevación eléctrica y transporte manual; variante Inox Plus." }]
+  },
+  {
+    url: "https://logitrans.com/weighing-scale-pallet-truck-wsp-2200/", brand: "LOGITRANS", model: "WSP 2200", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "transpaleta", firstYear: null, lastYear: null, anchoredCatalogOffer: true, familyFromSourcePath: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "WSP 2200", País: "ESPAÑA", "Capacidad de carga (kg)": "2200 KG" }, conflictingEvidence: manualTravelConflict }, fields: ["Propulsión", "Funciones de pesaje"] },
+    facts: [{ field: "Propulsión", value: "Manual", support: "Ficha WSP 2200, Product information, y clasificación expresa de WSP 2200 en Manual pallet trucks (https://logitrans.com/US/solutions/pallet-tansportation/manual-pallet-trucks/); alimentación de la balanza no equivale a tracción." }, { field: "Funciones de pesaje", value: "Tara, recuento, suma y puesta a cero", support: "Ficha WSP 2200, Product information: taring, counting, summation and zero setting." }]
+  },
+  {
+    url: "https://logitrans.com/electric-logitilt/", brand: "LOGITRANS", model: "Logitilt LT", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "transpaleta", firstYear: null, lastYear: null, anchoredCatalogOffer: true, familyFromSourcePath: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "Logitilt LT", País: "ESPAÑA", "Capacidad de carga (kg)": "1000 KG", Motorización: "Eléctrico" }, conflictingEvidence: manualTravelConflict }, fields: ["Propulsión"] },
+    facts: [{ field: "Propulsión", value: "Manual", support: "Manual de fabricante Logitilt LT/LTS, 20.04.2020, p. 6, apartado 3.1: empuje y arrastre desde el timón, independiente de elevación e inclinación (https://www.manualslib.com/manual/1823181/Logitrans-Logitilt-Lt1001.html?page=6); ficha LT. No se alteran ángulos ni se atribuye equipamiento opcional." }]
+  },
+  {
+    url: "https://logitrans.com/electric-logitilt-with-straddle-legs/", brand: "LOGITRANS", model: "Logitilt LTS", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "transpaleta", firstYear: null, lastYear: null, anchoredCatalogOffer: true, familyFromSourcePath: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "Logitilt LTS", País: "ESPAÑA", "Capacidad de carga (kg)": "1000 KG", Motorización: "Eléctrico" }, conflictingEvidence: manualTravelConflict }, fields: ["Propulsión"] },
+    facts: [{ field: "Propulsión", value: "Manual", support: "Manual de fabricante Logitilt LT/LTS, 20.04.2020, p. 6, apartado 3.1: empuje y arrastre desde el timón, variante LTS con patas abiertas (https://www.manualslib.com/manual/1823181/Logitrans-Logitilt-Lt1001.html?page=6). No se alteran ángulos ni se atribuye equipamiento opcional." }]
+  },
+  {
+    url: "https://logitrans.com/electric-logitilt-inox-lti/", brand: "LOGITRANS", model: "Logitilt LTI", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "transpaleta", firstYear: null, lastYear: null, anchoredCatalogOffer: true, familyFromSourcePath: true,
+      sourceAnchors: { Marca: "LOGITRANS", Modelo: "Logitilt LTI", País: "ESPAÑA", "Capacidad de carga (kg)": "1000 KG", Motorización: "Eléctrico" }, conflictingEvidence: manualTravelConflict }, fields: ["Propulsión"] },
+    facts: [{ field: "Propulsión", value: "Manual", support: "Manual de fabricante Logitilt INOX/LTI, 06.04.2021, p. 6, apartado 3.1: empujar/tirar desde detrás del timón, independiente de elevación e inclinación (https://www.manualslib.fr/manual/468789/Logitrans-Logitilt-Inox-Lti-Serie.html?page=6). No se alteran ángulos ni se atribuye equipamiento opcional." }]
+  },
+  {
+    url: "https://used-equipement.haulotte.com/images/atts/cdb14e_COMPACT8-10N%20FR.pdf", brand: "Haulotte", model: "COMPACT-10N", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 10,
+      invariantGeometry: true, firstYear: 2014, lastYear: 2018 }, fields: ["Extensión de plataforma"] },
+    facts: [{ field: "Extensión de plataforma", value: "0,92 m", support: "Haulotte Compact 8 / Compact 10N, 03/2018, p. 2, columna Compact 10N, Longueur extension 0,92 m; corroborada por ficha 04/2014, p. 2, bandeja extensible estándar (https://maximdomenech.es/alquiler/media/products/fichaTecnica/Haulotte_Compact_8-Compact_10N_8-10_metros.pdf). No aplicable a versiones AE o DX." }]
+  },
+  {
+    url: "https://documentacionqr.com/sat/objects/955052/HAULOTTE_COMPACT%2010_FICHA_TECNICA_2018.pdf", brand: "Haulotte", model: "COMPACT-10", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 10,
+      invariantGeometry: true, firstYear: 2018, lastYear: 2018 }, fields: ["Extensión de plataforma"] },
+    facts: [{ field: "Extensión de plataforma", value: "0,92 m", support: "Haulotte Compact 8 W / 10 / 12, 03/2018, p. 2, columna Compact 10, Largo (extensión) 0,92 m, bandeja extensible estándar. Los 10 m declarados identifican la clase comercial; no se sustituye la altura ni se aplica a 10N, AE o DX." }]
+  },
+  {
+    url: "https://documentacionqr.com/sat/objects/955887/HAULOTTE_COMPACT14_FICHA_TECNICA.pdf", brand: "Haulotte", model: "COMPACT-14", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 14,
+      invariantGeometry: true, firstYear: 2014, lastYear: 2018 }, fields: ["Extensión de plataforma"] },
+    facts: [{ field: "Extensión de plataforma", value: "0,92 m", support: "Haulotte Compact 14, 04/2014, p. 2, Largo (extensión) 0,92 m; p. 1 plataforma con una extensión. Coincide con ficha 02/2012, p. 2 (https://www.cdpaccess.ro/wp-content/uploads/2018/08/COMPACT14-UK-BD.pdf). Los 14 m anunciados identifican la clase comercial; no se alteran las alturas ni se atribuyen opciones." }]
+  },
+  {
+    url: "https://www.ubaristi.com/media/documents/product/pdf/kubota-km-breakers-es_1.pdf", brand: "KUBOTA", model: "KM 55", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "martillo-miniexcavadora", firstYear: 2016, lastYear: 2021, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "KUBOTA", Modelo: "KM 55" },
+      conflictingEvidence: /\b(?:presion|diametro|modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Presión de aceite de trabajo del modelo", "Diámetro nominal de herramienta compatible"] },
+    facts: [
+      { field: "Presión de aceite de trabajo del modelo", value: "100–150 bar", support: "Kubota Hydraulic breaker ES 2024-07-11, p. 7, Datos técnicos, KM 55, presión de aceite; coincide con el catálogo general Kubota de 2017, p. 5 (https://loewener.dk/wp-content/uploads/2017/02/Kubota-2017-01-05-Doc-Generale-2017-pages-A4.pdf) y la ficha KM de 2015 (https://sab-daruvar.squarespace.com/s/KM-hidraulic-breakers-2015.pdf). Rango de diseño, no presión medida de unidad ni de portadora." },
+      { field: "Diámetro nominal de herramienta compatible", value: "40 mm", support: "Mismas tablas KM 55, diámetro de herramienta; coincide con la gama KM de Kubota (https://kuk.kubota-eu.com/constructionmachinery/products/km-series/). No acredita herramienta instalada, peso de servicio ni caudal." }
+    ]
+  },
+  {
+    url: "https://www.ubaristi.com/media/documents/product/pdf/kubota-km-breakers-es_1.pdf", brand: "KUBOTA", model: "KM 105", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "martillo-miniexcavadora", firstYear: 2016, lastYear: 2021, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "KUBOTA", Modelo: "KM 105" },
+      conflictingEvidence: /\b(?:presion|diametro|modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Presión de aceite de trabajo del modelo", "Diámetro nominal de herramienta compatible"] },
+    facts: [
+      { field: "Presión de aceite de trabajo del modelo", value: "100–150 bar", support: "Kubota Hydraulic breaker ES 2024-07-11, p. 7, Datos técnicos, KM 105, presión de aceite; coincide con el catálogo general Kubota de 2017, p. 5 (https://loewener.dk/wp-content/uploads/2017/02/Kubota-2017-01-05-Doc-Generale-2017-pages-A4.pdf) y la ficha KM de 2015 (https://sab-daruvar.squarespace.com/s/KM-hidraulic-breakers-2015.pdf). Rango de diseño, no presión medida de unidad ni de portadora." },
+      { field: "Diámetro nominal de herramienta compatible", value: "45 mm", support: "Mismas tablas KM 105, diámetro de herramienta; coincide con la gama KM de Kubota (https://kuk.kubota-eu.com/constructionmachinery/products/km-series/). No acredita herramienta instalada, peso de servicio ni caudal." }
+    ]
+  },
+  {
+    url: "https://www.ubaristi.com/media/documents/product/pdf/kubota-km-breakers-es_1.pdf", brand: "KUBOTA", model: "KM 155", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "martillo-miniexcavadora", firstYear: 2016, lastYear: 2021, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "KUBOTA", Modelo: "KM 155" },
+      conflictingEvidence: /\b(?:presion|diametro|modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Presión de aceite de trabajo del modelo", "Diámetro nominal de herramienta compatible"] },
+    facts: [
+      { field: "Presión de aceite de trabajo del modelo", value: "100–150 bar", support: "Kubota Hydraulic breaker ES 2024-07-11, p. 7, Datos técnicos, KM 155, presión de aceite; coincide con el catálogo general Kubota de 2017, p. 5 (https://loewener.dk/wp-content/uploads/2017/02/Kubota-2017-01-05-Doc-Generale-2017-pages-A4.pdf) y la ficha KM de 2015 (https://sab-daruvar.squarespace.com/s/KM-hidraulic-breakers-2015.pdf). Rango de diseño, no presión medida de unidad ni de portadora." },
+      { field: "Diámetro nominal de herramienta compatible", value: "50 mm", support: "Mismas tablas KM 155, diámetro de herramienta; coincide con la gama KM de Kubota (https://kuk.kubota-eu.com/constructionmachinery/products/km-series/). No acredita herramienta instalada, peso de servicio ni caudal." }
+    ]
+  },
+  {
+    url: "https://www.ubaristi.com/media/documents/product/pdf/kubota-km-breakers-es_1.pdf", brand: "KUBOTA", model: "KM 205", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "martillo-miniexcavadora", firstYear: 2016, lastYear: 2021, verifiedStructuredIdentity: true,
+      sourceAnchors: { Marca: "KUBOTA", Modelo: "KM 205" },
+      conflictingEvidence: /\b(?:presion|diametro|modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
+      fields: ["Presión de aceite de trabajo del modelo", "Diámetro nominal de herramienta compatible"] },
+    facts: [
+      { field: "Presión de aceite de trabajo del modelo", value: "100–150 bar", support: "Kubota Hydraulic breaker ES 2024-07-11, p. 7, Datos técnicos, KM 205, presión de aceite; coincide con el catálogo general Kubota de 2017, p. 5 (https://loewener.dk/wp-content/uploads/2017/02/Kubota-2017-01-05-Doc-Generale-2017-pages-A4.pdf) y la ficha KM de 2015 (https://sab-daruvar.squarespace.com/s/KM-hidraulic-breakers-2015.pdf). Rango de diseño, no presión medida de unidad ni de portadora." },
+      { field: "Diámetro nominal de herramienta compatible", value: "65 mm", support: "Mismas tablas KM 205, diámetro de herramienta; coincide con la gama KM de Kubota (https://kuk.kubota-eu.com/constructionmachinery/products/km-series/). No acredita herramienta instalada, peso de servicio ni caudal." }
+    ]
+  },
+  {
+    url: "https://www.alpesur.com/images/pdf-maquinaria/1930ES%20-%20FICHA%20TECNICA.pdf", brand: "JLG", model: "1930 ES", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 8,
+      invariantGeometry: true, firstYear: 2008, lastYear: 2008 }, fields: ["Extensión de plataforma"] },
+    facts: [{ field: "Extensión de plataforma", value: "0,9 m", support: "Ficha JLG 1930ES, DS462-SPANISH (©2008), p. 1 equipamiento estándar: extensión de plataforma de 0,90 m; p. 2 dimensiones. Los 8 m anunciados identifican la clase de trabajo, no una nueva cota acreditada." }]
+  },
   {
     url: "https://pramac.com/file/96662", brand: "Pramac", model: "P18000 (STAGE V)", reviewedOn: "2026-11-25",
     reuse: { compatibility: { family: "grupo-electrogeno", firstYear: 2023, lastYear: 2023,
@@ -80,7 +658,7 @@ const documents: readonly ReviewedModelDocument[] = [
   },
   {
     url: "https://pramac.com/es_ES/product?folder=264&product=11366", brand: "Pramac", model: "GPW45P", reviewedOn: "2026-11-25",
-    reuse: { compatibility: { family: "grupo-electrogeno", firstYear: 2023, lastYear: 2023,
+    reuse: { compatibility: { family: "grupo-electrogeno", firstYear: 2023, lastYear: 2025,
       sourceAnchors: {"Altura": "1.31 metros", "Longitud": "2.20 m", "Anchura": "1.02 m", "Peso": "1017 KG", "Motor": "Diésel", "Potencia": "45 kva"},
       conflictingEvidence: /\b(?:frecuencia|factor de potencia|potencia (?:de emergencia|continua|activa))\b|\b(?:modificad[oa]|sustituid[oa]|convertid[oa])\b/u },
       fields: ["Potencia de emergencia ESP", "Factor de potencia nominal", "Frecuencia nominal"] },
@@ -1463,7 +2041,11 @@ const documents: readonly ReviewedModelDocument[] = [
   },
   {
     url: "https://www.colle.eu/media/6015/170aetj-l_eng.pdf",
-    brand: "Manitou", model: "170AETJL", reviewedOn: "2026-11-21", facts: [
+    brand: "Manitou", model: "170AETJL", reviewedOn: "2026-11-21",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 17,
+      invariantGeometry: true, firstYear: 2014, lastYear: 2016 }, fields: ["Rotación de torreta", "Rotación de cesta"] }, facts: [
+      { field: "Rotación de torreta", value: "355°", support: "Ficha Manitou 170AETJL, p. 2, Turntable rotation 355°; rango nominal de giro, no giro continuo." },
+      { field: "Rotación de cesta", value: "140°", support: "Ficha Manitou 170AETJL, p. 2, Basket rotation 140°; recorrido total, no 140° por lado. No se atribuye dimensión de cesta opcional." },
       { field: "Alcance horizontal (m)", value: "9,4 m", support: "170 AETJ L, página 2: Horizontal outreach 9.40 m" },
       { field: "Altura de plataforma", value: "14,9 m", support: "170 AETJ L, página 2: Platform height 14.90 m" },
       { field: "Anchura (mm)", value: "1,75 m", support: "170 AETJ L, página 2: Width 1.75 m" },
@@ -1590,7 +2172,11 @@ const documents: readonly ReviewedModelDocument[] = [
     ]
   },
   {
-    url: "https://www.colle.eu/media/6008/120aetj-c-eng.pdf", brand: "Manitou", model: "120AETJC", reviewedOn: "2026-11-21", facts: [
+    url: "https://www.colle.eu/media/6008/120aetj-c-eng.pdf", brand: "Manitou", model: "120AETJC", reviewedOn: "2026-11-21",
+    reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 12,
+      invariantGeometry: true, firstYear: 2015, lastYear: 2015 }, fields: ["Rotación de torreta", "Rotación de cesta"] }, facts: [
+      { field: "Rotación de torreta", value: "355°", support: "Ficha Manitou 120AETJC, p. 2, Turntable rotation 355°; rango nominal de giro, no giro continuo." },
+      { field: "Rotación de cesta", value: "140°", support: "Ficha Manitou 120AETJC, p. 2, Basket rotation 140°; recorrido total, no 140° por lado. No se atribuye dimensión de cesta opcional." },
       { field: "Alcance horizontal (m)", value: "7 m", support: "Manitou 120 AETJ-C, página 2: Outreach 7.00 m" },
       { field: "Altura de plataforma", value: "9,95 m", support: "Manitou 120 AETJ-C, página 2: Platform height 9.95 m" },
       { field: "Anchura (mm)", value: "1,2 m", support: "Manitou 120 AETJ-C, página 2: Overall width 1.20 m" },
@@ -2190,6 +2776,94 @@ const documents: readonly ReviewedModelDocument[] = [
       lengthM: 5.31, widthM: 1.19, loadCapacityKg: 227 }, fields: ["Altura de plataforma"] }, facts: [
       { field: "Altura de plataforma", value: "8,89 m", support: "Genie Z-30/20N RJ, ficha CE EMEAR 2022, página 1, Especificaciones y Productividad: altura máxima de cesta 8,89 m, trabajo 10,89 m, largo replegado 5,31 m, ancho 1,19 m y capacidad sin restricciones 227 kg; corroborada por ficha europea 2020. No atribuye dimensiones de cestas alternativas ni peso de la unidad" }
     ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "MC25D", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "almacen-vertical", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "MODULA", Modelo: "MC25D", Altura: "2500 mm" },
+      conflictingEvidence: /\b(?:paso (?:de (?:almacenamiento|bandejas)|entre bandejas)|separacion entre bandejas|tray storage pitch)\b/u }, fields: ["Paso de almacenamiento de bandejas"] }, facts: [
+      { field: "Paso de almacenamiento de bandejas", value: "25 mm", support: "Modula LIFT, página 3, especificaciones técnicas: Tray storage pitch 25 mm; paso de posicionamiento de las bandejas, no separación fija ni altura útil de carga" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "MC50D", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "almacen-vertical", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "MODULA", Modelo: "MC50D", Altura: "2500 mm" },
+      conflictingEvidence: /\b(?:paso (?:de (?:almacenamiento|bandejas)|entre bandejas)|separacion entre bandejas|tray storage pitch)\b/u }, fields: ["Paso de almacenamiento de bandejas"] }, facts: [
+      { field: "Paso de almacenamiento de bandejas", value: "25 mm", support: "Modula LIFT, página 3, especificaciones técnicas: Tray storage pitch 25 mm; paso de posicionamiento de las bandejas, no separación fija ni altura útil de carga" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "MC75D", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "almacen-vertical", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "MODULA", Modelo: "MC75D", Altura: "2500 mm" },
+      conflictingEvidence: /\b(?:paso (?:de (?:almacenamiento|bandejas)|entre bandejas)|separacion entre bandejas|tray storage pitch)\b/u }, fields: ["Paso de almacenamiento de bandejas"] }, facts: [
+      { field: "Paso de almacenamiento de bandejas", value: "25 mm", support: "Modula LIFT, página 3, especificaciones técnicas: Tray storage pitch 25 mm; paso de posicionamiento de las bandejas, no separación fija ni altura útil de carga" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "MX25D", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "almacen-vertical", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "MODULA", Modelo: "MX25D", Altura: "3100 mm" },
+      conflictingEvidence: /\b(?:paso (?:de (?:almacenamiento|bandejas)|entre bandejas)|separacion entre bandejas|tray storage pitch)\b/u }, fields: ["Paso de almacenamiento de bandejas"] }, facts: [
+      { field: "Paso de almacenamiento de bandejas", value: "25 mm", support: "Modula LIFT, página 3, especificaciones técnicas: Tray storage pitch 25 mm; paso de posicionamiento de las bandejas, no separación fija ni altura útil de carga" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "MX50D", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "almacen-vertical", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "MODULA", Modelo: "MX50D", Altura: "3100 mm" },
+      conflictingEvidence: /\b(?:paso (?:de (?:almacenamiento|bandejas)|entre bandejas)|separacion entre bandejas|tray storage pitch)\b/u }, fields: ["Paso de almacenamiento de bandejas"] }, facts: [
+      { field: "Paso de almacenamiento de bandejas", value: "25 mm", support: "Modula LIFT, página 3, especificaciones técnicas: Tray storage pitch 25 mm; paso de posicionamiento de las bandejas, no separación fija ni altura útil de carga" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "MX75D", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "almacen-vertical", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "MODULA", Modelo: "MX75D", Altura: "3100 mm" },
+      conflictingEvidence: /\b(?:paso (?:de (?:almacenamiento|bandejas)|entre bandejas)|separacion entre bandejas|tray storage pitch)\b/u }, fields: ["Paso de almacenamiento de bandejas"] }, facts: [
+      { field: "Paso de almacenamiento de bandejas", value: "25 mm", support: "Modula LIFT, página 3, especificaciones técnicas: Tray storage pitch 25 mm; paso de posicionamiento de las bandejas, no separación fija ni altura útil de carga" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "ML25D", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "almacen-vertical", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "MODULA", Modelo: "ML25D", Altura: "4100 mm" },
+      conflictingEvidence: /\b(?:paso (?:de (?:almacenamiento|bandejas)|entre bandejas)|separacion entre bandejas|tray storage pitch)\b/u }, fields: ["Paso de almacenamiento de bandejas"] }, facts: [
+      { field: "Paso de almacenamiento de bandejas", value: "25 mm", support: "Modula LIFT, página 3, especificaciones técnicas: Tray storage pitch 25 mm; paso de posicionamiento de las bandejas, no separación fija ni altura útil de carga" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "ML50D", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "almacen-vertical", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "MODULA", Modelo: "ML50D", Altura: "4100 mm" },
+      conflictingEvidence: /\b(?:paso (?:de (?:almacenamiento|bandejas)|entre bandejas)|separacion entre bandejas|tray storage pitch)\b/u }, fields: ["Paso de almacenamiento de bandejas"] }, facts: [
+      { field: "Paso de almacenamiento de bandejas", value: "25 mm", support: "Modula LIFT, página 3, especificaciones técnicas: Tray storage pitch 25 mm; paso de posicionamiento de las bandejas, no separación fija ni altura útil de carga" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Lift-ENG.pdf", brand: "MODULA", model: "ML75D", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "almacen-vertical", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "MODULA", Modelo: "ML75D", Altura: "4100 mm" },
+      conflictingEvidence: /\b(?:paso (?:de (?:almacenamiento|bandejas)|entre bandejas)|separacion entre bandejas|tray storage pitch)\b/u }, fields: ["Paso de almacenamiento de bandejas"] }, facts: [
+      { field: "Paso de almacenamiento de bandejas", value: "25 mm", support: "Modula LIFT, página 3, especificaciones técnicas: Tray storage pitch 25 mm; paso de posicionamiento de las bandejas, no separación fija ni altura útil de carga" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Slim-ENG.pdf", brand: "MODULA", model: "MSL19", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "almacen-vertical", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "MODULA", Modelo: "MSL19", Altura: "1900 mm" },
+      conflictingEvidence: /\b(?:paso (?:de (?:almacenamiento|bandejas)|entre bandejas)|separacion entre bandejas|tray storage pitch)\b/u }, fields: ["Paso de almacenamiento de bandejas"] }, facts: [
+      { field: "Paso de almacenamiento de bandejas", value: "25 mm", support: "Modula SLIM, página 3, especificaciones técnicas: Tray storage pitch 25 mm; paso de posicionamiento de las bandejas, no separación fija ni altura útil de carga" }
+    ]
+  },
+  {
+    url: "https://www.modula.eu/wp-content/uploads/2024/07/Modula-Slim-ENG.pdf", brand: "MODULA", model: "MSL25", reviewedOn: "2026-11-25",
+    reuse: { compatibility: { family: "almacen-vertical", firstYear: null, lastYear: null, anchoredCatalogOffer: true,
+      sourceAnchors: { Marca: "MODULA", Modelo: "MSL25", Altura: "2500 mm" },
+      conflictingEvidence: /\b(?:paso (?:de (?:almacenamiento|bandejas)|entre bandejas)|separacion entre bandejas|tray storage pitch)\b/u }, fields: ["Paso de almacenamiento de bandejas"] }, facts: [
+      { field: "Paso de almacenamiento de bandejas", value: "25 mm", support: "Modula SLIM, página 3, especificaciones técnicas: Tray storage pitch 25 mm; paso de posicionamiento de las bandejas, no separación fija ni altura útil de carga" }
+    ]
   }
 ];
 
@@ -2228,5 +2902,5 @@ export const reusableReviewedModelClaims = (brand: string, model: string) => doc
     if (!reuse) return [];
     const facts = documents.filter((document) => document.brand === brand && document.model === model &&
       document.url === entry.url).flatMap((document) => document.facts.filter((fact) => reuse.fields.includes(fact.field)));
-    return [{ url: entry.url, compatibility: reuse.compatibility, facts }];
+    return [{ url: entry.url, compatibility: reuse.compatibility, fallback: reuse.fallback === true, facts }];
   });

@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
+import { recoverGamSweepingBrushSpecs } from "./sweeping-brush-evidence.js";
+import { recoverReviewedModelTechnicalSpecs } from "../../technical/documented-technical-evidence.js";
 import { resolveAttributeValue } from "../../classification/attribute-mapping.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 
@@ -120,4 +122,52 @@ test("GAM limpieza: respeta los specs existentes y no extrapola a otros proveedo
     assert.equal(resolved(different, "Alimentación"), null);
     assert.equal(resolved(different, "Tipo de conductor"), null);
   }
+});
+
+
+test("GAM limpieza: convierte las cotas del cepillo en centímetros sin duplicar ni aceptar medidas discordantes", () => {
+  const machine: ProductRecord = {
+    ...record("barredoras", "La barredora TENNANT BCA S99 tiene un cepillo principal de 66 cm.", "Barredora industrial BCA S99", { Marca: "Tennant", Modelo: "BCA S99" }),
+    reference: "CONTROL-BRUSH", model: "BCA S99", condition: "Nuevo",
+    shortDescription: "Barredora TENNANT BCA S99",
+    url: "https://online.gamrentals.com/es/tennant/CONTROL-BRUSH-bca-s99"
+  };
+  const recover = (input: ProductRecord) => recoverGamSweepingBrushSpecs(input);
+  const key = "Anchura del cepillo principal (mm)";
+  assert.equal(recover(machine)[key], 660);
+  assert.equal(recover({ ...machine, longDescription: `${machine.longDescription} Cepillo principal de 660 mm.` })[key], 660);
+  assert.equal(recover({ ...machine, longDescription: `${machine.longDescription} Cepillo principal de 700 mm.` })[key], undefined);
+  assert.equal(recover({ ...machine, shortDescription: "Barredora TENNANT BCA S98" })[key], undefined);
+  assert.equal(recover({ ...machine, specs: { ...machine.specs, [key]: 650 } })[key], 650);
+});
+
+test("GAM limpieza: recupera el depósito de solución común a las variantes T7+ acreditadas", () => {
+  for (const variant of ["D65", "D80"]) {
+    const model = `FCS T7+ ${variant}`;
+    const machine: ProductRecord = {
+      ...record("fregadoras", `La fregadora TENNANT ${model} dispone de un depósito de recuperación de 110 litros y un nivel sonoro de 67 dBA.`, `Fregadora TENNANT ${model}`, { Marca: "Tennant", Modelo: model, Peso: "471 KG", "RPM cepillo": "260" }),
+      reference: "CONTROL-TANK", model, condition: "Nuevo", shortDescription: `Fregadora TENNANT ${model}`,
+      url: `https://online.gamrentals.com/es/tennant/CONTROL-TANK-fcs-t7-${variant.toLowerCase()}`
+    };
+    const recover = (input: ProductRecord) => recoverReviewedModelTechnicalSpecs(input, input.specs ?? {});
+    const key = "Capacidad del depósito de solución";
+    assert.equal(recover(machine)[key], "110 L");
+    assert.equal(recover({ ...machine, longDescription: `${machine.longDescription} Depósito de solución de 90 litros.` })[key], undefined);
+    assert.equal(recover({ ...machine, model: "FCS T7+ C80" })[key], undefined);
+    assert.equal(recover({ ...machine, condition: "Segunda mano" })[key], undefined);
+  }
+});
+
+test("GAM limpieza: acredita el depósito de recuperación T17 C sin inferir la opción ES", () => {
+  const model = "FCS T17 C";
+  const machine: ProductRecord = {
+    ...record("fregadoras", `La fregadora TENNANT ${model} tiene cepillos de hasta 500 RPM y presión de hasta 250 kg.`, `Fregadora TENNANT ${model}`, { Marca: "Tennant", Modelo: model, "Anchura trabajo": "1,1 metros", "RPM cepillo": "500" }),
+    reference: "CONTROL-RECOVERY", model, condition: "Nuevo", shortDescription: `Fregadora TENNANT ${model}`,
+    url: "https://online.gamrentals.com/es/tennant/CONTROL-RECOVERY-fcs-t17-c"
+  };
+  const recover = (input: ProductRecord) => recoverReviewedModelTechnicalSpecs(input, input.specs ?? {});
+  const key = "Capacidad del depósito de recuperación";
+  assert.deepEqual(recover(machine), { ...machine.specs, [key]: "346 L" });
+  assert.equal(recover({ ...machine, longDescription: `${machine.longDescription} Depósito de recuperación de 300 litros.` })[key], undefined);
+  assert.equal(recover({ ...machine, shortDescription: "Fregadora TENNANT FCS T17 D" })[key], undefined);
 });

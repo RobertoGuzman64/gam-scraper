@@ -18,7 +18,7 @@ import { reconcileSourceCategoryTitle, reconcileVerifiedSourceReviewClaims, reco
 import { publicationConflictForMercaeleva } from "./mercaeleva/technical/mercaeleva.js";
 import { hasDocumentedGomarizPriceOnRequest } from "./gomariz/price-on-request.js";
 import { normalizeOriginalEnergyPresentation, normalizeOriginalLengthPresentation, normalizeOriginalMassPresentation } from "./technical/technical-presentation.js";
-import { reconcileHandlingFamilySpecs } from "./technical/handling-family-specifications.js";
+import { reconcileHandlingFamilySpecs, recoverSourceHandlingConfiguration } from "./technical/handling-family-specifications.js";
 import { presentGamVerifiedRestrictedCapacity } from "./gam/reconciliation/gam-verified-capacity-coherence.js";
 import { recoverSourcePlatformGeometry } from "./technical/platform-geometry-recovery.js";
 import { recoverBaseTechnicalSpecs } from "./technical/base-technical-recovery.js";
@@ -58,7 +58,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   record = reconcileTechnicalAfterEditorial(record);
   const sourceGeometrySpecs = recoverSourcePlatformGeometry(originalRecord, recoverySource,
     applyReconciledTechnicalSpecs(beforeReconciliation, record, documentedSpecs), technicalProvenance.observe);
-  const reconciledSpecs = recoverReviewedModelTechnicalSpecs(originalRecord, sourceGeometrySpecs, technicalProvenance.observe);
+  const sourceHandlingSpecs = recoverSourceHandlingConfiguration(originalRecord, recoverySource, sourceGeometrySpecs, technicalProvenance.observe);
+  const reconciledSpecs = recoverReviewedModelTechnicalSpecs(originalRecord, sourceHandlingSpecs, technicalProvenance.observe);
   const editorialRecord = reconcileManainEditorialSourceSpecs({ ...record, specs: reconciledSpecs,
     shortDescription: sourceUnitRecord.shortDescription, longDescription: coherentSource.longDescription });
   const sourceEditorial = captureSourceEditorialEvidence(editorialRecord);

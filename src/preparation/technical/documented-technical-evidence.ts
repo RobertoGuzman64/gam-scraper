@@ -13,7 +13,7 @@ import { resolveEditorialFacts } from "../editorial/core/editorial-facts.js";
 import type { EditorialEnergy } from "../editorial/core/editorial-facts.js";
 import { editorialMetricOf, editorialQuantityOf, editorialQuantity } from "../editorial/measurements/editorial-measurements.js";
 import { fold } from "../classification/category-utils.js";
-import { containsEditorialBrandModel } from "../editorial/identity/editorial-identity-match.js";
+import { containsEditorialBrandModel, containsEditorialIdentity } from "../editorial/identity/editorial-identity-match.js";
 
 export type DocumentedTechnicalUnit = {
   readonly fingerprint: string;
@@ -177,7 +177,16 @@ const geometryAliases: Readonly<Record<string, RegExp>> = {
   "Longitud de plataforma": /^(?:longitud|largo) (?:de (?:la )?)?(?:plataforma|cesta)(?: principal)?(?: \(m[m]?\))?$/u,
   "Anchura de plataforma": /^(?:anchura|ancho) (?:de (?:la )?)?(?:plataforma|cesta)(?: principal)?(?: \(m[m]?\))?$/u,
   "Longitud de plumín": /^(?:longitud|largo) (?:de(?:l)? )?(?:plumin|jib|brazo auxiliar)(?: \(m[m]?\))?$/u,
-  "Extensión de plataforma": /^(?:extension(?: de (?:la )?plataforma)?|longitud (?:de )?extension|plataforma extensible)(?: \(m[m]?\))?$/u
+  "Rotación de torreta": /^(?:rotacion|giro|angulo de giro).*(?:torreta|torre)\b|^torreta giratoria$/u,
+  "Rotación de cesta": /^(?:rotacion|giro|angulo de giro).*(?:cesta|plataforma)\b/u,
+  "Extensión de plataforma": /^(?:extension(?: de (?:la )?(?:plataforma|cesta))?|longitud (?:de )?extension|plataforma (?:extensible|desplegable|desplazable)|lateral extensible)(?: \(m[m]?\))?$/u
+};
+
+const angularGeometry = (field: string): boolean => field === "Rotación de torreta" || field === "Rotación de cesta";
+const geometryAngle = (value: unknown): number | null => {
+  const match = typeof value === "string" ? /^(\d{1,3})\s*[°º]$/u.exec(value.trim()) : null;
+  const angle = Number(match?.[1]);
+  return Number.isInteger(angle) && angle > 0 && angle <= 360 ? angle : null;
 };
 
 const combinedGeometry = /^(?:dimensiones|medidas) (?:de (?:la )?)?(?:cesta|plataforma)\b/u;
@@ -196,29 +205,54 @@ export const recoverReviewedModelTechnicalSpecs = (
 ): SpecsMap => {
   if (!original.brand || !original.model || !original.specs) return specs;
   const claims = reusableReviewedModelClaims(original.brand, original.model);
-  if (claims.length !== 1) return specs;
-  const claim = claims[0];
-  if (!claim) return specs;
+  const primary = claims.filter((claim) => !claim.fallback);
+  const fallback = claims.filter((claim) => claim.fallback);
+  if (primary.length > 1 || fallback.length > 1 || fallback.length && primary.length !== 1) return specs;
+  const result = primary[0] ? recoverReviewedModelClaim(original, specs, primary[0], observe) : specs;
+  return result !== specs || !fallback[0] ? result : recoverReviewedModelClaim(original, specs, fallback[0], observe);
+};
+
+const recoverReviewedModelClaim = (
+  original: ProductRecord, specs: SpecsMap, claim: ReturnType<typeof reusableReviewedModelClaims>[number],
+  observe?: TechnicalRecoveryObservation
+): SpecsMap => {
+  if (!original.brand || !original.model || !original.specs) return specs;
   const expected = claim.compatibility;
   if ("sourceAnchors" in expected) {
     const year = Number(original.year);
     const anchoredOffer = expected.anchoredCatalogOffer === true;
+    const structuredIdentity = expected.verifiedStructuredIdentity === true;
+    const verifiedSource = structuredIdentity ? resolveEditorialSource(original) : null;
     const sourceText = fold([original.shortDescription, original.longDescription].filter(Boolean).join(" "));
     const validYear = expected.firstYear === null && expected.lastYear === null
       ? original.year === null : /^\d{4}$/u.test(original.year ?? "") &&
         expected.firstYear !== null && expected.lastYear !== null && year >= expected.firstYear && year <= expected.lastYear;
+    const structuredOffer = anchoredOffer && structuredIdentity && verifiedSource?.brand === original.brand && verifiedSource.model === original.model &&
+      containsEditorialBrandModel(original.title ?? "", original.brand, original.model) &&
+      containsEditorialBrandModel(original.shortDescription ?? "", original.brand, original.model) &&
+      containsEditorialBrandModel(original.longDescription ?? "", original.brand, original.model);
     const validIdentity = anchoredOffer
-      ? original.condition === "Nuevo" && !original.serialNumber && !original.horometer &&
+      ? original.condition === "Nuevo" && !original.serialNumber && !original.horometer && (!structuredIdentity || structuredOffer) &&
         containsEditorialBrandModel(original.title ?? "", original.brand, original.model) &&
-        containsEditorialBrandModel(original.shortDescription ?? "", original.brand, original.model)
-      : original.condition === "Segunda mano" &&
-        comparableIdentifier(original.title ?? "") === comparableIdentifier(`${original.brand} ${original.model}`);
+        (containsEditorialBrandModel(original.shortDescription ?? "", original.brand, original.model) ||
+          containsEditorialIdentity(original.shortDescription ?? "", `${original.brand}${original.model}`) &&
+          containsEditorialBrandModel(original.longDescription ?? "", original.brand, original.model))
+      : original.condition === "Segunda mano" && (structuredIdentity
+        ? verifiedSource?.brand === original.brand && verifiedSource.model === original.model &&
+          comparableIdentifier(original.title ?? "") === comparableIdentifier(original.model) &&
+          !original.shortDescription?.trim() && !original.longDescription?.trim()
+        : comparableIdentifier(original.title ?? "") === comparableIdentifier(`${original.brand} ${original.model}`));
     const generalFamily = editorialFamilyFromSourceGeneral(original.longDescription);
-    const sourceFamily = generalFamily ?? (expected.familyFromSourcePath ? editorialFamilyOf(new URL(original.url).pathname) : null);
+    const sourceFamily = generalFamily ?? (verifiedSource ? editorialFamilyOf(verifiedSource.familyClues) :
+      expected.familyFromSourcePath ? editorialFamilyOf(new URL(original.url).pathname) : null);
     if (!validYear || !validIdentity ||
-      !containsEditorialBrandModel(new URL(original.url).pathname, original.brand, original.model) ||
+      (!containsEditorialBrandModel(new URL(original.url).pathname, original.brand, original.model) && !structuredOffer) ||
+      anchoredOffer && !comparableIdentifier(new URL(original.url).pathname.split("/").filter(Boolean).at(-1) ?? "")
+        .endsWith(comparableIdentifier(structuredOffer ? original.model : `${original.brand}${original.model}`)) ||
       sourceFamily !== expected.family ||
-      Object.keys(original.specs).length !== Object.keys(expected.sourceAnchors).length ||
+      ((!structuredIdentity || anchoredOffer) && Object.keys(original.specs).length !== Object.keys(expected.sourceAnchors).length) ||
+      (structuredIdentity && Object.entries(original.specs).some(([key, value]) =>
+        expected.conflictingEvidence.test(fold(`${key} ${String(value)}`)))) ||
       Object.entries(expected.sourceAnchors).some(([key, value]) =>
         typeof original.specs?.[key] !== "string" || fold(String(original.specs[key])) !== fold(value)) ||
       expected.corroboratingText && !expected.corroboratingText.test(fold(original.longDescription ?? "")) ||
@@ -337,6 +371,13 @@ export const recoverReviewedModelTechnicalSpecs = (
   if ((facts.energy !== expected.energy && !corroboratedHeadingEnergy && !corroboratedAdvertisedEnergy) ||
     (facts.workingHeightM !== expected.workingHeightM && !advertisedHeightClass)) return specs;
   if ("invariantGeometry" in expected) {
+    const modelToken = fold(original.model).replace(/[^a-z0-9]/gu, "");
+    const variantPattern = new RegExp(`(?:^|[^a-z0-9])${[...modelToken].join("[^a-z0-9]{0,3}")}[^a-z0-9]+(?:pro|trax|ae)(?![a-z0-9])`, "u");
+    if (variantPattern.test(sourceText) || variantPattern.test(fold(new URL(original.url).pathname))) return specs;
+    const fixedScissorDeck = expected.family === "plataforma-tijera" &&
+      claim.facts.every((fact) => fact.field === "Longitud de plataforma" || fact.field === "Anchura de plataforma" || fact.field === "Extensión de plataforma");
+    if (claim.fallback && (!fixedScissorDeck || claim.facts.some((fact) => fact.field === "Extensión de plataforma")) && (expected.family !== "plataforma-articulada" || facts.lengthM !== null || facts.widthM !== null ||
+      facts.loadCapacityKg !== null || claim.facts.some((fact) => fact.field !== "Anchura de plataforma"))) return specs;
     if (!expected.energy || facts.energy !== expected.energy || !original.year || !/^\d{4}$/u.test(original.year) ||
       facts.year !== Number(original.year) || facts.year < expected.firstYear || facts.year > expected.lastYear ||
       !containsEditorialBrandModel(original.title ?? "", original.brand, original.model) ||
@@ -344,7 +385,14 @@ export const recoverReviewedModelTechnicalSpecs = (
       new RegExp(`\\b${escapedModel}\\s+(?:serie(?:s)?\\s+[a-z0-9]+|s(?:i{1,3}|[123])|[a-z]{1,3}[0-9]+)\\b`, "u").test(sourceText) ||
       declaredEnergies.size !== 1 || !declaredEnergies.has(expected.energy) ||
       /\b(?:sin|no (?:es|usa|utiliza|funciona con)|convertid[oa] a)\s+(?:motor (?:de )?)?(?:glp|lpg|diesel|gasoil|gasolina|electric[oa]s?|bateria)\b/u.test(energyText) ||
-      claim.facts.some((fact) => fact.field !== "Anchura de plataforma" && fact.field !== "Longitud de plumín")) return specs;
+      claim.facts.some((fact) => expected.family === "plataforma-tijera" ? !fixedScissorDeck && fact.field !== "Extensión de plataforma" :
+        fact.field !== "Anchura de plataforma" && fact.field !== "Longitud de plumín" && !angularGeometry(fact.field))) return specs;
+    if (original.condition !== "Segunda mano" || !source ||
+      !containsEditorialBrandModel(new URL(original.url).pathname, original.brand, original.model) ||
+      original.shortDescription && !containsEditorialBrandModel(original.shortDescription, original.brand, original.model) ||
+      new RegExp(`\\b${escapedModel}\\s+(?:ii|iii|iv)\\b`, "u").test(sourceText)) return specs;
+    if (expected.family === "plataforma-tijera" &&
+      /\b(?:extension|extensible|desplazable|desplegable|modificad[oa]|sustituid[oa]|convertid[oa])\b/u.test(sourceText)) return specs;
     if ([original.specs, specs].some((source) => Object.entries(source).some(([key, value]) => {
       const label = fold(key);
       return combinedGeometry.test(label) ||
@@ -383,11 +431,15 @@ export const recoverReviewedModelTechnicalSpecs = (
     const aliases = geometryAliases[fact.field];
     if (!aliases) return specs;
     const isDimension = fact.field === "Longitud de plataforma" || fact.field === "Anchura de plataforma";
+    if (isDimension && "invariantGeometry" in expected && expected.family === "plataforma-tijera" &&
+      (facts.lengthM !== null || facts.widthM !== null || facts.loadCapacityKg !== null)) continue;
     if (isDimension && sources.some((source) => Object.keys(source).some((key) => combinedGeometry.test(fold(key))))) continue;
-    const expectedValue = editorialMetricOf({ [fact.field]: fact.value }, [fact.field]);
+    const angular = angularGeometry(fact.field);
+    if (angular && /\b(?:torreta|torre|rotacion|giro|giratoria|modificad[oa]|sustituid[oa]|convertid[oa])\b/u.test(sourceText)) return specs;
+    const expectedValue = angular ? geometryAngle(fact.value) : editorialMetricOf({ [fact.field]: fact.value }, [fact.field]);
     if (expectedValue === null) return specs;
     const existing = sources.flatMap((source) => Object.keys(source).filter((key) => aliases.test(fold(key)))
-      .map((key) => editorialMetricOf(source, [key])));
+      .map((key) => angular ? geometryAngle(source[key]) : editorialMetricOf(source, [key])));
     if (existing.some((value) => value !== expectedValue)) return specs;
     if (fact.field === "Altura de plataforma" && sources.some((source) =>
       editorialMetricOf(source, ["Altura"]) === expectedValue)) continue;

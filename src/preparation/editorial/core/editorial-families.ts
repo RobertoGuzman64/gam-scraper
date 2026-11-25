@@ -130,6 +130,7 @@ export const isEditorialFamily = (value: string): value is EditorialFamily =>
   definitions.some((item) => item.family === value);
 
 const sourceHeadings: readonly { readonly family: EditorialFamily; readonly pattern: RegExp }[] = [
+  { family: "maquina-limpieza", pattern: /^(?:la |el )?aspirador(?:a)?s?\b/u },
   { family: "plataforma-oruga", pattern: /^(?:la?\s+)?oruga\b.{1,90}\bplataforma\b.{0,100}\borugas?\b/u },
   { family: "plataforma-tijera", pattern: /^(?:las?\s+)?tijeras?\s+(?:electricas?|diesel|de\s+elevacion)\b/u },
   { family: "plataforma-articulada", pattern: /^(?:las?\s+)?articuladas?\s+(?:electricas?|diesel)\b/u },

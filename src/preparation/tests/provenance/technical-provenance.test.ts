@@ -264,3 +264,19 @@ test("recupera los depósitos de una fregadora corroborada sin atribuir configur
   assert.equal(entry?.scope, "model-document");
   assert.equal(entry?.verification?.kind, "reviewed-model-fact");
 });
+
+test("recupera magnitudes nominales GPW45P en el periodo compatible sin inferir configuración eléctrica", () => {
+  const record: ProductRecord = { ...controlledGomarizPlatform(), brand: "Pramac", model: "GPW45P", year: "2025", condition: "Segunda mano",
+    title: "Pramac GPW45P", shortDescription: null, longDescription: "Grupo electrógeno para suministro eléctrico.",
+    url: "https://www.gomarizrent.com/producto/pramac-gpw45p/",
+    specs: { Altura: "1.31 metros", Longitud: "2.20 m", Anchura: "1.02 m", Peso: "1017 KG", Motor: "Diésel", Potencia: "45 kva" } };
+  const result = recoverDocumented(record);
+  assert.deepEqual(result, { ...record.specs, "Potencia de emergencia ESP": "49,5 kVA", "Factor de potencia nominal": "0,8", "Frecuencia nominal": "50 Hz" });
+  assert.equal(recoverReviewedModelTechnicalSpecs(record, result), result);
+  for (const invalid of [
+    { ...record, year: "2026" }, { ...record, model: "GPW45P X" },
+    { ...record, specs: { ...record.specs, Peso: "1100 kg" } },
+    { ...record, specs: { ...record.specs, Potencia: "50 kva" } },
+    { ...record, longDescription: "Grupo electrógeno de frecuencia 60 Hz." }
+  ]) assert.equal(recoverDocumented(invalid), invalid.specs);
+});

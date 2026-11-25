@@ -4,7 +4,7 @@ const brushMain = "Anchura del cepillo principal (mm)";
 const brushSide = "Anchura del cepillo lateral (mm)";
 const sweepingSingle = "Anchura de barrido con un cepillo lateral (mm)";
 const sweepingDouble = "Anchura de barrido con dos cepillos laterales (mm)";
-const brushMeasure = /\bcepillo\s+(principal|lateral)\s+de\s+(\d{1,2}\.\d{3}|\d{3,4})\s*mm\b/giu;
+const brushMeasure = /\bcepillo\s+(principal|lateral)\s+de\s+(\d{1,2}\.\d{3}|\d{1,4}(?:,\d{1,2})?)\s*(mm|cm)\b/giu;
 const sweepingPair = /\bancho\s+de\s+barrido\s+de\s+(\d{3,4})\s*mm\s+con\s+un\s+cepillo\s+lateral\s+y\s+hasta\s+(\d{3,4})\s*mm\s+con\s+cepillos\s+(?:laterales\s+)?dobles\b/giu;
 const anySweepingWidth = /\bancho\s+de\s+barrido\s+de\s+\d{3,4}\s*mm\b/giu;
 const normalize = (value: string): string => value.toLowerCase().normalize("NFD")
@@ -18,9 +18,9 @@ const sourceIdentity = (record: ProductRecord): boolean => {
     !normalize(record.title ?? "").includes(normalize(record.model ?? "")) ||
     !normalize(record.longDescription ?? "").includes("tennant")) return false;
   const model = record.model ?? "";
-  const baseModel = model.match(/^(?:BCS\s+(?:S\d+[A-Z]?|\d+)|BF\s+M\d+)/iu)?.[0];
+  const baseModel = model.match(/^(?:BC[AS]\s+(?:S\d+[A-Z]?|\d+)|BF\s+M\d+)/iu)?.[0];
   if (!baseModel || !normalize(record.longDescription ?? "").includes(normalize(baseModel))) return false;
-  const sourceShortModel = record.shortDescription?.match(/\b(?:BCS\s+(?:S\d+[A-Z]?|\d+)|BF\s+M\d+)\b/iu)?.[0];
+  const sourceShortModel = record.shortDescription?.match(/\b(?:BC[AS]\s+(?:S\d+[A-Z]?|\d+)|BF\s+M\d+)\b/iu)?.[0];
   if (sourceShortModel && normalize(sourceShortModel) !== normalize(baseModel)) return false;
   if (/\bdescarga\s+baja\b/iu.test(model) && !/\bdescarga\s+baja\b/iu.test(record.longDescription ?? "")) return false;
   if (/\bbater[ií]a\b/iu.test(model) && !/\ba\s+bater[ií]a\b/iu.test(record.longDescription ?? "")) return false;
@@ -40,7 +40,7 @@ const sourceIdentity = (record: ProductRecord): boolean => {
 const readBrush = (text: string, label: string): number | null => {
   const values = [...text.matchAll(brushMeasure)]
     .filter((match) => match[1]?.toLowerCase() === label)
-    .map((match) => Number((match[2] ?? "").replace(".", "")));
+    .map((match) => Number((match[2] ?? "").replace(".", "").replace(",", ".")) * (match[3]?.toLowerCase() === "cm" ? 10 : 1));
   const value = values[0];
   return value !== undefined && Number.isInteger(value) && value >= 300 && value <= 1500 &&
     values.every((candidate) => candidate === value) ? value : null;
