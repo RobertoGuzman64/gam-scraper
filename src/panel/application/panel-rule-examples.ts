@@ -23,7 +23,7 @@ const sources: Readonly<Record<PanelRuleId, RuleSource>> = {
     summary: "Esta ruta incorpora especificaciones solo cuando la identidad, huella y claves son compatibles. No representa todas las fuentes posibles.",
     path: "src/preparation/technical/evidence/documented-technical-evidence.ts",
     first: "if (!unit || record.brand !== unit.brand || record.model !== unit.model ||",
-    last: "Object.keys(unit.specifications).some((key) => key in specs)) return specs;"
+    last: "    Object.keys(unit.specifications).some((key) => key in specs)) return specs;"
   },
   normalization: {
     title: "Comprobación de valores numéricos",
@@ -46,7 +46,7 @@ export const PANEL_RULE_SOURCE_PATHS: readonly string[] = Object.values(sources)
 const readExcerpt = async (workspace: string, spec: RuleSource): Promise<PanelRuleExample> => {
   const lines = (await readFile(join(workspace, spec.path), "utf8")).split(/\r?\n/u);
   const start = lines.findIndex((line) => line.includes(spec.first));
-  const end = lines.findIndex((line, index) => index >= start && line.includes(spec.last));
+  const end = lines.findIndex((line, index) => index >= start && line.trimEnd() === spec.last);
   if (start < 0 || end < start || end - start > 18 ||
     lines.filter((line) => line.includes(spec.first)).length !== 1) {
     throw new Error(`No se puede acreditar el ejemplo de código: ${spec.path}`);

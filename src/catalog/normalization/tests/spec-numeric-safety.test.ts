@@ -178,7 +178,7 @@ test("las alternativas de anchura y pasillo AST conservan todos sus valores en o
 
 
 test("interpreta funciones de seguridad independientes sin atribuir opciones ni confundir recuentos", () => {
-  const keys = ["Control de estabilidad", "Autocargable", "Giratorio", "Descarga altura", "Certificación CE"];
+  const keys = ["Control de estabilidad", "Autocargable", "Giratorio", "Descarga altura"];
   for (const key of keys) {
     const alias = key.normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toUpperCase();
     assert.deepEqual(normalizeSpecsObject({ [alias]: "Sí" }).normalized, { [key]: true });
@@ -186,6 +186,12 @@ test("interpreta funciones de seguridad independientes sin atribuir opciones ni 
     for (const raw of ["Opcional", "Sí / No", "Según configuración", "4 mm"]) {
       assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
     }
+  }
+  for (const raw of ["Sí", "No", "verificar"]) {
+    const result = normalizeSpecsObject({ "Certificación CE": raw });
+    assert.deepEqual(result.normalized, {});
+    assert.deepEqual(result.unknownKeys, ["Certificación CE"]);
+    assert.deepEqual(result.discardedSpecs, []);
   }
   assert.deepEqual(normalizeSpecsObject({ "Control de estabilidad": true, "Sistema antivuelco ACS": false,
     Estabilizadores: false, "Estabilizadores hidráulicos": true }).normalized, {

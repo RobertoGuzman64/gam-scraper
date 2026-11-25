@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "runId": "individual-mercaeleva-a0036d6415c2f5e5cdf95245e7c73d87",
+  "approved": true,
+  "approvalReason": "Acreditación automática de exclusiones históricas coincidentes, con evidencia y preparación verificadas",
+  "sources": [
+    {
+      "providerId": "mercaeleva",
+      "catalogSha256": "83e0265743ba1ec0b6ebb1c1bc8bbb9cd3b26eba77d208d659d35e7a62bba792",
+      "preparationSha256": "40fa10cb3f63447a3bfc81f492285294b3469e775930c4ee82afbbd6d6fecef2",
+      "productCount": 221
+    }
+  ],
+  "exclusions": []
+}

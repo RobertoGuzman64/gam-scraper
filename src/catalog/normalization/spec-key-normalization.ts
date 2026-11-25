@@ -418,7 +418,6 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "autocargable": "Autocargable",
     "giratorio": "Giratorio",
     "descarga altura": "Descarga altura",
-    "certificacion ce": "Certificación CE",
     "numero de estabilizadores hidraulicos": "Número de estabilizadores hidráulicos",
     "polos": "Polos",
     "factor de potencia nominal": "Factor de potencia nominal",

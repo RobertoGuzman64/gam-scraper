@@ -35,7 +35,7 @@ test("el resumen del arrastrador recupera la variante acreditada sin cambiar la 
   assert.equal(output.description,
     "TrailerCaddy Terminal Tractor TT30K nuevo. Venta de arrastrador a pie. Capacidad de arrastre 45300 kg");
   assert.equal(output.title, original.title);
-  assert.equal(output.spec["Capacidad de arrastre"], "45300 Kg");
+  assert.equal(output.spec["Capacidad de arrastre"], "45300 kg");
   assert.equal(JSON.stringify(original), snapshot);
   assert.deepEqual(normalizePreparedEditorialPresentation(original, output), output);
 });

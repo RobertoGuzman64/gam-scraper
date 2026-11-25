@@ -189,7 +189,6 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Autocargable": "bool",
     "Giratorio": "bool",
     "Descarga altura": "bool",
-    "Certificación CE": "bool",
     "Número de estabilizadores hidráulicos": "number",
     "Polos": "number",
     "Factor de potencia nominal": "number",
