@@ -5,6 +5,7 @@ import { prepareIndividualCatalogs } from "../../../../preparation/workflow/indi
 import { checkHistoricalReferenceIntegrity } from "../../../../infrastructure/filesystem/legacy-export/reference-integrity.js";
 import { printCommandHeader, printCommandProvider, printCommandSection, printCommandResult, printCommandWarning, printCommandDeliverable, printReportLine, printStatus } from "../../../reporting/terminal.js";
 import { printCommandError } from "../../../reporting/errors.js";
+import { renderHistoricalReferenceMismatches } from "../../../reporting/catalog/historical-references.js";
 import { OperationProgress } from "../../../reporting/progress/operation-progress.js";
 
 export const prepareIndividualHelp = `Uso:
@@ -16,7 +17,7 @@ export const prepareIndividualHelp = `Uso:
   npm run catalogo:preparar -- --detalle
 
 Proveedores por defecto: gam, gomariz y mercaeleva. Manain se prepara solo si se solicita explícitamente.
---simular consulta y calcula sin escribir nada; --detalle muestra diagnósticos, rutas y referencias históricas.
+--simular consulta y calcula sin escribir nada; --detalle muestra progreso por proveedor, diagnósticos, rutas y referencias históricas.
 La preparación de Manain verifica su registro parcial y conserva esa procedencia; no habilita FINISH.
 Reutiliza preparaciones verificadas; nunca aprueba, publica, extrae ni altera originales.`;
 
@@ -30,7 +31,7 @@ export const runPrepareIndividual = async (args: readonly string[], workspace: s
   if (args.filter((arg) => arg === "--detalle").length > 1) throw new Error("--detalle repetido");
   const options = parseIndividualCatalogProviders(args.filter((arg) => arg !== "--detalle"), true);
   printCommandHeader("PASO 1/2 · PREPARAR", options.dryRun);
-  const progress = new OperationProgress("PREPARAR");
+  const progress = new OperationProgress("PREPARAR", detailed);
   let results: Awaited<ReturnType<typeof prepareIndividualCatalogs>>;
   let referenceMismatches: Awaited<ReturnType<typeof checkHistoricalReferenceIntegrity>>;
   try {
@@ -83,11 +84,7 @@ export const runPrepareIndividual = async (args: readonly string[], workspace: s
     }
   }
   if (referenceMismatches?.length) {
-    printCommandSection("REFERENCIAS HISTÓRICAS");
-    printCommandWarning(`${referenceMismatches.length} archivos difieren del manifiesto histórico; no se modifican`);
-    if (detailed) {
-      for (const item of referenceMismatches) printReportLine(`  ${item.path} · SHA-256 actual ${item.actualSha256 ?? "archivo ausente o no regular"}`);
-    } else printReportLine("  Usa --detalle para consultar rutas y huellas");
+    for (const line of renderHistoricalReferenceMismatches(referenceMismatches, detailed)) printReportLine(line);
   }
   printCommandSection("RESUMEN");
   printReportLine(`${results.length - blocked}/${results.length} proveedores · ${total} originales · ${ready} ready · ${review} review · ${blocked} bloqueados`);

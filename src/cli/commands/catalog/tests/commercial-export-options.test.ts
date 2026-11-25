@@ -37,3 +37,14 @@ test("regenera el panel solo después de una entrega normal de develop", () => {
   assert.equal(shouldRefreshLocalPanel(simulated), false);
   assert.equal(shouldRefreshLocalPanel(files), false);
 });
+
+
+test("el detalle comercial es opcional y compatible con la simulación", () => {
+  assert.deepEqual(parseCommercialExportOptions(["--entorno", "develop", "--detalle"]), {
+    out: null, environment: "develop", dryRun: false, detailed: true
+  });
+  assert.deepEqual(parseCommercialExportOptions(["--detalle", "--simular"]), {
+    out: null, environment: null, dryRun: true, detailed: true
+  });
+  assert.throws(() => parseCommercialExportOptions(["--simular", "--detalle", "--detalle"]), /inválida/);
+});

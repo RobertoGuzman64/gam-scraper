@@ -24,7 +24,7 @@ const capture = (action: () => void): string => {
 
 test("presenta una línea definitiva por proveedor, contador y etapas sin barras", () => {
   const output = capture(() => {
-    const progress = new OperationProgress("PREPARAR");
+    const progress = new OperationProgress("PREPARAR", true);
     progress.stage("CATÁLOGOS", "3 proveedores");
     progress.update("GAM", 0, 3);
     progress.update("GAM", 1, 3);
@@ -46,7 +46,7 @@ test("presenta una línea definitiva por proveedor, contador y etapas sin barras
 
 test("registra avances de inspección sin atribuir tiempos de proveedor no medidos", () => {
   const output = capture(() => {
-    const progress = new OperationProgress("FINISH");
+    const progress = new OperationProgress("FINISH", true);
     progress.stage("INSPECCIÓN", "2 proveedores");
     progress.update("GAM", 1, 2);
     progress.update("GOMARIZ", 2, 2);
@@ -59,7 +59,7 @@ test("registra avances de inspección sin atribuir tiempos de proveedor no medid
 
 test("una interrupción no acredita la etapa inacabada", () => {
   const output = capture(() => {
-    const progress = new OperationProgress("FINISH");
+    const progress = new OperationProgress("FINISH", true);
     progress.stage("VERIFICACIÓN", "sin total acreditado");
     progress.update("GOMARIZ");
     progress.abort();
@@ -74,7 +74,7 @@ test("una interrupción no acredita la etapa inacabada", () => {
 
 test("los contadores inválidos y los eventos repetidos no inventan proveedores completados", () => {
   const output = capture(() => {
-    const progress = new OperationProgress("FINISH");
+    const progress = new OperationProgress("FINISH", true);
     progress.stage("ACREDITACIÓN", "3 proveedores");
     progress.update("GAM", 0, 3);
     progress.update("GAM", 0, 3);
@@ -103,4 +103,24 @@ test("una etapa fallida conserva el estado FAIL y no anuncia una ejecución corr
   assert.equal((output.match(/FAIL \| EXPORTACIÓN COMERCIAL \| VERIFICACIÓN/g) ?? []).length, 1);
   assert.equal((output.match(/FAIL \| EXPORTACIÓN COMERCIAL \| TOTAL/g) ?? []).length, 1);
   assert.doesNotMatch(output, /PASS \| EXPORTACIÓN COMERCIAL|GOMARIZ|█|░/);
+});
+
+
+test("el progreso compacto resume cada etapa sin perder el contador ni el estado final", () => {
+  const output = capture(() => {
+    const progress = new OperationProgress("FINISH");
+    progress.stage("PREFLIGHT", "3 proveedores");
+    progress.update("GAM", 1, 3);
+    progress.update("GOMARIZ", 2, 3);
+    progress.update("MERCAELEVA", 3, 3);
+    progress.stage("INSPECCIÓN", "3 proveedores");
+    progress.update("GAM", 1, 3);
+    progress.update("GOMARIZ", 0, 3);
+    progress.update("GOMARIZ", 4, 3);
+    progress.abort();
+  });
+  assert.match(output, /PASS \| FINISH \| PREFLIGHT \| 3\/3 proveedores procesados \| \d+s/);
+  assert.match(output, /WARN \| FINISH \| INSPECCIÓN \| 1\/3 proveedores procesados \| \d+s/);
+  assert.doesNotMatch(output, /^  (GAM|GOMARIZ|MERCAELEVA) \| .*procesados/gm);
+  assert.doesNotMatch(output, /PASS \| FINISH \| INSPECCIÓN|4\/3 proveedores procesados/);
 });

@@ -21,6 +21,7 @@ export type CommercialExportOptions = {
   readonly out: string | null;
   readonly environment: CommercialEnvironment | null;
   readonly dryRun: boolean;
+  readonly detailed?: boolean;
 };
 
 export const parseCommercialExportOptions = (args: readonly string[]): CommercialExportOptions | "help" => {
@@ -28,10 +29,12 @@ export const parseCommercialExportOptions = (args: readonly string[]): Commercia
   let out: string | null = null;
   let environment: CommercialEnvironment | null = null;
   let dryRun = false;
+  let detailed = false;
   for (let i = 0; i < args.length; i += 1) {
     const original = args[i];
     const arg = original === "--salida" ? "--out" : original === "--entorno" ? "--environment" :
       original === "--simular" ? "--dry-run" : original;
+    if (arg === "--detalle" && !detailed) { detailed = true; continue; }
     if (arg === "--dry-run" && !dryRun) { dryRun = true; continue; }
     if (arg === "--out" && out === null) {
       const value = args[++i];
@@ -57,7 +60,7 @@ export const parseCommercialExportOptions = (args: readonly string[]): Commercia
       throw new Error("La salida comercial debe estar fuera del repositorio para proteger sus datos técnicos");
     }
   }
-  return { out, environment, dryRun };
+  return { out, environment, dryRun, ...(detailed ? { detailed } : {}) };
 };
 
 export const shouldRefreshLocalPanel = (options: CommercialExportOptions): boolean =>
@@ -66,15 +69,15 @@ export const shouldRefreshLocalPanel = (options: CommercialExportOptions): boole
 export const runCommercialExport = async (args: readonly string[]): Promise<void> => {
   const options = parseCommercialExportOptions(args);
   if (options === "help") {
-    printReportLine("Uso: npm run exportar:comercial -- --entorno develop|production [--simular] [--salida <directorio-nuevo>]\nPor defecto genera un ZIP comercial verificado en el Escritorio (un JSON por proveedor acreditado y manifiesto) y actualiza el informe interno de integración. --salida conserva los archivos sueltos en un directorio nuevo. --simular permite verificar sin elegir entorno. También admite --out, --environment y --dry-run. No publica ni importa en backend.");
+    printReportLine("Uso: npm run exportar:comercial -- --entorno develop|production [--simular] [--salida <directorio-nuevo>] [--detalle]\nPor defecto genera un ZIP comercial verificado en el Escritorio (un JSON por proveedor acreditado y manifiesto) y actualiza el informe interno de integración. --salida conserva los archivos sueltos en un directorio nuevo. --simular permite verificar sin elegir entorno. --detalle muestra el progreso por proveedor, rutas, huellas e identificadores. También admite --out, --environment y --dry-run. No publica ni importa en backend.");
     return;
   }
-  const progress = new OperationProgress("EXPORTACIÓN COMERCIAL");
+  const progress = new OperationProgress("EXPORTACIÓN COMERCIAL", options.detailed);
   try {
     progress.stage("PREFLIGHT Y PROYECCIÓN", "acreditando y preparando proveedores");
     const { preflight, files } = await prepareCommercialExportPreflight(root, options.environment,
       (providerId, completed, total) => progress.update(providerId.toUpperCase(), completed, total));
-    for (const line of renderCommercialExportPreflight(preflight, options.environment)) progress.log(formatReportLine(line));
+    for (const line of renderCommercialExportPreflight(preflight, options.environment, options.detailed)) progress.log(formatReportLine(line));
     if (preflight.failures.length || preflight.globalFailures.length || !isReferenceProviderSet(preflight.publications.map((item) => item.providerId))) {
       throw new Error(`Preflight comercial no conforme: ${preflight.failures.length} incidencias por proveedor y ${preflight.globalFailures.length} globales. No se exportó ningún archivo`);
     }
@@ -112,7 +115,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
       printCommandDeliverable("COMERCIAL", delivered.commercial);
       if (delivered.report) printCommandDeliverable("INFORME INTERNO", delivered.report);
       if (shouldRefreshLocalPanel(options)) {
-        const panelProgress = new OperationProgress("PANEL LOCAL");
+        const panelProgress = new OperationProgress("PANEL LOCAL", options.detailed);
         try {
           panelProgress.stage("EVIDENCIAS", "preparando explorador técnico");
           await prepareExplorerTechnicalEvidence(root);

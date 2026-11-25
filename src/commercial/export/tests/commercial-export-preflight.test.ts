@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { createCommercialReferenceFixture, type CommercialReferenceFixture } from "../../../testing/builders/commercial-reference-fixture.js";
-import { inspectCommercialExportPreflight, prepareCommercialExportPreflight } from "../commercial-export-preflight.js";
+import { inspectCommercialExportPreflight, prepareCommercialExportPreflight, type CommercialExportPreflight } from "../commercial-export-preflight.js";
 import { validateCommercialExportFiles } from "../commercial-export-verification.js";
 import { renderCommercialExportPreflight } from "../../../cli/reporting/commercial/commercial-export-preflight.js";
 import { renderCommercialIntegrationReport } from "../../../cli/reporting/commercial/commercial-integration-report.js";
@@ -36,6 +36,16 @@ test("preflight comercial usa tres proveedores y acredita el corte sin fecha inv
   assert.match(lines, /paquete comercial AÚN NO GENERADO/);
   assert.doesNotMatch(lines, /Categoría comercial no válida para gam:ref:2071: 11/);
   assert.doesNotMatch(lines, /PUBLICACIÓN VIGENTE \| manain/u);
+  assert.doesNotMatch(lines, /SHA256|Run:|selección:/u);
+  assert.equal((lines.match(/Fecha de publicación: no declarada/g) ?? []).length, 1);
+  const detailed = renderCommercialExportPreflight(result, "develop", true).join("\n");
+  for (const item of result.publications) {
+    assert.ok(detailed.includes(item.publicationSha256));
+    assert.ok(detailed.includes(item.runId));
+    assert.ok(detailed.includes(item.selection));
+    if (item.sourceCatalogSha256) assert.ok(detailed.includes(item.sourceCatalogSha256));
+  }
+  assert.match(detailed, /Fecha de publicación: no declarada en el contrato acreditado/);
   assert.ok(files);
   assert.doesNotThrow(() => validateCommercialExportFiles(files));
 });
@@ -53,6 +63,12 @@ test("selecciones corruptas se informan por proveedor sin bloquear otros diagnó
     assert.ok(result.failures.some((item) => item.providerId === "gam" && item.category === "ERROR"));
     assert.ok(result.failures.some((item) => item.providerId === "gomariz" && item.category === "ERROR"));
     assert.ok(result.publications.some((item) => item.providerId === "mercaeleva"));
+    for (const detailed of [false, true]) {
+      const rendered = renderCommercialExportPreflight(result, null, detailed).join("\n");
+      for (const failure of result.failures) assert.ok(rendered.includes(failure.detail));
+      assert.match(rendered, /publicaciones inspeccionadas con bloqueos/);
+      assert.match(rendered, /paquete comercial NO GENERADO/);
+    }
     const prepared = await prepareCommercialExportPreflight(root, null);
     assert.equal(prepared.files, null);
     assert.ok(prepared.preflight.failures.some((item) => item.providerId === "gam"));
@@ -83,4 +99,27 @@ test("el preflight no entrega archivos si faltan las publicaciones y notifica el
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+
+test("el preflight conserva las alertas históricas y reserva las huellas completas para el detalle", () => {
+  const mismatch = { path: "data/reference.json", expectedSha256: "a".repeat(64), actualSha256: null };
+  const result: CommercialExportPreflight = {
+    publications: [], failures: [], globalFailures: ["Diagnóstico de prueba"],
+    historicalReferences: [mismatch], historicalReferenceWarning: null
+  };
+  const compact = renderCommercialExportPreflight(result, null).join("\n");
+  const detailed = renderCommercialExportPreflight(result, null, true).join("\n");
+  for (const output of [compact, detailed]) {
+    assert.match(output, /WARN \| REFERENCIAS HISTÓRICAS \| 1 discrepancia de huella; archivos no modificados/);
+    assert.match(output, /ERROR \| Diagnóstico de prueba/);
+  }
+  assert.match(compact, /--detalle/);
+  assert.ok(!compact.includes(mismatch.path));
+  assert.ok(!compact.includes(mismatch.expectedSha256));
+  assert.ok(detailed.includes(mismatch.path));
+  assert.ok(detailed.includes(mismatch.expectedSha256));
+  assert.match(detailed, /archivo ausente o no regular/);
+  assert.match(renderCommercialExportPreflight({ ...result, historicalReferences: null }, null).join("\n"), /sin manifiesto disponible/);
+  assert.match(renderCommercialExportPreflight({ ...result, historicalReferenceWarning: "Lectura fallida" }, null).join("\n"), /diagnóstico no disponible: Lectura fallida/);
 });

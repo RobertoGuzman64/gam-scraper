@@ -8,11 +8,12 @@ export class OperationProgress {
   private stageStartedAt = this.startedAt;
   private closed = false;
   private lastCompleted = 0;
+  private lastTotal: number | null = null;
   private activeDetail: string | null = null;
   private activeStartedAt: number | null = null;
   private lastFinishedDetail: string | null = null;
 
-  constructor(private readonly operation: string) {}
+  constructor(private readonly operation: string, private readonly detailed = false) {}
 
   stage(name: string, detail?: string): void {
     if (this.closed) return;
@@ -20,6 +21,7 @@ export class OperationProgress {
     this.stageName = name;
     this.stageStartedAt = Date.now();
     this.lastCompleted = 0;
+    this.lastTotal = null;
     this.activeDetail = null;
     this.activeStartedAt = null;
     this.lastFinishedDetail = null;
@@ -36,11 +38,17 @@ export class OperationProgress {
       this.live.update(`${prefix} | ${detail}`);
       return;
     }
+    if (completed < this.lastCompleted) return;
+    this.lastTotal = total;
     if (completed > this.lastCompleted) {
       const elapsed = this.activeDetail === detail && this.activeStartedAt !== null
         ? ` | ${formatDuration(Date.now() - this.activeStartedAt)}` : "";
-      this.live.stop();
-      this.live.log(`  ${detail} | ${completed}/${total} procesados${elapsed}`);
+      if (this.detailed) {
+        this.live.stop();
+        this.live.log(`  ${detail} | ${completed}/${total} procesados${elapsed}`);
+      } else {
+        this.live.update(`${prefix} | ${detail} | ${completed}/${total}`);
+      }
       this.lastCompleted = completed;
       this.lastFinishedDetail = detail;
       this.activeDetail = null;
@@ -76,7 +84,9 @@ export class OperationProgress {
   private closeStage(status: TerminalStatus): void {
     this.live.stop();
     if (this.stageName === null) return;
-    printStatus(status, `${this.operation} | ${this.stageName} | ${formatDuration(Date.now() - this.stageStartedAt)}`);
+    const count = !this.detailed && this.lastTotal !== null
+      ? ` | ${this.lastCompleted}/${this.lastTotal} ${this.lastTotal === 1 ? "proveedor procesado" : "proveedores procesados"}` : "";
+    printStatus(status, `${this.operation} | ${this.stageName}${count} | ${formatDuration(Date.now() - this.stageStartedAt)}`);
     this.stageName = null;
   }
 }

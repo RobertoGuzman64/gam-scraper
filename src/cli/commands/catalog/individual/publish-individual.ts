@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseIndividualCatalogProviders } from "../../../options/individual-catalog.js";
-import { printCommandHeader, printCommandSection, printCommandProvider, printCommandResult, printCommandDeliverable, printReportLine, printStatus, formatStatus } from "../../../reporting/terminal.js";
+import { printCommandHeader, printCommandSection, printCommandProvider, printCommandResult, printCommandDeliverable, printReportLine, printStatus } from "../../../reporting/terminal.js";
 import { LiveStatus, formatDuration } from "../../../reporting/live-status.js";
 import { OperationProgress } from "../../../reporting/progress/operation-progress.js";
 import { printCommandError } from "../../../reporting/errors.js";
@@ -28,7 +28,7 @@ Paso 2/2: FINISH. Reutiliza automáticamente exclusiones históricas idénticas 
 Verifica la publicación interna acreditada antes de activar; activa proveedores individuales con diario de recuperación,
 comprueba integridad, ejecuta retención e informe de trabajo original → publicado. --simular no escribe ni activa.
 Repetir el comando recupera un conjunto parcial sin sobrescribir entregas.
-No sustituye una campaña global de cuatro proveedores. --detalle muestra diferencias. FINISH no genera ZIP externos.
+No sustituye una campaña global de cuatro proveedores. --detalle muestra progreso por proveedor y diferencias. FINISH no genera ZIP externos.
 --estado consulta sin escritura el diario de activación, retención e informe.`;
 
 export const consolidate = async (workspace: string): Promise<void> => {
@@ -129,7 +129,7 @@ export const runPublishIndividual = async (
   const parsed = parseIndividualCatalogProviders(args.filter((arg) => arg !== "--detalle"), true);
   printCommandHeader("PASO 2/2 · FINISH", parsed.dryRun);
   const root = resolve(workspace);
-  const progress = new OperationProgress("FINISH");
+  const progress = new OperationProgress("FINISH", detailed);
   let result: IndividualFinishResult;
   try {
     progress.stage(parsed.dryRun ? "ACREDITACIÓN" : "PREFLIGHT", `${parsed.providerIds.length} ${parsed.providerIds.length === 1 ? "proveedor" : "proveedores"}`);
@@ -153,21 +153,18 @@ export const runPublishIndividual = async (
         if (stage === "ACREDITACIÓN") {
           const name = preflightComplete ? "ACREDITACIÓN BAJO BLOQUEO" : "PREFLIGHT";
           if (name !== activeStage) {
-            if (preflightComplete) {
-              progress.log(formatStatus("PASS", `PREFLIGHT | ${total} proveedores comprobados; reacreditación bajo bloqueo`));
-            }
-            progress.stage(name, `${total} proveedores`);
+            progress.stage(name, `${total} ${total === 1 ? "proveedor" : "proveedores"}`);
             activeStage = name;
           }
         } else if (stage === "INSPECCIÓN") {
           const name = preflightComplete ? "REVALIDACIÓN" : "INSPECCIÓN";
           if (name !== activeStage) {
-            progress.stage(name, `${total} proveedores`);
+            progress.stage(name, `${total} ${total === 1 ? "proveedor" : "proveedores"}`);
             activeStage = name;
           }
           if (completed === total && !preflightComplete) preflightComplete = true;
         } else if (stage !== activeStage) {
-          progress.stage(stage, `${total} proveedores`);
+          progress.stage(stage, `${total} ${total === 1 ? "proveedor" : "proveedores"}`);
           activeStage = stage;
         }
         progress.update(providerId.toUpperCase(), completed, total);
@@ -191,7 +188,7 @@ export const runPublishIndividual = async (
   printCommandSection("CIERRE DE PUBLICACIÓN");
   const closeStep = async (name: string, task: () => Promise<void>): Promise<void> => {
     const startedAt = Date.now();
-    printStatus("RUN", `FINISH | ${name} | en curso`);
+    if (detailed || hooks.retention) printStatus("RUN", `FINISH | ${name} | en curso`);
     await task();
     printStatus("PASS", `FINISH | ${name} | ${formatDuration(Date.now() - startedAt)}`);
   };
@@ -199,7 +196,7 @@ export const runPublishIndividual = async (
     retention: async () => { await closeStep("RETENCIÓN", async () => { await (hooks.retention ?? (() => consolidate(root)))(); }); },
     reporter: async () => {
       const startedAt = Date.now();
-      printStatus("RUN", "FINISH | INFORME | actualizando informe técnico interno");
+      if (detailed) printStatus("RUN", "FINISH | INFORME | actualizando informe técnico interno");
       const delivery = await (hooks.reporter ?? retainPublishedWorkReport)(root, result);
       printStatus("PASS", `FINISH | INFORME | ${formatDuration(Date.now() - startedAt)}`);
       printCommandSection("TRABAJO REALIZADO");
@@ -207,7 +204,7 @@ export const runPublishIndividual = async (
       return delivery;
     }
   });
-  printStatus("PASS", closure.executed.includes("retained") ? "RETENCIÓN | COMPLETA" : "RETENCIÓN | CIERRE PREVIO CONSERVADO");
+  if (!closure.executed.includes("retained")) printStatus("PASS", "RETENCIÓN | CIERRE PREVIO CONSERVADO");
   printCommandDeliverable(closure.executed.includes("reported") ? "INFORME TÉCNICO · versión interna verificada" : "INFORME TÉCNICO · RECIBO YA CERRADO", closure.reportFile);
   if (detailed) printReportLine(`  Diario de cierre: ${closure.journalPath}`);
   printCommandResult(result.providers.every((item) => item.status === "YA VIGENTE")
