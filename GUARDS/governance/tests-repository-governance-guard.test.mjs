@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { gzipSync } from "node:zlib";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -20,6 +21,7 @@ const fixture = (t) => {
   const policy = {
     version: 3,
     maxCounts: { markdown: 1, scripts: 1 },
+    documentaryImages: {},
     allowedPaths: { markdown: ["docs/QUALITY.md"], scripts: ["scripts/run.mjs"] },
     npmScripts: { test: "node scripts/run.mjs" },
     npmBin: null
@@ -326,4 +328,50 @@ test("excluye artefactos operativos de storage sin permitir réplicas en testing
   write("src/testing/fixtures/duplicated-source.json", source);
   assert.ok(replicaCodes(root).includes("R-ARCHIVO-DUPLICADO"));
   assert.ok(findings(value).some((finding) => finding.includes("src/testing/fixtures/duplicated-source.json")));
+});
+
+const documentaryImage = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4//8/AAX+Av4N70a4AAAAAElFTkSuQmCC", "base64");
+const documentaryImagePath = "docs/images/memorial.png";
+const documentaryImageHash = createHash("sha256").update(documentaryImage).digest("hex");
+
+const authorizeDocumentaryImage = (value) => {
+  value.policy.documentaryImages = { [documentaryImagePath]: documentaryImageHash };
+  value.write(documentaryImagePath, documentaryImage);
+};
+
+test("acepta exclusivamente las imágenes documentales acreditadas por ruta y huella", (t) => {
+  const value = fixture(t);
+  authorizeDocumentaryImage(value);
+  assert.deepEqual(findings(value), []);
+  value.write("docs/images/extra.png", documentaryImage);
+  assert.deepEqual(findings(value), ["Archivo no autorizado en docs/: docs/images/extra.png"]);
+});
+
+test("rechaza modificar o sustituir una imagen documental acreditada", (t) => {
+  const value = fixture(t);
+  authorizeDocumentaryImage(value);
+  value.write(documentaryImagePath, Buffer.concat([documentaryImage, Buffer.from("changed")]));
+  assert.deepEqual(findings(value), [`Imagen documental modificada: ${documentaryImagePath}`]);
+  value.write(documentaryImagePath, zip([["catalogs/hidden.json", "{}"]]));
+  const result = findings(value);
+  assert.ok(result.includes(`Imagen documental modificada: ${documentaryImagePath}`));
+  assert.ok(result.includes(`R-CATALOGO-EMPAQUETADO: ${documentaryImagePath}!catalogs/hidden.json`));
+});
+
+test("rechaza eliminar o mover una imagen documental acreditada", (t) => {
+  const value = fixture(t);
+  authorizeDocumentaryImage(value);
+  rmSync(join(value.root, documentaryImagePath));
+  assert.deepEqual(findings(value), [`Imagen documental ausente: ${documentaryImagePath}`]);
+  value.write("docs/images/moved.png", documentaryImage);
+  assert.ok(findings(value).includes("Archivo no autorizado en docs/: docs/images/moved.png"));
+});
+
+test("rechaza contratos de imágenes documentales inválidos", (t) => {
+  const value = fixture(t);
+  for (const documentaryImages of [null, [], { "docs/images/../escape.png": documentaryImageHash },
+    { "docs/images/memorial.zip": documentaryImageHash }, { "src/memorial.png": documentaryImageHash },
+    { [documentaryImagePath]: "invalid" }]) {
+    assert.throws(() => inspectRepositoryGovernance(value.root, { ...value.policy, documentaryImages }), /inválido/u);
+  }
 });

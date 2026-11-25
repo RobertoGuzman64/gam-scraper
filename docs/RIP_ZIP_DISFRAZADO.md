@@ -19,6 +19,12 @@ Este documento es una excepción documental solicitada expresamente para preserv
 
 *No era una evidencia pequeña. Era una instalación portátil de datos históricos con nombre de evidencia.*
 
+### El hallazgo — evidencia gráfica
+
+![El ZIP disfrazado en el árbol de fixtures del panel](images/zip-disfrazado-hallazgo.png)
+
+*Captura original del 23 de noviembre de 2026: `published-snapshot.evidence` en `src/testing/fixtures/panel/`, antes de su retirada.*
+
 ## Hechos comprobados
 
 En la copia del repositorio inspeccionada durante la auditoría:
@@ -51,6 +57,12 @@ Esta distinción obliga a separar:
 3. Integraciones que dependen legítimamente de fuentes acreditadas: candidatas a conservación bajo contratos explícitos, sin inventarios paralelos permanentes.
 
 No basta con conseguir una batería verde restaurando los catálogos eliminados. Tampoco basta con eliminar las pruebas que fallan para conseguirla.
+
+## El funeral — evidencia gráfica
+
+![Retirada del ZIP disfrazado y de las fixtures históricas](images/zip-disfrazado-funeral.png)
+
+*Captura original del 23 de noviembre de 2026: archivos marcados para eliminación en el control de cambios, incluido `published-snapshot.evidence`. La imagen documenta la poda; el cierre funcional se acredita en el apartado siguiente.*
 
 ## Cierre acreditado — fase 11
 

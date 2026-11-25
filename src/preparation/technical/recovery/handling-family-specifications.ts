@@ -1,11 +1,12 @@
-import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
+import type { ProductRecord, SpecsMap, SpecValue } from "../../../contracts/catalog.js";
+import { isGamUnitUrl } from "../../../catalog/normalization/gam/unit-url.js";
 import { fold } from "../../classification/category-utils.js";
 import { hasUnconditionalEditorialClaim } from "../../editorial/claims/editorial-claim-evidence.js";
 import { resolvedEditorialUnitFamilies } from "../../editorial/identity/editorial-unit-provenance.js";
 import { resolveEditorialSource } from "../../editorial/core/editorial-source.js";
 import { containsEditorialSourceSlugModel } from "../../editorial/source/editorial-source-url.js";
 import type { TechnicalRecoveryObservation } from "../../provenance/technical-recovery-observation.js";
-import { containsEditorialBrandModel } from "../../editorial/identity/editorial-identity-match.js";
+import { containsEditorialBrandModel, containsEditorialIdentity } from "../../editorial/identity/editorial-identity-match.js";
 import { resolveEditorialFacts } from "../../editorial/core/editorial-facts.js";
 
 export const reconcileHandlingFamilySpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap => {
@@ -38,7 +39,7 @@ export const recoverSourceHandlingConfiguration = (
   const short = original.shortDescription ?? "";
   const singleClaim = (claim: RegExp, mentions: RegExp): boolean =>
     [...text.matchAll(mentions)].length === 1 && hasUnconditionalEditorialClaim(text, claim) && [...short.matchAll(mentions)].length === 0;
-  const additions: Record<string, string> = {};
+  const additions: Record<string, SpecValue> = {};
   const lowLevelPicker = families[0] === null && families[1] === null &&
     /^preparapedidos\b/iu.test(original.title ?? "") && /^preparapedidos\b/iu.test(recovered.title ?? "") &&
     new URL(original.url).pathname.split("/").some((segment) => /^preparapedidos(?:-|$)/iu.test(segment));
@@ -89,11 +90,107 @@ export const recoverSourceHandlingConfiguration = (
       additions["Posición de conducción"] = "Operador a bordo";
     }
   }
+  if ((families[0] === "apilador" || families[0] === "transpaleta") && original.brand && original.model &&
+    !additions["Posición de conducción"] &&
+    absent(/conductor|conduccion|posicion.*(?:operario|operador)|plataforma.*(?:operario|operador)|puesto.*(?:operario|operador)/u) &&
+    containsEditorialBrandModel(original.title ?? "", original.brand, original.model) &&
+    (!short || containsEditorialBrandModel(short, original.brand, original.model))) {
+    const { brand, model } = original;
+    const description = fold(text);
+    const evidence = fold(`${original.title ?? ""}. ${short}. ${text}`);
+    const pedestrianClaim = families[0] === "apilador"
+      ? /\bapilador(?: electrico| manual)? (?:de )?(?:(?:conductor|operari[oa]|operador) )?a pie\b/gu
+      : /\btranspaleta(?: electrica| manual)? (?:de )?(?:(?:conductor|operari[oa]|operador) )?a pie\b/gu;
+    const brandPattern = fold(brand).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+    const namedModel = new RegExp(`\\b${brandPattern}\\s+([a-z0-9./-]*\\d[a-z0-9/-]*(?:\\.\\d[a-z0-9/-]*)*)`, "gu");
+    const conflictingModel = [...evidence.matchAll(namedModel)].some((match) =>
+      !!match[1] && !containsEditorialIdentity(model, match[1]));
+    const identifiedClaim = description.slice(0, 450).split(/(?<=[.!?;])\s+|\n/u).some((clause) =>
+      [...clause.matchAll(pedestrianClaim)].length > 0 && containsEditorialBrandModel(clause, brand, model));
+    if (identifiedClaim && !conflictingModel && hasUnconditionalEditorialClaim(description, pedestrianClaim) &&
+      !/\b(?:a bordo|sentad[oa]|montad[oa]|plataforma (?:abatible|plegable|opcional|(?:para|del|de) (?:el )?(?:operario|operador|conductor))|(?:conductor|operario|operador) (?:de pie|sobre plataforma)|(?:a pie|peatonal) (?:opcional|segun|como opcion)|(?:no|sin) (?:ser |un |una )?(?:apilador|transpaleta|conductor|operario|operador)|(?:comparacion|comparad[oa]) con)\b/u.test(evidence.replace(/\b(?:cargador|diagnostico|sistema de diagnostico) a bordo\b/gu, "")) &&
+      !/\b(?:no|sin|ni|opcion|opcional|alternativ[oa]|segun)\b[^.!?;\n]{0,45}\ba pie\b/u.test(evidence)) {
+      additions["Posición de conducción"] = "Operador a pie";
+    }
+  }
   if (newOffer && original.brand && original.model &&
     containsEditorialBrandModel(original.title ?? "", original.brand, original.model) &&
     containsEditorialBrandModel(text, original.brand, original.model)) {
     const evidence = fold(`${original.title ?? ""} ${short} ${text}`);
-    const technologyAbsent = absent(/tecnologia.*motor|tipo.*motor.*traccion|corriente.*(?:motor|traccion)|motor.*(?:ca|ac|cc|dc)|controlador de traccion/u);
+    const diagnosticClaim = /\bsistema de diagn[oó]stico\b/giu;
+    if ((families[0] === "carretilla-elevadora" || families[0] === "carretilla-retractil" ||
+      families[0] === "apilador" || families[0] === "transpaleta" || families[0] === "recogepedidos" || families[0] === "tractor-arrastre") &&
+      absent(/diagnost|autodiagnost|\bvsm\b/u) && (!short || containsEditorialBrandModel(short, original.brand, original.model))) {
+      const brandPattern = fold(original.brand).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+      const namedModel = new RegExp(`\\b${brandPattern}\\s+([a-z0-9./-]*\\d[a-z0-9/-]*(?:\\.\\d[a-z0-9/-]*)*)`, "gu");
+      const conflictingModel = [...evidence.matchAll(namedModel)].some((match) =>
+        !!match[1] && !containsEditorialIdentity(original.model ?? "", match[1]));
+      const context = `${original.title ?? ""}. ${short}. ${text}`;
+      if (!conflictingModel && hasUnconditionalEditorialClaim(text, diagnosticClaim) &&
+        hasUnconditionalEditorialClaim(context, diagnosticClaim) &&
+        [...context.matchAll(diagnosticClaim)].every((match) => {
+          const index = match.index ?? 0;
+          const before = fold(context.slice(Math.max(0, index - 150), index)).split(/[.!?;\n]/u).at(-1) ?? "";
+          const after = fold(context.slice(index + match[0].length, index + match[0].length + 150)).split(/[.!?;\n]/u)[0] ?? "";
+          return !/\b(?:otros? modelos?|otras? maquinas?|otra variante|comparacion|comparad[oa]|a diferencia de|segun configuracion|alternativ[oa]s?)\b/u.test(`${before} ${after}`) &&
+            !/\b(?:sin|ni|carece de|no (?:tiene|lleva|monta|equipa|incluye|incorpora|dispone de|cuenta con))(?:\s+(?:un|el|su))?\s*$/u.test(before) &&
+            !/\b(?:desactivad[oa]|no disponible|no instalad[oa]|externo|opcional)\b/u.test(after);
+        })) additions["Sistema de diagnóstico"] = true;
+    }
+    const seatClaim = /\basiento (?:ajustable|regulable)\b/giu;
+    if ((families[0] === "carretilla-elevadora" || families[0] === "carretilla-retractil") &&
+      absent(/asiento|sillin|\bseat\b/u) && (!short || containsEditorialBrandModel(short, original.brand, original.model))) {
+      const brandPattern = fold(original.brand).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+      const namedModel = new RegExp(`\\b${brandPattern}\\s+([a-z0-9./-]*\\d[a-z0-9/-]*(?:\\.\\d[a-z0-9/-]*)*)`, "gu");
+      const conflictingModel = [...evidence.matchAll(namedModel)].some((match) =>
+        !!match[1] && !containsEditorialIdentity(original.model ?? "", match[1]));
+      const context = `${original.title ?? ""}. ${short}. ${text}`;
+      if (!conflictingModel && [...context.matchAll(/\b(?:SWB|MWB|LWB)\b/giu)].every((match) =>
+        containsEditorialIdentity(original.model ?? "", match[0])) &&
+        hasUnconditionalEditorialClaim(text, seatClaim) && hasUnconditionalEditorialClaim(context, seatClaim) &&
+        !/\b(?:sin asiento|asiento (?:es )?(?:fijo|no (?:ajustable|regulable))|no (?:tiene|lleva|monta|equipa|incluye|incorpora|dispone de|cuenta con) (?:un |el |su )?asiento)\b/u.test(evidence) &&
+        [...context.matchAll(seatClaim)].every((match) => {
+          const index = match.index ?? 0;
+          const before = fold(context.slice(Math.max(0, index - 150), index)).split(/[.!?;\n]/u).at(-1) ?? "";
+          const after = fold(context.slice(index + match[0].length, index + match[0].length + 150)).split(/[.!?;\n]/u)[0] ?? "";
+          return !/\b(?:otros? modelos?|otras? maquinas?|otra variante|comparacion|comparad[oa]|a diferencia de|segun configuracion|alternativ[oa]s?|no regulable|no ajustable)\b/u.test(`${before} ${after}`);
+        })) additions["Asiento regulable"] = true;
+    }
+    const workLights = /\bluces de trabajo\b/giu;
+    if (families[0] === "carretilla-elevadora" &&
+      (original.providerId === "mercaeleva" || original.providerId === "gam" && isGamUnitUrl(original)) && absent(/\b(?:luces?|faros?|focos?|iluminacion|alumbrado)\b/u) &&
+      (!short || containsEditorialBrandModel(short, original.brand, original.model)) &&
+      hasUnconditionalEditorialClaim(text, workLights)) {
+      const context = fold(`${original.title ?? ""}. ${short}. ${text}`);
+      const brandPattern = fold(original.brand).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+      const namedModel = new RegExp(`\\b${brandPattern}\\s+([a-z0-9./-]*\\d[a-z0-9/-]*(?:\\.\\d[a-z0-9/-]*)*)`, "gu");
+      const conflictingModel = [...context.matchAll(namedModel)].some((match) =>
+        !!match[1] && !containsEditorialIdentity(original.model ?? "", match[1]));
+      if (!conflictingModel && [...context.matchAll(/\b(?:swb|mwb|lwb)\b/gu)].every((match) =>
+        containsEditorialIdentity(original.model ?? "", match[0])) &&
+        hasUnconditionalEditorialClaim(context, workLights) &&
+        [...context.matchAll(workLights)].every((match) => {
+          const index = match.index ?? 0;
+          const before = context.slice(Math.max(0, index - 180), index).split(/[.!?;\n]/u).at(-1) ?? "";
+          const after = context.slice(index + match[0].length, index + match[0].length + 150).split(/[.!?;\n]/u)[0] ?? "";
+          return /\b(?:equipad[oa] con|se han (?:incorporado|implementado)|incorpora|incluye|dispone de|cuenta con|de serie)\b/u.test(before) &&
+            !/\b(?:no|sin|ni|carece|ausencia|opcional(?:es)?|opcion|pueden?|podrian?|configuracion|configurarse|disponibles?|alternativ[oa]s?|dependiendo|otros? modelos?|otras? maquinas?|otra variante|comparacion|comparad[oa]|a diferencia de|desactivad[oa]s?)\b/u.test(`${before} ${after}`);
+        })) additions["Luces de trabajo"] = true;
+    }
+    const steeringClaim = /\bdirecci[oó]n el[eé]ctrica\b/giu;
+    if ((families[0] === "apilador" || families[0] === "transpaleta" || families[0] === "recogepedidos" ||
+      families[0] === "tractor-arrastre" || families[0] === "carretilla-elevadora" || families[0] === "carretilla-retractil") &&
+      absent(/direccion|gobierno|steering/u) && (!short || containsEditorialBrandModel(short, original.brand, original.model)) &&
+      !/\b(?:direccion (?:manual|hidraulica|mecanica|opcional|alternativa)|(?:no|sin|ni)\s+[^.!?;\n]{0,45}direccion electrica|direccion electrica[^.!?;\n]{0,45}\b(?:opcional|no incluida|no disponible)|(?:otros? modelos?|otra variante|comparacion con)\b[^.!?;\n]{0,70}direccion electrica)\b/u.test(evidence) &&
+      !(/\bmotor (?:diesel|gasolina|glp)\b/u.test(evidence) && !absent(/bateria|voltaje|tension/u)) &&
+      hasUnconditionalEditorialClaim(text, steeringClaim)) {
+      const brandPattern = fold(original.brand).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+      const namedModel = new RegExp(`\\b${brandPattern}\\s+([a-z0-9./-]*\\d[a-z0-9/-]*(?:\\.\\d[a-z0-9/-]*)*)`, "gu");
+      const conflictingModel = [...evidence.matchAll(namedModel)].some((match) =>
+        !!match[1] && !containsEditorialIdentity(original.model ?? "", match[1]));
+      if (!conflictingModel) additions["Sistema de dirección"] = "Eléctrica";
+    }
+    const technologyAbsent = absent(/tecnologia.*motor|tipo.*motor.*traccion|corriente.*(?:motor|traccion)|motor.*\b(?:ca|ac|cc|dc)\b|controlador de traccion/u);
     const acTraction = families[0] === "recogepedidos" ? /\bmotor de tracci[oó]n (?:de )?(?:CA|AC|corriente alterna)\b/giu :
       families[0] === "transpaleta" ? /\bmotor de tracci[oó]n AC sin escobillas\b/giu :
         families[0] === "apilador" ? /\bmotor de tracci[oó]n AC sin mantenimiento\b/giu : null;
@@ -104,6 +201,34 @@ export const recoverSourceHandlingConfiguration = (
       !/\b(?:corriente continua|motor (?:de cc|dc|diesel|gasolina|glp)|motor alternativo|motor opcional|sin motor|no (?:esta )?equipad[oa])\b/u.test(evidence) &&
       hasUnconditionalEditorialClaim(text, /\bequipad[oa] con un motor de (?:CA|AC|corriente alterna)\b/giu)) {
       additions["Tecnología del motor"] = "Corriente alterna";
+    }
+    if (families[0] === "carretilla-elevadora" && technologyAbsent &&
+      (!short || containsEditorialBrandModel(short, original.brand, original.model)) &&
+      /\bcarretilla(?: elevadora)? electrica\b/u.test(fold(original.title ?? "")) &&
+      ![original.specs, specs].some((values) => Object.entries(values ?? {}).some(([key, value]) =>
+        /motor|motorizacion|propulsion|traccion/u.test(fold(key)) && typeof value === "string" &&
+        /\b(?:corriente alterna|corriente continua|ac|ca|dc|cc|diesel|glp|gasolina)\b/u.test(fold(value)))) &&
+      !/\b(?:corriente continua|motor(?:es)? (?:de )?(?:cc|dc|diesel|gasolina|glp)|motor(?:es)? alternativ[oa]s?|motor(?:es)? opcional(?:es)?|motorizacion opcional|sin motor(?:es)?|no (?:tiene|incluye|monta|utiliza|dispone de) (?:un )?motor(?:es)?)\b/u.test(evidence)) {
+      const brandPattern = fold(original.brand).replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+      const namedModel = new RegExp(`\\b${brandPattern}\\s+([a-z0-9./-]*\\d[a-z0-9/-]*(?:\\.\\d[a-z0-9/-]*)*)`, "gu");
+      const conflictingModel = [...evidence.matchAll(namedModel)].some((match) =>
+        !!match[1] && !containsEditorialIdentity(original.model ?? "", match[1]));
+      const tractionClaim = /\bmotor(?:es)? de tracci[oó]n (?:de )?(?:CA|AC|corriente alterna)\b/giu;
+      const motorClaim = /\bmotor(?:es)?(?: el[eé]ctricos?)? (?:de )?(?:CA|AC|corriente alterna)\b/giu;
+      const declared = (pattern: RegExp): boolean => hasUnconditionalEditorialClaim(text, pattern) &&
+        [...text.matchAll(pattern)].every((match) => {
+          const index = match.index ?? 0;
+          const prefix = fold(text.slice(Math.max(0, index - 150), index)).split(/(?<!\d)[.!?;\n]|[.!?;\n](?!\d)/u).at(-1) ?? "";
+          const suffix = fold(text.slice(index + match[0].length, index + match[0].length + 100)).split(/[.!?;\n]/u)[0] ?? "";
+          return !/\b(?:no|sin|ni)(?:\s+(?:un|una|el|los|sus))?\s*$/u.test(prefix) &&
+            !/\b(?:controlador|control|regulador|variador)(?: (?:de|del))?\s*$/u.test(prefix) &&
+            !/\b(?:configuracion|variante|alternativ[oa]s?|otros? modelos?|comparad[oa]|comparacion)\b/u.test(`${prefix} ${suffix}`);
+        });
+      if (!conflictingModel && declared(tractionClaim)) {
+        additions["Tecnología del motor de tracción"] = "Corriente alterna";
+      } else if (!conflictingModel && declared(motorClaim)) {
+        additions["Tecnología del motor"] = "Corriente alterna";
+      }
     }
     if (families[0] === "apilador" && absent(/posicion.*(?:conductor|conduccion|operador)|plataforma.*(?:conductor|operario|operador)|tipo.*conduccion|conduccion.*(?:pie|bordo|sentado)/u) &&
       hasUnconditionalEditorialClaim(text, /\best[aá] dise[ñn]ad[oa] para uso por operario a pie\b/giu) &&

@@ -18,6 +18,7 @@ import { reconcileSourceCategoryTitle, reconcileVerifiedSourceReviewClaims, reco
 import { publicationConflictForMercaeleva } from "./mercaeleva/technical/mercaeleva.js";
 import { hasDocumentedGomarizPriceOnRequest } from "./gomariz/price-on-request.js";
 import { normalizeOriginalEnergyPresentation, normalizeOriginalLengthPresentation, normalizeOriginalMassPresentation } from "./technical/technical-presentation.js";
+import { recoverSourceCleaningConfiguration } from "./technical/recovery/cleaning-family-specifications.js";
 import { reconcileHandlingFamilySpecs, recoverSourceHandlingConfiguration } from "./technical/recovery/handling-family-specifications.js";
 import { presentGamVerifiedRestrictedCapacity } from "./gam/reconciliation/gam-verified-capacity-coherence.js";
 import { recoverSourcePlatformGeometry } from "./technical/recovery/platform-geometry-recovery.js";
@@ -59,7 +60,8 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   const sourceGeometrySpecs = recoverSourcePlatformGeometry(originalRecord, recoverySource,
     applyReconciledTechnicalSpecs(beforeReconciliation, record, documentedSpecs), technicalProvenance.observe);
   const sourceHandlingSpecs = recoverSourceHandlingConfiguration(originalRecord, recoverySource, sourceGeometrySpecs, technicalProvenance.observe);
-  const reconciledSpecs = recoverReviewedModelTechnicalSpecs(originalRecord, sourceHandlingSpecs, technicalProvenance.observe);
+  const sourceCleaningSpecs = recoverSourceCleaningConfiguration(originalRecord, recoverySource, sourceHandlingSpecs, technicalProvenance.observe);
+  const reconciledSpecs = recoverReviewedModelTechnicalSpecs(originalRecord, sourceCleaningSpecs, technicalProvenance.observe);
   const editorialRecord = reconcileManainEditorialSourceSpecs({ ...record, specs: reconciledSpecs,
     shortDescription: sourceUnitRecord.shortDescription, longDescription: coherentSource.longDescription });
   const sourceEditorial = captureSourceEditorialEvidence(editorialRecord);

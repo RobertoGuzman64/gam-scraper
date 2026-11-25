@@ -1,4 +1,4 @@
-import { SPEC_KEY_NORMALIZATION, SPEC_RULES, type SpecRuleType } from "./spec-rules.js";
+import { SPEC_KEY_NORMALIZATION, SPEC_LENGTH_UNITS, SPEC_MASS_UNITS, SPEC_RULES, type SpecRuleType } from "./spec-rules.js";
 import {
   cleanEnum,
   parseBattery,
@@ -70,11 +70,15 @@ const isInvalidStringValue = (v: string): boolean => {
   return Object.keys(SPEC_RULES).some((candidate) => cleanKeyBase(candidate) === text);
 };
 
+const specUnit = (key: string): string | undefined =>
+  key.match(/\(([^)]+)\)$/)?.[1] ?? (Object.hasOwn(SPEC_LENGTH_UNITS, key) ? SPEC_LENGTH_UNITS[key] : undefined) ??
+  (Object.hasOwn(SPEC_MASS_UNITS, key) ? SPEC_MASS_UNITS[key] : undefined);
+
 const rejectionReason = (value: unknown, key: string, rule: SpecRuleType): DiscardReason => {
   if (typeof value !== "string") return "invalid_value";
   const text = value.trim();
   if (/^[+-]?\d[\d.,]*\s*(?:[x×/]|[-–])\s*[+-]?\d/u.test(text)) return "conditional_value";
-  const expectedUnit = key.match(/\(([^)]+)\)$/)?.[1];
+  const expectedUnit = specUnit(key);
   if (expectedUnit && (rule === "number" || rule === "number_array")) {
     const match = text.match(/^[+-]?\d[\d.,]*\s+([a-zA-Záéíóú²%/]+)$/iu);
     if (match?.[1] && parseNumber(text, expectedUnit) === null && parseMeasuredLength(text, key, expectedUnit === "m" ? "m" : "mm") === null) {
@@ -89,9 +93,9 @@ const applyRule = (type: SpecRuleType, value: unknown, rawKey: string, normalize
   switch (type) {
     case "number": {
       if (normalizedKey === "Año") return parseYear(value);
-      const measure = normalizedKey.match(/\((mm|m)\)$/)?.[1];
+      const measure = specUnit(normalizedKey);
       if (measure === "mm" || measure === "m") return parseMeasuredLength(value, rawKey, measure);
-      const unit = normalizedKey.match(/\(([^)]+)\)$/)?.[1];
+      const unit = measure;
       const number = parseNumber(value, unit);
       return number !== null && number >= 0 ? number : null;
     }

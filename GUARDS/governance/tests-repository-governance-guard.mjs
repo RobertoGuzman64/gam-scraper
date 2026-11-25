@@ -251,6 +251,9 @@ export const inspectRepositoryGovernance = (root, policy) => {
   if (policy?.version !== 3 || !policy.maxCounts ||
     !Number.isSafeInteger(policy.maxCounts.markdown) || policy.maxCounts.markdown < 0 ||
     !Number.isSafeInteger(policy.maxCounts.scripts) || policy.maxCounts.scripts < 0 ||
+    !object(policy.documentaryImages) ||
+    !validPaths(Object.keys(policy.documentaryImages), (pathname) => /^docs\/images\/[^/]+\.png$/u.test(pathname)) ||
+    !Object.values(policy.documentaryImages).every((hash) => typeof hash === "string" && /^[a-f0-9]{64}$/u.test(hash)) ||
     !policy.allowedPaths ||
     !validPaths(policy.allowedPaths.markdown, (pathname) => /\.md$/iu.test(pathname)) ||
     !validPaths(policy.allowedPaths.scripts, isScript) ||
@@ -281,8 +284,16 @@ export const inspectRepositoryGovernance = (root, policy) => {
   if (JSON.stringify(inventory.npmBin) !== JSON.stringify(policy.npmBin)) {
     findings.push("Entradas ejecutables package.json/bin modificadas");
   }
+  const inventoryPaths = new Set(inventory.paths);
+  for (const [pathname, expectedHash] of Object.entries(policy.documentaryImages)) {
+    if (!inventoryPaths.has(pathname)) {
+      findings.push(`Imagen documental ausente: ${pathname}`);
+    } else if (digest(readFileSync(join(root, pathname))) !== expectedHash) {
+      findings.push(`Imagen documental modificada: ${pathname}`);
+    }
+  }
   for (const pathname of inventory.paths) {
-    if (pathname.startsWith("docs/") && !/\.md$/iu.test(pathname)) {
+    if (pathname.startsWith("docs/") && !/\.md$/iu.test(pathname) && !Object.hasOwn(policy.documentaryImages, pathname)) {
       findings.push(`Archivo no autorizado en docs/: ${pathname}`);
     }
     if (pathname.startsWith("scripts/") && !isScript(pathname)) {

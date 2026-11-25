@@ -9,9 +9,12 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Ubicación": "location",
 
     "Capacidad de carga (kg)": "number_array",
+    "Capacidad máxima de plataforma": "number",
+    "Capacidad máxima de elevación": "number",
     "Carga Máxima (kg)": "number",
     "Capacidad de arrastre (kg)": "number",
     "Centro de carga (mm)": "number",
+    "Centro de carga nominal del modelo": "number",
     "Peso (kg)": "number",
     "Peso del rodillo (kg)": "number",
 
@@ -25,6 +28,8 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Cargador de batería": "string",
 
     "Tipo motor": "enum",
+    "Tecnología del motor": "string",
+    "Tecnología del motor de tracción": "string",
     "Combustible": "enum",
     "Motorización": "string",
     "Marca del motor": "string",
@@ -38,11 +43,24 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Altura de trabajo (m)": "number",
     "Altura mástil replegado (mm)": "number",
     "Altura al suelo (mm)": "number",
+    "Altura almacenaje": "number",
+    "Altura replegada": "number",
+    "Altura barandilla bajada": "number",
+    "Altura articulacion": "number",
+    "Altura de plataforma": "number",
     "Altura plataforma (mm)": "number",
     "Altura plataforma (m)": "number",
     "Alcance horizontal (m)": "number",
+    "Alcance lateral": "number",
+    "Alcance horizontal max.": "number",
 
+    "Longitud transporte": "number",
+    "Longitud de plumín": "number",
     "Longitud (mm)": "number",
+    "Largo": "number",
+    "Alto": "number",
+    "Longitud sin horquillas": "number",
+    "Longitud extensión": "number",
     "Anchura (mm)": "number",
     "Anchura trabajo (mm)": "number",
     "Ancho promedio (mm)": "number_array",
@@ -56,6 +74,9 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Dimensiones horquillas (mm)": "dimension",
     "Longitud de horquillas (mm)": "number",
     "Dimensiones cesta (mm)": "dimension_rect",
+    "Longitud de plataforma": "number",
+    "Anchura de plataforma": "number",
+    "Extensión de plataforma": "number",
 
     "Elevación libre (mm)": "number",
     "Elevación libre disponible": "bool",
@@ -78,15 +99,30 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Tracción 4x4": "bool",
     "Frenado regenerativo": "bool",
     "Frenado automático": "bool",
+    "Reducción de velocidad en curvas": "bool",
+    "Sistema de diagnóstico": "bool",
+    "Asiento regulable": "bool",
+    "Luces de trabajo": "bool",
     "Frenos de disco húmedos": "bool",
     "Frenos hidráulicos": "bool",
     "Frenos hidráulicos autocompensados": "bool",
     "Freno electromagnético": "bool",
     "Frenos en baño de aceite": "bool",
     "Dirección asistida": "bool",
+    "Sistema de dirección": "string",
+    "Posición de conducción": "string",
+    "Tipo de conductor": "string",
     "Controles proporcionales": "bool",
     "Sistema de presencia del operador": "bool",
     "Protección contra sobrecarga": "bool",
+    "Detección de obstáculos": "bool",
+    "Control de tracción TCS": "bool",
+    "Sistema antivuelco ACS": "bool",
+    "Parada de emergencia": "bool",
+    "Barra antiatrapamiento": "bool",
+    "Trabajo negativo": "bool",
+    "Estabilizadores": "bool",
+    "Nivelación automática": "bool",
     "Alarma de inclinación": "bool",
     "Sensor de inclinación": "bool",
     "Desplazamiento lateral": "bool",
@@ -110,6 +146,7 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Pendiente con carga, nominal 3 min (%)": "number",
     "Pendiente sin carga, nominal 3 min (%)": "number",
     "Altura de elevación máxima (mm)": "number",
+    "Altura máxima de elevación": "number",
     "Velocidad máxima sin carga (km/h)": "number",
     "Autonomía según batería": "string",
     "Potencia de aspiración (kW)": "number",
@@ -138,6 +175,32 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
 
     "Nº de serie": "string",
     "Estado baterías": "string"
+};
+
+export const SPEC_LENGTH_UNITS: Readonly<Partial<Record<string, "m" | "mm">>> = {
+    "Longitud de plataforma": "m",
+    "Anchura de plataforma": "m",
+    "Extensión de plataforma": "m",
+    "Altura almacenaje": "m",
+    "Altura replegada": "m",
+    "Altura barandilla bajada": "m",
+    "Altura articulacion": "m",
+    "Longitud transporte": "m",
+    "Longitud de plumín": "m",
+    "Altura de plataforma": "m",
+    "Alcance lateral": "m",
+    "Alcance horizontal max.": "m",
+    "Centro de carga nominal del modelo": "mm",
+    "Longitud sin horquillas": "mm",
+    "Longitud extensión": "m",
+    "Largo": "mm",
+    "Alto": "mm",
+    "Altura máxima de elevación": "mm"
+};
+
+export const SPEC_MASS_UNITS: Readonly<Partial<Record<string, "kg">>> = {
+    "Capacidad máxima de plataforma": "kg",
+    "Capacidad máxima de elevación": "kg"
 };
 
 export { SPEC_KEY_NORMALIZATION } from "./spec-key-normalization.js";

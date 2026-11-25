@@ -4,6 +4,10 @@
     "markdown": 17,
     "scripts": 57
   },
+  "documentaryImages": {
+    "docs/images/zip-disfrazado-funeral.png": "eb7bd6472bee4138c39ad42b71369ab695fc6ce377c750df774bab936b947190",
+    "docs/images/zip-disfrazado-hallazgo.png": "38a4fe18183c1fa032081e928291d8687949be3217d51c5a332164af50a06efd"
+  },
   "allowedPaths": {
     "markdown": [
       "README.md",

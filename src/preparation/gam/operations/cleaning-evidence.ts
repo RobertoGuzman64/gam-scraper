@@ -62,12 +62,4 @@ export const batteryFromConfirmedDescription = (record: ProductRecord): string |
   return null;
 };
 
-export const driver = (description: string): string | null => {
-  const text = foldText(description);
-  if (/\b(?:robot|robotica|autonom[oa])\b/.test(text) && /\b(?:fregadora|barredora|aspiradora)\b/.test(text)) return null;
-  const onBoard = /\b(?:conductor|operari[oa]|operador|hombre) sentado\b|\b(?:conductor|operari[oa]|operador|hombre) a bordo\b|\boperacion a bordo\b/.test(text);
-  const walking = /\b(?:conductor|operari[oa]|operador) acompanante\b|\bhombre a pie\b|\b(?:conductor|operari[oa]|operador) a pie\b|\bwalk.behind\b/.test(text);
-  if (onBoard === walking) return null;
-  return onBoard ? "Hombre a bordo" : "Hombre a pie";
-};
-
+export { driver } from "../../technical/recovery/cleaning-family-specifications.js";

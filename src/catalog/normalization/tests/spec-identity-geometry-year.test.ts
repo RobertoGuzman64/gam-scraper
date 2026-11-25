@@ -71,3 +71,280 @@ test("N08 solo acepta años de fabricación de cuatro cifras y no infiere año d
   assert.equal(parseSpecByRule("Año", "2012"), 2012);
   assert.equal(parseSpecByRule("Año", "2099"), null);
 });
+
+test("normaliza equipamiento booleano sin confundir opciones, ausencia o prestaciones distintas", () => {
+  for (const key of ["Reducción de velocidad en curvas", "Sistema de diagnóstico", "Asiento regulable", "Luces de trabajo"]) {
+    const alias = key.normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toUpperCase();
+    for (const [raw, expected] of [[true, true], [false, false], ["Sí", true], ["No", false]] as const) {
+      assert.equal(normalizeSpecsObject({ [alias]: raw }).normalized[key], expected);
+      assert.equal(parseSpecByRule(key, raw), expected);
+      assert.deepEqual(normalizeSpecsObject({ [key]: expected }).unknownKeys, []);
+    }
+    for (const raw of ["Opcional", "No disponible", "Según configuración", "", null]) {
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
+    }
+    if (alias !== key) {
+      const conflict = normalizeSpecsObject({ [key]: true, [alias]: false });
+      assert.equal(conflict.normalized[key], undefined);
+      assert.equal(conflict.conflictingKeys.length, 1);
+      assert.equal(normalizeSpecsObject({ [key]: true, [alias]: "Sí" }).normalized[key], true);
+    }
+  }
+  const distinct = normalizeSpecsObject({ "Asiento con suspensión": true, "Luces LED": true,
+    "Velocidad (km/h)": "5 km/h", "Diagnóstico externo": true });
+  assert.deepEqual(distinct.normalized, { "Velocidad (km/h)": [5] });
+});
+
+
+test("normaliza las tres dimensiones de plataforma sin confundir geometría exterior ni extensión", () => {
+  for (const [alias, canonical] of [
+    ["Longitud plataforma", "Longitud de plataforma"],
+    ["Ancho plataforma", "Anchura de plataforma"],
+    ["EXTENSIÓN DE PLATAFORMA", "Extensión de plataforma"]
+  ] as const) {
+    for (const [raw, expected] of [["1,25 m", 1.25], ["125 cm", 1.25], ["1250 mm", 1.25], ["1,25 metros", 1.25]] as const) {
+      assert.equal(normalizeSpecsObject({ [alias]: raw }).normalized[canonical], expected);
+      assert.equal(parseSpecByRule(alias, raw), expected);
+    }
+    assert.equal(normalizeSpecsObject({ [`${alias} (mm)`]: 1250 }).normalized[canonical], 1.25);
+    assert.equal(normalizeSpecsObject({ [`${alias} (cm)`]: "125 cm" }).normalized[canonical], 1.25);
+    assert.equal(normalizeSpecsObject({ [`${alias} (mm)`]: "1,25 m" }).normalized[canonical], undefined);
+    for (const raw of ["1,25 kg", "1,25–1,50 m", "1,25 m opcional", "-1 m", "1,25 x 2 m"]) {
+      assert.equal(normalizeSpecsObject({ [alias]: raw }).normalized[canonical], undefined, raw);
+    }
+    assert.equal(normalizeSpecsObject({ [alias]: "1250 mm", [canonical]: "1,25 m" }).normalized[canonical], 1.25);
+    const conflict = normalizeSpecsObject({ [alias]: "1,25 m", [canonical]: "1,50 m" });
+    assert.equal(conflict.normalized[canonical], undefined);
+    assert.equal(conflict.conflictingKeys.length, 1);
+  }
+  assert.deepEqual(normalizeSpecsObject({ Longitud: "3 m", Anchura: "2 m", "Longitud plataforma": "1,25 m", "Ancho plataforma": "0,8 m", "Extensión de plataforma": "0,5 m" }).normalized, {
+    "Longitud (mm)": 3000, "Anchura (mm)": 2000, "Longitud de plataforma": 1.25, "Anchura de plataforma": 0.8, "Extensión de plataforma": 0.5
+  });
+});
+
+
+test("normaliza alturas de almacenaje y transporte conservando cada condición de medida", () => {
+  const keys = ["Altura almacenaje", "Altura replegada", "Altura barandilla bajada"] as const;
+  for (const key of keys) {
+    for (const [raw, expected] of [["2,15 m", 2.15], ["215 cm", 2.15], ["2150 mm", 2.15], ["2,15 metros", 2.15]] as const) {
+      assert.equal(normalizeSpecsObject({ [key.toUpperCase()]: raw }).normalized[key], expected);
+      assert.equal(parseSpecByRule(key, raw), expected);
+    }
+    assert.equal(normalizeSpecsObject({ [`${key} (mm)`]: 2150 }).normalized[key], 2.15);
+    assert.equal(normalizeSpecsObject({ [`${key} (cm)`]: "215 cm" }).normalized[key], 2.15);
+    assert.equal(normalizeSpecsObject({ [`${key} (mm)`]: "2,15 m" }).normalized[key], undefined);
+    for (const raw of ["2,15 kg", "2,15–2,50 m", "2,15 m opcional", "-2 m", "2 x 3 m"]) {
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined, raw);
+    }
+    assert.equal(normalizeSpecsObject({ [key]: "2,15 m", [`${key} (mm)`]: 2150 }).normalized[key], 2.15);
+    const conflict = normalizeSpecsObject({ [key]: "2,15 m", [`${key} (mm)`]: 2500 });
+    assert.equal(conflict.normalized[key], undefined);
+    assert.equal(conflict.conflictingKeys.length, 1);
+  }
+  assert.deepEqual(normalizeSpecsObject({ Altura: "3 m", "Altura almacenaje": "2,5 m", "Altura replegada": "2,2 m", "Altura barandilla bajada": "1,8 m", "Altura de trabajo (m)": "8 m" }).normalized, {
+    "Altura (mm)": 3000, "Altura almacenaje": 2.5, "Altura replegada": 2.2, "Altura barandilla bajada": 1.8, "Altura de trabajo (m)": 8
+  });
+});
+
+
+test("normaliza equipamiento y capacidades booleanas de plataforma sin atribuir opciones", () => {
+  for (const [alias, canonical] of [
+    ["BARRA ANTIATRAPAMIENTO", "Barra antiatrapamiento"],
+    ["Trabajo en negativo", "Trabajo negativo"],
+    ["ESTABILIZADORES", "Estabilizadores"],
+    ["NIVELACION AUTOMATICA", "Nivelación automática"]
+  ] as const) {
+    for (const [raw, expected] of [["Sí", true], ["No", false], [true, true], [false, false]] as const) {
+      assert.equal(normalizeSpecsObject({ [alias]: raw }).normalized[canonical], expected);
+      assert.equal(parseSpecByRule(alias, raw), expected);
+      assert.equal(normalizeSpecsObject({ [canonical]: expected }).normalized[canonical], expected);
+    }
+    for (const raw of ["Opcional", "Según configuración", "No disponible", "", null]) {
+      assert.equal(normalizeSpecsObject({ [alias]: raw }).normalized[canonical], undefined);
+    }
+    assert.equal(normalizeSpecsObject({ [alias]: "Sí", [canonical]: true }).normalized[canonical], true);
+    const conflict = normalizeSpecsObject({ [alias]: "Sí", [canonical]: false });
+    assert.equal(conflict.normalized[canonical], undefined);
+    assert.equal(conflict.conflictingKeys.length, 1);
+  }
+  const distinct = normalizeSpecsObject({ Estabilizadores: "Sí", "Estabilizadores hidráulicos": "No",
+    "Nivelación automática": "No", "Nivelación manual": "Sí", "Trabajo negativo": "No", "Altura de trabajo (m)": "8 m" });
+  assert.deepEqual(distinct.normalized, { Estabilizadores: true, "Nivelación automática": false,
+    "Trabajo negativo": false, "Altura de trabajo (m)": 8 });
+});
+
+
+test("normaliza geometría de articulación, transporte y plumín sin mezclar cotas", () => {
+  for (const [alias, key] of [
+    ["Altura de articulación", "Altura articulacion"],
+    ["LONGITUD TRANSPORTE", "Longitud transporte"],
+    ["Longitud del plumín", "Longitud de plumín"]
+  ] as const) {
+    for (const [raw, expected] of [["2,15 m", 2.15], ["215 cm", 2.15], ["2150 mm", 2.15], ["2,15 metros", 2.15]] as const) {
+      assert.equal(normalizeSpecsObject({ [alias]: raw }).normalized[key], expected);
+      assert.equal(parseSpecByRule(alias, raw), expected);
+    }
+    assert.equal(normalizeSpecsObject({ [`${alias} (mm)`]: 2150 }).normalized[key], 2.15);
+    assert.equal(normalizeSpecsObject({ [`${alias} (cm)`]: "215 cm" }).normalized[key], 2.15);
+    assert.equal(normalizeSpecsObject({ [`${alias} (mm)`]: "2,15 m" }).normalized[key], undefined);
+    for (const raw of ["2,15 kg", "2,15–2,50 m", "2,15 m opcional", "-2 m", "2 x 3 m"]) {
+      assert.equal(normalizeSpecsObject({ [alias]: raw }).normalized[key], undefined, raw);
+    }
+    assert.equal(normalizeSpecsObject({ [alias]: "2150 mm", [key]: "2,15 m" }).normalized[key], 2.15);
+    const conflict = normalizeSpecsObject({ [alias]: "2,15 m", [key]: "2,50 m" });
+    assert.equal(conflict.normalized[key], undefined);
+    assert.equal(conflict.conflictingKeys.length, 1);
+  }
+  assert.deepEqual(normalizeSpecsObject({ Altura: "2 m", "Altura de trabajo (m)": "12 m", "Altura de articulación": "5 m",
+    Longitud: "6 m", "Longitud transporte": "5 m", "Longitud del plumín": "1,2 m" }).normalized, {
+    "Altura (mm)": 2000, "Altura de trabajo (m)": 12, "Altura articulacion": 5,
+    "Longitud (mm)": 6000, "Longitud transporte": 5, "Longitud de plumín": 1.2
+  });
+});
+
+
+test("normaliza altura de plataforma y alcances declarados sin mezclar sus condiciones", () => {
+  for (const key of ["Altura de plataforma", "Alcance lateral", "Alcance horizontal max."] as const) {
+    for (const [raw, expected] of [["7,25 m", 7.25], ["725 cm", 7.25], ["7250 mm", 7.25], ["0 m", 0]] as const) {
+      assert.equal(normalizeSpecsObject({ [key.toUpperCase()]: raw }).normalized[key], expected);
+      assert.equal(parseSpecByRule(key, raw), expected);
+    }
+    assert.equal(normalizeSpecsObject({ [`${key} (mm)`]: 7250 }).normalized[key], 7.25);
+    assert.equal(normalizeSpecsObject({ [`${key} (cm)`]: "725 cm" }).normalized[key], 7.25);
+    assert.equal(normalizeSpecsObject({ [`${key} (mm)`]: "7,25 m" }).normalized[key], undefined);
+    for (const raw of ["7,25 kg", "7–8 m", "7 m opcional", "-2 m", "7 x 3 m", "7.2 m, 3.40 m"]) {
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined, raw);
+    }
+    assert.equal(normalizeSpecsObject({ [key]: "7,25 m", [`${key} (mm)`]: 7250 }).normalized[key], 7.25);
+    const conflict = normalizeSpecsObject({ [key]: "7,25 m", [`${key} (mm)`]: 8000 });
+    assert.equal(conflict.normalized[key], undefined);
+    assert.equal(conflict.conflictingKeys.length, 1);
+  }
+  assert.deepEqual(normalizeSpecsObject({ "Altura de plataforma": "8 m", "Altura de trabajo (m)": "10 m",
+    "Alcance lateral": "5 m", "Alcance horizontal max.": "6 m", "Alcance horizontal": "4 m" }).normalized, {
+    "Altura de plataforma": 8, "Altura de trabajo (m)": 10, "Alcance lateral": 5,
+    "Alcance horizontal max.": 6, "Alcance horizontal (m)": 4
+  });
+});
+
+
+test("normaliza cotas nominales y condicionadas sin fusionarlas con medidas de unidad", () => {
+  for (const [key, expected] of [
+    ["Centro de carga nominal del modelo", 600], ["Longitud sin horquillas", 600], ["Longitud extensión", 0.6]
+  ] as const) {
+    for (const raw of ["600 mm", "60 cm", "0,6 m"]) {
+      assert.equal(normalizeSpecsObject({ [key.toUpperCase()]: raw }).normalized[key], expected);
+      assert.equal(parseSpecByRule(key, raw), expected);
+    }
+    assert.equal(normalizeSpecsObject({ [`${key} (mm)`]: 600 }).normalized[key], expected);
+    assert.equal(normalizeSpecsObject({ [`${key} (mm)`]: "0,6 m" }).normalized[key], undefined);
+    for (const raw of ["600 kg", "600–800 mm", "600 mm opcional", "-600 mm", "600 x 800 mm"]) {
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
+    }
+    assert.equal(normalizeSpecsObject({ [key]: "60 cm", [`${key} (mm)`]: 600 }).normalized[key], expected);
+    const conflict = normalizeSpecsObject({ [key]: "60 cm", [`${key} (mm)`]: 800 });
+    assert.equal(conflict.normalized[key], undefined);
+    assert.equal(conflict.conflictingKeys.length, 1);
+  }
+  assert.deepEqual(normalizeSpecsObject({ "Centro de carga": "500 mm", "Centro de carga nominal del modelo": "600 mm",
+    Longitud: "3 m", "Longitud sin horquillas": "2 m", "Longitud extensión": "0,6 m", "Extensión de plataforma": "0,8 m" }).normalized, {
+    "Centro de carga (mm)": 500, "Centro de carga nominal del modelo": 600, "Longitud (mm)": 3000,
+    "Longitud sin horquillas": 2000, "Longitud extensión": 0.6, "Extensión de plataforma": 0.8
+  });
+});
+
+
+test("normaliza largo, alto y altura máxima de elevación conservando sus claves y unidades", () => {
+  for (const key of ["Largo", "Alto", "Altura máxima de elevación"]) {
+    for (const raw of ["2500 mm", "250 cm", "2,5 m"]) {
+      assert.equal(normalizeSpecsObject({ [key.toUpperCase()]: raw }).normalized[key], 2500);
+      assert.equal(parseSpecByRule(key, raw), 2500);
+    }
+    assert.equal(normalizeSpecsObject({ [`${key} (m)`]: 2.5 }).normalized[key], 2500);
+    assert.equal(normalizeSpecsObject({ [`${key} (mm)`]: "2,5 m" }).normalized[key], undefined);
+    for (const raw of ["2500 kg", "2500–3000 mm", "2500 mm opcional", "-2500 mm", "2500 x 3000 mm"]) {
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
+    }
+    const conflict = normalizeSpecsObject({ [key]: "250 cm", [`${key} (mm)`]: 3000 });
+    assert.equal(conflict.normalized[key], undefined);
+    assert.equal(conflict.conflictingKeys.length, 1);
+  }
+  assert.deepEqual(normalizeSpecsObject({ Largo: "3 m", Alto: "2 m", "Altura máxima de elevación": "6 m",
+    Longitud: "3,1 m", Altura: "2,1 m", "Altura de elevación (m)": "4,5 m" }).normalized, {
+    Largo: 3000, Alto: 2000, "Altura máxima de elevación": 6000,
+    "Longitud (mm)": 3100, "Altura (mm)": 2100, "Altura de elevación (m)": 4.5
+  });
+});
+
+
+test("normaliza capacidades máximas en kg sin fusionar prestaciones ni aceptar otras unidades", () => {
+  for (const key of ["Capacidad máxima de plataforma", "Capacidad máxima de elevación"]) {
+    for (const raw of ["2500 kg", "2500kg", "2.500 kilogramos", 2500]) {
+      assert.equal(normalizeSpecsObject({ [key.toUpperCase()]: raw }).normalized[key], 2500);
+      assert.equal(parseSpecByRule(key, raw), 2500);
+    }
+    assert.equal(normalizeSpecsObject({ [`${key} (kg)`]: "2500 kg" }).normalized[key], 2500);
+    for (const raw of ["2500 l", "2500 mm", "2,5 t", "2500–3000 kg", "2500 kg opcional", "-2500 kg"]) {
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined, raw);
+    }
+    assert.equal(normalizeSpecsObject({ [key]: "2500 kg", [`${key} (kg)`]: 2500 }).normalized[key], 2500);
+    const conflict = normalizeSpecsObject({ [key]: "2500 kg", [`${key} (kg)`]: 3000 });
+    assert.equal(conflict.normalized[key], undefined);
+    assert.equal(conflict.conflictingKeys.length, 1);
+  }
+  assert.deepEqual(normalizeSpecsObject({ "Capacidad máxima de plataforma": "230 kg",
+    "Capacidad máxima de elevación": "2500 kg", "Capacidad de carga": "2000 kg" }).normalized, {
+    "Capacidad máxima de plataforma": 230, "Capacidad máxima de elevación": 2500, "Capacidad de carga (kg)": [2000]
+  });
+  assert.deepEqual(normalizeSpecsObject({ Capacidad: "350 l" }).unknownKeys, ["Capacidad"]);
+});
+
+
+test("normaliza sistemas de seguridad sin fusionar funciones ni atribuir equipamiento opcional", () => {
+  for (const key of ["Detección de obstáculos", "Control de tracción TCS", "Sistema antivuelco ACS", "Parada de emergencia"]) {
+    const alias = key.normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toUpperCase();
+    for (const [raw, expected] of [[true, true], [false, false], ["Sí", true], ["No", false]] as const) {
+      assert.equal(normalizeSpecsObject({ [alias]: raw }).normalized[key], expected);
+      assert.equal(parseSpecByRule(key, raw), expected);
+      assert.deepEqual(normalizeSpecsObject({ [key]: raw }).unknownKeys, []);
+    }
+    for (const raw of ["Opcional", "Según configuración", "No disponible", "", null]) {
+      assert.equal(normalizeSpecsObject({ [alias]: raw }).normalized[key], undefined);
+    }
+    assert.equal(normalizeSpecsObject({ [alias]: "Sí", [key]: true }).normalized[key], true);
+    const conflict = normalizeSpecsObject({ [alias]: "Sí", [key]: false });
+    assert.equal(conflict.normalized[key], undefined);
+    assert.equal(conflict.conflictingKeys.length, 1);
+  }
+  assert.deepEqual(normalizeSpecsObject({ "Control de tracción TCS": true, "Tracción 4x4": false,
+    "Sistema antivuelco ACS": false, "Detección de obstáculos": true, "Parada de emergencia": false,
+    "Sensores de obstáculos": true, "Control de tracción": true }).normalized, {
+    "Control de tracción TCS": true, "Tracción 4x4": false, "Sistema antivuelco ACS": false,
+    "Detección de obstáculos": true, "Parada de emergencia": false
+  });
+});
+
+
+test("normaliza prestaciones de conducción y tecnología sin fusionar conceptos", () => {
+  const specs = {
+    "Tecnología del motor": "Corriente alterna",
+    "Tecnología del motor de tracción": "Corriente continua",
+    "Sistema de dirección": "Eléctrica",
+    "Posición de conducción": "Operador a pie",
+    "Tipo de conductor": "Hombre a bordo"
+  };
+  for (const [key, value] of Object.entries(specs)) {
+    const alias = key.normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toUpperCase();
+    assert.deepEqual(normalizeSpecsObject({ [alias]: ` ${value} ` }).normalized, { [key]: value });
+    assert.equal(parseSpecByRule(key, value), value);
+    for (const raw of [null, "", "n/a", false, 42, key]) {
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
+    }
+    assert.equal(normalizeSpecsObject({ [alias]: value, [key]: value }).normalized[key], value);
+    const conflict = normalizeSpecsObject({ [alias]: value, [key]: "Otra configuración" });
+    assert.equal(conflict.normalized[key], undefined);
+    assert.equal(conflict.conflictingKeys.length, 1);
+  }
+  assert.deepEqual(normalizeSpecsObject({ ...specs, "Tipo motor": "Eléctrico", "Dirección asistida": false }).normalized,
+    { ...specs, "Tipo motor": "Eléctrico", "Dirección asistida": false });
+});

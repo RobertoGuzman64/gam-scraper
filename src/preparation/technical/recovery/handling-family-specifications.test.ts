@@ -331,3 +331,160 @@ test("recupera mandos y seguridad de agarres declarados sin duplicar equipamient
     { ...drum, longDescription: `${drum.longDescription} Cierre opcional.` }
   ]) assert.equal(recover(invalid), invalid.specs);
 });
+
+test("recupera conducción peatonal de manutención con identidad y afirmación corroboradas", () => {
+  const field = "Posición de conducción";
+  for (const family of ["Apilador", "Transpaleta"] as const) {
+    const noun = family === "Apilador" ? "apilador eléctrico" : "transpaleta eléctrica";
+    const record = source(family, `MARCA MODELO10 es un equipo de manutención. El ${noun} a pie MARCA MODELO10 permite transportar cargas.`);
+    const result = recover(record);
+    assert.equal(result[field], "Operador a pie");
+    assert.equal(recoverSourceHandlingConfiguration(record, record, result), result);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.product.spec[field], "Operador a pie");
+    assert.equal(prepared.technicalProvenance?.entries.find((entry) => entry.field === field)?.sourceField, "longDescription");
+    const other: ProductRecord = { ...record, providerId: "mercaeleva", categoryKey: "venta", reference: "CONTROL-02",
+      url: "https://sales.mercaeleva.com/es/for-sale/machine/MARCA-MODELO10-CONTROL-02" };
+    assert.equal(recover(other)[field], "Operador a pie");
+    for (const invalid of [
+      { ...record, longDescription: `Como opción, el ${noun} a pie MARCA MODELO10 permite transportar cargas.` },
+      { ...record, longDescription: `No es un ${noun} a pie MARCA MODELO10.` },
+      { ...record, longDescription: `${record.longDescription} También permite trabajar a bordo.` },
+      { ...record, longDescription: `${record.longDescription} El MARCA MODELO20 tiene más potencia.` },
+      { ...record, longDescription: `MARCA MODELO10 es un equipo. El ${noun} a pie pertenece a otro fabricante.` },
+      { ...record, shortDescription: "MARCA MODELO20" },
+      { ...record, specs: { ...record.specs, "Tipo de conductor": "Sentado" } }
+    ]) assert.equal(recover(invalid), invalid.specs);
+    assert.equal(recoverSourceHandlingConfiguration(record, { ...record, reference: "OTRA" }, record.specs ?? {}), record.specs);
+  }
+});
+
+test("recupera corriente alterna en carretillas eléctricas sin inferir el motor de tracción", () => {
+  const record: ProductRecord = { ...source("Apilador", "La carretilla elevadora eléctrica MARCA MODELO10 incorpora motores eléctricos de corriente alterna."),
+    title: "Carretilla elevadora eléctrica MARCA MODELO10", categoryName: "Carretilla elevadora", specs: { Marca: "MARCA", Modelo: "MODELO10", Motorización: "Eléctrico" } };
+  const general = recover(record);
+  assert.equal(general["Tecnología del motor"], "Corriente alterna");
+  assert.equal(general["Tecnología del motor de tracción"], undefined);
+  assert.equal(recoverSourceHandlingConfiguration(record, record, general), general);
+  const traction = { ...record, longDescription: "La carretilla elevadora eléctrica MARCA MODELO10 incorpora un motor de tracción AC." };
+  assert.equal(recover(traction)["Tecnología del motor de tracción"], "Corriente alterna");
+  assert.equal(recover(traction)["Tecnología del motor"], undefined);
+  const other: ProductRecord = { ...traction, providerId: "mercaeleva", reference: "CONTROL-02", categoryKey: "venta",
+    url: "https://sales.mercaeleva.com/es/for-sale/machine/MARCA-MODELO10-CONTROL-02" };
+  assert.equal(recover(other)["Tecnología del motor de tracción"], "Corriente alterna");
+  const prepared = prepareSourceProduct(traction);
+  assert.equal(prepared.product.spec["Tecnología del motor de tracción"], "Corriente alterna");
+  assert.equal(prepared.technicalProvenance?.entries.find((entry) => entry.field === "Tecnología del motor de tracción")?.sourceField, "longDescription");
+  for (const invalid of [
+    { ...record, longDescription: "La carretilla elevadora eléctrica MARCA MODELO10 puede equiparse con un motor AC opcional." },
+    { ...record, longDescription: "La carretilla elevadora eléctrica MARCA MODELO10 incorpora un controlador de motor AC." },
+    { ...record, longDescription: "La carretilla elevadora eléctrica MARCA MODELO10 incorpora motor AC. MARCA MODELO20 incorpora motor AC." },
+    { ...record, longDescription: "La carretilla elevadora eléctrica MARCA MODELO10 tiene una variante con motor AC." },
+    { ...record, longDescription: "La carretilla elevadora eléctrica MARCA MODELO10 no tiene motor AC." },
+    { ...record, longDescription: `${record.longDescription} Motor de corriente continua.` },
+    { ...record, condition: "Segunda mano" as const },
+    { ...record, specs: { ...record.specs, "Tipo motor": "Eléctrico de corriente alterna" } },
+    { ...record, specs: { ...record.specs, "Tecnología del motor de tracción": "Corriente continua" } }
+  ]) assert.equal(recover(invalid), invalid.specs, invalid.longDescription ?? "");
+  assert.equal(recoverSourceHandlingConfiguration(record, { ...record, reference: "OTRA" }, record.specs ?? {}), record.specs);
+});
+
+test("recupera dirección eléctrica declarada en manutención sin inferir asistencia ni opciones", () => {
+  const field = "Sistema de dirección";
+  for (const family of ["Apilador", "Transpaleta"] as const) {
+    const record = source(family, "El equipo MARCA MODELO10 incorpora un sistema de dirección eléctrica.");
+    const result = recover(record);
+    assert.equal(result[field], "Eléctrica");
+    assert.equal(result["Dirección asistida"], undefined);
+    assert.equal(recoverSourceHandlingConfiguration(record, record, result), result);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.product.spec[field], "Eléctrica");
+    assert.equal(prepared.technicalProvenance?.entries.find((entry) => entry.field === field)?.sourceField, "longDescription");
+    const other: ProductRecord = { ...record, providerId: "mercaeleva", reference: "CONTROL-02", categoryKey: "venta",
+      url: "https://sales.mercaeleva.com/es/for-sale/machine/MARCA-MODELO10-CONTROL-02" };
+    assert.equal(recover(other)[field], "Eléctrica");
+    for (const invalid of [
+      { ...record, longDescription: "MARCA MODELO10 puede equiparse con dirección eléctrica opcional." },
+      { ...record, longDescription: "MARCA MODELO10 no tiene dirección eléctrica." },
+      { ...record, longDescription: `${record.longDescription} La dirección hidráulica es de serie.` },
+      { ...record, longDescription: `${record.longDescription} Motor diésel.`, specs: { ...record.specs, Batería: "24 V" } },
+      { ...record, longDescription: `${record.longDescription} MARCA MODELO20 incorpora dirección eléctrica.` },
+      { ...record, shortDescription: "MARCA MODELO20" },
+      { ...record, condition: "Segunda mano" as const },
+      { ...record, specs: { ...record.specs, "Dirección asistida": true } }
+    ]) assert.equal(recover(invalid)[field], undefined);
+    assert.equal(recoverSourceHandlingConfiguration(record, { ...record, reference: "OTRA" }, record.specs ?? {}), record.specs);
+  }
+});
+
+test("recupera el sistema de diagnóstico declarado sin inferir su tecnología", () => {
+  const field = "Sistema de diagnóstico";
+  for (const family of ["Apilador", "Transpaleta"] as const) {
+    const record = source(family, "El equipo MARCA MODELO10 dispone de un sistema de diagnóstico integrado.");
+    const snapshot = structuredClone(record);
+    const result = recover(record);
+    assert.equal(result[field], true);
+    assert.equal(recoverSourceHandlingConfiguration(record, record, result), result);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.product.spec[field], true);
+    const provenance = prepared.technicalProvenance?.entries.find((entry) => entry.field === field);
+    assert.equal(provenance?.sourceField, "longDescription");
+    assert.equal(provenance?.scope, "unit");
+    assert.deepEqual(record, snapshot);
+    const other: ProductRecord = { ...record, providerId: "mercaeleva", reference: "CONTROL-02", categoryKey: "venta",
+      url: "https://sales.mercaeleva.com/es/for-sale/machine/MARCA-MODELO10-CONTROL-02" };
+    assert.equal(recover(other)[field], true);
+    for (const invalid of [
+      { ...record, longDescription: "MARCA MODELO10 puede incorporar un sistema de diagnóstico." },
+      { ...record, longDescription: "MARCA MODELO10 no tiene sistema de diagnóstico." },
+      { ...record, longDescription: "MARCA MODELO10 utiliza un sistema de diagnóstico externo." },
+      { ...record, longDescription: "MARCA MODELO10 dispone de un sistema de diagnóstico opcional." },
+      { ...record, longDescription: "MARCA MODELO10 dispone de un sistema de diagnóstico desactivado." },
+      { ...record, longDescription: `${record.longDescription} MARCA MODELO20 dispone de un sistema de diagnóstico.` },
+      { ...record, longDescription: `${record.longDescription} Carece de sistema de diagnóstico.` },
+      { ...record, longDescription: "MARCA MODELO10. Otros modelos incorporan un sistema de diagnóstico." },
+      { ...record, shortDescription: "MARCA MODELO20" },
+      { ...record, shortDescription: "MARCA MODELO10 sin sistema de diagnóstico" },
+      { ...record, condition: "Segunda mano" as const },
+      { ...record, specs: { ...record.specs, [field]: false } },
+      { ...record, specs: { ...record.specs, Autodiagnóstico: "Integrado" } }
+    ]) assert.equal(recover(invalid), invalid.specs, invalid.longDescription ?? "");
+    assert.equal(recoverSourceHandlingConfiguration(record, { ...record, reference: "OTRA" }, record.specs ?? {}), record.specs);
+  }
+});
+
+test("recupera el asiento regulable declarado sin inferir suspensión ni configuración opcional", () => {
+  const field = "Asiento regulable";
+  for (const claim of ["Incorpora un asiento ajustable.", "Dispone de asiento regulable con suspensión."]) {
+    const record: ProductRecord = { ...source("Apilador", `La carretilla MARCA MODELO10 es eléctrica. ${claim}`),
+      title: "Carretilla elevadora eléctrica MARCA MODELO10", categoryName: "Carretilla elevadora" };
+    const snapshot = structuredClone(record);
+    const result = recover(record);
+    assert.equal(result[field], true);
+    assert.equal(result["Suspensión del asiento"], undefined);
+    assert.equal(recoverSourceHandlingConfiguration(record, record, result), result);
+    const prepared = prepareSourceProduct(record);
+    assert.equal(prepared.product.spec[field], true);
+    const provenance = prepared.technicalProvenance?.entries.find((entry) => entry.field === field);
+    assert.equal(provenance?.sourceField, "longDescription");
+    assert.equal(provenance?.scope, "unit");
+    assert.deepEqual(record, snapshot);
+    const other: ProductRecord = { ...record, providerId: "mercaeleva", reference: "CONTROL-02", categoryKey: "venta",
+      url: "https://sales.mercaeleva.com/es/for-sale/machine/MARCA-MODELO10-CONTROL-02" };
+    assert.equal(recover(other)[field], true);
+    for (const invalid of [
+      { ...record, longDescription: "MARCA MODELO10 dispone de asiento regulable opcional." },
+      { ...record, longDescription: "MARCA MODELO10 no dispone de asiento regulable." },
+      { ...record, longDescription: `${record.longDescription} MARCA MODELO20 dispone de asiento regulable.` },
+      { ...record, longDescription: `${record.longDescription} El asiento es fijo.` },
+      { ...record, longDescription: "MARCA MODELO10. Otros modelos incorporan asiento regulable." },
+      { ...record, longDescription: "MARCA MODELO10. La variante LWB incorpora asiento regulable." },
+      { ...record, shortDescription: "MARCA MODELO20" },
+      { ...record, condition: "Segunda mano" as const },
+      { ...record, specs: { ...record.specs, "Tipo de asiento": "Fijo" } },
+      { ...record, specs: { ...record.specs, [field]: false } }
+    ]) assert.equal(recover(invalid), invalid.specs, invalid.longDescription ?? "");
+    assert.equal(recoverSourceHandlingConfiguration(record, { ...record, reference: "OTRA" }, record.specs ?? {}), record.specs);
+  }
+  assert.equal(recover(source("Apilador", "MARCA MODELO10 dispone de asiento regulable."))[field], undefined);
+});
