@@ -1,0 +1,152 @@
+@media(max-width:1320px) {
+  .sidebar {
+    width:216px;
+    flex-basis:216px
+  }
+  .topbar,.page-inner {
+    padding-left:27px;
+    padding-right:27px
+  }
+}
+@media(max-width:1040px) {
+
+  .hero {
+    padding:30px
+  }
+  .kpi-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+
+
+}
+@media(max-width:750px) {
+  .app-shell {
+    display:block
+  }
+  .sidebar {
+    width:100%;
+    height:auto;
+    position:relative;
+    padding:14px 17px;
+    border-right:0;
+    border-bottom:1px solid #2b3b4b
+  }
+  .brand {
+    padding:0 0 14px
+  }
+  .brand-mark {
+    height:32px;
+    width:32px;
+    font-size:17px
+  }
+  .sidebar-spacer,.sidebar-bottom {
+    display:none
+  }
+  .nav-list {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px
+  }
+  .nav-button {
+    min-width:0;
+    min-height:52px;
+    padding:10px 11px;
+    gap:9px;
+    font-size:var(--type-secondary)
+  }
+  .nav-icon {
+    width:19px;
+    height:19px;
+    flex-basis:19px
+  }
+  .topbar {
+    min-height:50px;
+    height:auto;
+    padding:10px 18px
+  }
+  .page-inner {
+    padding:0 16px 24px
+  }
+  .page-tools {
+    align-items:stretch;
+    flex-direction:column;
+    padding:20px 0 18px;
+    gap:12px
+  }
+  .filter-control {
+    justify-content:space-between
+  }
+  .filter-control select {
+    min-width:0;
+    flex:1;
+    max-width:260px
+  }
+  .hero {
+    min-height:auto;
+    padding:28px 24px
+  }
+  .hero h1,.standard-heading h1 {
+    font-size:38px
+  }
+  .section-heading {
+    align-items:flex-start;
+    flex-direction:column
+  }
+  .kpi-grid {
+    grid-template-columns:1fr 1fr
+  }
+  .kpi-card {
+    padding:18px;
+    min-height:145px
+  }
+  .kpi-value {
+    font-size:34px
+  }
+  .surface-card {
+    padding:19px 17px
+  }
+  .card-side-note {
+    display:none
+  }
+
+}
+@media(max-width:440px) {
+  .kpi-grid {
+    grid-template-columns:1fr
+  }
+  .standard-heading h1,.hero h1 {
+    font-size:34px
+  }
+  .hero {
+    padding:24px 19px
+  }
+}
+@media(max-width:360px) {
+  .nav-button {
+    flex-direction:column;
+    justify-content:center;
+    gap:4px;
+    min-height:76px;
+    padding:8px 6px;
+    text-align:center
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  html {
+    scroll-behavior:auto
+  }
+  * {
+    transition:none!important;
+    animation:none!important
+  }
+}
+
+.no-script {
+  padding:24px;
+  background:#4c2f23;
+  color:#ffdab0;
+  text-align:center;
+}
+
+
+

@@ -10,7 +10,7 @@ import { deliverIndividualArchive } from "../individual/individual-archive.js";
 import { deliverIndividualProvider } from "../individual/individual-delivery.js";
 import { completeIndividualDelivery } from "../individual/complete-individual-delivery.js";
 import { resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
-import test, { after } from "node:test";
+import test from "node:test";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../contracts/scraping.js";
 import { prepareSavedCatalog } from "../../preparation/workflow/prepare.js";
@@ -18,12 +18,8 @@ import { readOfflinePreparation } from "../../infrastructure/filesystem/preparat
 import { readPublicationTechnicalProvenance } from "../../panel/evidence/read-technical-provenance.js";
 import { writeOutputs } from "../../scraping/output/publish.js";
 import { selectIndividualPublishable, readIndividualSelection } from "../individual/individual-selection.js";
-import {
-  approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial,
-  inspectIndividualEditorialIfExists, readIndividualEditorialState,
-  prepareIndividualEditorialProposals, startIndividualEditorial
-} from "../individual/individual-editorial.js";
-import type { IndividualEditorialOptions } from "../individual/individual-editorial.js";
+import { approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial, inspectIndividualEditorialIfExists, readIndividualEditorialState, prepareIndividualEditorialProposals, startIndividualEditorial } from "../individual/individual-editorial.js";
+import { reason, optionsFor, createIndividualEditorialFixture } from "./individual-editorial-fixture.js";
 
 const category: CategoryConfig = {
   key: "elevacion-nueva", name: "Plataformas elevadoras nuevas", url: "https://example.test/catalogo"
@@ -39,78 +35,7 @@ const machine = (reference: string, serialNumber: string | null): ProductRecord 
   specs: { "Altura de trabajo": "8 m" }
 });
 
-const reason = "Identidad de origen sin garantías suficientes para publicar";
-
-let baseWorkspace: Promise<string> | undefined;
-let baseApprovedWorkspace: Promise<string> | undefined;
-const createBaseWorkspace = async (): Promise<string> => {
-  const root = await mkdtemp(join(tmpdir(), "equipzilla-editorial-seed-"));
-  const now = new Date().toISOString();
-  const products = [machine("11111", "SERIE-COMPARTIDA"), machine("22222", "SERIE-COMPARTIDA"), machine("33333", null)];
-  const result: CategoryScrapeResult = { category, discoveredProductUrls: products.length, products, failures: [] };
-  try {
-    await writeOutputs(join(root, "original"), "catalogo-ejemplo", [result], now, now);
-    await prepareSavedCatalog({
-      providerId: "gam", source: join(root, "original", "catalogo-ejemplo-catalog.json"),
-      out: join(root, "prepared", "catalogo-ejemplo-preparation.json"), dryRun: false, compare: null
-    });
-    return root;
-  } catch (error) {
-    await rm(root, { recursive: true, force: true });
-    throw error;
-  }
-};
-
-const optionsFor = (root: string): IndividualEditorialOptions => ({
-  rootDirectory: root, providerId: "gam",
-  catalogFile: join(root, "original", "catalogo-ejemplo-catalog.json"),
-  preparationFile: join(root, "prepared", "catalogo-ejemplo-preparation.json")
-});
-
-const createApprovedWorkspace = async (): Promise<string> => {
-  baseWorkspace ??= createBaseWorkspace();
-  const source = await baseWorkspace;
-  const root = await mkdtemp(join(tmpdir(), "equipzilla-editorial-approved-seed-"));
-  try {
-    await cp(source, root, { recursive: true });
-    const options = optionsFor(root);
-    const started = await startIndividualEditorial(options);
-    for (const item of started.accreditation.exclusions) {
-      await decideIndividualEditorial(options, {
-        reference: item.reference, decision: "excluir", reason, evidenceUrls: [item.sourceUrl]
-      });
-    }
-    await approveIndividualEditorial(options, "Selección individual contrastada y aprobada expresamente");
-    return root;
-  } catch (error) {
-    await rm(root, { recursive: true, force: true });
-    throw error;
-  }
-};
-
-const fixture = async (
-  run: (options: IndividualEditorialOptions) => Promise<void>,
-  state: "prepared" | "approved" = "prepared"
-): Promise<void> => {
-  const seed = state === "approved"
-    ? (baseApprovedWorkspace ??= createApprovedWorkspace())
-    : (baseWorkspace ??= createBaseWorkspace());
-  const source = await seed;
-  const root = await mkdtemp(join(tmpdir(), "equipzilla-editorial-individual-"));
-  try {
-    await cp(source, root, { recursive: true });
-    await run(optionsFor(root));
-  } finally {
-    await rm(root, { recursive: true, force: true });
-  }
-};
-
-after(async () => {
-  const seeds = [baseApprovedWorkspace, baseWorkspace].filter((value): value is Promise<string> => value !== undefined);
-  const results = await Promise.allSettled(seeds);
-  await Promise.all(results.flatMap((result) => result.status === "fulfilled"
-    ? [rm(result.value, { recursive: true, force: true })] : []));
-});
+const fixture = createIndividualEditorialFixture(category, machine);
 
 test("acreditación individual exige decisiones reales y aprobación humana sin publicar", async () => {
   await fixture(async (options) => {
@@ -193,7 +118,6 @@ test("la acreditación individual no crea borrador por consultas antes del inici
   });
 });
 
-
 test("entrega individual bloquea borradores y validaciones sin aprobación", async () => {
   await fixture(async (options) => {
     await assert.rejects(deliverIndividualProvider(options, "simulation"), /No hay borrador individual/);
@@ -252,7 +176,6 @@ test("entrega individual rechaza aprobación obsoleta y artefactos adicionales",
     await assert.rejects(deliverIndividualProvider(options), /Manifest|preparación/);
   }, "approved");
 });
-
 
 test("la entrega individual empaqueta el JSON aprobado y verifica el ZIP sin duplicarlo", async () => {
   await fixture(async (options) => {
@@ -335,7 +258,6 @@ test("la entrega individual no sobrescribe ZIP ajenos con el mismo nombre", asyn
   }, "approved");
 });
 
-
 test("propuestas individuales conservan decisiones humanas, no aprueban y son idempotentes", async () => {
   await fixture(async (options) => {
     const started = await startIndividualEditorial(options);
@@ -395,7 +317,6 @@ test("propuestas no descartan errores técnicos, intervenciones ni inventan evid
   });
 });
 
-
 test("el cierre JSON respeta simulación, candidata y verificación, y activa al entregar definitivamente", async () => {
   await fixture(async (options) => {
     const preview = await completeIndividualDelivery(options, null, "simulation");
@@ -449,7 +370,6 @@ test("el cierre ZIP nuevo completa entrega y activación sin un segundo comando"
   }, "approved");
 });
 
-
 test("el cierre definitivo no elige una publicación entre históricos sin selección inequívoca", async () => {
   await fixture(async (options) => {
     const candidate = await completeIndividualDelivery(options, null, "candidate");
@@ -471,7 +391,6 @@ test("el cierre definitivo no elige una publicación entre históricos sin selec
     await assert.rejects(readFile(join(dirname(directory), "active.json")), /ENOENT/);
   }, "approved");
 });
-
 
 test("fase 17: la publicación individual conserva las trazas del motor sin alterar el producto comercial", async () => {
   const root = await mkdtemp(join(tmpdir(), "equipzilla-provenance-publication-"));

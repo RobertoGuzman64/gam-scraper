@@ -3,6 +3,7 @@ import { cp, mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises"
 import { join } from "node:path";
 import { test } from "node:test";
 import { readPanelSnapshot } from "../../evidence/read-panel-snapshot.js";
+import { PANEL_STYLESHEETS } from "../panel-html.js";
 import { writeLocalPanel } from "../write-local-panel.js";
 import { PANEL_RULE_SOURCE_PATHS } from "../panel-rule-examples.js";
 import { createPanelEvidenceWorkspaceFixture } from "../../../testing/builders/panel-evidence-workspace-fixture.js";
@@ -17,7 +18,7 @@ const preparePanelWorkspace = async (workspace: string): Promise<void> => {
   await mkdir(compiledUi, { recursive: true });
   await mkdir(compiledExplorer, { recursive: true });
   await cp(join(process.cwd(), "dist", "panel", "explorer"), compiledExplorer, { recursive: true });
-  for (const name of ["dashboard.css", "explorer.css", "stage-viewer.css", "explorer-layout.css"]) {
+  for (const name of PANEL_STYLESHEETS) {
     await cp(join(process.cwd(), "src", "panel", "ui", name), join(sourceUi, name));
   }
   await cp(join(process.cwd(), "dist", "panel", "ui"), compiledUi, { recursive: true });

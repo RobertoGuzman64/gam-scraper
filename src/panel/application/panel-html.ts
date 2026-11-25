@@ -64,9 +64,14 @@ const offlineModules = async (workspace: string, entries: readonly string[]): Pr
   return results;
 };
 
+export const PANEL_STYLESHEETS = [
+  "dashboard.css", "dashboard-components.css", "dashboard-responsive.css", "dashboard-diagrams.css",
+  "explorer.css", "stage-viewer.css", "explorer-layout.css"
+] as const;
+
 export const renderPanelHtml = async (workspace: string, payload: PanelDashboardPayload): Promise<string> => {
   const [css, ruleExamples, scripts] = await Promise.all([
-    Promise.all(["dashboard.css", "explorer.css", "stage-viewer.css", "explorer-layout.css"]
+    Promise.all(PANEL_STYLESHEETS
       .map((name) => readFile(join(workspace, "src", "panel", "ui", name), "utf8"))).then((parts) => parts.join("")),
     readPanelRuleExamples(workspace),
     offlineModules(workspace, ["dashboard-client.js", "explorer-client.js"])
