@@ -1,0 +1,281 @@
+export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
+    "marca": "Marca",
+    "modelo": "Modelo",
+    "pais": "País",
+    "país": "País",
+
+    "ubicacion": "Ubicación",
+    "ubicación": "Ubicación",
+    "localizacion": "Ubicación",
+    "localización": "Ubicación",
+
+    "matricula": "Matrícula",
+    "matrícula": "Matrícula",
+
+    "año": "Año",
+    "ano": "Año",
+    "ano fabricacion": "Año",
+    "ano de fabricacion": "Año",
+    "año fabricación": "Año",
+    "año de fabricación": "Año",
+
+    "nº de serie": "Nº de serie",
+    "no de serie": "Nº de serie",
+    "n de serie": "Nº de serie",
+    "numero de serie": "Nº de serie",
+    "número de serie": "Nº de serie",
+    "serial": "Nº de serie",
+
+    "capacidad carga": "Capacidad de carga (kg)",
+    "capacidad de carga": "Capacidad de carga (kg)",
+    "capacidad de carga (kg)": "Capacidad de carga (kg)",
+
+    "carga maxima": "Carga Máxima (kg)",
+    "carga máxima": "Carga Máxima (kg)",
+
+    "capacidad arrastre": "Capacidad de arrastre (kg)",
+    "capacidad de arrastre": "Capacidad de arrastre (kg)",
+
+    "centro de carga": "Centro de carga (mm)",
+    "centro carga": "Centro de carga (mm)",
+
+    "peso": "Peso (kg)",
+    "peso kg": "Peso (kg)",
+    "peso (kg)": "Peso (kg)",
+
+    "bateria": "Batería",
+    "batería": "Batería",
+    "baterias": "Baterías",
+    "baterías": "Baterías",
+
+    "tipo bateria": "Tipo de batería",
+    "tipo de bateria": "Tipo de batería",
+    "tipo batería": "Tipo de batería",
+    "tipo de batería": "Tipo de batería",
+
+    "cargador bateria": "Cargador de batería",
+    "cargador batería": "Cargador de batería",
+    "cargador de bateria": "Cargador de batería",
+    "cargador de batería": "Cargador de batería",
+
+    "capacidad bateria": "Capacidad de la batería (Ah)",
+    "capacidad de la batería": "Capacidad de la batería (Ah)",
+    "capacidad de la bateria": "Capacidad de la batería (Ah)",
+    "capacidad batería": "Capacidad de la batería (Ah)",
+    "capacidad batería (ah)": "Capacidad de la batería (Ah)",
+    "capacidad bateria (ah)": "Capacidad de la batería (Ah)",
+    "capacidad ah": "Capacidad de la batería (Ah)",
+    "amp": "Capacidad de la batería (Ah)",
+    "amperios": "Capacidad de la batería (Ah)",
+
+    "energia de bateria (kwh)": "Energía de batería (kWh)",
+    "energía de batería (kwh)": "Energía de batería (kWh)",
+    "voltaje batería": "Voltaje batería (V)",
+    "voltaje bateria": "Voltaje batería (V)",
+    "voltaje (v)": "Voltaje batería (V)",
+    "voltaje": "Voltaje batería (V)",
+    "voltios": "Voltaje batería (V)",
+
+    "tipo motor": "Tipo motor",
+    "motor": "Tipo motor",
+
+    "marca motor": "Marca del motor",
+    "marca del motor": "Marca del motor",
+
+    "marca alternador": "Marca del alternador",
+    "marca del alternador": "Marca del alternador",
+
+    "combustible": "Combustible",
+
+    "motorizacion": "Motorización",
+    "motorización": "Motorización",
+
+    "potencia kw": "Potencia (kW)",
+    "potencia (kw)": "Potencia (kW)",
+    "potencia motor (kw)": "Potencia (kW)",
+    "potencia nominal": "Potencia (kW)",
+    "potencia continua": "Potencia (kW)",
+    "kw": "Potencia (kW)",
+
+    "par motor": "Par motor (Nm)",
+    "par motor (nm)": "Par motor (Nm)",
+    "par máximo": "Par motor (Nm)",
+    "par maximo": "Par motor (Nm)",
+
+    "potencia cv": "Potencia (CV)",
+    "potencia (cv)": "Potencia (CV)",
+    "cv": "Potencia (CV)",
+
+    "altura": "Altura (mm)",
+    "altura total": "Altura (mm)",
+    "altura maxima": "Altura (mm)",
+    "altura máxima": "Altura (mm)",
+
+    "altura elevacion": "Altura de elevación (mm)",
+    "altura de elevacion": "Altura de elevación (mm)",
+    "altura de elevación": "Altura de elevación (mm)",
+    "altura elevación (industr.)": "Altura de elevación (mm)",
+
+    "altura de elevacion (m)": "Altura de elevación (m)",
+    "altura de elevación (m)": "Altura de elevación (m)",
+
+    "altura trabajo": "Altura de trabajo (mm)",
+    "altura de trabajo": "Altura de trabajo (mm)",
+    "altura de trabajo (m)": "Altura de trabajo (m)",
+
+    "altura mastil": "Altura mástil replegado (mm)",
+    "altura mástil": "Altura mástil replegado (mm)",
+    "altura mastil replegado": "Altura mástil replegado (mm)",
+    "altura mástil replegado": "Altura mástil replegado (mm)",
+
+    "altura al suelo": "Altura al suelo (mm)",
+
+    "altura plataforma": "Altura plataforma (mm)",
+    "altura plataforma (m)": "Altura plataforma (m)",
+
+    "alcance horizontal": "Alcance horizontal (m)",
+    "alcance horizontal (m)": "Alcance horizontal (m)",
+
+    "longitud": "Longitud (mm)",
+    "longitud total": "Longitud (mm)",
+    "longitud/": "Longitud (mm)",
+    "longitud (m)": "Longitud (mm)",
+
+    "ancho": "Anchura (mm)",
+    "anchura": "Anchura (mm)",
+    "anchura total": "Anchura (mm)",
+    "anchura/": "Anchura (mm)",
+    "ancho total": "Anchura (mm)",
+    "ancho vehículo": "Anchura (mm)",
+
+    "anchura trabajo": "Anchura trabajo (mm)",
+    "anchura de trabajo": "Anchura trabajo (mm)",
+
+    "ancho promedio": "Ancho promedio (mm)",
+    "ancho medio": "Ancho promedio (mm)",
+
+    "distancia entre ejes": "Distancia entre ejes (mm)",
+
+    "ancho via delantero": "Ancho de vía delante (mm)",
+    "ancho de via delante": "Ancho de vía delante (mm)",
+    "ancho vía delante": "Ancho de vía delante (mm)",
+
+    "ancho via trasero": "Ancho de vía detrás (mm)",
+    "ancho de via detras": "Ancho de vía detrás (mm)",
+    "ancho vía detrás": "Ancho de vía detrás (mm)",
+
+    "radio giro": "Radio de giro (mm)",
+    "radio de giro": "Radio de giro (mm)",
+    "radio giro (m)": "Radio de giro (mm)",
+    "radio de giro (m)": "Radio de giro (mm)",
+
+    "ast": "AST (mm)",
+    "ast (pasillo minimo)": "AST (mm)",
+
+    "dimensiones horquillas": "Dimensiones horquillas (mm)",
+    "dim horquillas": "Dimensiones horquillas (mm)",
+    "medidas horquillas": "Dimensiones horquillas (mm)",
+    "dimensión horquillas": "Dimensiones horquillas (mm)",
+    "dimensiones horquilla": "Dimensiones horquillas (mm)",
+    "dimensiones horquillas (mm)": "Dimensiones horquillas (mm)",
+
+    "dimensiones cesta": "Dimensiones cesta (mm)",
+    "dim cesta": "Dimensiones cesta (mm)",
+    "dimensiones cesta (mm)": "Dimensiones cesta (mm)",
+
+    "elevacion libre": "Elevación libre (mm)",
+    "altura libre": "Elevación libre (mm)",
+    "elevación libre": "Elevación libre (mm)",
+
+    "elevacion libre disponible": "Elevación libre disponible",
+    "elevación libre disponible": "Elevación libre disponible",
+    "elevación libre (sí/no)": "Elevación libre disponible",
+
+    "caracteristicas elevacion": "Características de elevación",
+    "características elevación": "Características de elevación",
+
+    "velocidad desplazamiento": "Velocidad de desplazamiento (km/h)",
+    "velocidad de desplazamiento": "Velocidad de desplazamiento (km/h)",
+    "velocidad máxima": "Velocidad de desplazamiento (km/h)",
+    "velocidad máxima (km/h)": "Velocidad de desplazamiento (km/h)",
+
+    "velocidad desplazamiento carga": "Velocidad de desplazamiento con/sin carga (km/h)",
+    "velocidad con/sin carga": "Velocidad de desplazamiento con/sin carga (km/h)",
+    "velocidad de desplazamiento con/sin carga": "Velocidad de desplazamiento con/sin carga (km/h)",
+
+    "tiro barra": "Tiro a la barra nominal (N)",
+    "tiro a la barra": "Tiro a la barra nominal (N)",
+
+    "maximo tiro": "Máximo tiro a la barra (N)",
+    "máximo tiro a la barra": "Máximo tiro a la barra (N)",
+
+    "traccion": "Tracción",
+    "tracción": "Tracción",
+
+    "tracción 4x4": "Tracción 4x4",
+    "traccion 4x4": "Tracción 4x4",
+
+    "desplazador lateral": "Desplazamiento lateral",
+    "desplazamiento lateral": "Desplazamiento lateral",
+
+    "tipo mastil": "Tipo Mástil",
+    "tipo de mastil": "Tipo Mástil",
+    "tipo mástil": "Tipo Mástil",
+    "tipo de mástil": "Tipo Mástil",
+
+    "tipo maquina": "Tipo de máquina",
+    "tipo máquina": "Tipo de máquina",
+    "tipo de maquina": "Tipo de máquina",
+    "tipo de máquina": "Tipo de máquina",
+
+    "transmision": "Transmisión",
+    "transmisión": "Transmisión",
+
+    "capacidad de la tolva": "Capacidad de la tolva",
+    "capacidad tolva": "Capacidad de la tolva",
+    "neumaticos": "Neumáticos",
+    "neumáticos": "Neumáticos",
+
+    "ruedas": "Ruedas",
+
+    "numero ruedas": "Número de ruedas",
+    "número de ruedas": "Número de ruedas",
+
+    "rpm": "RPM cepillo",
+    "rpm cepillo": "RPM cepillo",
+    "rpm del cepillo": "RPM del cepillo",
+    "presión máxima de fregado (kg)": "Presión máxima de fregado (kg)",
+
+    "rendimiento de limpieza (m²/h)": "Rendimiento de limpieza (m²/h)",
+
+    "estado ruedas": "Estado de las ruedas",
+    "estado de las ruedas": "Estado de las ruedas",
+
+    "marcado ce": "Marcado CE",
+    "marcado ce (si/no)": "Marcado CE",
+
+    "pendiente": "Pendiente superable (%)",
+    "pendiente superable": "Pendiente superable (%)",
+    "pendiente max": "Pendiente superable (%)",
+    "pendiente máxima": "Pendiente superable (%)",
+    "gradiente": "Pendiente superable (%)",
+
+    "horometro": "Horas (h)",
+    "horas": "Horas (h)",
+    "horas uso": "Horas (h)",
+    "horas totales": "Horas (h)",
+    "hrs": "Horas (h)",
+    "h": "Horas (h)",
+
+    "kilometros": "Kilómetros (km)",
+    "kilómetros": "Kilómetros (km)",
+    "km": "Kilómetros (km)",
+    "kilometraje": "Kilómetros (km)",
+    "km totales": "Kilómetros (km)",
+
+    "estado baterias": "Estado baterías",
+    "estado baterías": "Estado baterías",
+
+    "controles hidraulicos": "Controles hidraúlicos",
+    "controles hidráulicos": "Controles hidraúlicos"
+};
