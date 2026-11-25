@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
-import { classifyFindingRecognitions, fingerprintAuditedFinding } from "../finding-recognitions.js";
-import type { AuditedFinding, FindingRecognition, FindingRecognitionRegistry } from "../finding-recognitions.js";
+import { classifyFindingRecognitions, fingerprintAuditedFinding } from "../findings/finding-recognitions.js";
+import type { AuditedFinding, FindingRecognition, FindingRecognitionRegistry } from "../findings/finding-recognitions.js";
 
 const sha = (value: string): string => createHash("sha256").update(value).digest("hex");
 

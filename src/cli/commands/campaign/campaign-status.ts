@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { inspectCampaignOperations } from "../../../campaign/operations-status.js";
 import { inspectOperationsInventory } from "../../../campaign/operations-inventory.js";
-import { printOperationsInventory } from "../../reporting/operations-inventory.js";
+import { printOperationsInventory } from "../../reporting/campaign/operations-inventory.js";
 import { printCommandError } from "../../reporting/errors.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));

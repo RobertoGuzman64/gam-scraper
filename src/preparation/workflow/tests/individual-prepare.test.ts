@@ -5,8 +5,8 @@ import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFi
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 import test, { after } from "node:test";
-import { writeCanonicalCatalog, readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { consolidatePortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
+import { writeCanonicalCatalog, readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
+import { consolidatePortableOriginal } from "../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { requireIndividualPreparationContext } from "../individual-context.js";
 import { parseIndividualCatalogProviders } from "../../../cli/options/individual-catalog.js";
 import { prepareIndividualCatalogs } from "../individual-prepare.js";

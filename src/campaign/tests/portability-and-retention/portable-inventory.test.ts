@@ -3,8 +3,8 @@ import { mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:f
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { consolidatePortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
-import { readCanonicalCatalog, writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { consolidatePortableOriginal } from "../../../infrastructure/filesystem/catalog/originals/portable-original.js";
+import { readCanonicalCatalog, writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import { inspectPortableInventory } from "../../portable-inventory.js";
 import { retainRepositoryArtifact } from "../../../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
 import { createFixture, approveDraft } from "../finalization-fixture.js";

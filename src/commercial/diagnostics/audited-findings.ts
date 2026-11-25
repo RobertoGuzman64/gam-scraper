@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { ProductRecord } from "../../contracts/catalog.js";
-import type { AuditedFinding } from "../../catalog/diagnostics/finding-recognitions.js";
+import type { AuditedFinding } from "../../catalog/diagnostics/findings/finding-recognitions.js";
 import type { ImportCandidate } from "../legacy-export/contracts.js";
 import type { CommercialBaselineInput } from "./commercial-baseline.js";
 import type { CommercialAccreditation } from "./commercial-accreditation.js";

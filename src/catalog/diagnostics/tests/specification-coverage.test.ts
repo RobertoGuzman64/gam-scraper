@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { analyzeSpecificationCoverage, classifySpecificationWork } from "../specification-coverage.js";
-import type { DescriptionCoverageInput } from "../description-coverage.js";
+import { analyzeSpecificationCoverage, classifySpecificationWork } from "../coverage/specification-coverage.js";
+import type { DescriptionCoverageInput } from "../coverage/description-coverage.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { SpecValue } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";

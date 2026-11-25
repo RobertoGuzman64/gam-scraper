@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { getProvider } from "../../../scraping/registry.js";
-import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { inspectCampaignOperations } from "../../operations-status.js";
 import { inspectOperationsInventory } from "../../operations-inventory.js";
 

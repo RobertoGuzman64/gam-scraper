@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { join } from "node:path";
-import { parseCommercialExportOptions, shouldRefreshLocalPanel } from "../commercial-export.js";
+import { parseCommercialExportOptions, shouldRefreshLocalPanel } from "../commercial/commercial-export.js";
 
 test("predetermina un ZIP y conserva directorio fuera del repositorio y entorno explícito", () => {
   assert.throws(() => parseCommercialExportOptions([]), /requiere --entorno/);

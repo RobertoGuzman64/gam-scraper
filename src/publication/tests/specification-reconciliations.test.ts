@@ -13,7 +13,7 @@ import { prepareSourceProduct } from "../../preparation/prepare-product.js";
 
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 
-import { accreditedReconciliationCases } from "../../testing/fixtures/gam/specification-reconciliations.js";
+import { accreditedReconciliationCases } from "./specification-reconciliation-fixture.js";
 
 const reconciliationProduct = (
   item: (typeof accreditedReconciliationCases)[number], spec: ImportCandidate["spec"]

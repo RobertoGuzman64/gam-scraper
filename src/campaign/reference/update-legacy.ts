@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { compareCampaignReferences } from "../../catalog/reference/compare.js";
-import { readCampaignReference } from "../../infrastructure/filesystem/reference/store.js";
+import { readCampaignReference } from "../../infrastructure/filesystem/campaign/reference-store.js";
 import { writeCampaignReference } from "./maintenance.js";
 import { verifyDeliveredCampaign } from "../delivery/verification.js";
 import { readActiveCampaignReferenceInput } from "./compare.js";

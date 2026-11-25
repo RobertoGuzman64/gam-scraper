@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { prepareSavedCatalog } from "../../../preparation/workflow/prepare.js";
 import { interventionPreparationHelp, parseInterventionPreparationOptions } from "../../options/intervention-preparation.js";
 import { printCommandError } from "../../reporting/errors.js";
-import { formatPreparationWork } from "../../reporting/preparation-work.js";
+import { formatPreparationWork } from "../../reporting/catalog/preparation-work.js";
 
 export const runPrepareIntervention = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {

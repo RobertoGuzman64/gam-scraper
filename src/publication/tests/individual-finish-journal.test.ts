@@ -7,9 +7,9 @@ import test from "node:test";
 import {
   advanceIndividualFinishClosure, individualFinishClosurePhase, listIndividualFinishJournals, markIndividualFinishCandidates,
   openIndividualFinishJournal, updateIndividualFinishJournal, withIndividualFinishLock
-} from "../../infrastructure/filesystem/catalog/individual-finish-journal.js";
-import type { IndividualFinishTarget } from "../../infrastructure/filesystem/catalog/individual-finish-journal.js";
-import { formatAccreditationIssues } from "../../cli/reporting/individual-accreditation.js";
+} from "../../infrastructure/filesystem/catalog/publications/individual-finish-journal.js";
+import type { IndividualFinishTarget } from "../../infrastructure/filesystem/catalog/publications/individual-finish-journal.js";
+import { formatAccreditationIssues } from "../../cli/reporting/individual/individual-accreditation.js";
 import type { AccreditationIssue } from "../../catalog/editorial/campaign-accreditation.js";
 
 const target: IndividualFinishTarget = { providerId: "gam", approvalSha256: "a".repeat(64), previousSha256: null };

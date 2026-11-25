@@ -4,7 +4,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { controlledGomarizPlatform } from "../../editorial/core/editorial-contract-records.js";
-import { applyDocumentedTechnicalEvidence, recoverReviewedModelTechnicalSpecs, type DocumentedTechnicalUnit } from "../../technical/documented-technical-evidence.js";
+import { applyDocumentedTechnicalEvidence, recoverReviewedModelTechnicalSpecs, type DocumentedTechnicalUnit } from "../../technical/evidence/documented-technical-evidence.js";
 import { isProductTechnicalProvenance } from "../../provenance/technical-provenance.js";
 import { buildPublicationTechnicalProvenance, isPublicationTechnicalProvenance } from "../../provenance/publication-technical-provenance.js";
 import { originalRecordFingerprint } from "../../../catalog/identity-fingerprint.js";

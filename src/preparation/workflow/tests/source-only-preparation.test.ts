@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { prepareImportBatch } from "../../product/batch-identity.js";
-import { analyzeSourceContentGaps } from "../../../catalog/diagnostics/content-gaps-source.js";
+import { analyzeSourceContentGaps } from "../../../catalog/diagnostics/coverage/content-gaps-source.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 
 const record = (reference: string, specs: ProductRecord["specs"] = {}): ProductRecord => ({

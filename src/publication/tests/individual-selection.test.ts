@@ -8,7 +8,7 @@ import type { CategoryConfig, CategoryScrapeResult } from "../../contracts/scrap
 import { offlinePreparationManifestPath } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { prepareSavedCatalog } from "../../preparation/workflow/prepare.js";
 import { writeOutputs } from "../../scraping/output/publish.js";
-import { readIndividualSelection, selectIndividualPublishable } from "../individual-selection.js";
+import { readIndividualSelection, selectIndividualPublishable } from "../individual/individual-selection.js";
 
 const category: CategoryConfig = {
   key: "elevacion-nueva", name: "Plataformas elevadoras nuevas", url: "https://example.test/catalogo"

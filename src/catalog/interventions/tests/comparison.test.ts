@@ -5,7 +5,7 @@ import { parseCanonicalCatalog } from "../../canonical-catalog.js";
 import { buildProductIdentity } from "../../identity.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { compareInterventionScripts } from "../comparison.js";
-import { formatInterventionComparison } from "../../../cli/reporting/intervention-comparison.js";
+import { formatInterventionComparison } from "../../../cli/reporting/campaign/intervention-comparison.js";
 import type { ManualInterventionProposal } from "../contracts.js";
 import { simulateIntervention } from "../simulation.js";
 

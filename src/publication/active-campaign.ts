@@ -1,9 +1,9 @@
 import { basename, dirname, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { CAMPAIGN_PROVIDERS } from "../contracts/campaign-providers.js";
-import { readActiveCatalogIndex, withActiveCatalogLock, writeActiveCatalogIndex } from "../infrastructure/filesystem/catalog/active-selection.js";
-import { readAccreditedPublication, resolveAccreditedPublication } from "../infrastructure/filesystem/catalog/accredited-publication.js";
-import { readPortableCampaign } from "../infrastructure/filesystem/catalog/portable-campaign.js";
+import { readActiveCatalogIndex, withActiveCatalogLock, writeActiveCatalogIndex } from "../infrastructure/filesystem/catalog/publications/active-selection.js";
+import { readAccreditedPublication, resolveAccreditedPublication } from "../infrastructure/filesystem/catalog/publications/accredited-publication.js";
+import { readPortableCampaign } from "../infrastructure/filesystem/catalog/campaigns/portable-campaign.js";
 import { differenceBetween } from "./active-publication.js";
 import type { PublicationDifference } from "./active-publication.js";
 

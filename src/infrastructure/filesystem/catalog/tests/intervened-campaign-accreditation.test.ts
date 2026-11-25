@@ -8,7 +8,7 @@ import { createAccreditationDraft, selectAccreditedPublishable, sha256 } from ".
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import { CAMPAIGN_PROVIDERS } from "../../../../contracts/campaign-providers.js";
 import { persistAppliedIntervention } from "../../interventions/intervention-application.js";
-import { writeCanonicalCatalog } from "../canonical-catalog.js";
+import { writeCanonicalCatalog } from "../originals/canonical-catalog.js";
 import { readInterventionSource } from "../../interventions/intervention-source.js";
 import { readCampaignAccreditationSources } from "../../../../campaign/accreditation-sources.js";
 import { readOfflinePreparation } from "../../preparation/offline-preparation.js";

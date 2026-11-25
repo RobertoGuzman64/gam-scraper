@@ -1,8 +1,8 @@
 import { join, dirname, basename } from "node:path";
-import { readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
-import { readVerifiedManainRecordSource } from "../../infrastructure/filesystem/catalog/manain-record-source.js";
-import { readPortableOriginal, readPortableOriginalArtifacts } from "../../infrastructure/filesystem/catalog/portable-original.js";
-import { resolvePublicationDirectory } from "../../infrastructure/filesystem/catalog/publication-identity.js";
+import { readAccreditedPublication } from "../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
+import { readVerifiedManainRecordSource } from "../../infrastructure/filesystem/catalog/originals/manain-record-source.js";
+import { readPortableOriginal, readPortableOriginalArtifacts } from "../../infrastructure/filesystem/catalog/originals/portable-original.js";
+import { resolvePublicationDirectory } from "../../infrastructure/filesystem/catalog/publications/publication-identity.js";
 import { artifact, digest, isMissing, isRecord, isSha, recordFrom, regularText } from "./evidence-files.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { PanelArtifact, PanelOriginalEvidence, PanelProviderId, PanelProviderEvidence } from "./types.js";

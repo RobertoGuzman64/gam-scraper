@@ -21,7 +21,7 @@ const sources: Readonly<Record<PanelRuleId, RuleSource>> = {
   source: {
     title: "Compatibilidad de evidencia documental",
     summary: "Esta ruta incorpora especificaciones solo cuando la identidad, huella y claves son compatibles. No representa todas las fuentes posibles.",
-    path: "src/preparation/technical/documented-technical-evidence.ts",
+    path: "src/preparation/technical/evidence/documented-technical-evidence.ts",
     first: "if (!unit || record.brand !== unit.brand || record.model !== unit.model ||",
     last: "Object.keys(unit.specifications).some((key) => key in specs)) return specs;"
   },

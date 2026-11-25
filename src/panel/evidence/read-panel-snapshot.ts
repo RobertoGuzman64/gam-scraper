@@ -1,7 +1,7 @@
 import { join, resolve } from "node:path";
 import { inspectCommercialPackage, assertCommercialPackageProviders } from "../../commercial/export/commercial-package-snapshot.js";
 import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
-import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
 import { parseTechnicalReport, selectTechnicalReportProviders } from "./report-metrics.js";
 import type { TechnicalReportProvider } from "./report-metrics.js";
 import { artifact, digest, inspectReport, recordFrom, regularText } from "./evidence-files.js";

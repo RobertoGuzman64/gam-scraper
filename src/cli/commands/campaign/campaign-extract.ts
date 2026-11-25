@@ -3,10 +3,10 @@ import { fileURLToPath } from "node:url";
 import { extractCampaign } from "../../../campaign/extraction.js";
 import { inspectBeforeExtraction } from "../../../campaign/preflight.js";
 import { reviewActiveCampaign } from "../../../campaign/review.js";
-import { BatchConsole } from "../../reporting/batch-progress.js";
-import { formatBatchSummary } from "../../reporting/batch-summary.js";
+import { BatchConsole } from "../../reporting/progress/batch-progress.js";
+import { formatBatchSummary } from "../../reporting/progress/batch-summary.js";
 import { printCommandError } from "../../reporting/errors.js";
-import { printCampaignReview } from "../../reporting/campaign-review.js";
+import { printCampaignReview } from "../../reporting/campaign/campaign-review.js";
 import { formatHeader, printStatus, printReportLine } from "../../reporting/terminal.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
@@ -30,7 +30,7 @@ export const runCampaignExtraction = async (args: readonly string[]): Promise<vo
   if (previous.requiresNewCampaign && !args.includes("--nueva")) {
     throw new Error("La campaña anterior requiere atención. Ejecuta npm run revisar o inicia un lote nuevo con --nueva");
   }
-  const scriptFile = fileURLToPath(new URL("../extraction/scrape.js", import.meta.url));
+  const scriptFile = fileURLToPath(new URL("../scrape.js", import.meta.url));
   const { report, reportFile } = await extractCampaign(root, scriptFile, args.includes("--nueva"), new BatchConsole());
   for (const line of formatBatchSummary(report, reportFile)) printReportLine(line);
   if (report.status !== "complete") {

@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { originalRecordFingerprint } from "../../../../catalog/identity-fingerprint.js";
 import { technicalDocumentClaimSha256 } from "../../../../contracts/technical-provenance.js";
-import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
-import { reviewedCatalogModelIdentity } from "../../../technical/reviewed-catalog-model-identity.js";
-import { reviewedModelDocumentVerification } from "../../../technical/reviewed-model-claims.js";
+import { reviewedCatalogModelIdentity } from "../../../technical/evidence/reviewed-catalog-model-identity.js";
+import { reviewedModelDocumentVerification } from "../../../technical/evidence/reviewed-model-claims.js";
 import { classifyPublishedTechnicalSpec } from "../../../provenance/technical-spec-classification.js";
 
 const url = "https://www.ctelift.com/wp-content/uploads/2020/11/B-LIFT-27.2_2021-05_EN.pdf";

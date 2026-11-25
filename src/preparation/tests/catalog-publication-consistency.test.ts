@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { readVerifiedManainRecordSource } from "../../infrastructure/filesystem/catalog/manain-record-source.js";
+import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
+import { readVerifiedManainRecordSource } from "../../infrastructure/filesystem/catalog/originals/manain-record-source.js";
 import { basename } from "node:path";
-import { discoverAccreditedPublications, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { discoverAccreditedPublications, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
 import { loadImportCatalog } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { projectCommercialCategory } from "../../commercial/projection/category-projection.js";

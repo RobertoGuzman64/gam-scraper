@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { readCanonicalCatalog } from "../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readCanonicalCatalog } from "../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import { validateOfflinePreparation } from "../preparation/workflow/offline.js";
 import { sha256 } from "../catalog/editorial/campaign-accreditation.js";
 import type { AccreditedSource } from "../catalog/editorial/campaign-accreditation.js";

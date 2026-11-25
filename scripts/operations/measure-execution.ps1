@@ -23,7 +23,7 @@ try {
     $previousPreference = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
     try {
-        & node scripts/run-tests.mjs --medicion $basePath 2>&1 | Tee-Object -FilePath $baseLog | Out-Host
+        & node scripts/testing/run-tests.mjs --medicion $basePath 2>&1 | Tee-Object -FilePath $baseLog | Out-Host
         $baseExit = $LASTEXITCODE
     } finally {
         $ErrorActionPreference = $previousPreference
@@ -34,7 +34,7 @@ try {
         $previousPreference = $ErrorActionPreference
         $ErrorActionPreference = "Continue"
         try {
-            & node scripts/run-tests.mjs --concurrencia $Concurrency --medicion $adjustedPath 2>&1 | Tee-Object -FilePath $adjustedLog | Out-Host
+            & node scripts/testing/run-tests.mjs --concurrencia $Concurrency --medicion $adjustedPath 2>&1 | Tee-Object -FilePath $adjustedLog | Out-Host
             $adjustedExit = $LASTEXITCODE
         } finally {
             $ErrorActionPreference = $previousPreference

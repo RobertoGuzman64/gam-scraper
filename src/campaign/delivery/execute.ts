@@ -6,7 +6,7 @@ import { isDeepStrictEqual } from "node:util";
 import { createZipArchive, readZipArchive, type ZipFile } from "../../infrastructure/archive/zip.js";
 import { CAMPAIGN_PROVIDERS } from "../discovery/report.js";
 import { finalizeActiveCampaign } from "../finalization.js";
-import { PortableCampaignConflictError } from "../../infrastructure/filesystem/catalog/portable-campaign.js";
+import { PortableCampaignConflictError } from "../../infrastructure/filesystem/catalog/campaigns/portable-campaign.js";
 import { persistCampaignDelivery, removeDeliveredRunLogs } from "../../infrastructure/filesystem/campaign/campaign-cleanup.js";
 
 export type CampaignDeliveryResult = {

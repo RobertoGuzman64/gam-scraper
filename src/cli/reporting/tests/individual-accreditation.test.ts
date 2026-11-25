@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatAccreditationIssues } from "../individual-accreditation.js";
+import { formatAccreditationIssues } from "../individual/individual-accreditation.js";
 import type { AccreditationIssue } from "../../../catalog/editorial/campaign-accreditation.js";
 
 const issues: readonly AccreditationIssue[] = [

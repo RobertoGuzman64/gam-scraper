@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { classifyPublishedTechnicalSpec } from "../../../provenance/technical-spec-classification.js";
-import { reviewedModelDocumentVerification } from "../../../technical/reviewed-model-claims.js";
+import { reviewedModelDocumentVerification } from "../../../technical/evidence/reviewed-model-claims.js";
 import { matchesTechnicalDocumentVerification, technicalDocumentClaimSha256 } from "../../../../contracts/technical-provenance.js";
 import type { ProductTechnicalProvenance, TechnicalDocumentVerification, TechnicalSpecEvidence } from "../../../../contracts/technical-provenance.js";
 

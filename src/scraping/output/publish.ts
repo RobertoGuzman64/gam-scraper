@@ -11,11 +11,11 @@ import { dedupeBy, emptyDedupeReport, mergeDedupeReports } from "../../catalog/i
 import { parseCanonicalCatalog } from "../../catalog/canonical-catalog.js";
 import type { CategoryConfig, CategoryScrapeResult, Summary } from "../../contracts/scraping.js";
 import { atomicWrite } from "../../infrastructure/filesystem/atomic-write.js";
-import { writeCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { writeCanonicalCatalog } from "../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import {
   abandonArchive, cleanCatalogExcess, finalizePublishedCatalog, restorePublishedCatalog,
   stagePublishedCatalog
-} from "../../infrastructure/filesystem/catalog/catalog-retention.js";
+} from "../../infrastructure/filesystem/catalog/retention/catalog-retention.js";
 import { prepareImportBatch } from "../../preparation/prepare.js";
 import { loadImportCatalog } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { serializeCategoriesCsv, serializeProductsCsv } from "./csv-serializer.js";

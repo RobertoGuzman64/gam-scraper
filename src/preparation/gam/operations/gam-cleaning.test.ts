@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { recoverGamSweepingBrushSpecs } from "./sweeping-brush-evidence.js";
-import { recoverReviewedModelTechnicalSpecs } from "../../technical/documented-technical-evidence.js";
+import { recoverReviewedModelTechnicalSpecs } from "../../technical/evidence/documented-technical-evidence.js";
 import { resolveAttributeValue } from "../../classification/attribute-mapping.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 

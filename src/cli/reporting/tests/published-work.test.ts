@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aggregatePublishedWork } from "../../../catalog/diagnostics/published-work.js";
-import type { PublishedWorkProvider } from "../../../catalog/diagnostics/published-work.js";
-import { formatPublishedWorkTerminal, renderPublishedWorkMarkdown } from "../published-work.js";
+import { aggregatePublishedWork } from "../../../catalog/diagnostics/work/published-work.js";
+import type { PublishedWorkProvider } from "../../../catalog/diagnostics/work/published-work.js";
+import { formatPublishedWorkTerminal, renderPublishedWorkMarkdown } from "../individual/published-work.js";
 
 const provider = (providerId: string): PublishedWorkProvider => ({
   providerId, sourceSha256: "a".repeat(64), approvalSha256: "b".repeat(64),

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatSpecificationCoverageReport } from "../specification-coverage-report.js";
-import type { SpecificationCoverage } from "../../../../catalog/diagnostics/specification-coverage.js";
+import { formatSpecificationCoverageReport } from "../audits/specification-coverage-report.js";
+import type { SpecificationCoverage } from "../../../../catalog/diagnostics/coverage/specification-coverage.js";
 
 const report: SpecificationCoverage = {
   note: "Cobertura observada, no obligatoria",

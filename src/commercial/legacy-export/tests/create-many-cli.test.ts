@@ -4,7 +4,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { runExport } from "../../../cli/commands/legacy-export/export.js";
+import { runExport } from "../../../cli/commands/legacy-export.js";
 import { parseExportOptions } from "../../../cli/options/export.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { prepareProduct } from "../prepare-product.js";

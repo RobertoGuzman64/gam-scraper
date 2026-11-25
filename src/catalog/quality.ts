@@ -5,7 +5,7 @@ import type { CatalogSnapshot } from "./snapshot.js";
 export type { CatalogItem, CatalogSnapshot, CatalogChanges } from "./snapshot.js";
 export { categoryScope, buildCatalogItems, compareCatalog, parseCatalogSnapshot } from "./snapshot.js";
 export { findIdentityConflicts, findSerialNumberCollisions, describeSerialNumberCollision } from "./identity-conflicts.js";
-export { validateScrapedProduct } from "./product-validation.js";
+export { validateScrapedProduct } from "./validation/product-validation.js";
 
 export type CatalogQuality = {
   readonly status: "complete" | "partial" | "blocked";

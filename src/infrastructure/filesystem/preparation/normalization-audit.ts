@@ -1,9 +1,9 @@
 import { relative } from "node:path";
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
-import { attachNormalizationPublications, inspectNormalizationProduct } from "../../../catalog/diagnostics/normalization-audit.js";
-import { analyzeNormalizationImpact } from "../../../catalog/diagnostics/normalization-impact.js";
-import { resolveAccreditedPublication, readAccreditedPublication } from "../catalog/accredited-publication.js";
-import { accreditedPublicationOriginalSources } from "../catalog/accredited-publication-original.js";
+import { attachNormalizationPublications, inspectNormalizationProduct } from "../../../catalog/diagnostics/normalization/normalization-audit.js";
+import { analyzeNormalizationImpact } from "../../../catalog/diagnostics/normalization/normalization-impact.js";
+import { resolveAccreditedPublication, readAccreditedPublication } from "../catalog/publications/accredited-publication.js";
+import { accreditedPublicationOriginalSources } from "../catalog/publications/accredited-publication-original.js";
 import { editorialAuditFingerprints, loadEditorialAuditPopulation } from "./editorial-audit-population.js";
 import { auditProviderCoverage, collectAuditProviderResults } from "../../../shared/audit-provider-results.js";
 

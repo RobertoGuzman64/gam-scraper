@@ -1,8 +1,8 @@
 import pLimit from "p-limit";
 import type { CategoryConfig, ScrapeOptions } from "../../contracts/scraping.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
-import { fetchHtml } from "../../infrastructure/http/fetch-html.js";
-import { validateScrapedProduct } from "../../catalog/product-validation.js";
+import { fetchHtml } from "../../infrastructure/network/fetch-html.js";
+import { validateScrapedProduct } from "../../catalog/validation/product-validation.js";
 import type { ScraperProvider } from "../provider.js";
 import type { ProductPageCache, ProductPageResult, ScrapeProgressCallbacks, ScrapeReport } from "./scrape-types.js";
 

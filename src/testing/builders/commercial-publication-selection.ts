@@ -3,8 +3,8 @@ import type { CommercialBaselineInput } from "../../commercial/diagnostics/comme
 import type { CommercialPublicationInputs } from "../../commercial/export/commercial-inputs.js";
 import { projectCommercialCategory } from "../../commercial/projection/category-projection.js";
 import type { ImportCatalog } from "../../commercial/legacy-export/contracts.js";
-import { publicationOriginalSources } from "../../infrastructure/filesystem/catalog/accredited-publication-original.js";
-import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { publicationOriginalSources } from "../../infrastructure/filesystem/catalog/publications/accredited-publication-original.js";
+import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
 import { prepareImportBatch } from "../../preparation/product/batch-identity.js";
 
 export const selectAccreditedCommercialInputs = async (

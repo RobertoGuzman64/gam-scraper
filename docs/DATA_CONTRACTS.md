@@ -37,6 +37,8 @@ La ubicación habitual es `storage/scraped/<proveedor>/`, con prefijo configurab
 
 La preparación **offline** se puede escribir en `storage/prepared/<proveedor>/`. Incluye procedencia del catálogo, identidades, huella de las reglas técnicas (`rulesVersion: 2`, `rulesSha256`), calidad y candidatos preparados. Los snapshots comerciales solo figuran en el formato histórico `rulesVersion: 1`; no son entradas de la preparación nueva. Debe poder verificarse sin consultar las webs.
 
+Los identificadores `mechanism` de la procedencia técnica son contractuales, incluso cuando tienen forma de ruta histórica. Se conservan al trasladar módulos porque intervienen en `editorialRuleId` y en la comparación exacta de evidencias publicadas. Las rutas físicas de imports y lecturas de código sí deben apuntar a la ubicación vigente; no se crean alias de archivos ni se alteran publicaciones para mantener estos identificadores.
+
 Los documentos de origen, los manifests y los datos de preparación deben permanecer alineados. No editar productos manualmente en un JSON publicado ni reemplazar su manifest para «validar» una modificación. Los archivos de ejecución están excluidos del control de versiones.
 
 ## Persistencia definitiva y ciclo de vida

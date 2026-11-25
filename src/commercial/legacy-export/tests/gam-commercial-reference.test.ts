@@ -16,9 +16,9 @@ import { planCreateMany } from "../create-many-plan.js";
 
 import { commercialReferenceKey } from "../commercial-reference.js";
 
-import { accreditedPublicationOriginalSources } from "../../../infrastructure/filesystem/catalog/accredited-publication-original.js";
+import { accreditedPublicationOriginalSources } from "../../../infrastructure/filesystem/catalog/publications/accredited-publication-original.js";
 
-import { readAccreditedPublication, resolveAccreditedPublication } from "../../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { readAccreditedPublication, resolveAccreditedPublication } from "../../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
 
 const source: ProductRecord = {
   providerId: "gam", categoryKey: "elevacion-nueva", categoryName: "Plataformas elevadoras nuevas",

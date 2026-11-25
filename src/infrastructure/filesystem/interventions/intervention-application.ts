@@ -3,7 +3,7 @@ import { isDeepStrictEqual } from "node:util";
 import { mkdir, readFile, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { basename, join, relative, sep } from "node:path";
 import { applyInterventionToCatalog } from "../../../catalog/interventions/application.js";
-import { measureAppliedIntervention, type InterventionWorkSummary } from "../../../catalog/diagnostics/intervention-work.js";
+import { measureAppliedIntervention, type InterventionWorkSummary } from "../../../catalog/diagnostics/work/intervention-work.js";
 import { validateInterventionScriptSelection } from "../intervention-scripts/script-location.js";
 import { simulateIntervention } from "../../../catalog/interventions/simulation.js";
 import { readInterventionScriptVersions } from "../intervention-scripts/script-selection.js";

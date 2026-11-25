@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatSpecificationImprovementReport } from "../specification-improvement-report.js";
-import type { SpecificationImprovementAudit } from "../../../../catalog/diagnostics/specification-improvement.js";
+import { formatSpecificationImprovementReport } from "../audits/specification-improvement-report.js";
+import type { SpecificationImprovementAudit } from "../../../../catalog/diagnostics/coverage/specification-improvement.js";
 
 const report: SpecificationImprovementAudit = {
   note: "Solo oportunidades con evidencia comparable",

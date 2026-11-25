@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { runDeliverProvider } from "../deliver-provider.js";
+import { runDeliverProvider } from "../individual/deliver-provider.js";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../..");
 
@@ -23,7 +23,7 @@ test("entregar:proveedor libera la terminal tras terminar con recursos ajenos ab
     const preload = join(temp, "keep-alive.mjs");
     writeFileSync(preload, "setInterval(() => {}, 60000);\n");
     const result = spawnSync(process.execPath, ["--import", pathToFileURL(preload).href,
-      join(root, "dist/cli/commands/catalog/deliver-provider.js"), "--help"], {
+      join(root, "dist/cli/commands/catalog/individual/deliver-provider.js"), "--help"], {
       cwd: root, windowsHide: true, encoding: "utf8", timeout: 8000
     });
     assert.equal(result.status, 0, result.stderr || result.error?.message);

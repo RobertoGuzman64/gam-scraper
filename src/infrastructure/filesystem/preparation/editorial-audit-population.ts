@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { readPortableOriginalArtifacts } from "../catalog/portable-original.js";
-import { readVerifiedManainRecordSource } from "../catalog/manain-record-source.js";
+import { readPortableOriginalArtifacts } from "../catalog/originals/portable-original.js";
+import { readVerifiedManainRecordSource } from "../catalog/originals/manain-record-source.js";
 import { manainRecordPreparationSource } from "../../../preparation/workflow/manain-record-source.js";
 import { loadPreparationInputs } from "./preparation-inputs.js";
 import { prepareImportBatch } from "../../../preparation/product/batch-identity.js";

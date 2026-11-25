@@ -1,12 +1,12 @@
 import { printReportLine } from "../../reporting/terminal.js";
-import { formatInterventionWork } from "../../reporting/intervention-work.js";
+import { formatInterventionWork } from "../../reporting/campaign/intervention-work.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readInterventionSource } from "../../../infrastructure/filesystem/interventions/intervention-source.js";
 import { persistAppliedIntervention } from "../../../infrastructure/filesystem/interventions/intervention-application.js";
 import { readSelectedInterventionScripts } from "../../../infrastructure/filesystem/intervention-scripts/script-selection.js";
 import { compareInterventionScripts } from "../../../catalog/interventions/comparison.js";
-import { formatInterventionComparison } from "../../reporting/intervention-comparison.js";
+import { formatInterventionComparison } from "../../reporting/campaign/intervention-comparison.js";
 import { validateInterventionScriptSelection } from "../../../infrastructure/filesystem/intervention-scripts/script-location.js";
 import { simulateIntervention } from "../../../catalog/interventions/simulation.js";
 import type { InterventionSimulation } from "../../../catalog/interventions/simulation.js";

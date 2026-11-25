@@ -8,7 +8,7 @@ import test, { after } from "node:test";
 import { createPreparedRetentionFixture } from "./prepared-retention-fixture.js";
 import { readOfflinePreparation } from "../offline-preparation.js";
 import { simulatePreparedRetention } from "../preparation-retention.js";
-import { formatRetentionSimulation } from "../../../../cli/reporting/retention-simulation.js";
+import { formatRetentionSimulation } from "../../../../cli/reporting/retention/retention-simulation.js";
 
 const fixtures = createPreparedRetentionFixture();
 const { withWorkspace, saveVersion } = fixtures;

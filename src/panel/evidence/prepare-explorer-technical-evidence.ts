@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js";
-import { readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { readAccreditedPublication } from "../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
 import { readPanelOriginalProducts } from "./publication-evidence.js";
 import { readPanelSnapshot } from "./read-panel-snapshot.js";
 import { readPublicationTechnicalProvenance } from "./read-technical-provenance.js";

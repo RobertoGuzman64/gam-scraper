@@ -1,6 +1,6 @@
 import { readdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { inspectCampaignReference } from "../../infrastructure/filesystem/reference/store.js";
+import { inspectCampaignReference } from "../../infrastructure/filesystem/campaign/reference-store.js";
 import { listCampaignRuns } from "../discovery/search.js";
 import type { CampaignRun } from "../discovery/search.js";
 import { verifyDeliveredCampaign } from "../delivery/verification.js";

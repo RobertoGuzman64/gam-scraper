@@ -3,11 +3,11 @@ import { createHash } from "node:crypto";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { CAMPAIGN_PROVIDERS } from "../contracts/campaign-providers.js";
-import { readCanonicalCatalog } from "../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { readActiveCatalogIndex } from "../infrastructure/filesystem/catalog/active-selection.js";
-import { readPortableCampaign } from "../infrastructure/filesystem/catalog/portable-campaign.js";
-import { readPortableOriginal, readPortableOriginalArtifacts } from "../infrastructure/filesystem/catalog/portable-original.js";
-import { listTechnicalVersions, readActiveTechnicalPublication } from "../infrastructure/filesystem/catalog/technical-publication.js";
+import { readCanonicalCatalog } from "../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
+import { readActiveCatalogIndex } from "../infrastructure/filesystem/catalog/publications/active-selection.js";
+import { readPortableCampaign } from "../infrastructure/filesystem/catalog/campaigns/portable-campaign.js";
+import { readPortableOriginal, readPortableOriginalArtifacts } from "../infrastructure/filesystem/catalog/originals/portable-original.js";
+import { listTechnicalVersions, readActiveTechnicalPublication } from "../infrastructure/filesystem/catalog/publications/technical-publication.js";
 import { inspectRepositoryArtifact } from "../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
 import type { InventoryItem } from "./inventory-contracts.js";
 

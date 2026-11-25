@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatSpecificationOpportunitiesReport } from "../specification-opportunities-report.js";
-import type { SpecificationOpportunities } from "../../../../catalog/diagnostics/specification-opportunities.js";
+import { formatSpecificationOpportunitiesReport } from "../audits/specification-opportunities-report.js";
+import type { SpecificationOpportunities } from "../../../../catalog/diagnostics/coverage/specification-opportunities.js";
 
 const report: SpecificationOpportunities = {
   note: "Exploración, no obligación de publicación",

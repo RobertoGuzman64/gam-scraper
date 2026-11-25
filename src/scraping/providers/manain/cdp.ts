@@ -1,7 +1,7 @@
 import type { ScrapeOptions } from "../../../contracts/scraping.js";
-import { DevtoolsWebSocket, openDebugSocket, assertChromeWebSocketSupport, withTimeout } from "../../../infrastructure/browser/devtools.js";
+import { DevtoolsWebSocket, openDebugSocket, assertChromeWebSocketSupport, withTimeout } from "../../../infrastructure/network/devtools.js";
 import { buildManainListingScript, MANAIN_LISTING_PROGRESS_BINDING } from "./listing-script.js";
-import type { DevtoolsResponse } from "../../../infrastructure/browser/devtools.js";
+import type { DevtoolsResponse } from "../../../infrastructure/network/devtools.js";
 import { normalizeManainSaleProductUrl, parseManainListingResult } from "./listing.js";
 import type { ManainListingResult } from "./listing.js";
 

@@ -1,8 +1,8 @@
 import { printReportLine } from "../../reporting/terminal.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { cleanCatalogExcess, cleanLegacyCatalogExcess, type RetentionCandidate } from "../../../infrastructure/filesystem/catalog/catalog-retention.js";
-import { cleanBatchExcess } from "../../../infrastructure/filesystem/runs/run-retention.js";
+import { cleanCatalogExcess, cleanLegacyCatalogExcess, type RetentionCandidate } from "../../../infrastructure/filesystem/catalog/retention/catalog-retention.js";
+import { cleanBatchExcess } from "../../../infrastructure/filesystem/retention/run-retention.js";
 import { listProviders, getProvider } from "../../../scraping/registry.js";
 
 export const cleanStorage = async (argv: readonly string[]): Promise<void> => {

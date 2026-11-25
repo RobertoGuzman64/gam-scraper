@@ -95,7 +95,7 @@ test("ayuda española y validación de proveedor funcionan sin compilar", async 
 test("el despachador utiliza comandos únicos y traduce las opciones antes de ejecutar", async () => {
   const temp = mkdtempSync(join(tmpdir(), "equipzilla-tooling-"));
   try {
-    mkdirSync(join(temp, "scripts"));
+    mkdirSync(join(temp, "scripts", "build"), { recursive: true });
     mkdirSync(join(temp, "dist/cli"), { recursive: true });
     writeFileSync(join(temp, "package.json"), JSON.stringify({
       name: "equipzilla-tooling-test", type: "module", scripts: {
@@ -105,12 +105,12 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     }));
     copyFileSync(script, join(temp, "scripts/tooling.mjs"));
     copyFileSync(join(root, "scripts/terminal.mjs"), join(temp, "scripts/terminal.mjs"));
-    copyFileSync(join(root, "scripts/build-cache.mjs"), join(temp, "scripts/build-cache.mjs"));
-    writeFileSync(join(temp, "scripts/run-build.mjs"), "process.exitCode = 0;\n");
+    copyFileSync(join(root, "scripts/build/build-cache.mjs"), join(temp, "scripts/build/build-cache.mjs"));
+    writeFileSync(join(temp, "scripts/build/run-build.mjs"), "process.exitCode = 0;\n");
     mkdirSync(join(temp, "scripts/maintenance"), { recursive: true });
     writeFileSync(join(temp, "scripts/maintenance/consolidate-local-artifacts.mjs"), 'process.stdout.write("RETENCIÓN COMPLETA\\n");\n');
     const echo = 'console.log(JSON.stringify(process.argv.slice(2)));\n';
-    for (const filename of ["cli/commands/catalog/prepare.js", "cli/index.js", "cli/commands/maintenance/storage-clean.js", "cli/commands/maintenance/catalogs-migrate.js", "cli/commands/campaign/campaign-extract.js", "cli/commands/campaign/campaign-status.js", "cli/commands/campaign/campaign-review.js", "cli/commands/campaign/campaign-reference.js", "cli/commands/campaign/campaign-finalize.js", "cli/commands/catalog/catalog-content-gaps.js", "cli/commands/catalog/deliver-provider.js"]) {
+    for (const filename of ["cli/commands/catalog/prepare.js", "cli/index.js", "cli/commands/maintenance/storage-clean.js", "cli/commands/maintenance/catalogs-migrate.js", "cli/commands/campaign/campaign-extract.js", "cli/commands/campaign/campaign-status.js", "cli/commands/campaign/campaign-review.js", "cli/commands/campaign/campaign-reference.js", "cli/commands/campaign/campaign-finalize.js", "cli/commands/catalog/audits/catalog-content-gaps.js", "cli/commands/catalog/individual/deliver-provider.js"]) {
       const target = join(temp, "dist", filename);
       mkdirSync(dirname(target), { recursive: true });
       writeFileSync(target, echo);

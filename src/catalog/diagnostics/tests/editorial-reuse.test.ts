@@ -7,8 +7,8 @@ import {
   controlledGomarizPlatform,
   controlledMercaelevaForklift
 } from "../../../preparation/editorial/core/editorial-contract-records.js";
-import { analyzeEditorialReuse } from "../editorial-reuse.js";
-import type { GapInput } from "../content-gaps-types.js";
+import { analyzeEditorialReuse } from "../editorial/editorial-reuse.js";
+import type { GapInput } from "../coverage/content-gaps-types.js";
 
 const entry = (source: ProductRecord): GapInput => ({ source, prepared: prepareSourceProduct(source) });
 const without = (input: GapInput, field: "description" | "description_general"): GapInput => ({

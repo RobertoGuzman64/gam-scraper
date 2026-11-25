@@ -13,7 +13,7 @@ const original = (provider: string): string =>
 export const gam = original("gam");
 export const gomariz = original("gomariz");
 export const mercaeleva = original("mercaeleva");
-const cli = join(root, "dist", "cli", "commands", "catalog", "catalog-content-gaps.js");
+const cli = join(root, "dist", "cli", "commands", "catalog", "audits", "catalog-content-gaps.js");
 
 export const execute = async (args: readonly string[]): Promise<string> =>
   (await run(process.execPath, [cli, ...args], { cwd: root, maxBuffer: 16 * 1024 * 1024 })).stdout;
@@ -73,7 +73,7 @@ export const readCommercialBaselineRoot = async (): Promise<string> => {
 };
 export const executeBaseline = async (args: readonly string[]): Promise<string> => {
   baselineRoot ??= await createBaselineRoot();
-  const fixtureCli = join(baselineRoot, "dist", "cli", "commands", "catalog", "catalog-content-gaps.js");
+  const fixtureCli = join(baselineRoot, "dist", "cli", "commands", "catalog", "audits", "catalog-content-gaps.js");
   return (await run(process.execPath, [fixtureCli, ...args], { cwd: baselineRoot, maxBuffer: 16 * 1024 * 1024 })).stdout;
 };
 export const cleanupBaseline = async (): Promise<void> => {

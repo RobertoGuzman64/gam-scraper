@@ -6,10 +6,10 @@ import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js
 import type { DocumentedTechnicalSource, ProductTechnicalProvenance, TechnicalSpecEvidence } from "../../contracts/technical-provenance.js";
 import type { TechnicalRecoverySourceField } from "./technical-recovery-observation.js";
 import { resolveEditorialSource } from "../editorial/core/editorial-source.js";
-import { reviewedModelDocumentVerification } from "../technical/reviewed-model-claims.js";
-import { reviewedUnitDescriptionEvidence } from "../technical/reviewed-unit-description-claims.js";
-import { reviewedUnitListingVerification } from "../technical/reviewed-unit-listing-claims.js";
-import { matchesDocumentedTechnicalIdentity } from "../technical/reviewed-catalog-model-identity.js";
+import { reviewedModelDocumentVerification } from "../technical/evidence/reviewed-model-claims.js";
+import { reviewedUnitDescriptionEvidence } from "../technical/evidence/reviewed-unit-description-claims.js";
+import { reviewedUnitListingVerification } from "../technical/evidence/reviewed-unit-listing-claims.js";
+import { matchesDocumentedTechnicalIdentity } from "../technical/evidence/reviewed-catalog-model-identity.js";
 import { sourceTechnicalEvidence, verifiedReconciledSourceTechnicalRule } from "./technical-source-measures-evidence.js";
 export { isProductTechnicalProvenance } from "../../contracts/technical-provenance.js";
 

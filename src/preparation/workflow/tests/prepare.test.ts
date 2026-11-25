@@ -11,10 +11,10 @@ import { writeOutputs } from "../../../scraping/output/publish.js";
 import { assertPreparationInputsCurrent, prepareSavedCatalog } from "../prepare.js";
 import { runPrepare } from "../../../cli/commands/catalog/prepare.js";
 import { compareOfflinePreparations } from "../../documents/offline-diagnostics.js";
-import { buildSourceTriage } from "../../../catalog/diagnostics/source-triage.js";
-import { measurePreparationWork } from "../../../catalog/diagnostics/preparation-work.js";
+import { buildSourceTriage } from "../../../catalog/diagnostics/review/source-triage.js";
+import { measurePreparationWork } from "../../../catalog/diagnostics/work/preparation-work.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import { loadPreparationInputs } from "../../../infrastructure/filesystem/preparation/preparation-inputs.js";
 
 const category: CategoryConfig = { key: "maquinas", name: "Maquinaria de ocasión", url: "https://example.test/maquinas" };

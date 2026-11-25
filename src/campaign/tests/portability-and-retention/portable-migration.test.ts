@@ -4,8 +4,8 @@ import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/pr
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test, { after } from "node:test";
-import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
-import { readPortableCampaign } from "../../../infrastructure/filesystem/catalog/portable-campaign.js";
+import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/originals/portable-original.js";
+import { readPortableCampaign } from "../../../infrastructure/filesystem/catalog/campaigns/portable-campaign.js";
 import { inspectPortableInventory } from "../../portable-inventory.js";
 import { finalizeActiveCampaign } from "../../finalization.js";
 import { deliverActiveCampaign } from "../../delivery/execute.js";

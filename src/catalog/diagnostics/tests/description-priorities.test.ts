@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
-import type { DescriptionCoverageInput } from "../description-coverage.js";
-import { analyzeDescriptionPriorities } from "../description-priorities.js";
-import { analyzeEditorialQuality, analyzePublishedEditorialQuality } from "../editorial-quality.js";
+import type { DescriptionCoverageInput } from "../coverage/description-coverage.js";
+import { analyzeDescriptionPriorities } from "../coverage/description-priorities.js";
+import { analyzeEditorialQuality, analyzePublishedEditorialQuality } from "../editorial/editorial-quality.js";
 
 const words = (quantity: number, prefix: string): string =>
   Array.from({ length: quantity }, (_, index) => `${prefix}${index}`).join(" ");

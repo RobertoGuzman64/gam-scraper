@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { analyzeTechnicalDensity } from "../technical-density.js";
-import { analyzeSpecificationCoverage } from "../specification-coverage.js";
-import { analyzeSpecificationOpportunities } from "../specification-opportunities.js";
-import type { DescriptionCoverageInput } from "../description-coverage.js";
+import { analyzeTechnicalDensity } from "../technical/technical-density.js";
+import { analyzeSpecificationCoverage } from "../coverage/specification-coverage.js";
+import { analyzeSpecificationOpportunities } from "../coverage/specification-opportunities.js";
+import type { DescriptionCoverageInput } from "../coverage/description-coverage.js";
 import type { ProductRecord, SpecValue } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 

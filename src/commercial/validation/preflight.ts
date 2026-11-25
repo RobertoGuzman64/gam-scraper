@@ -6,7 +6,7 @@ import { parseCsv } from "../../shared/csv-parse.js";
 import { parsePreparation } from "../../preparation/documents/preparation-document.js";
 import { loadImportCatalog } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { validateCreateManyCandidate } from "../legacy-export/import-validation.js";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 
 export type PreflightOptions = {
   readonly providerId: string;

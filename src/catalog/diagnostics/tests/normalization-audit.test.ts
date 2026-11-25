@@ -4,10 +4,10 @@ import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 import { createPreparedSourceFixture } from "../../../testing/builders/prepared-source-fixture.js";
 import { originalRecordFingerprint } from "../../identity-fingerprint.js";
 import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
-import { attachNormalizationPublication, attachNormalizationPublications, inspectNormalizationProduct, inspectNormalizationStage } from "../normalization-audit.js";
-import { discoverNormalizationPatterns } from "../normalization-patterns.js";
-import { contrastNormalizationProduct } from "../normalization-contrast.js";
-import { analyzeNormalizationImpact } from "../normalization-impact.js";
+import { attachNormalizationPublication, attachNormalizationPublications, inspectNormalizationProduct, inspectNormalizationStage } from "../normalization/normalization-audit.js";
+import { discoverNormalizationPatterns } from "../normalization/normalization-patterns.js";
+import { contrastNormalizationProduct } from "../normalization/normalization-contrast.js";
+import { analyzeNormalizationImpact } from "../normalization/normalization-impact.js";
 
 const prepare = createPreparedSourceFixture();
 const record = (specs: SpecsMap): ProductRecord => ({

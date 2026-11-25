@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { normalizeSpecKey } from "../../../catalog/normalization/normalize-specs.js";
-import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 import { classifyPublishedTechnicalAdditions } from "../../../preparation/provenance/technical-spec-classification.js";
 import { readPanelSnapshot } from "../../evidence/read-panel-snapshot.js";

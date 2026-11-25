@@ -5,7 +5,7 @@ import { lstat, mkdir, mkdtemp, readFile, readdir, rm, utimes, writeFile } from 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { catalogArchiveExcess, cleanCatalogExcess, staleArchiveExcess } from "../catalog-retention.js";
+import { catalogArchiveExcess, cleanCatalogExcess, staleArchiveExcess } from "../retention/catalog-retention.js";
 
 const prefix = "scrape-gam";
 const archiveName = (day: number): string =>

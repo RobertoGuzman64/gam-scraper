@@ -6,7 +6,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { readZipArchive } from "../../../infrastructure/archive/zip.js";
-import { deliverGrouped } from "../grouped-delivery.js";
+import { deliverGrouped } from "../commercial/grouped-delivery.js";
 import { parseGroupedDelivery } from "../../commands/campaign/campaign-deliver.js";
 
 const hash = (content: string): string => createHash("sha256").update(content).digest("hex");

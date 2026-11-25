@@ -4,8 +4,8 @@ import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import type { ReferenceComparison } from "../../catalog/reference/compare.js";
 import type { ReferenceManifest } from "../../catalog/reference/manifest.js";
 
-import { digest, directoryExists, paths, referenceFiles, readReferenceDirectory, inspectCampaignReference, readCampaignReference, acquireLock, recoverTransaction, promoteReference } from "../../infrastructure/filesystem/reference/store.js";
-import type { ReferenceCatalogSource } from "../../infrastructure/filesystem/reference/store.js";
+import { digest, directoryExists, paths, referenceFiles, readReferenceDirectory, inspectCampaignReference, readCampaignReference, acquireLock, recoverTransaction, promoteReference } from "../../infrastructure/filesystem/campaign/reference-store.js";
+import type { ReferenceCatalogSource } from "../../infrastructure/filesystem/campaign/reference-store.js";
 
 const independentDirectory = (rootDirectory: string, directory: string): string => {
   if (!directory.trim()) throw new Error("Se necesita una carpeta de traslado explícita");

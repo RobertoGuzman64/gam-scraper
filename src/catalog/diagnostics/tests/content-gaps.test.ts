@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { analyzeCatalogContentGaps } from "../../../commercial/legacy-export/content-gaps-commercial.js";
-import { prioritizeCatalogGaps } from "../content-gaps-source.js";
-import type { GapInput } from "../content-gaps-types.js";
+import { prioritizeCatalogGaps } from "../coverage/content-gaps-source.js";
+import type { GapInput } from "../coverage/content-gaps-types.js";
 import type { ImportCandidate, ImportCatalog } from "../../../commercial/legacy-export/contracts.js";
 import type { PreparedProduct } from "../../../preparation/contracts.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";

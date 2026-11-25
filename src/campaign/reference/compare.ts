@@ -3,13 +3,13 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { resolve } from "node:path";
 import { compareCampaignReferences } from "../../catalog/reference/compare.js";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { inspectCampaignReference } from "../../infrastructure/filesystem/reference/store.js";
+import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
+import { inspectCampaignReference } from "../../infrastructure/filesystem/campaign/reference-store.js";
 import { discoverCampaign, listCampaignRuns } from "../discovery/search.js";
 import { verifyDeliveredCampaign } from "../delivery/verification.js";
 import type { CanonicalCatalog } from "../../catalog/canonical-catalog.js";
 import type { ReferenceComparison } from "../../catalog/reference/compare.js";
-import type { ReferenceCatalogSource } from "../../infrastructure/filesystem/reference/store.js";
+import type { ReferenceCatalogSource } from "../../infrastructure/filesystem/campaign/reference-store.js";
 
 export type ActiveCampaignReferenceInput = {
   readonly runId: string;

@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readContentGapOptions } from "../catalog-content-gaps-options.js";
-import { formatTitleQualityReport } from "../title-quality-report.js";
-import { analyzeTitleQuality } from "../../../../catalog/diagnostics/title-quality.js";
-import type { DescriptionCoverageInput } from "../../../../catalog/diagnostics/description-coverage.js";
+import { readContentGapOptions } from "../audits/catalog-content-gaps-options.js";
+import { formatTitleQualityReport } from "../audits/title-quality-report.js";
+import { analyzeTitleQuality } from "../../../../catalog/diagnostics/editorial/title-quality.js";
+import type { DescriptionCoverageInput } from "../../../../catalog/diagnostics/coverage/description-coverage.js";
 
 const single = (): DescriptionCoverageInput => {
   const product = {

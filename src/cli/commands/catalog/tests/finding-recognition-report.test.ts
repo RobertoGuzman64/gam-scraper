@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
-import { classifyCurrentAuditFindings } from "../../../../catalog/diagnostics/current-audit-findings.js";
-import { fingerprintAuditedFinding } from "../../../../catalog/diagnostics/finding-recognitions.js";
-import type { AuditedFinding, FindingRecognition, FindingRecognitionRegistry } from "../../../../catalog/diagnostics/finding-recognitions.js";
-import { printClassifiedAccreditationFindings, printStaleFindingRecognitions } from "../../../reporting/finding-recognitions.js";
+import { classifyCurrentAuditFindings } from "../../../../catalog/diagnostics/findings/current-audit-findings.js";
+import { fingerprintAuditedFinding } from "../../../../catalog/diagnostics/findings/finding-recognitions.js";
+import type { AuditedFinding, FindingRecognition, FindingRecognitionRegistry } from "../../../../catalog/diagnostics/findings/finding-recognitions.js";
+import { printClassifiedAccreditationFindings, printStaleFindingRecognitions } from "../../../reporting/audits/finding-recognitions.js";
 
 const finding: AuditedFinding = {
   providerId: "gam", reference: "TEST", sourceUrl: "https://supplier.test/machine",

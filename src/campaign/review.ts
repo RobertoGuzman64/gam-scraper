@@ -1,6 +1,6 @@
 import { basename, dirname, join } from "node:path";
 import { prepareSavedCatalog } from "../preparation/workflow/prepare.js";
-import type { PreparationWorkSummary } from "../catalog/diagnostics/preparation-work.js";
+import type { PreparationWorkSummary } from "../catalog/diagnostics/work/preparation-work.js";
 import { validateCanonicalSource, validateOfflinePreparation } from "../preparation/workflow/offline.js";
 import { discoverCampaign, listCampaignRuns } from "./discovery/search.js";
 import type { CampaignDiscovery, ProviderDiscovery } from "./discovery/search.js";

@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { prepareSavedCatalog } from "../../../../preparation/workflow/prepare.js";
 import { readCampaignAccreditationSources } from "../../../../campaign/accreditation-sources.js";
-import { readCanonicalCatalog } from "../canonical-catalog.js";
+import { readCanonicalCatalog } from "../originals/canonical-catalog.js";
 import { readOfflinePreparation } from "../../preparation/offline-preparation.js";
 import { CAMPAIGN_PROVIDERS } from "../../../../contracts/campaign-providers.js";
 import { copyCampaignTestCatalog } from "../../../../campaign/tests/campaign-catalog-fixture.js";

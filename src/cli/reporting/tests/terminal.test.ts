@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { mock } from "node:test";
 import test from "node:test";
-import { BatchConsole } from "../batch-progress.js";
+import { BatchConsole } from "../progress/batch-progress.js";
 import type { ProviderRun } from "../../../contracts/batch-report.js";
 import { formatHeader, formatProgressBar, formatReportLine, formatStatus, supportsTerminalColor, supportsAnimation, printCommandHeader, printCommandProvider, printCommandResult, printCommandSection } from "../terminal.js";
 

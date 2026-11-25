@@ -2,7 +2,7 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import type { OfflinePreparation } from "../../../preparation/documents/offline-document.js";
 import type { OfflineDiagnostics, PreparationComparison } from "../../../preparation/documents/offline-diagnostics.js";
-import type { SourceTriageGroup } from "../../../catalog/diagnostics/source-triage.js";
+import type { SourceTriageGroup } from "../../../catalog/diagnostics/review/source-triage.js";
 import { offlinePreparationManifest, offlinePreparationManifestPath } from "./offline-preparation.js";
 import { preparedWorkspaceForOutput, withPreparedStorageWriteLock } from "./prepared-storage-lock.js";
 

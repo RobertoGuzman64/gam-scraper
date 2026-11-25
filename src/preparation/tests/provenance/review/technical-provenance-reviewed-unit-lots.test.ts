@@ -4,10 +4,10 @@ import { originalRecordFingerprint } from "../../../../catalog/identity-fingerpr
 import {
   isProductTechnicalProvenance, matchesTechnicalUnitListingVerification, technicalUnitListingClaimSha256
 } from "../../../../contracts/technical-provenance.js";
-import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import type { ProductTechnicalProvenance, TechnicalSpecEvidence } from "../../../../contracts/technical-provenance.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
-import { reviewedUnitListingVerification } from "../../../technical/reviewed-unit-listing-claims.js";
+import { reviewedUnitListingVerification } from "../../../technical/evidence/reviewed-unit-listing-claims.js";
 import { classifyPublishedTechnicalSpec } from "../../../provenance/technical-spec-classification.js";
 
 const reviewedLots = [

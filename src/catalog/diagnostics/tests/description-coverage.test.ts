@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { analyzeDescriptionCoverage } from "../description-coverage.js";
-import type { DescriptionCoverageInput } from "../description-coverage.js";
+import { analyzeDescriptionCoverage } from "../coverage/description-coverage.js";
+import type { DescriptionCoverageInput } from "../coverage/description-coverage.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 

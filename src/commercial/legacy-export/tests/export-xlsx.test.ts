@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { planProductImport, readReferenceInventory } from "../export-plan.js";
-import { createProductsXlsx } from "../../../infrastructure/spreadsheet/xlsx.js";
+import { createProductsXlsx } from "../../../infrastructure/xlsx.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { record, documentFor, readZipXml } from "./export-fixtures.js";
 

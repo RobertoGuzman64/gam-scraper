@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
-import { acquireBatchLock } from "../../infrastructure/locking/batch-lock.js";
+import { acquireBatchLock } from "../../infrastructure/filesystem/batch-lock.js";
 import { base } from "./journal.js";
 
 export const withCampaignAdmissionLock = async <T>(rootDirectory: string, action: () => Promise<T>): Promise<T> => {

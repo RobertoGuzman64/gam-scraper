@@ -146,8 +146,8 @@ export const inspectPublicationOriginals = async (root, candidate = null) => {
   const items = [];
   for (const { providerId, manifestFile, expected: source } of sources) {
     if (providerId === "manain") {
-      const { readVerifiedManainRecordSource } = await import("../../dist/infrastructure/filesystem/catalog/manain-record-source.js");
-      const { accreditedPublicationOriginalSources } = await import("../../dist/infrastructure/filesystem/catalog/accredited-publication-original.js");
+      const { readVerifiedManainRecordSource } = await import("../../dist/infrastructure/filesystem/catalog/originals/manain-record-source.js");
+      const { accreditedPublicationOriginalSources } = await import("../../dist/infrastructure/filesystem/catalog/publications/accredited-publication-original.js");
       const path = join(root, "catalogs", "providers", providerId, "records", "manain-record.json");
       let current;
       try {

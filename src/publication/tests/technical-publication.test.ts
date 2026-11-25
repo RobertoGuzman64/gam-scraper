@@ -5,14 +5,14 @@ import { lstat, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { consolidatePortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
-import { readActiveTechnicalPublication, activateTechnicalPublication, readTechnicalVersion, listTechnicalVersions } from "../../infrastructure/filesystem/catalog/technical-publication.js";
-import { publishTechnicalSnapshot, compareWithTechnicalVersion } from "../technical-publication.js";
-import { parseTechnicalSnapshot } from "../technical-snapshot.js";
+import { consolidatePortableOriginal } from "../../infrastructure/filesystem/catalog/originals/portable-original.js";
+import { readActiveTechnicalPublication, activateTechnicalPublication, readTechnicalVersion, listTechnicalVersions } from "../../infrastructure/filesystem/catalog/publications/technical-publication.js";
+import { publishTechnicalSnapshot, compareWithTechnicalVersion } from "../technical/technical-publication.js";
+import { parseTechnicalSnapshot } from "../technical/technical-snapshot.js";
 import { prepareImportBatch } from "../../preparation/prepare.js";
 import { loadPreparationInputs } from "../../infrastructure/filesystem/preparation/preparation-inputs.js";
 import { offlinePreparationManifest } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
-import { readCanonicalCatalog, writeCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readCanonicalCatalog, writeCanonicalCatalog } from "../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import { buildProductIdentity } from "../../catalog/identity.js";
 import type { OfflinePreparation } from "../../preparation/documents/offline-document.js";
 import { buildManainRecord } from "../../preparation/workflow/manain-record.js";
@@ -20,8 +20,8 @@ import { discardedManainProductUrls } from "../../preparation/manain/discarded-u
 import { baseProductHeaders } from "../../scraping/output/csv-serializer.js";
 import { toCsv } from "../../shared/csv.js";
 import { inspectPortableInventory } from "../../campaign/portable-inventory.js";
-import { readContentGapOptions } from "../../cli/commands/catalog/catalog-content-gaps-options.js";
-import { runTechnicalPublication } from "../../cli/commands/catalog/technical-publication.js";
+import { readContentGapOptions } from "../../cli/commands/catalog/audits/catalog-content-gaps-options.js";
+import { runTechnicalPublication } from "../../cli/commands/catalog/publications/technical-publication.js";
 import { copyCampaignTestCatalog } from "../../campaign/tests/campaign-catalog-fixture.js";
 
 const hash = (text: string): string => createHash("sha256").update(text).digest("hex");

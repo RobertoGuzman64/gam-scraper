@@ -6,7 +6,7 @@ import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-
 import type { CommercialEnvironment } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
 import { checkHistoricalReferenceIntegrity } from "../../infrastructure/filesystem/legacy-export/reference-integrity.js";
 import type { HistoricalReferenceMismatch } from "../../infrastructure/filesystem/legacy-export/reference-integrity.js";
-import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
 import { assertCurrentCommercialInventory, readCommercialPublicationInput } from "./commercial-inputs.js";
 import { assembleCommercialExportFiles, prepareCommercialExportProvider, type CommercialExportFile } from "./commercial-export.js";
 import { loadFindingRecognitionRegistry } from "../../infrastructure/filesystem/catalog/finding-recognition-store.js";

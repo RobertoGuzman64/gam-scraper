@@ -7,7 +7,7 @@ import { after } from "node:test";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { IndividualCatalogProvider } from "../../preparation/workflow/individual-context.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../contracts/scraping.js";
-import { consolidatePortableOriginal } from "../../infrastructure/filesystem/catalog/portable-original.js";
+import { consolidatePortableOriginal } from "../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { prepareIndividualCatalogs } from "../../preparation/workflow/individual-prepare.js";
 import { writeOutputs } from "../../scraping/output/publish.js";
 

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import { classifyQualityIssue } from "../documents/offline-diagnostics.js";
-import { sourceSignalForIssue } from "../../catalog/diagnostics/source-triage.js";
+import { sourceSignalForIssue } from "../../catalog/diagnostics/review/source-triage.js";
 
 const base: ProductRecord = {
   providerId: "gam", categoryKey: "carretillas", categoryName: "Carretillas",

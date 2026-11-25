@@ -6,8 +6,8 @@ import { discoverCampaign } from "../../../campaign/discovery/search.js";
 import { discoverCampaignCatalogHistory } from "../../../campaign/discovery/history.js";
 import { assessInterventionMaintenance } from "../../../catalog/interventions/maintenance.js";
 import { formatInterventionSimulation } from "../interventions/intervene.js";
-import { formatInterventionComparison } from "../../reporting/intervention-comparison.js";
-import { formatInterventionWork } from "../../reporting/intervention-work.js";
+import { formatInterventionComparison } from "../../reporting/campaign/intervention-comparison.js";
+import { formatInterventionWork } from "../../reporting/campaign/intervention-work.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { formatHeader, printStatus, printReportLine } from "../../reporting/terminal.js";
 

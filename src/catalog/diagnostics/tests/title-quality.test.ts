@@ -3,8 +3,8 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { PreparedProduct } from "../../../preparation/contracts.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
-import type { DescriptionCoverageInput } from "../description-coverage.js";
-import { analyzeTitleQuality } from "../title-quality.js";
+import type { DescriptionCoverageInput } from "../coverage/description-coverage.js";
+import { analyzeTitleQuality } from "../editorial/title-quality.js";
 
 const record = (reference: string, originalTitle: string | null, publishedTitle: string | null,
   preparedTitle: string | null, options: { readonly brand?: string | null; readonly model?: string | null;

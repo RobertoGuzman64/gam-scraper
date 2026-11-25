@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { AuditedFinding, FindingRecognition, FindingRecognitionRegistry } from "../../../catalog/diagnostics/finding-recognitions.js";
-import { validateFindingRecognitionRegistry } from "../../../catalog/diagnostics/finding-recognitions.js";
+import type { AuditedFinding, FindingRecognition, FindingRecognitionRegistry } from "../../../catalog/diagnostics/findings/finding-recognitions.js";
+import { validateFindingRecognitionRegistry } from "../../../catalog/diagnostics/findings/finding-recognitions.js";
 
 const record = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);

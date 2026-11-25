@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { reviewActiveCampaign } from "../../../campaign/review.js";
 import { printCommandError } from "../../reporting/errors.js";
-import { printCampaignReview } from "../../reporting/campaign-review.js";
+import { printCampaignReview } from "../../reporting/campaign/campaign-review.js";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 

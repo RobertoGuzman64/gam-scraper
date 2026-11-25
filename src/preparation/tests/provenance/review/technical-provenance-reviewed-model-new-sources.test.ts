@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { isProductTechnicalProvenance, matchesTechnicalDocumentVerification } from "../../../../contracts/technical-provenance.js";
-import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { classifyPublishedTechnicalAdditions } from "../../../provenance/technical-spec-classification.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { reviewedModelDocumentClaims, reviewedModelDocumentVerification } from
-  "../../../technical/reviewed-model-claims.js";
+  "../../../technical/evidence/reviewed-model-claims.js";
 
 const references = [
   { providerId: "mercaeleva", reference: "M401-4335", count: 2 },

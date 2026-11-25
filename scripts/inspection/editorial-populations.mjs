@@ -1,8 +1,8 @@
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { readEditorialAuditSource } from '../operations/editorial-audit-population.mjs';
-import { discoverAccreditedPublications, readAccreditedPublication } from '../../dist/infrastructure/filesystem/catalog/accredited-publication.js';
-import { readActiveTechnicalPublication } from '../../dist/infrastructure/filesystem/catalog/technical-publication.js';
+import { discoverAccreditedPublications, readAccreditedPublication } from '../../dist/infrastructure/filesystem/catalog/publications/accredited-publication.js';
+import { readActiveTechnicalPublication } from '../../dist/infrastructure/filesystem/catalog/publications/technical-publication.js';
 import { CAMPAIGN_PROVIDERS } from '../../dist/contracts/campaign-providers.js';
 import { loadPreparationInputs } from '../../dist/infrastructure/filesystem/preparation/preparation-inputs.js';
 

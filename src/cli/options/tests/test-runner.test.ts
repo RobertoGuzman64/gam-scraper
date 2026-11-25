@@ -11,7 +11,7 @@ const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../../.
 const spawnRunner = (root: string, args: readonly string[], overrides: NodeJS.ProcessEnv = {}) => {
   const env: NodeJS.ProcessEnv = { ...process.env, CI: "false", ...overrides };
   delete env.NODE_TEST_CONTEXT;
-  return spawnSync(process.execPath, [join(root, "scripts", "run-tests.mjs"), ...args],
+  return spawnSync(process.execPath, [join(root, "scripts", "testing", "run-tests.mjs"), ...args],
     { cwd: root, encoding: "utf8", env });
 };
 
@@ -19,17 +19,18 @@ const withRunner = (action: (root: string) => void): void => {
   const root = mkdtempSync(join(tmpdir(), "equipzilla-runner-"));
   try {
     mkdirSync(join(root, "scripts", "inspection", "tests"), { recursive: true });
+    mkdirSync(join(root, "scripts", "testing"));
     mkdirSync(join(root, "src"));
     mkdirSync(join(root, "dist"));
-    copyFileSync(join(projectRoot, "scripts", "run-tests.mjs"), join(root, "scripts", "run-tests.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "testing", "run-tests.mjs"), join(root, "scripts", "testing", "run-tests.mjs"));
     copyFileSync(join(projectRoot, "scripts", "terminal.mjs"), join(root, "scripts", "terminal.mjs"));
-    copyFileSync(join(projectRoot, "scripts", "test-performance.mjs"), join(root, "scripts", "test-performance.mjs"));
-    copyFileSync(join(projectRoot, "scripts", "test-runner-observability.mjs"), join(root, "scripts", "test-runner-observability.mjs"));
-    copyFileSync(join(projectRoot, "scripts", "test-runner-execution.mjs"), join(root, "scripts", "test-runner-execution.mjs"));
-    copyFileSync(join(projectRoot, "scripts", "test-runner-completion.mjs"), join(root, "scripts", "test-runner-completion.mjs"));
-    copyFileSync(join(projectRoot, "scripts", "test-runner-worker.mjs"), join(root, "scripts", "test-runner-worker.mjs"));
-    copyFileSync(join(projectRoot, "scripts", "test-runner-ui.mjs"), join(root, "scripts", "test-runner-ui.mjs"));
-    copyFileSync(join(projectRoot, "scripts", "test-result-cache.mjs"), join(root, "scripts", "test-result-cache.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "testing", "test-performance.mjs"), join(root, "scripts", "testing", "test-performance.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "testing", "test-runner-observability.mjs"), join(root, "scripts", "testing", "test-runner-observability.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "testing", "test-runner-execution.mjs"), join(root, "scripts", "testing", "test-runner-execution.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "testing", "test-runner-completion.mjs"), join(root, "scripts", "testing", "test-runner-completion.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "testing", "test-runner-worker.mjs"), join(root, "scripts", "testing", "test-runner-worker.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "testing", "test-runner-ui.mjs"), join(root, "scripts", "testing", "test-runner-ui.mjs"));
+    copyFileSync(join(projectRoot, "scripts", "testing", "test-result-cache.mjs"), join(root, "scripts", "testing", "test-result-cache.mjs"));
     writeFileSync(join(root, "package.json"), '{"type":"module"}');
     writeFileSync(join(root, "src", "prueba.test.ts"), "export {};\n");
     writeFileSync(join(root, "dist", "prueba.test.js"),
@@ -557,7 +558,7 @@ test("cambiar el ejecutor del runner invalida las suites cacheadas", () => {
     const warm = spawnRunner(root, []);
     assert.equal(warm.status, 0, `${warm.stdout}${warm.stderr}`);
     assertCacheReuse(warm.stdout, 2, 2);
-    const module = join(root, "scripts", "test-runner-execution.mjs");
+    const module = join(root, "scripts", "testing", "test-runner-execution.mjs");
     writeFileSync(module, `${readFileSync(module, "utf8")}\n`);
     const invalidated = spawnRunner(root, []);
     assert.equal(invalidated.status, 0, `${invalidated.stdout}${invalidated.stderr}`);
@@ -565,7 +566,7 @@ test("cambiar el ejecutor del runner invalida las suites cacheadas", () => {
     const warmedAgain = spawnRunner(root, []);
     assert.equal(warmedAgain.status, 0, `${warmedAgain.stdout}${warmedAgain.stderr}`);
     assertCacheReuse(warmedAgain.stdout, 2, 2);
-    const workerModule = join(root, "scripts", "test-runner-worker.mjs");
+    const workerModule = join(root, "scripts", "testing", "test-runner-worker.mjs");
     writeFileSync(workerModule, `${readFileSync(workerModule, "utf8")}\n`);
     const workerChanged = spawnRunner(root, []);
     assert.equal(workerChanged.status, 0, `${workerChanged.stdout}${workerChanged.stderr}`);

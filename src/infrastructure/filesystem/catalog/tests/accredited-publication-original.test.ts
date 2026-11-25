@@ -3,8 +3,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
 import { createPublishedIndividualFinishWorkspace } from "../../../../testing/builders/individual-finish-fixture.js";
-import { accreditedPublicationOriginalSources } from "../accredited-publication-original.js";
-import { readAccreditedPublication, resolveAccreditedPublication } from "../accredited-publication.js";
+import { accreditedPublicationOriginalSources } from "../publications/accredited-publication-original.js";
+import { readAccreditedPublication, resolveAccreditedPublication } from "../publications/accredited-publication.js";
 
 const withPublished = createPublishedIndividualFinishWorkspace();
 

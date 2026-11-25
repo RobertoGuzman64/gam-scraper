@@ -1,4 +1,4 @@
-import { applyDocumentedTechnicalEvidence } from "../../../technical/documented-technical-evidence.js";
+import { applyDocumentedTechnicalEvidence } from "../../../technical/evidence/documented-technical-evidence.js";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import type { TechnicalRecoveryObservation } from "../../../provenance/technical-recovery-observation.js";
 import { validMercaelevaTechnicalSource } from "../../technical/technical.js";

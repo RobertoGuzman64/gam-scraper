@@ -2,7 +2,7 @@ import test, { after } from "node:test";
 import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { readPortableCampaign } from "../../../infrastructure/filesystem/catalog/portable-campaign.js";
+import { readPortableCampaign } from "../../../infrastructure/filesystem/catalog/campaigns/portable-campaign.js";
 import { verifyDeliveredCampaign } from "../../delivery/verification.js";
 import { prepareCampaignAdmission } from "../../retention/admission.js";
 import { abandonFailedCampaign } from "../../retention/recovery.js";

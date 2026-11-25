@@ -3,12 +3,12 @@ import { createHash } from "node:crypto";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import test from "node:test";
-import { resolveAccreditedPublication, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
-import { publicationApprovalSha } from "../../infrastructure/filesystem/catalog/publication-identity.js";
+import { resolveAccreditedPublication, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
+import { publicationApprovalSha } from "../../infrastructure/filesystem/catalog/publications/publication-identity.js";
 import { buildNormalizationAudit } from "../../infrastructure/filesystem/preparation/normalization-audit.js";
-import { formatNormalizationAudit } from "../../cli/reporting/normalization-audit.js";
+import { formatNormalizationAudit } from "../../cli/reporting/audits/normalization-audit.js";
 import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
-import { publishIndividualCatalogs } from "../individual-finish.js";
+import { publishIndividualCatalogs } from "../individual/individual-finish.js";
 import { createIndividualFinishWorkspace, finishProviders, publishIndividualTestWorkspace } from "../../testing/builders/individual-finish-fixture.js";
 
 const withWorkspace = createIndividualFinishWorkspace();

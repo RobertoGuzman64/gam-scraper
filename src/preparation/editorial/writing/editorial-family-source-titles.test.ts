@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { EditorialKnowledge, EditorialUnitKnowledge } from "../core/editorial-knowledge.js";
-import { editorialSourceDigest } from "../../../infrastructure/filesystem/editorial/knowledge.js";
+import { editorialSourceDigest } from "../../../infrastructure/filesystem/editorial-knowledge.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { resolveCorroboratedTitleBrand, resolveDocumentedFamilyTitle, resolveManufacturerFamilyTitle } from "./editorial-documented-title.js";
 import { editorialFamilyOf } from "../core/editorial-families.js";

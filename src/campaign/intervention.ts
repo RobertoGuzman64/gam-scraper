@@ -2,7 +2,7 @@ import { basename, join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { readFile, realpath, stat } from "node:fs/promises";
 import { readAppliedIntervention } from "../infrastructure/filesystem/interventions/intervention-derived.js";
-import { measureAppliedIntervention, type InterventionWorkSummary } from "../catalog/diagnostics/intervention-work.js";
+import { measureAppliedIntervention, type InterventionWorkSummary } from "../catalog/diagnostics/work/intervention-work.js";
 import { readInterventionSource } from "../infrastructure/filesystem/interventions/intervention-source.js";
 import { persistAppliedIntervention } from "../infrastructure/filesystem/interventions/intervention-application.js";
 import { validateOfflinePreparation } from "../preparation/workflow/offline.js";

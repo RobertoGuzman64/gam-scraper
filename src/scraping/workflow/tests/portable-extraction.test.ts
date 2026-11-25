@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import type { Summary } from "../../../contracts/scraping.js";
-import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginal } from "../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import type { ScraperProvider } from "../../provider.js";
 import { GOMARIZ_CATEGORIES, GOMARIZ_OPTIONS } from "../../providers/gomariz/config.js";
 import { runScrape } from "../run.js";

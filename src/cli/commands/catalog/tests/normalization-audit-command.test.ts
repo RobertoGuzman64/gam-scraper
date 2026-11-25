@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { readdir, rm } from "node:fs/promises";
 import test from "node:test";
 import { CAMPAIGN_PROVIDERS } from "../../../../contracts/campaign-providers.js";
-import { parseNormalizationAuditOptions, runNormalizationAudit } from "../normalization-audit.js";
+import { parseNormalizationAuditOptions, runNormalizationAudit } from "../audits/normalization-audit.js";
 import { buildNormalizationAudit } from "../../../../infrastructure/filesystem/preparation/normalization-audit.js";
-import { formatNormalizationAudit } from "../../../reporting/normalization-audit.js";
+import { formatNormalizationAudit } from "../../../reporting/audits/normalization-audit.js";
 import { createTemporaryTestWorkspace } from "../../../../testing/builders/reusable-workspace-fixture.js";
 
 test("el comando distingue resumen, detalle y JSON completo", () => {

@@ -6,7 +6,7 @@ import { resolveReusableEditorial } from '../../dist/preparation/editorial/core/
 import { resolveSourceEditorialClaims } from '../../dist/preparation/editorial/claims/editorial-source-claims.js';
 import { resolveUnbrandedEditorial } from '../../dist/preparation/editorial/identity/editorial-unbranded-equipment.js';
 import { resolveKnowledgeEditorial } from '../../dist/preparation/editorial/core/knowledge-editorial.js';
-import { loadEditorialKnowledge } from '../../dist/infrastructure/filesystem/editorial/knowledge.js';
+import { loadEditorialKnowledge } from '../../dist/infrastructure/filesystem/editorial-knowledge.js';
 
 import { CAMPAIGN_PROVIDERS } from '../../dist/contracts/campaign-providers.js';
 

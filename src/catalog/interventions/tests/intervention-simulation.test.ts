@@ -8,7 +8,7 @@ import test from "node:test";
 import { parseCanonicalCatalog } from "../../canonical-catalog.js";
 import { buildProductIdentity } from "../../identity.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import { readInterventionSource } from "../../../infrastructure/filesystem/interventions/intervention-source.js";
 import type { ManualInterventionProposal } from "../contracts.js";
 import { simulateIntervention } from "../simulation.js";

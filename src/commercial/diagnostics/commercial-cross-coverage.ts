@@ -1,5 +1,5 @@
-import { analyzePublishedEditorialQuality } from "../../catalog/diagnostics/editorial-quality.js";
-import type { EditorialIssueCode } from "../../catalog/diagnostics/editorial-quality.js";
+import { analyzePublishedEditorialQuality } from "../../catalog/diagnostics/editorial/editorial-quality.js";
+import type { EditorialIssueCode } from "../../catalog/diagnostics/editorial/editorial-quality.js";
 import type { ImportCandidate } from "../legacy-export/contracts.js";
 import { commercialReference } from "./commercial-baseline.js";
 import { commercialReferenceKey } from "../legacy-export/commercial-reference.js";

@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { waitForDebuggingPort, withTimeout } from "../../../infrastructure/browser/devtools.js";
+import { waitForDebuggingPort, withTimeout } from "../../../infrastructure/network/devtools.js";
 import { manainCdpPort, selectManainTarget, setManagedManainCdpPort } from "./cdp.js";
 
 const catalogUrl = "https://manain.com/catalogo/venta/";

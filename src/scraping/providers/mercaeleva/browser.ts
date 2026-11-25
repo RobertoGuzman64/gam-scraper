@@ -4,12 +4,12 @@ import { existsSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { DevtoolsPipe, DevtoolsWebSocket, withTimeout, waitForDebuggingPort, openDebugSocket, assertChromeWebSocketSupport } from "../../../infrastructure/browser/devtools.js";
-import type { DevtoolsResponse } from "../../../infrastructure/browser/devtools.js";
+import { DevtoolsPipe, DevtoolsWebSocket, withTimeout, waitForDebuggingPort, openDebugSocket, assertChromeWebSocketSupport } from "../../../infrastructure/network/devtools.js";
+import type { DevtoolsResponse } from "../../../infrastructure/network/devtools.js";
 import { extractMercaelevaLinks } from "./parsers.js";
 import { collectMercaelevaPages } from "./browser-pagination.js";
 
-export { waitForDebuggingPort } from "../../../infrastructure/browser/devtools.js";
+export { waitForDebuggingPort } from "../../../infrastructure/network/devtools.js";
 export { buildMercaelevaCatalogScript, buildMercaelevaReadinessScript } from "./listing-script.js";
 
 const candidateBrowsers = (): readonly string[] => {

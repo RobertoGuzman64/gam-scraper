@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promis
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { compareActiveCampaignReference } from "../../reference/compare.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";

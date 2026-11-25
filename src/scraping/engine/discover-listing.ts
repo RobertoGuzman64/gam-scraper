@@ -1,6 +1,6 @@
 import pLimit from "p-limit";
 import type { CategoryConfig, ScrapeOptions } from "../../contracts/scraping.js";
-import { fetchHtml, sleep } from "../../infrastructure/http/fetch-html.js";
+import { fetchHtml, sleep } from "../../infrastructure/network/fetch-html.js";
 import type { ScraperProvider } from "../provider.js";
 import type { ScrapeProgressCallbacks, ScrapeReport, ScrapeFailureRecorder } from "./scrape-types.js";
 

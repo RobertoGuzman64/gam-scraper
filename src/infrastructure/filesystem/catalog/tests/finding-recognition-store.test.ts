@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { fingerprintAuditedFinding } from "../../../../catalog/diagnostics/finding-recognitions.js";
+import { fingerprintAuditedFinding } from "../../../../catalog/diagnostics/findings/finding-recognitions.js";
 import { loadFindingRecognitionRegistry, parseFindingRecognitionRegistry } from "../finding-recognition-store.js";
 
 const empty = { version: 1, recognitions: [] };

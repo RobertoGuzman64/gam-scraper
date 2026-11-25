@@ -3,7 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test, { after } from "node:test";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import { buildProductIdentity } from "../../../catalog/identity.js";
 import { persistAppliedIntervention } from "../../../infrastructure/filesystem/interventions/intervention-application.js";
 import { interveneActiveCampaign } from "../../intervention.js";

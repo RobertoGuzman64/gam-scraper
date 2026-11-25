@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { classifyPublishedTechnicalSpec } from "../../../provenance/technical-spec-classification.js";
 import { matchesTechnicalDocumentVerification, technicalDocumentClaimSha256 } from "../../../../contracts/technical-provenance.js";
-import { reviewedModelDocumentClaims } from "../../../technical/reviewed-model-claims.js";
+import { reviewedModelDocumentClaims } from "../../../technical/evidence/reviewed-model-claims.js";
 import type { TechnicalDocumentVerification, TechnicalSpecEvidence } from "../../../../contracts/technical-provenance.js";
 
 const cases = [

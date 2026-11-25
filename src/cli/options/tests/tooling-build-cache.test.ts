@@ -7,13 +7,13 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
-const buildScript = join(root, "scripts/run-build.mjs");
+const buildScript = join(root, "scripts/build/run-build.mjs");
 const terminalScript = join(root, "scripts/terminal.mjs");
-const cacheScript = join(root, "scripts/build-cache.mjs");
+const cacheScript = join(root, "scripts/build/build-cache.mjs");
 const toolingScript = join(root, "scripts/tooling.mjs");
 
 const invoke = (directory: string, args: readonly string[] = []): void => {
-  const result = spawnSync(process.execPath, ["scripts/run-build.mjs", "--quiet", ...args], {
+  const result = spawnSync(process.execPath, ["scripts/build/run-build.mjs", "--quiet", ...args], {
     cwd: directory, encoding: "utf8", windowsHide: true
   });
   assert.equal(result.status, 0, result.stderr || result.stdout);
@@ -25,12 +25,12 @@ const compilationCount = (directory: string): number =>
 test("el tooling reutiliza un build íntegro e invalida la caché ante cambios", () => {
   const directory = mkdtempSync(join(tmpdir(), "equipzilla-build-cache-"));
   try {
-    mkdirSync(join(directory, "scripts"));
+    mkdirSync(join(directory, "scripts", "build"), { recursive: true });
     mkdirSync(join(directory, "src", "cli"), { recursive: true });
     mkdirSync(join(directory, "node_modules", "typescript", "bin"), { recursive: true });
-    copyFileSync(buildScript, join(directory, "scripts/run-build.mjs"));
+    copyFileSync(buildScript, join(directory, "scripts/build/run-build.mjs"));
     copyFileSync(terminalScript, join(directory, "scripts/terminal.mjs"));
-    copyFileSync(cacheScript, join(directory, "scripts/build-cache.mjs"));
+    copyFileSync(cacheScript, join(directory, "scripts/build/build-cache.mjs"));
     copyFileSync(toolingScript, join(directory, "scripts/tooling.mjs"));
     writeFileSync(join(directory, "package.json"), '{"type":"module"}');
     writeFileSync(join(directory, "package-lock.json"), '{}');

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatCategoryProgress, formatRunSummary } from "../scrape-progress.js";
+import { formatCategoryProgress, formatRunSummary } from "../progress/scrape-progress.js";
 import type { Summary } from "../../../contracts/scraping.js";
 
 const summary: Summary = {

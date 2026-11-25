@@ -1,8 +1,8 @@
 import { CAMPAIGN_PROVIDERS, isReferenceProviderSet } from "../../contracts/campaign-providers.js";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { readPortableOriginalArtifacts } from "../../infrastructure/filesystem/catalog/portable-original.js";
+import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
+import { readPortableOriginalArtifacts } from "../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import type { BatchReport } from "../../contracts/batch-report.js";
 
 import type { ProviderDiscovery } from "./contracts.js";

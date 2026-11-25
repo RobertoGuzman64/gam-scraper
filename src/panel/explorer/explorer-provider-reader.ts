@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { readAccreditedPublication } from "../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
 import { readPanelOriginalProducts } from "../evidence/publication-evidence.js";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { CommercialDeliveryPlan, CommercialDeliveryProduct } from "../../commercial/export/commercial-export.js";

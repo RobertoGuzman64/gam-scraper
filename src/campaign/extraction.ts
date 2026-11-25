@@ -1,6 +1,6 @@
 import { join, resolve } from "node:path";
-import { consolidatePortableOriginal } from "../infrastructure/filesystem/catalog/portable-original.js";
-import { readCanonicalCatalog } from "../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { consolidatePortableOriginal } from "../infrastructure/filesystem/catalog/originals/portable-original.js";
+import { readCanonicalCatalog } from "../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import { initializeWorkspace } from "../infrastructure/filesystem/workspace.js";
 import { createBatchRunId, runBatch } from "../scraping/batch/run.js";
 import type { BatchObserver, BatchResult } from "../scraping/batch/run.js";

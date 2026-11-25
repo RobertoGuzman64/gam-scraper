@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { mock, test } from "node:test";
-import { OperationProgress } from "../operation-progress.js";
+import { OperationProgress } from "../progress/operation-progress.js";
 
 const capture = (action: () => void): string => {
   const lines: string[] = [];

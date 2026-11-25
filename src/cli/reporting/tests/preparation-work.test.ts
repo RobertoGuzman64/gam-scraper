@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { PreparationWorkSummary } from "../../../catalog/diagnostics/preparation-work.js";
-import { formatPreparationWork } from "../preparation-work.js";
+import type { PreparationWorkSummary } from "../../../catalog/diagnostics/work/preparation-work.js";
+import { formatPreparationWork } from "../catalog/preparation-work.js";
 
 const empty: PreparationWorkSummary = {
   processedProducts: 3, transformedProducts: 0,

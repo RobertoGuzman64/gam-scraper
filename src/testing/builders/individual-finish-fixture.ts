@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { basename, join } from "node:path";
-import type { IndividualFinishResult } from "../../publication/individual-finish.js";
+import type { IndividualFinishResult } from "../../publication/individual/individual-finish.js";
 import type { IndividualCatalogProvider } from "../../preparation/workflow/individual-context.js";
 import { createIndividualWorkspaceFixture } from "./individual-workspace-fixture.js";
-import { preflightIndividualAccreditations } from "../../publication/individual-accreditation.js";
-import { startIndividualEditorial, decideIndividualEditorial, approveIndividualEditorial } from "../../publication/individual-editorial.js";
-import { publishIndividualCatalogs } from "../../publication/individual-finish.js";
+import { preflightIndividualAccreditations } from "../../publication/individual/individual-accreditation.js";
+import { startIndividualEditorial, decideIndividualEditorial, approveIndividualEditorial } from "../../publication/individual/individual-editorial.js";
+import { publishIndividualCatalogs } from "../../publication/individual/individual-finish.js";
 
 export const finishProviders = ["gam", "gomariz", "mercaeleva"] as const;
 const reason = "Contraste editorial realizado con evidencia de origen";

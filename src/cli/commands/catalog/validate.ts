@@ -1,9 +1,9 @@
 import { printReportLine } from "../../reporting/terminal.js";
 import { readFile } from "node:fs/promises";
 import { LiveStatus, formatDuration } from "../../reporting/live-status.js";
-import { formatPriceAvailability, formatReviewDiagnostics } from "../../reporting/review-diagnostics.js";
-import { formatDetailedValidation } from "../../reporting/detailed-validation.js";
-import { formatImportDiagnostics } from "../../reporting/import-diagnostics.js";
+import { formatPriceAvailability, formatReviewDiagnostics } from "../../reporting/catalog/review-diagnostics.js";
+import { formatDetailedValidation } from "../../reporting/catalog/detailed-validation.js";
+import { formatImportDiagnostics } from "../../reporting/catalog/import-diagnostics.js";
 import { parsePreparation } from "../../../preparation/documents/preparation-document.js";
 import { printCommandError } from "../../reporting/errors.js";
 import { join, resolve } from "node:path";
@@ -13,7 +13,7 @@ export { validateHelp } from "../../options/validate.js";
 import { validateCatalogPublication } from "../../../commercial/validation/preflight.js";
 import { validateCanonicalSource, validateOfflinePreparation } from "../../../preparation/workflow/offline.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import { compareCanonicalCoverage } from "../../../catalog/coverage/compare.js";
 
 export const runPreflight = async (args: readonly string[]): Promise<void> => {

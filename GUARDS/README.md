@@ -8,24 +8,24 @@ Ninguna IA puede crear, modificar, mover ni eliminar esta guía sin autorizació
 
 Esta guía describe los **controles actuales**, no un histórico de suites. La ejecución global comunicada por el propietario el 24-11-2026 (anterior al blindaje adicional de `panel`) terminó con 372 suites, 1.941 pruebas correctas, build correcto y cero infracciones; posteriormente se añadieron dos autopruebas arquitectónicas, comprobadas por separado. Ejecutar la batería completa sobre cualquier versión nueva sigue siendo obligatorio para acreditar ese resultado.
 
-`GUARDS/tests-domain-tests-guard.mjs` admite actualmente **dos dependencias transitivas exactas de tests hacia una fixture de Manain** y `accreditedCatalogIntegrations` admite **dos lecturas directas en una suite**. No existen excepciones activas de recuentos por cohorte. Son contratos verificables, no un baseline de errores ni permisos generales para acoplar nuevos tests a catálogos. La referencia exacta está en los mapas y las comprobaciones del guard, no en contadores históricos.
+`guards/architecture/tests-domain-tests-guard.mjs` admite actualmente **dos dependencias transitivas exactas de tests hacia una fixture de Manain** y `accreditedCatalogIntegrations` admite **dos lecturas directas en una suite**. No existen excepciones activas de recuentos por cohorte. Son contratos verificables, no un baseline de errores ni permisos generales para acoplar nuevos tests a catálogos. La referencia exacta está en los mapas y las comprobaciones del guard, no en contadores históricos.
 
-El inventario de gobernanza `GUARDS/repository-governance.json` protege **17 rutas Markdown, 57 rutas de scripts y 58 comandos npm**. Bloquea rutas no autorizadas, cuotas y cambios de comandos o `bin`, pero no comprueba autorizaciones humanas ni hashes de contenido Markdown. Cualquier edición o baja de un archivo protegido requiere permiso expreso aun cuando el guard no pueda reconocerla.
+El inventario de gobernanza `guards/governance/repository-governance.json` protege **17 rutas Markdown, 57 rutas de scripts y 58 comandos npm**. Bloquea rutas no autorizadas, cuotas y cambios de comandos o `bin`, pero no comprueba autorizaciones humanas ni hashes de contenido Markdown. Cualquier edición o baja de un archivo protegido requiere permiso expreso aun cuando el guard no pueda reconocerla.
 
 ## Ejecutar los controles
 
 Desde la raíz del repositorio, con las dependencias de `npm ci` instaladas:
 
 ```powershell
-node GUARDS/tests-repository-governance-guard.mjs
-node GUARDS/tests-module-integrity-guard.mjs
-node GUARDS/tests-editorial-architecture-guard.mjs --detail
-node GUARDS/tests-domain-tests-guard.mjs --detail
-node --test --test-reporter=./scripts/test-runner-ui.mjs GUARDS/tests-architecture-guards.test.mjs
+node guards/governance/tests-repository-governance-guard.mjs
+node guards/architecture/tests-module-integrity-guard.mjs
+node guards/architecture/tests-editorial-architecture-guard.mjs --detail
+node guards/architecture/tests-domain-tests-guard.mjs --detail
+node --test --test-reporter=./scripts/testing/test-runner-ui.mjs guards/architecture/tests-architecture-guards.test.mjs
 npm test
 ```
 
-`npm test` integra gobernanza y autopruebas, integridad productiva, motor y autoridad editoriales, arquitectura de tests, conocimiento, rendimiento, contrato comercial v2, build, consenso y batería funcional. Las ejecuciones individuales son diagnósticos y no sustituyen la batería. `GUARDS/guards-architecture-core.mjs` requiere `node_modules/typescript` local, sin respaldo implícito en TypeScript global.
+`npm test` integra gobernanza y autopruebas, integridad productiva, motor y autoridad editoriales, arquitectura de tests, conocimiento, rendimiento, contrato comercial v2, build, consenso y batería funcional. Las ejecuciones individuales son diagnósticos y no sustituyen la batería. `guards/architecture/guards-architecture-core.mjs` requiere `node_modules/typescript` local, sin respaldo implícito en TypeScript global.
 
 ## Fronteras productivas
 

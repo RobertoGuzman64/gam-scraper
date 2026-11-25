@@ -3,7 +3,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const build = spawnSync(process.execPath, ["scripts/run-build.mjs", "--quiet", "--if-needed"], {
+const build = spawnSync(process.execPath, ["scripts/build/run-build.mjs", "--quiet", "--if-needed"], {
   cwd: root, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8", windowsHide: true
 });
 if (build.status !== 0 || build.error) {
@@ -14,7 +14,7 @@ if (build.status !== 0 || build.error) {
 try {
   const [{ parseIndividualCatalogProviders }, { inspectIndividualFinishPreflight }] = await Promise.all([
     import(pathToFileURL(resolve(root, "dist/cli/options/individual-catalog.js")).href),
-    import(pathToFileURL(resolve(root, "dist/publication/finish-preflight.js")).href)
+    import(pathToFileURL(resolve(root, "dist/publication/individual/finish-preflight.js")).href)
   ]);
   const { providerIds } = parseIndividualCatalogProviders(process.argv.slice(2));
   const report = await inspectIndividualFinishPreflight(root, providerIds);

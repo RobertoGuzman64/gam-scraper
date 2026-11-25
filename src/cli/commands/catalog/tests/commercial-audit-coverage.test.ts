@@ -29,7 +29,7 @@ test("la auditoría comercial conserva los bloqueos reales y distingue fuentes a
 });
 
 test("el reporte de acreditación parcial no puede imprimir PASS con cero infracciones observadas", () => {
-  const expression = `import { printCommercialAuditReport } from "./dist/cli/reporting/commercial-audit.js";
+  const expression = `import { printCommercialAuditReport } from "./dist/cli/reporting/commercial/commercial-audit.js";
     printCommercialAuditReport({ version: 2, providers: [] }, "--acreditacion", undefined, undefined, undefined, true);`;
   const result = spawnSync(process.execPath, ["--input-type=module", "--eval", expression], {
     cwd: process.cwd(), encoding: "utf8"

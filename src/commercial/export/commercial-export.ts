@@ -12,7 +12,7 @@ import { accreditCommercialPlan } from "../diagnostics/commercial-accreditation.
 import { loadCommercialPublicationInputs, assertCurrentCommercialInventory } from "./commercial-inputs.js";
 import type { CommercialPublicationInputs } from "./commercial-inputs.js";
 import { loadFindingRecognitionRegistry } from "../../infrastructure/filesystem/catalog/finding-recognition-store.js";
-import { classifyFindingRecognitions } from "../../catalog/diagnostics/finding-recognitions.js";
+import { classifyFindingRecognitions } from "../../catalog/diagnostics/findings/finding-recognitions.js";
 import { observeCommercialAccreditationFindings } from "../diagnostics/audited-findings.js";
 import { controlledCommercialField, createCommercialExceptionAccreditation } from "./commercial-exception-accreditation.js";
 

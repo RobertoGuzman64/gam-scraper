@@ -1,8 +1,8 @@
 import { buildProductIdentity } from "../../catalog/identity.js";
 import type { ImportCatalog } from "./contracts.js";
 
-import type { GapInput, GapOptions, GapAnalysis, GapGroup, GapField, GapObservation, GapCase, InternalGroup } from "../../catalog/diagnostics/content-gaps-types.js";
-import { compare, evidenceOf, groupKey, present, specHasValue } from "../../catalog/diagnostics/content-gaps-source.js";
+import type { GapInput, GapOptions, GapAnalysis, GapGroup, GapField, GapObservation, GapCase, InternalGroup } from "../../catalog/diagnostics/coverage/content-gaps-types.js";
+import { compare, evidenceOf, groupKey, present, specHasValue } from "../../catalog/diagnostics/coverage/content-gaps-source.js";
 
 export const analyzeCatalogContentGaps = (
   inputs: readonly GapInput[], catalog: ImportCatalog, options: GapOptions = { groupBy: "categoria" }

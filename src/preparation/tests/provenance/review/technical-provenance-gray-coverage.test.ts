@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { technicalDocumentClaimSha256 } from "../../../../contracts/technical-provenance.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { TechnicalDocumentVerification, TechnicalSpecEvidence } from "../../../../contracts/technical-provenance.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { classifyPublishedTechnicalSpec } from "../../../provenance/technical-spec-classification.js";
-import { reviewedModelDocumentClaims } from "../../../technical/reviewed-model-claims.js";
+import { reviewedModelDocumentClaims } from "../../../technical/evidence/reviewed-model-claims.js";
 
 const accredited = [
   { provider: "gam", reference: "222", model: "Self Maxi", fields: ["Conducción con timón vertical"] },

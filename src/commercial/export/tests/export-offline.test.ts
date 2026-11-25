@@ -3,7 +3,7 @@ import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { runExport } from "../../../cli/commands/legacy-export/export.js";
+import { runExport } from "../../../cli/commands/legacy-export.js";
 import { prepareExport } from "../prepare-export.js";
 import { prepareSavedCatalog } from "../../../preparation/workflow/prepare.js";
 import { writeOutputs } from "../../../scraping/output/publish.js";

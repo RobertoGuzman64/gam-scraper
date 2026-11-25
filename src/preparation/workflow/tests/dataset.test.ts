@@ -5,7 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { prepareImportBatch } from "../../prepare.js";
 import type { ImportCatalog } from "../../prepare.js";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { parseCsv } from "../../../shared/csv-parse.js";
 import type { ProductRecord, SpecScalar, SpecsMap } from "../../../contracts/catalog.js";

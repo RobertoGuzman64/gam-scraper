@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { discoverAccreditedPublications, readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { discoverAccreditedPublications, readAccreditedPublication, resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
 import { selectActivePublication } from "../active-publication.js";
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 

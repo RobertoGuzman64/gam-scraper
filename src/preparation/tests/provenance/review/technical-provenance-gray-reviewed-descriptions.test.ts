@@ -4,10 +4,10 @@ import { originalRecordFingerprint } from "../../../../catalog/identity-fingerpr
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { TechnicalSpecEvidence } from "../../../../contracts/technical-provenance.js";
 import { isProductTechnicalProvenance, matchesTechnicalDocumentVerification } from "../../../../contracts/technical-provenance.js";
-import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
-import { reviewedModelDocumentVerification } from "../../../technical/reviewed-model-claims.js";
-import { reviewedUnitDescriptionEvidence } from "../../../technical/reviewed-unit-description-claims.js";
+import { reviewedModelDocumentVerification } from "../../../technical/evidence/reviewed-model-claims.js";
+import { reviewedUnitDescriptionEvidence } from "../../../technical/evidence/reviewed-unit-description-claims.js";
 import { classifyPublishedTechnicalSpec } from "../../../provenance/technical-spec-classification.js";
 
 const descriptionCases = [

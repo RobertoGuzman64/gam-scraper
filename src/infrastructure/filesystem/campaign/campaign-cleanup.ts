@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { lstat, readdir, readFile, realpath, rm, writeFile, mkdir } from "node:fs/promises";
 import { CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
 import { basename, join, relative, resolve, sep, isAbsolute } from "node:path";
-import { assertInactiveCampaignBatchLock } from "../../locking/batch-lock.js";
+import { assertInactiveCampaignBatchLock } from "../batch-lock.js";
 import { allowedFile, allowedDir, isRecord, validateHistory, validateScrapedContent, type CleanupArea, type CleanupArtifactKind } from "./campaign-cleanup-validation.js";
 
 const inside = (parent: string, child: string): boolean => {

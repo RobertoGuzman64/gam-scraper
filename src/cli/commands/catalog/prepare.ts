@@ -4,11 +4,11 @@ import { fileURLToPath } from "node:url";
 import { prepareSavedCatalogWithRetention } from "../../../preparation/workflow/retained-prepare.js";
 import { prepareManainRecord } from "../../../preparation/workflow/manain-record.js";
 import { parseManainRecordOptions, parsePrepareOptions, prepareHelp } from "../../options/prepare.js";
-import { formatPriceAvailability } from "../../reporting/review-diagnostics.js";
-import { formatImportDiagnostics } from "../../reporting/import-diagnostics.js";
+import { formatPriceAvailability } from "../../reporting/catalog/review-diagnostics.js";
+import { formatImportDiagnostics } from "../../reporting/catalog/import-diagnostics.js";
 import { printCommandError } from "../../reporting/errors.js";
-import { formatRetentionExecution } from "../../reporting/retention-execution.js";
-import { formatPreparationWork } from "../../reporting/preparation-work.js";
+import { formatRetentionExecution } from "../../reporting/retention/retention-execution.js";
+import { formatPreparationWork } from "../../reporting/catalog/preparation-work.js";
 
 export const runPrepare = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {

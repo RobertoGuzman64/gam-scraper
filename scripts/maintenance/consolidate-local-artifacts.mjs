@@ -4,7 +4,7 @@ import { copyFile, lstat, mkdir, open, readFile, readdir, rename, rm, rmdir, wri
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { isPublicationDirectoryName, matchesPublicationApproval } from "../shared/publication-identity.mjs";
+import { isPublicationDirectoryName, matchesPublicationApproval } from "../publication-identity.mjs";
 import { readOfflinePreparation } from "../../dist/infrastructure/filesystem/preparation/offline-preparation.js";
 import { isPublicationTechnicalProvenance } from "../../dist/contracts/technical-provenance.js";
 

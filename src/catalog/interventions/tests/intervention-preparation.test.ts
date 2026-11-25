@@ -9,7 +9,7 @@ import { selectPublishableCatalog } from "../../editorial/select-publishable.js"
 import { parseOfflinePreparation } from "../../../preparation/documents/offline-document.js";
 import { buildProductIdentity } from "../../identity.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import { persistAppliedIntervention } from "../../../infrastructure/filesystem/interventions/intervention-application.js";
 import { readAppliedIntervention } from "../../../infrastructure/filesystem/interventions/intervention-derived.js";
 import { readInterventionSource } from "../../../infrastructure/filesystem/interventions/intervention-source.js";

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { analyzeSpecificationImprovement, parseSpecificationImprovementExceptions, type SpecificationImprovementExceptionRegistry } from "../specification-improvement.js";
-import { technicalPriorityFamily } from "../specification-family-priorities.js";
-import type { DescriptionCoverageInput } from "../description-coverage.js";
+import { analyzeSpecificationImprovement, parseSpecificationImprovementExceptions, type SpecificationImprovementExceptionRegistry } from "../coverage/specification-improvement.js";
+import { technicalPriorityFamily } from "../coverage/specification-family-priorities.js";
+import type { DescriptionCoverageInput } from "../coverage/description-coverage.js";
 import type { ProductRecord, SpecValue } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 

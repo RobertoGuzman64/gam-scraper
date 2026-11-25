@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { lstat, mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
-import { resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
 import { selectActivePublication } from "../active-publication.js";
-import { publishIndividualCatalogs } from "../individual-finish.js";
+import { publishIndividualCatalogs } from "../individual/individual-finish.js";
 import { prepareIndividualTestWorkspace } from "../../testing/builders/individual-workspace-fixture.js";
 import { createIndividualFinishWorkspace, finishProviders, publishIndividualTestWorkspace } from "../../testing/builders/individual-finish-fixture.js";
 

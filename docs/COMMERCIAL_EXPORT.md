@@ -105,7 +105,7 @@ npm run exportar:comercial -- --salida <directorio-nuevo-fuera-del-repo>
 npm run auditar:comercial -- --verificar=<directorio-existente>
 ```
 
-La CLI separa la **coordinación** en `src/cli/commands/catalog/commercial-audit.ts` de la **presentación** en `src/cli/reporting/commercial-audit.ts`. La política está en `src/commercial/projection/category-projection.ts` y las evidencias de procedencia en `source-category-evidence.ts` y `gam-category-evidence.ts`; la exportación y verificación están en `src/commercial/export/`. `--verificar=RUTA` compara el manifiesto comercial y los archivos exportados con el corte vigente, sin reescribirlos.
+La CLI separa la **coordinación** en `src/cli/commands/catalog/commercial/commercial-audit.ts` de la **presentación** en `src/cli/reporting/commercial/commercial-audit.ts`. La política está en `src/commercial/projection/category-projection.ts` y las evidencias de procedencia en `source-category-evidence.ts` y `gam-category-evidence.ts`; la exportación y verificación están en `src/commercial/export/`. `--verificar=RUTA` compara el manifiesto comercial y los archivos exportados con el corte vigente, sin reescribirlos.
 
 El exportador real, sin `--salida`, genera **un ZIP comercial verificado** en el Escritorio configurado y actualiza el informe interno versionado en `catalogs/reports/commercial/<entorno>/`. Con `--salida` escribe **un JSON por proveedor acreditado y `commercial-manifest.json`** en un directorio nuevo fuera del repositorio, en lugar del ZIP. Con `--entorno develop|production` incluye el `companyID` correspondiente si está acreditado; sin entorno no se incluye. `--simular` calcula/verifica sin escribir. El informe y la exportación no prueban importación efectiva al backend.
 
@@ -135,7 +135,7 @@ El panel no ejecuta scraping, no revisa editorialmente, no cambia las publicacio
 - `src/commercial/projection/` decide la correspondencia con el snapshot de categorías y atributos; los IDs solo proceden de `data/category/categorySell-flat.json` y `data/import/attributeCatalog.json`.
 - `src/commercial/projection/category-projection.ts` mantiene la política; `source-category-evidence.ts` y `gam-category-evidence.ts` aíslan las comprobaciones de procedencia. La extracción de evidencia no cambia las reglas comerciales.
 - `src/commercial/export/` produce los JSON derivados y su `commercial-manifest.json`, con hashes de archivos, snapshot y referencias relevantes. La exportación consulta las publicaciones **individuales acreditadas** y sus originales históricos sin modificarlos; contrasta el original vigente para impedir exportaciones de stock obsoleto.
-- `src/cli/commands/catalog/commercial-audit.ts` coordina la auditoría y `src/cli/reporting/commercial-audit.ts` presenta informes. `--verificar=RUTA` contrasta una exportación existente con las fuentes vigentes.
+- `src/cli/commands/catalog/commercial/commercial-audit.ts` coordina la auditoría y `src/cli/reporting/commercial/commercial-audit.ts` presenta informes. `--verificar=RUTA` contrasta una exportación existente con las fuentes vigentes.
 - `data/commercial-reference/` contiene logos y correspondencias de empresas; `companyID` solo se incluye con entorno explícito. Las categorías, opciones, valores, condición, identidad y metadata se validan, no se inventan.
 
 ```powershell
@@ -150,7 +150,7 @@ Los comandos de exportación definitiva crean un directorio nuevo y archivos ver
 
 ## Compatibilidad heredada y responsabilidades del receptor
 
-`npm run exportar` es un mecanismo **legado** de Excel/JSON en `src/commercial/legacy-export/` y `src/cli/commands/legacy-export/`, con infraestructura de XLSX y referencias comerciales heredadas. Su preparación con catálogo corresponde a un contrato histórico; no es la continuación automática de `entregar` y rechaza una preparación técnica nueva que no tenga asignaciones comerciales compatibles.
+`npm run exportar` es un mecanismo **legado** de Excel/JSON en `src/commercial/legacy-export/` y `src/cli/commands/legacy-export.ts`, con infraestructura de XLSX y referencias comerciales heredadas. Su preparación con catálogo corresponde a un contrato histórico; no es la continuación automática de `entregar` y rechaza una preparación técnica nueva que no tenga asignaciones comerciales compatibles.
 
 El backend debe decidir identidad de sus registros, altas/actualizaciones, permisos e inventario, preservar en su caso `metadata.featured` previamente gestionado y procesar los JSON sin recrear por IA categorías o atributos que el derivado comercial ya acredita. Estas obligaciones **no quedan implementadas ni verificadas** por ejecutar los comandos de este repositorio; ver los pendientes de integración de [Comercialización](COMMERCIAL_EXPORT.md).
 

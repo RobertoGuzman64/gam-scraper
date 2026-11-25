@@ -1,5 +1,5 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { loadEditorialKnowledge, editorialSourceDigest } from "../../../infrastructure/filesystem/editorial/knowledge.js";
+import { loadEditorialKnowledge, editorialSourceDigest } from "../../../infrastructure/filesystem/editorial-knowledge.js";
 import { reconcileInitialTechnicalEvidence } from "../../technical/preparation-technical-stages.js";
 import { resolveEditorialFacts } from "./editorial-facts.js";
 import { hasCorroboratedEditorialCapacityReconciliation, sameEditorialUnit, verifiedEditorialIdentity } from "./editorial-source-contract.js";

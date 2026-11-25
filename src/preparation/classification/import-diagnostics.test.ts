@@ -4,8 +4,8 @@ import { buildImportDiagnostics, classifyImportIssue, importIssueCode } from "..
 import { buildOfflineDiagnostics, issueCode } from "../documents/offline-diagnostics.js";
 import type { PreparedProduct } from "../contracts.js";
 import type { OfflinePreparation } from "../documents/offline-document.js";
-import { formatImportDiagnostics } from "../../cli/reporting/import-diagnostics.js";
-import { formatDetailedValidation } from "../../cli/reporting/detailed-validation.js";
+import { formatImportDiagnostics } from "../../cli/reporting/catalog/import-diagnostics.js";
+import { formatDetailedValidation } from "../../cli/reporting/catalog/detailed-validation.js";
 
 const entry = (reference: string, issues: readonly string[], excel: readonly string[], createMany: readonly string[]): PreparedProduct => ({
   status: issues.length > 0 ? "review" : "ready", issues,

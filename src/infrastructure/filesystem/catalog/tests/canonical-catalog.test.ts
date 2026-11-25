@@ -7,8 +7,8 @@ import test from "node:test";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../../../contracts/scraping.js";
 import { writeOutputs } from "../../../../scraping/output/publish.js";
-import { readCanonicalCatalog, readCanonicalCatalogWithFingerprint } from "../canonical-catalog.js";
-import { readPortableOriginal } from "../portable-original.js";
+import { readCanonicalCatalog, readCanonicalCatalogWithFingerprint } from "../originals/canonical-catalog.js";
+import { readPortableOriginal } from "../originals/portable-original.js";
 import { copyCampaignTestCatalog } from "../../../../campaign/tests/campaign-catalog-fixture.js";
 
 const category: CategoryConfig = { key: "venta", name: "Venta", url: "https://test.example/venta" };

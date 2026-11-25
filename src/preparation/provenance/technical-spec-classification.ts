@@ -5,9 +5,9 @@ import { prepareSourceProduct } from "../prepare-product.js";
 import { matchesTechnicalDocumentVerification, matchesTechnicalUnitListingVerification, isProductTechnicalProvenance } from "../../contracts/technical-provenance.js";
 import type { ProductTechnicalProvenance } from "../../contracts/technical-provenance.js";
 import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js";
-import { reviewedModelDocumentVerification } from "../technical/reviewed-model-claims.js";
-import { reviewedUnitListingVerification } from "../technical/reviewed-unit-listing-claims.js";
-import { matchesDocumentedTechnicalIdentity, matchesReviewedCatalogModelIdentity } from "../technical/reviewed-catalog-model-identity.js";
+import { reviewedModelDocumentVerification } from "../technical/evidence/reviewed-model-claims.js";
+import { reviewedUnitListingVerification } from "../technical/evidence/reviewed-unit-listing-claims.js";
+import { matchesDocumentedTechnicalIdentity, matchesReviewedCatalogModelIdentity } from "../technical/evidence/reviewed-catalog-model-identity.js";
 
 type TechnicalAddition = { readonly field: string; readonly value: string };
 

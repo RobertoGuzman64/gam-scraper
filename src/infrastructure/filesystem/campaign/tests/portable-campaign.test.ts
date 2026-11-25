@@ -7,7 +7,7 @@ import { finalizeActiveCampaign } from "../../../../campaign/finalization.js";
 import { approveDraft, createFixture, prefixes } from "../../../../campaign/tests/finalization-fixture.js";
 import { reuseCampaignTestFixture } from "../../../../campaign/tests/campaign-catalog-fixture.js";
 import { CAMPAIGN_PROVIDERS } from "../../../../contracts/campaign-providers.js";
-import { consolidatePortableCampaign, readPortableCampaign } from "../../catalog/portable-campaign.js";
+import { consolidatePortableCampaign, readPortableCampaign } from "../../catalog/campaigns/portable-campaign.js";
 
 const fixtures = reuseCampaignTestFixture(createFixture);
 after(fixtures.close);

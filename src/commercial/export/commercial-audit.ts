@@ -1,5 +1,5 @@
-import type { AuditedFinding } from "../../catalog/diagnostics/finding-recognitions.js";
-import { classifyCurrentAuditFindings } from "../../catalog/diagnostics/current-audit-findings.js";
+import type { AuditedFinding } from "../../catalog/diagnostics/findings/finding-recognitions.js";
+import { classifyCurrentAuditFindings } from "../../catalog/diagnostics/findings/current-audit-findings.js";
 import { loadFindingRecognitionRegistry } from "../../infrastructure/filesystem/catalog/finding-recognition-store.js";
 import { analyzePresentationConsistency } from "../diagnostics/presentation-consistency.js";
 import { observePreparationCoherenceFindings } from "../diagnostics/audited-findings.js";

@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import type { CampaignAccreditation } from "../../catalog/editorial/campaign-accreditation.js";
-import type { IndividualEditorialReview } from "../individual-editorial.js";
+import type { IndividualEditorialReview } from "../individual/individual-editorial.js";
 
 export const stageReviewedTestExclusions = async (review: IndividualEditorialReview): Promise<void> => {
   const next: CampaignAccreditation = {

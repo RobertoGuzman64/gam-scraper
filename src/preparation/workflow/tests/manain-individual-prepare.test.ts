@@ -7,8 +7,8 @@ import test from "node:test";
 import { parseIndividualCatalogProviders } from "../../../cli/options/individual-catalog.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { validateManainRecordPreparation } from "../offline.js";
-import { readVerifiedManainRecordSource } from "../../../infrastructure/filesystem/catalog/manain-record-source.js";
-import { runPrepareIndividual } from "../../../cli/commands/catalog/prepare-individual.js";
+import { readVerifiedManainRecordSource } from "../../../infrastructure/filesystem/catalog/originals/manain-record-source.js";
+import { runPrepareIndividual } from "../../../cli/commands/catalog/individual/prepare-individual.js";
 
 const source = join(process.cwd(), "catalogs", "providers", "manain");
 

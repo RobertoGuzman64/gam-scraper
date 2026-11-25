@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { consolidatePortableOriginal } from "../../../infrastructure/filesystem/catalog/portable-original.js";
+import { consolidatePortableOriginal } from "../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { discoverCampaign } from "../../discovery/search.js";
 import { inspectBeforeExtraction } from "../../preflight.js";
 

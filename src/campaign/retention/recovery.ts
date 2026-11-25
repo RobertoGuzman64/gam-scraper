@@ -1,7 +1,7 @@
 import { lstat, open, readdir, rename, rm } from "node:fs/promises";
 import { join, resolve, sep } from "node:path";
 import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
-import { verifyPortableCampaignRetirement, retirePortableCampaign } from "../../infrastructure/filesystem/catalog/portable-campaign.js";
+import { verifyPortableCampaignRetirement, retirePortableCampaign } from "../../infrastructure/filesystem/catalog/campaigns/portable-campaign.js";
 import { inspectCleanupArea, removeCleanupDirectories } from "../../infrastructure/filesystem/campaign/campaign-cleanup.js";
 import { discoverCampaign, listCampaignRuns } from "../discovery/search.js";
 import { readCampaignBatch } from "../discovery/report.js";

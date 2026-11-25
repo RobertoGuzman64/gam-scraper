@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { lstat, mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
-import { consolidate, runPublishIndividual } from "../../cli/commands/catalog/publish-individual.js";
-import { preflightIndividualAccreditations } from "../individual-accreditation.js";
-import { publishIndividualCatalogs } from "../individual-finish.js";
+import { consolidate, runPublishIndividual } from "../../cli/commands/catalog/individual/publish-individual.js";
+import { preflightIndividualAccreditations } from "../individual/individual-accreditation.js";
+import { publishIndividualCatalogs } from "../individual/individual-finish.js";
 import { createIndividualFinishWorkspace, publishIndividualTestWorkspace } from "../../testing/builders/individual-finish-fixture.js";
 
 const withWorkspace = createIndividualFinishWorkspace();

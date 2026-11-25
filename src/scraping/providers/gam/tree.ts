@@ -1,6 +1,6 @@
 import type { CategoryConfig, ScrapeOptions } from "../../../contracts/scraping.js";
 
-import { fetchHtml, sleep } from "../../../infrastructure/http/fetch-html.js";
+import { fetchHtml, sleep } from "../../../infrastructure/network/fetch-html.js";
 import { normalizeSpace } from "./parsers.js";
 import * as cheerio from "cheerio";
 

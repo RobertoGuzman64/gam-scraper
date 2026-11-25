@@ -3,7 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ProductTechnicalProvenance, TechnicalSpecEvidence } from "../../../contracts/technical-provenance.js";
 import { originalRecordFingerprint } from "../../../catalog/identity-fingerprint.js";
-import { reviewedModelEditorialSpecs } from "../../technical/documented-technical-evidence.js";
+import { reviewedModelEditorialSpecs } from "../../technical/evidence/documented-technical-evidence.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { resolvePreparedEditorial } from "../core/prepared-editorial.js";
 import { captureSourceEditorialEvidence } from "./source-editorial-evidence.js";

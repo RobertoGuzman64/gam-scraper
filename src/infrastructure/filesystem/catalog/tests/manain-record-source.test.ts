@@ -3,8 +3,8 @@ import { copyFile, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile } fro
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { readVerifiedManainRecordSource } from "../manain-record-source.js";
-import { runTechnicalPublication } from "../../../../cli/commands/catalog/technical-publication.js";
+import { readVerifiedManainRecordSource } from "../originals/manain-record-source.js";
+import { runTechnicalPublication } from "../../../../cli/commands/catalog/publications/technical-publication.js";
 
 const production = process.cwd();
 const source = join(production, "catalogs", "providers", "manain");

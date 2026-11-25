@@ -10,7 +10,7 @@ import { containsEditorialBrandModel, containsEditorialIdentity } from "../ident
 import { containsEditorialSourceSlugModel } from "../source/editorial-source-url.js";
 import { findBrandTypo } from "../../../catalog/normalization/technical-title-identity.js";
 import { verifiedEditorialLiteralUnitPair, verifiedEditorialUnitPair } from "../identity/editorial-unit-provenance.js";
-import { editorialSourceDigest, loadEditorialKnowledge } from "../../../infrastructure/filesystem/editorial/knowledge.js";
+import { editorialSourceDigest, loadEditorialKnowledge } from "../../../infrastructure/filesystem/editorial-knowledge.js";
 import { editorialIdentityKey, selectIdentityOverrideKnowledge } from "../core/editorial-knowledge.js";
 import { resolveEditorialUnitIdentity } from "../core/knowledge-editorial.js";
 import type { EditorialKnowledge, EditorialVerifiedModelRule } from "../core/editorial-knowledge.js";

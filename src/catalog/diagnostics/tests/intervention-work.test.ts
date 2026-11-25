@@ -7,8 +7,8 @@ import { applyInterventionToCatalog } from "../../interventions/application.js";
 import type { ManualInterventionProposal } from "../../interventions/contracts.js";
 import { simulateIntervention } from "../../interventions/simulation.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { measureAppliedIntervention } from "../intervention-work.js";
-import { formatInterventionWork } from "../../../cli/reporting/intervention-work.js";
+import { measureAppliedIntervention } from "../work/intervention-work.js";
+import { formatInterventionWork } from "../../../cli/reporting/campaign/intervention-work.js";
 
 const item = (reference: string): ProductRecord => ({
   providerId: "gam", categoryKey: "maquinas", categoryName: "Máquinas", reference,

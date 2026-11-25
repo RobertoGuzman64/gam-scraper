@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { ProductRecord, SpecsMap } from "../../../../contracts/catalog.js";
 import type { TechnicalRecoveryObservation } from "../../../provenance/technical-recovery-observation.js";
-import { observeDocumentedTechnicalAddition } from "../../../technical/documented-technical-evidence.js";
+import { observeDocumentedTechnicalAddition } from "../../../technical/evidence/documented-technical-evidence.js";
 import { validMercaelevaTechnicalSource } from "../../technical/technical.js";
 
 type DocumentedUnit = {

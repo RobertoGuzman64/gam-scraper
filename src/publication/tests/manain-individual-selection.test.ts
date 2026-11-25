@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { copyFile, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
-import { runSelectProvider } from "../../cli/commands/catalog/select-provider.js";
+import { runSelectProvider } from "../../cli/commands/catalog/individual/select-provider.js";
 import { offlinePreparationManifestPath } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
-import { approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial, startIndividualEditorial } from "../individual-editorial.js";
-import { readIndividualSelection, selectIndividualPublishable } from "../individual-selection.js";
+import { approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial, startIndividualEditorial } from "../individual/individual-editorial.js";
+import { readIndividualSelection, selectIndividualPublishable } from "../individual/individual-selection.js";
 import { createManainSelectionWorkspace } from "../../testing/builders/manain-individual-selection-fixture.js";
 import { stageReviewedTestExclusions } from "./stage-reviewed-test-exclusions.js";
 

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
-import { measurePublishedWork } from "../published-work.js";
+import { measurePublishedWork } from "../work/published-work.js";
 
 const original = (reference: string): ProductRecord => ({
   providerId: "gam", categoryKey: "venta", categoryName: "Maquinaria",

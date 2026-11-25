@@ -6,7 +6,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { normalizeSpecsObject } from "../../../catalog/normalization/normalize-specs.js";
 import { SPEC_KEY_NORMALIZATION } from "../../../catalog/normalization/spec-rules.js";
-import { formatNormalizationWork } from "../../../cli/reporting/normalization-work.js";
+import { formatNormalizationWork } from "../../../cli/reporting/audits/normalization-work.js";
 import { toCsv } from "../../../shared/csv.js";
 import { normalizeGamRows } from "../normalization/normalize-rows.js";
 import { normalizedValueToScalar } from "../normalization/spec-scalar.js";

@@ -126,7 +126,7 @@ export const runAuditBattery = async ({ root, outDirectory, timeoutMs = 240_000,
   const output = await mkdtemp(join(parent, "corte-"));
   const startedAt = new Date().toISOString();
   const buildStart = Date.now();
-  const buildArgs = ["scripts/run-build.mjs", "--quiet", "--if-needed"];
+  const buildArgs = ["scripts/build/run-build.mjs", "--quiet", "--if-needed"];
   const safeRun = async (args) => {
     try { return await execute(workspace, args, timeoutMs); }
     catch (error) { return { stdout: "", stderr: "", exitCode: null,

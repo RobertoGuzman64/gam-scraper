@@ -15,9 +15,9 @@ import { createZipArchive, readZipArchive } from "../../../infrastructure/archiv
 import { assertCommercialPackageProviders, inspectCommercialPackage, validateStoredCommercialPackage } from "../commercial-package-snapshot.js";
 import { inspectRepositoryArtifact, retainRepositoryArtifact } from "../../../infrastructure/filesystem/catalog/repository-artifact-snapshot.js";
 import { CAMPAIGN_PROVIDERS, LEGACY_CAMPAIGN_PROVIDERS } from "../../../contracts/campaign-providers.js";
-import { renderCommercialIntegrationReport } from "../../../cli/reporting/commercial-integration-report.js";
-import { deliverGrouped } from "../../../cli/reporting/grouped-delivery.js";
-import { deliverCommercialPackages, publishCommercialArchivePair, verifyCommercialIntegrationArchive } from "../../../cli/reporting/commercial-package-delivery.js";
+import { renderCommercialIntegrationReport } from "../../../cli/reporting/commercial/commercial-integration-report.js";
+import { deliverGrouped } from "../../../cli/reporting/commercial/grouped-delivery.js";
+import { deliverCommercialPackages, publishCommercialArchivePair, verifyCommercialIntegrationArchive } from "../../../cli/reporting/commercial/commercial-package-delivery.js";
 
 const createFile = (name: string, content: string): CommercialExportFile => ({
   name, content, sha256: createHash("sha256").update(content).digest("hex"), bytes: Buffer.byteLength(content)

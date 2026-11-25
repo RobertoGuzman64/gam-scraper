@@ -6,7 +6,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { prepareProduct } from "../../../preparation/prepare.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
-import { runExport } from "../../../cli/commands/legacy-export/export.js";
+import { runExport } from "../../../cli/commands/legacy-export.js";
 import { runPreflight } from "../../../cli/commands/catalog/validate.js";
 import { validateCatalogPublication } from "../preflight.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";

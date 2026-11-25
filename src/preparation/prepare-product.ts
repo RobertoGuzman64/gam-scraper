@@ -18,12 +18,12 @@ import { reconcileSourceCategoryTitle, reconcileVerifiedSourceReviewClaims, reco
 import { publicationConflictForMercaeleva } from "./mercaeleva/technical/mercaeleva.js";
 import { hasDocumentedGomarizPriceOnRequest } from "./gomariz/price-on-request.js";
 import { normalizeOriginalEnergyPresentation, normalizeOriginalLengthPresentation, normalizeOriginalMassPresentation } from "./technical/technical-presentation.js";
-import { reconcileHandlingFamilySpecs, recoverSourceHandlingConfiguration } from "./technical/handling-family-specifications.js";
+import { reconcileHandlingFamilySpecs, recoverSourceHandlingConfiguration } from "./technical/recovery/handling-family-specifications.js";
 import { presentGamVerifiedRestrictedCapacity } from "./gam/reconciliation/gam-verified-capacity-coherence.js";
-import { recoverSourcePlatformGeometry } from "./technical/platform-geometry-recovery.js";
-import { recoverBaseTechnicalSpecs } from "./technical/base-technical-recovery.js";
-import { recoverReviewedModelTechnicalSpecs, reviewedModelEditorialSpecs } from "./technical/documented-technical-evidence.js";
-import { recoverDocumentedTechnicalSpecs } from "./technical/documented-technical-recovery.js";
+import { recoverSourcePlatformGeometry } from "./technical/recovery/platform-geometry-recovery.js";
+import { recoverBaseTechnicalSpecs } from "./technical/recovery/base-technical-recovery.js";
+import { recoverReviewedModelTechnicalSpecs, reviewedModelEditorialSpecs } from "./technical/evidence/documented-technical-evidence.js";
+import { recoverDocumentedTechnicalSpecs } from "./technical/recovery/documented-technical-recovery.js";
 import { resolvePreparedEditorial } from "./editorial/core/prepared-editorial.js";
 import { normalizePreparedEditorialPresentation } from "./editorial/writing/prepared-editorial-presentation.js";
 import { reconcileUsedHandlingSource } from "./editorial/identity/source-used-handling.js";

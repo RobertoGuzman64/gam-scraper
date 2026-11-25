@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   gamListingFixture, gamProductFixture, gomarizListingFixture, gomarizProductFixture,
   mercaelevaListingFixture, mercaelevaProductFixture
-} from "./fixtures/catalogs.js";
+} from "./catalog-fixtures.js";
 import { extractProductLinksFromListing as extractGam, parseProductPage as parseGam } from "../providers/gam/parsers.js";
 import { extractGomarizLinks, parseGomarizProduct } from "../providers/gomariz/parsers.js";
 import { identifyWordPressImage } from "../parsing/image-gallery.js";

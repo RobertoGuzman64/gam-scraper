@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { technicalDocumentClaimSha256 } from "../../../../contracts/technical-provenance.js";
 import type { ProductTechnicalProvenance, TechnicalSpecEvidence } from "../../../../contracts/technical-provenance.js";
-import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
-import { reviewedModelDocumentVerification } from "../../../technical/reviewed-model-claims.js";
+import { reviewedModelDocumentVerification } from "../../../technical/evidence/reviewed-model-claims.js";
 import { classifyPublishedTechnicalSpec } from "../../../provenance/technical-spec-classification.js";
 
 const documentUrl = "https://www.coalci.es/wp-content/uploads/2019/07/1930ES_ES-pdf.pdf";

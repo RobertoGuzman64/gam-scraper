@@ -17,10 +17,10 @@ const shared = {
   gaps: "src/cli/commands/catalog/tests/catalog-content-gaps-fixtures.ts"
 };
 const contracts = {
-  "src/publication/individual-finish.ts": {
+  "src/publication/individual/individual-finish.ts": {
     publishIndividualCatalogs: ["publish", "createIndividualFinishWorkspace / publishIndividualTestWorkspace"]
   },
-  "src/cli/commands/catalog/publish-individual.ts": {
+  "src/cli/commands/catalog/individual/publish-individual.ts": {
     runPublishIndividual: ["finish-cli", "createIndividualFinishWorkspace"]
   },
   "src/preparation/workflow/individual-prepare.ts": {
@@ -38,10 +38,10 @@ const contracts = {
   "src/cli/commands/catalog/tests/catalog-content-gaps-fixtures.ts": {
     executeBaseline: ["gaps-cli", "readBaselineComparison / readBaselineDetailedComparison"]
   },
-  "src/cli/reporting/published-work-archive.ts": {
+  "src/cli/reporting/individual/published-work-archive.ts": {
     deliverPublishedWorkReport: ["work-report", "createPublishedIndividualFinishWorkspace"]
   },
-  "src/publication/individual-work-report.ts": {
+  "src/publication/individual/individual-work-report.ts": {
     collectPublishedWork: ["work-collection", "createPublishedIndividualFinishWorkspace"]
   },
 };
@@ -104,7 +104,7 @@ const panelPreparationLimits = {
     ["src/panel/evidence/read-panel-snapshot.ts", "readPanelSnapshot", 2],
     ["src/panel/explorer/read-panel-explorer.ts", "readPanelExplorer", 4]
   ],
-  "src/tools/catalog/tests/explorer-technical-evidence-cache.test.ts": [
+  "src/tools/catalog/explorer-technical-evidence-cache.test.ts": [
     ["src/panel/evidence/read-panel-snapshot.ts", "readPanelSnapshot", 1]
   ],
   "src/panel/explorer/tests/explorer-selection.test.ts": [
@@ -114,33 +114,33 @@ const panelPreparationLimits = {
 };
 const panelSharedPreparationSuites = [
   ...Object.keys(panelPreparationLimits),
-  "src/panel/evidence/tests/read-panel-snapshot.test.ts"
+  "src/panel/evidence/read-panel-snapshot.test.ts"
 ];
 const trustedProduction = new Set([
-  "src/cli/commands/catalog/publish-individual.ts",
-  "src/cli/commands/catalog/prepare-individual.ts",
-  "src/cli/reporting/published-work-archive.ts",
-  "src/publication/individual-finish.ts",
-  "src/publication/individual-work-report.ts"
+  "src/cli/commands/catalog/individual/publish-individual.ts",
+  "src/cli/commands/catalog/individual/prepare-individual.ts",
+  "src/cli/reporting/individual/published-work-archive.ts",
+  "src/publication/individual/individual-finish.ts",
+  "src/publication/individual/individual-work-report.ts"
 ]);
 const trustedDirectImports = new Set([
-  "src/cli/commands/catalog/publish-individual.ts",
-  "src/publication/individual-accreditation.ts",
-  "src/publication/individual-finish.ts",
-  "src/infrastructure/filesystem/catalog/accredited-publication.ts",
+  "src/cli/commands/catalog/individual/publish-individual.ts",
+  "src/publication/individual/individual-accreditation.ts",
+  "src/publication/individual/individual-finish.ts",
+  "src/infrastructure/filesystem/catalog/publications/accredited-publication.ts",
   "src/publication/active-publication.ts",
   "src/infrastructure/archive/zip.ts",
-  "src/publication/individual-work-report.ts",
-  "src/cli/reporting/published-work-archive.ts",
-  "src/catalog/diagnostics/description-coverage.ts",
-  "src/catalog/diagnostics/description-priorities.ts",
-  "src/catalog/diagnostics/specification-coverage.ts",
-  "src/catalog/diagnostics/technical-density.ts",
-  "src/catalog/diagnostics/audit-closure.ts",
-  "src/cli/commands/catalog/catalog-audit-closure-report.ts",
-  "src/cli/commands/catalog/technical-density-report.ts",
-  "src/cli/commands/catalog/specification-coverage-report.ts",
-  "src/cli/commands/catalog/catalog-content-gaps-options.ts"
+  "src/publication/individual/individual-work-report.ts",
+  "src/cli/reporting/individual/published-work-archive.ts",
+  "src/catalog/diagnostics/coverage/description-coverage.ts",
+  "src/catalog/diagnostics/coverage/description-priorities.ts",
+  "src/catalog/diagnostics/coverage/specification-coverage.ts",
+  "src/catalog/diagnostics/technical/technical-density.ts",
+  "src/catalog/diagnostics/findings/audit-closure.ts",
+  "src/cli/commands/catalog/audits/catalog-audit-closure-report.ts",
+  "src/cli/commands/catalog/audits/technical-density-report.ts",
+  "src/cli/commands/catalog/audits/specification-coverage-report.ts",
+  "src/cli/commands/catalog/audits/catalog-content-gaps-options.ts"
 ]);
 
 const enumerate = (directory, names = []) => {
@@ -393,7 +393,7 @@ export const inspectPanelHeavyPreparations = (sources) => {
 };
 
 const testSupport = (path) => path.startsWith("src/testing/") || /(?:^|\/)tests\//u.test(path) ||
-  /\.test\.[cm]?[jt]s$/u.test(path) || path.startsWith("scripts/tests/");
+  /\.test\.[cm]?[jt]s$/u.test(path);
 const isProtectedSource = (path, discovered) => protectedSuites.includes(path) || Object.values(shared).includes(path) ||
   discovered.has(path);
 const guard = (sources) => {

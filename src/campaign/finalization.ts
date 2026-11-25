@@ -1,4 +1,4 @@
-import { consolidatePortableCampaign } from "../infrastructure/filesystem/catalog/portable-campaign.js";
+import { consolidatePortableCampaign } from "../infrastructure/filesystem/catalog/campaigns/portable-campaign.js";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";

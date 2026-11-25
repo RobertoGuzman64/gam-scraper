@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { PreparedProduct } from "../../../preparation/contracts.js";
-import { analyzeEditorialQuality, analyzePublishedEditorialQuality, EDITORIAL_CRITERIA } from "../editorial-quality.js";
-import type { GapInput } from "../content-gaps-types.js";
+import { analyzeEditorialQuality, analyzePublishedEditorialQuality, EDITORIAL_CRITERIA } from "../editorial/editorial-quality.js";
+import type { GapInput } from "../coverage/content-gaps-types.js";
 
 const entry = (reference: string, values: {
   title?: string | null; short?: string | null; long?: string | null;

@@ -1,4 +1,4 @@
-import type { VerifiedManainRecordSource } from "../../infrastructure/filesystem/catalog/manain-record-source.js";
+import type { VerifiedManainRecordSource } from "../../infrastructure/filesystem/catalog/originals/manain-record-source.js";
 import type { PreparationSource } from "../documents/offline-document.js";
 
 export const manainRecordPreparationSource = (verified: VerifiedManainRecordSource): PreparationSource => {

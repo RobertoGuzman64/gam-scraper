@@ -6,10 +6,10 @@ import { sha256 } from "../../catalog/editorial/campaign-accreditation.js";
 import { proposeIndividualExclusions } from "../../catalog/editorial/individual-decision-proposals.js";
 import type { CampaignAccreditation } from "../../catalog/editorial/campaign-accreditation.js";
 import { readZipArchive } from "../../infrastructure/archive/zip.js";
-import { deliverIndividualArchive } from "../individual-archive.js";
-import { deliverIndividualProvider } from "../individual-delivery.js";
-import { completeIndividualDelivery } from "../complete-individual-delivery.js";
-import { resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { deliverIndividualArchive } from "../individual/individual-archive.js";
+import { deliverIndividualProvider } from "../individual/individual-delivery.js";
+import { completeIndividualDelivery } from "../individual/complete-individual-delivery.js";
+import { resolveAccreditedPublication } from "../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
 import test, { after } from "node:test";
 import type { ProductRecord } from "../../contracts/catalog.js";
 import type { CategoryConfig, CategoryScrapeResult } from "../../contracts/scraping.js";
@@ -17,13 +17,13 @@ import { prepareSavedCatalog } from "../../preparation/workflow/prepare.js";
 import { readOfflinePreparation } from "../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { readPublicationTechnicalProvenance } from "../../panel/evidence/read-technical-provenance.js";
 import { writeOutputs } from "../../scraping/output/publish.js";
-import { selectIndividualPublishable, readIndividualSelection } from "../individual-selection.js";
+import { selectIndividualPublishable, readIndividualSelection } from "../individual/individual-selection.js";
 import {
   approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial,
   inspectIndividualEditorialIfExists, readIndividualEditorialState,
   prepareIndividualEditorialProposals, startIndividualEditorial
-} from "../individual-editorial.js";
-import type { IndividualEditorialOptions } from "../individual-editorial.js";
+} from "../individual/individual-editorial.js";
+import type { IndividualEditorialOptions } from "../individual/individual-editorial.js";
 
 const category: CategoryConfig = {
   key: "elevacion-nueva", name: "Plataformas elevadoras nuevas", url: "https://example.test/catalogo"

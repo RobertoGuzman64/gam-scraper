@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { PreparedProduct } from "../../../preparation/contracts.js";
-import { formatDetailedValidation } from "../detailed-validation.js";
+import { formatDetailedValidation } from "../catalog/detailed-validation.js";
 
 const entry: PreparedProduct = {
   status: "review", issues: ["Precio no disponible o inválido", "Atributo obligatorio ausente: Tipo de mástil"],

@@ -6,8 +6,8 @@ import test from "node:test";
 import { createCommercialReferenceFixture, type CommercialReferenceFixture } from "../../../testing/builders/commercial-reference-fixture.js";
 import { inspectCommercialExportPreflight, prepareCommercialExportPreflight } from "../commercial-export-preflight.js";
 import { validateCommercialExportFiles } from "../commercial-export-verification.js";
-import { renderCommercialExportPreflight } from "../../../cli/reporting/commercial-export-preflight.js";
-import { renderCommercialIntegrationReport } from "../../../cli/reporting/commercial-integration-report.js";
+import { renderCommercialExportPreflight } from "../../../cli/reporting/commercial/commercial-export-preflight.js";
+import { renderCommercialIntegrationReport } from "../../../cli/reporting/commercial/commercial-integration-report.js";
 
 const publication = (providerId: string, root: string): string =>
   join(root, "catalogs", "providers", providerId, "publications", "active.json");

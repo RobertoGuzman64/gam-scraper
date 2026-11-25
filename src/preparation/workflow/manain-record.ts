@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
-import { readManainRecordEvidence, writeManainRecordArtifact } from "../../infrastructure/filesystem/catalog/manain-record-artifact.js";
+import { readManainRecordEvidence, writeManainRecordArtifact } from "../../infrastructure/filesystem/catalog/originals/manain-record-artifact.js";
 import type { ProductRecord, SpecScalar, SpecsMap } from "../../contracts/catalog.js";
 import type { PreparedProduct } from "../contracts.js";
 import { buildProductIdentity } from "../../catalog/identity.js";

@@ -4,8 +4,8 @@ import { lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { readCanonicalCatalog, writeCanonicalCatalog } from "../canonical-catalog.js";
-import { consolidatePortableOriginal, readPortableOriginal, recoverPortableOriginal } from "../portable-original.js";
+import { readCanonicalCatalog, writeCanonicalCatalog } from "../originals/canonical-catalog.js";
+import { consolidatePortableOriginal, readPortableOriginal, recoverPortableOriginal } from "../originals/portable-original.js";
 
 const prefix = "scrape-gomariz";
 const files = [`${prefix}-catalog.json`, `${prefix}-catalog.manifest.json`, `${prefix}-summary.json`] as const;

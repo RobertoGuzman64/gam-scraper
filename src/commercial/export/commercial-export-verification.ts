@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 import { readZipArchive } from "../../infrastructure/archive/zip.js";
 import { loadImportCatalogSnapshot } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { loadCommercialReference } from "../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
-import { discoverAccreditedPublications, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/accredited-publication.js";
+import { discoverAccreditedPublications, readAccreditedPublication } from "../../infrastructure/filesystem/catalog/publications/accredited-publication.js";
 import { buildCommercialExportFiles, type CommercialExportFile } from "./commercial-export.js";
 import { validCommercialExceptionAccreditation } from "./commercial-exception-accreditation.js";
 import { isCommercialReceiverProduct } from "../validation/commercial-receiver-product.js";

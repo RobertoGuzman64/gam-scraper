@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { isProductTechnicalProvenance, matchesTechnicalDocumentVerification } from "../../../../contracts/technical-provenance.js";
-import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/portable-original.js";
+import { readPortableOriginal } from "../../../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { prepareSourceProduct } from "../../../prepare-product.js";
 import { reviewedModelDocumentClaims, reviewedModelDocumentVerification } from
-  "../../../technical/reviewed-model-claims.js";
+  "../../../technical/evidence/reviewed-model-claims.js";
 
 const gamReferences = ["218", "219", "220", "221", "226", "228", "233", "243", "244", "4028", "4040"] as const;
 const mercaelevaReferences = ["M726-5166", "M569-9029", "M840-6795", "M177-1398",

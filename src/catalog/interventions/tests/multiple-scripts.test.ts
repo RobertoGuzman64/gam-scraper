@@ -6,7 +6,7 @@ import { basename, join } from "node:path";
 import test from "node:test";
 import { buildProductIdentity } from "../../identity.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
-import { writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { writeCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import { readInterventionSource } from "../../../infrastructure/filesystem/interventions/intervention-source.js";
 import { parseInterveneOptions } from "../../../cli/options/intervene.js";
 import { validateInterventionProposals } from "../proposals.js";

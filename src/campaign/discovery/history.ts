@@ -1,6 +1,6 @@
 import { CAMPAIGN_PROVIDERS, isReferenceProviderSet } from "../../contracts/campaign-providers.js";
 import { join, resolve } from "node:path";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 
 import { readCampaignBatch } from "./report.js";
 import { directories } from "./preparations.js";

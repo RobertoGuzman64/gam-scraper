@@ -3,7 +3,7 @@ import test from "node:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runCommercialAudit } from "../commercial-audit.js";
+import { runCommercialAudit } from "../commercial/commercial-audit.js";
 
 test("el comando conserva ayuda y rechazo de opciones inválidas", async () => {
   const output: string[] = [];

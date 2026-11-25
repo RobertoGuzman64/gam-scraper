@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { readCanonicalCatalog } from "../catalog/canonical-catalog.js";
+import { readCanonicalCatalog } from "../catalog/originals/canonical-catalog.js";
 
 export const readInterventionSource = async (source: string) => {
   const path = resolve(source);

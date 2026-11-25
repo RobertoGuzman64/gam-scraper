@@ -26,55 +26,55 @@ Una prueba que usa un dato real **no** se considera obsoleta por ello. La difere
 El orden oficial **real** de `npm test` se define en `package.json`:
 
 ```text
-node GUARDS/tests-repository-governance-guard.mjs
-node --test GUARDS/tests-repository-governance-guard.test.mjs
-node GUARDS/tests-module-integrity-guard.mjs
-node GUARDS/tests-shared-editorial-guard.mjs
-node GUARDS/tests-commercial-editorial-boundary-guard.mjs
-node GUARDS/tests-editorial-architecture-guard.mjs
-node GUARDS/tests-domain-tests-guard.mjs
-node --test --test-reporter=./scripts/test-runner-ui.mjs GUARDS/tests-architecture-guards.test.mjs
+node guards/governance/tests-repository-governance-guard.mjs
+node --test guards/governance/tests-repository-governance-guard.test.mjs
+node guards/architecture/tests-module-integrity-guard.mjs
+node guards/architecture/tests-shared-editorial-guard.mjs
+node guards/architecture/tests-commercial-editorial-boundary-guard.mjs
+node guards/architecture/tests-editorial-architecture-guard.mjs
+node guards/architecture/tests-domain-tests-guard.mjs
+node --test --test-reporter=./scripts/testing/test-runner-ui.mjs guards/architecture/tests-architecture-guards.test.mjs
 node scripts/operations/rebuild-editorial-knowledge.mjs --check
-node GUARDS/tests-performance-guard.mjs
-node GUARDS/tests-commercial-contract-guard.mjs
-node scripts/run-build.mjs --quiet --if-needed
+node guards/tests-performance-guard.mjs
+node guards/tests-commercial-contract-guard.mjs
+node scripts/build/run-build.mjs --quiet --if-needed
 node scripts/operations/rebuild-editorial-models.mjs --check
-node scripts/run-tests.mjs
+node scripts/testing/run-tests.mjs
 ```
 
 Los guards de gobernanza, integridad productiva, editorial y de tests, con sus autopruebas correspondientes, **forman parte de `npm test`**, antes del build. Para investigar una infracción concreta, pueden ejecutarse individualmente con detalle:
 
 ```powershell
-node GUARDS/tests-module-integrity-guard.mjs
-node GUARDS/tests-editorial-architecture-guard.mjs --detail
-node GUARDS/tests-domain-tests-guard.mjs --detail
-node --test --test-reporter=./scripts/test-runner-ui.mjs GUARDS/tests-architecture-guards.test.mjs
+node guards/architecture/tests-module-integrity-guard.mjs
+node guards/architecture/tests-editorial-architecture-guard.mjs --detail
+node guards/architecture/tests-domain-tests-guard.mjs --detail
+node --test --test-reporter=./scripts/testing/test-runner-ui.mjs guards/architecture/tests-architecture-guards.test.mjs
 ```
 
-El core necesita `node_modules/typescript` local y no utiliza el TypeScript global como respaldo. `node scripts/run-tests.mjs` aislado no comprueba los guards, el consenso de modelos ni el build. `npm run build` utiliza `scripts/run-build.mjs`. Las suites `src/**/*.test.ts` son descubiertas por el runner desde sus equivalentes compilados, junto a los tests de `scripts/` que éste admita.
+El core necesita `node_modules/typescript` local y no utiliza el TypeScript global como respaldo. `node scripts/testing/run-tests.mjs` aislado no comprueba los guards, el consenso de modelos ni el build. `npm run build` utiliza `scripts/build/run-build.mjs`. Las suites `src/**/*.test.ts` son descubiertas por el runner desde sus equivalentes compilados, junto a los tests de `scripts/` que éste admita.
 
 Los guards controlan fronteras, no verifican por sí solos los resultados comerciales ni cada contrato funcional. El guard de rendimiento y el de contrato comercial también son independientes del guard de arquitectura de tests.
 
 ## Ubicación de suites, fixtures y helpers
 
-- Colocar las suites del dominio en el directorio `tests/` junto al módulo que validan; se conserva la excepción técnica GAM existente, cuyas suites viven junto a sus módulos técnicos. El runner solo descubre suites `*.test.ts` en `src/`: otros sufijos o extensiones de suite quedan fuera y el guard los rechaza.
+- Colocar las suites del dominio en el directorio `tests/` de su área o junto al módulo homónimo (`nombre.ts` y `nombre.test.ts`), sin crear carpetas unitarias; se conserva la excepción técnica GAM existente, cuyas suites viven junto a sus módulos técnicos. El runner solo descubre suites `*.test.ts` en `src/`: otros sufijos o extensiones de suite quedan fuera y el guard los rechaza.
 - Las integraciones compartidas viven en `src/testing/integration/{catalog,commercial,preparation}/` y solo contienen suites `*.test.ts`. Los builders y sus tests viven en `src/testing/builders/` y `src/testing/builders/tests/`; los datos de prueba acotados en `src/testing/fixtures/`. El antiguo árbol `src/testing/domain-cases/` está retirado y no debe reconstruirse.
 - Los helpers locales se quedan en los `tests/` de su módulo o se comparten mediante `src/testing/builders/`. Los seis helpers históricos admitidos bajo `src/preparation/testing/` tienen rutas cerradas; no ampliarlos formando otra infraestructura paralela. No importar una suite de test como si fuera un helper.
 - El runner, reporter, trabajadores y medición pertenecen a `scripts/`; **no** montar runners ni orquestación de procesos en `src/testing/`. La gobernanza del inventario de scripts se decide en [Gobernanza](REPOSITORY_GOVERNANCE.md), no en el guard de pruebas.
 
-Estas reglas son verificadas por `GUARDS/tests-domain-tests-guard.mjs` y las fronteras de producción por `tests-module-integrity-guard.mjs`. Mantener las integraciones censales acreditadas y sus fixtures cuando se requieren por el contrato; no moverlas por estética.
+Estas reglas son verificadas por `guards/architecture/tests-domain-tests-guard.mjs` y las fronteras de producción por `tests-module-integrity-guard.mjs`. Mantener las integraciones censales acreditadas y sus fixtures cuando se requieren por el contrato; no moverlas por estética.
 
 ## Guard editorial y guard de tests
 
-- `GUARDS/tests-editorial-architecture-guard.mjs` protege el compositor compartido, detecta narradores aislados/conectados, reescrituras fuera del propietario, ramificaciones por referencia y dependencias impropias del dominio.
-- `GUARDS/tests-domain-tests-guard.mjs` inspecciona dependencias directas/transitivas de catálogos, cohortes fijas y hashes editoriales congelados. El hash de **procedencia de manifest** no es un hash de redacción.
-- Ambos usan `GUARDS/guards-architecture-core.mjs`; las autopruebas están en `GUARDS/tests-architecture-guards.test.mjs`. Las excepciones son verificaciones exactas de contratos, **no** tolerancias globales.
+- `guards/architecture/tests-editorial-architecture-guard.mjs` protege el compositor compartido, detecta narradores aislados/conectados, reescrituras fuera del propietario, ramificaciones por referencia y dependencias impropias del dominio.
+- `guards/architecture/tests-domain-tests-guard.mjs` inspecciona dependencias directas/transitivas de catálogos, cohortes fijas y hashes editoriales congelados. El hash de **procedencia de manifest** no es un hash de redacción.
+- Ambos usan `guards/architecture/guards-architecture-core.mjs`; las autopruebas están en `guards/architecture/tests-architecture-guards.test.mjs`. Las excepciones son verificaciones exactas de contratos, **no** tolerancias globales.
 
 El contrato vigente del guard permite **dos dependencias transitivas exactas** de suites de publicación Manain hacia una fixture acreditada, y **dos lecturas directas en una suite** de integridad de catálogo/publicación. Las antiguas autorizaciones de 12 cohortes y 21 lecturas en 14 suites ya no existen. Las coincidencias se comprueban por ruta y huella de contenido, no por proveedor o permiso general. **No** añadir excepciones para hacer desaparecer una incidencia nueva: primero acreditar su contrato, o desacoplar la prueba sin debilitarla.
 
 La ejecución global comunicada por el propietario el **24-11-2026**, anterior al último blindaje de guards, superó 372/372 suites y 1.941 pruebas, con 0 fallos y build correcto. La ampliación posterior de guard incluyó dos nuevas autopruebas arquitectónicas comprobadas por separado; no presentar ese resultado previo como una ejecución global de la versión posterior. Los números son resultados de una ejecución, no cuotas ni umbrales fijos del runner.
 
-La enumeración vigente y la razón de cada autorización están en [GUARDS/README.md](../GUARDS/README.md); el mapa `accreditedCatalogIntegrations` del guard define la única suite con lecturas directas.
+La enumeración vigente y la razón de cada autorización están en [guards/README.md](../guards/README.md); el mapa `accreditedCatalogIntegrations` del guard define la única suite con lecturas directas.
 
 ## Regresión del tooling operativo
 
@@ -98,7 +98,7 @@ Los recuentos históricos de baterías no son umbrales fijos. La ejecución glob
 | Integridad de originales o publicaciones | Manifiestos, firmas, archivos y pruebas de integración correspondientes | Prohibir indiscriminadamente el acceso legítimo al catálogo                      |
 | Evolución de composición editorial       | Comprobar título, corta, general, estado y especificaciones             | Congelar texto masivo por hash o aceptar cualquier nueva redacción sin evidencia |
 
-Para retirar una suite redundante, conservar primero la garantía que protegía; eliminar imports, fixtures y helpers sin consumidores únicamente después de acreditar equivalencia. Las suites y operaciones amparadas por `GUARDS/tests-performance-guard.mjs` conservan sus contratos de ejecución y de infraestructura; sus límites exactos se consultan en el guard, no en una cuota histórica copiada a esta guía. Esa protección no autoriza duplicar recorridos costosos.
+Para retirar una suite redundante, conservar primero la garantía que protegía; eliminar imports, fixtures y helpers sin consumidores únicamente después de acreditar equivalencia. Las suites y operaciones amparadas por `guards/tests-performance-guard.mjs` conservan sus contratos de ejecución y de infraestructura; sus límites exactos se consultan en el guard, no en una cuota histórica copiada a esta guía. Esa protección no autoriza duplicar recorridos costosos.
 
 ## Criterio de cierre de una modificación
 
@@ -120,7 +120,7 @@ La protección del rendimiento forma parte de `npm test`; no es un benchmark sep
 npm test = gobernanza y autopruebas → integridad productiva → motor compartido → frontera comercial/editorial → guard editorial → guard de tests → autopruebas arquitectónicas → conocimiento --check → rendimiento → contrato comercial v2 → build --if-needed → consenso de modelos --check → runner
 ```
 
-El guard detecta patrones de coste y la ejecución posterior compila cuando corresponde y lanza suites compiladas. `npm run test:guard` ejecuta **solo** el guard; **no** equivale al PASS integral. `npm run build` compila mediante `scripts/run-build.mjs` y la caché de build está en `scripts/build-cache.mjs`. Si faltan `typescript`, `cheerio`, `p-limit` o tipos de Node no se debe declarar un build correcto a partir de tests aislados.
+El guard detecta patrones de coste y la ejecución posterior compila cuando corresponde y lanza suites compiladas. `npm run test:guard` ejecuta **solo** el guard; **no** equivale al PASS integral. `npm run build` compila mediante `scripts/build/run-build.mjs` y la caché de build está en `scripts/build/build-cache.mjs`. Si faltan `typescript`, `cheerio`, `p-limit` o tipos de Node no se debe declarar un build correcto a partir de tests aislados.
 
 `npm test` incluye ahora `tests-editorial-architecture-guard.mjs`, `tests-domain-tests-guard.mjs` y `tests-architecture-guards.test.mjs` **antes del build**; comprueba además el consenso de modelos después de compilar. Estos controles requieren TypeScript instalado en el proyecto. Su ejecución aislada aporta diagnóstico, pero no sustituye el comando oficial. `npm run contrato:comercial` ejecuta el guard de contrato por separado y la exportación también lo comprueba. Una reorganización AST legítima podría exigir revisar la huella del guard comercial sin alterar el contrato externo; ver [Arquitectura de tests](TESTING.md).
 
@@ -128,17 +128,17 @@ Los tests de regresión históricos de Gomariz deben utilizar snapshots y public
 
 ### Runner y medición reproducible
 
-`scripts/run-tests.mjs` distribuye pruebas por carriles, ordena cargas por duración histórica y escoge una concurrencia apropiada para la máquina mediante `scripts/test-performance.mjs` y `test-runner-execution.mjs`. `test-runner-observability.mjs` y `test-runner-ui.mjs` presentan tiempos, omisiones y regresiones. `test-result-cache.mjs` puede reutilizar resultados en condiciones controladas; `test-runner-completion.mjs` decide si una ejecución es acreditable. No reducir la cobertura ni eliminar un test lento solo para mejorar la cifra global.
+`scripts/testing/run-tests.mjs` distribuye pruebas por carriles, ordena cargas por duración histórica y escoge una concurrencia apropiada para la máquina mediante `scripts/testing/test-performance.mjs` y `test-runner-execution.mjs`. `test-runner-observability.mjs` y `test-runner-ui.mjs` presentan tiempos, omisiones y regresiones. `test-result-cache.mjs` puede reutilizar resultados en condiciones controladas; `test-runner-completion.mjs` decide si una ejecución es acreditable. No reducir la cobertura ni eliminar un test lento solo para mejorar la cifra global.
 
 ```powershell
 npm ci
 npm run test:guard
 npm run build
 npm test
-node scripts/run-tests.mjs --medicion <ruta-informe.json>
+node scripts/testing/run-tests.mjs --medicion <ruta-informe.json>
 ```
 
-`--medicion` genera un informe de tiempos del runner y debe ejecutarse desde la raíz, con compilados disponibles. Para comparar dos medidas, usar el **mismo equipo, entorno, concurrencia y estado de caché**; no comparar una ejecución en frío con una reutilizada. El runner también reconoce `--concurrencia N` (1–64) y `--medicion-cache <ruta-informe.json>` con las restricciones de `parseOptions` en `scripts/run-tests.mjs`. En modo de salida no interactiva, `scripts/test-runner-ui.mjs` muestra un recuento acumulado cada **15 segundos** y comunica los fallos nuevos inmediatamente; el resumen `PASS | TESTS` o `FAIL | TESTS` se emite al terminar. En terminal interactiva mantiene su presentación dinámica. Los reportes de rendimiento operativos se guardan fuera de los datos/versiones acreditadas del catálogo.
+`--medicion` genera un informe de tiempos del runner y debe ejecutarse desde la raíz, con compilados disponibles. Para comparar dos medidas, usar el **mismo equipo, entorno, concurrencia y estado de caché**; no comparar una ejecución en frío con una reutilizada. El runner también reconoce `--concurrencia N` (1–64) y `--medicion-cache <ruta-informe.json>` con las restricciones de `parseOptions` en `scripts/testing/run-tests.mjs`. En modo de salida no interactiva, `scripts/testing/test-runner-ui.mjs` muestra un recuento acumulado cada **15 segundos** y comunica los fallos nuevos inmediatamente; el resumen `PASS | TESTS` o `FAIL | TESTS` se emite al terminar. En terminal interactiva mantiene su presentación dinámica. Los reportes de rendimiento operativos se guardan fuera de los datos/versiones acreditadas del catálogo.
 
 Para una batería que no reutilice resultados previos, desactivar la caché de tests **en el proceso**, sin modificar scripts ni borrar archivos de acreditación:
 
@@ -184,9 +184,9 @@ Para los criterios de equivalencia y materialización de cambios, ver [Validaci�
 `npm test` ejecuta gobernanza e integridad productiva, además de los guards arquitectónicos editorial y de tests y sus autopruebas, **antes del build**. En cambios de arquitectura, se pueden ejecutar también por separado para obtener un diagnóstico más detallado:
 
 ```powershell
-node GUARDS/tests-editorial-architecture-guard.mjs
-node GUARDS/tests-domain-tests-guard.mjs
-node --test GUARDS/tests-architecture-guards.test.mjs
+node guards/architecture/tests-editorial-architecture-guard.mjs
+node guards/architecture/tests-domain-tests-guard.mjs
+node --test guards/architecture/tests-architecture-guards.test.mjs
 ```
 
 La auditoría arquitectónica focal registra infracciones, excepciones exactas y lecturas de catálogo acreditadas; un resultado correcto no sustituye las pruebas funcionales ni acredita por sí solo `npm test` global. La validación exige dependencias locales completas (`npm ci`), no TypeScript global ni una compilación auxiliar. Véanse [Arquitectura de tests](TESTING.md) y [Motor editorial](EDITORIAL_ENGINE.md).
@@ -213,7 +213,7 @@ npm run estado
 
 `EQUIPZILLA_TEST_CACHE=0` desactiva la reutilización de resultados; la ejecución ordinaria puede informar suites y tests cacheados. Comprobar `0 fallidos` y el número de suites efectivamente ejecutadas, no solo el total. En Windows puede omitirse la prueba de enlaces simbólicos si el usuario no tiene privilegios para crearlos: es una omisión explícita, no un test aprobado ni un fallo de compilación. Ante cualquier fallo en `npm test`, limpiar la variable de entorno antes de continuar.
 
-`npm test` ejecuta los guards, valida el conocimiento editorial, **compila cuando corresponde, comprueba el consenso de modelos** y después lanza `scripts/run-tests.mjs`: descubre los `.test.ts` de `src/` (que se ejecutan compilados desde `dist/`) y las suites `.test.mjs` de `scripts/`. `npm run build` por separado confirma la compilación explícita. La cantidad de pruebas puede variar al añadir o mover suites; para diagnosticar resultados, ejecutar después del build `node scripts/run-tests.mjs --concurrencia 2` o `node scripts/run-tests.mjs --medicion <informe.json>`. La medición es un informe local generado, no un archivo de catálogo.
+`npm test` ejecuta los guards, valida el conocimiento editorial, **compila cuando corresponde, comprueba el consenso de modelos** y después lanza `scripts/testing/run-tests.mjs`: descubre los `.test.ts` de `src/` (que se ejecutan compilados desde `dist/`) y las suites `.test.mjs` de `scripts/`. `npm run build` por separado confirma la compilación explícita. La cantidad de pruebas puede variar al añadir o mover suites; para diagnosticar resultados, ejecutar después del build `node scripts/testing/run-tests.mjs --concurrencia 2` o `node scripts/testing/run-tests.mjs --medicion <informe.json>`. La medición es un informe local generado, no un archivo de catálogo.
 
 Al renombrar archivos o carpetas, comprobar además referencias dinámicas, rutas relativas desde `import.meta.url`, scripts programados, imports dentro de **cadenas que generan TypeScript temporal** y las rutas de prioridad del runner. Un `PASS` de TypeScript no garantiza que esas rutas apunten a los fixtures esperados; las suites de integración deben ejecutarse realmente. En Git, movimientos físicos pueden aparecer como eliminaciones y archivos no rastreados hasta incorporarlos al índice, por lo que se debe inspeccionar el diff antes del commit.
 

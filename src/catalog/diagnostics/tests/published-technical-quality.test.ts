@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { analyzePublishedTechnicalQuality } from "../published-technical-quality.js";
-import { formatPublishedTechnicalQualityReport } from "../../../cli/commands/catalog/published-technical-quality-report.js";
+import { analyzePublishedTechnicalQuality } from "../technical/published-technical-quality.js";
+import { formatPublishedTechnicalQualityReport } from "../../../cli/commands/catalog/audits/published-technical-quality-report.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 
 const product = (reference: string, spec: ImportCandidate["spec"],

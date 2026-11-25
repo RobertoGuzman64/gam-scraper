@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { hasCompleteCatalogAuditEvidence, hasUnresolvedCatalogAuditContracts } from "../audit-closure.js";
-import { analyzeDescriptionCoverage } from "../description-coverage.js";
-import { analyzeDescriptionPriorities } from "../description-priorities.js";
-import { analyzeEditorialQuality } from "../editorial-quality.js";
-import { analyzeSpecificationCoverage } from "../specification-coverage.js";
-import { formatCatalogAuditClosureReport } from "../../../cli/commands/catalog/catalog-audit-closure-report.js";
+import { hasCompleteCatalogAuditEvidence, hasUnresolvedCatalogAuditContracts } from "../findings/audit-closure.js";
+import { analyzeDescriptionCoverage } from "../coverage/description-coverage.js";
+import { analyzeDescriptionPriorities } from "../coverage/description-priorities.js";
+import { analyzeEditorialQuality } from "../editorial/editorial-quality.js";
+import { analyzeSpecificationCoverage } from "../coverage/specification-coverage.js";
+import { formatCatalogAuditClosureReport } from "../../../cli/commands/catalog/audits/catalog-audit-closure-report.js";
 
 const emptyEditorial = analyzeEditorialQuality([]);
 const coverage = analyzeDescriptionCoverage([]);

@@ -3,9 +3,9 @@ import test from "node:test";
 import { readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { basename, dirname } from "node:path";
 import { readZipArchive } from "../../infrastructure/archive/zip.js";
-import { collectPublishedWork } from "../individual-work-report.js";
-import { deliverPublishedWorkReport, retainPublishedWorkReport } from "../../cli/reporting/published-work-archive.js";
-import { renderPublishedWorkMarkdown } from "../../cli/reporting/published-work.js";
+import { collectPublishedWork } from "../individual/individual-work-report.js";
+import { deliverPublishedWorkReport, retainPublishedWorkReport } from "../../cli/reporting/individual/published-work-archive.js";
+import { renderPublishedWorkMarkdown } from "../../cli/reporting/individual/published-work.js";
 import { createHash } from "node:crypto";
 import { createPublishedIndividualFinishWorkspace } from "../../testing/builders/individual-finish-fixture.js";
 

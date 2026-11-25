@@ -1,7 +1,7 @@
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/canonical-catalog.js";
-import { fetchHtml, sleep } from "../../infrastructure/http/fetch-html.js";
+import { readCanonicalCatalog } from "../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
+import { fetchHtml, sleep } from "../../infrastructure/network/fetch-html.js";
 import { DEFAULT_OPTIONS } from "../../scraping/providers/gam/config.js";
 import { inspectGamBasketDom, pendingGamBasketRecords } from "./basket-dom-evidence.js";
 

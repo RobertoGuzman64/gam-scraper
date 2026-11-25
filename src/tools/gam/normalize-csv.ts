@@ -7,7 +7,7 @@ import { dirname, resolve } from "node:path";
 import { parseCsv } from "../../shared/csv-parse.js";
 import { toCsv } from "../../shared/csv.js";
 import { normalizeGamRows, type Report } from "./normalization/normalize-rows.js";
-import { formatNormalizationWork } from "../../cli/reporting/normalization-work.js";
+import { formatNormalizationWork } from "../../cli/reporting/audits/normalization-work.js";
 import { DEFAULT_OPTIONS } from "../../scraping/providers/gam/config.js";
 
 type Args = {

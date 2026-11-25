@@ -1,5 +1,5 @@
-import { gamNewForkliftIdentityIssues } from "./providers/gam/new-forklift-identity.js";
-import { curateGamGallery } from "./providers/gam/verified-gallery.js";
+import { gamNewForkliftIdentityIssues } from "./gam/new-forklift-identity.js";
+import { curateGamGallery } from "./gam/verified-gallery.js";
 import type { ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 import type { OfflinePreparation, PreparationSource } from "../../preparation/documents/offline-document.js";
 import { cohorts } from "./cohorts.js";

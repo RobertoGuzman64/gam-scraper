@@ -3,7 +3,7 @@ import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import test, { after } from "node:test";
-import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/canonical-catalog.js";
+import { readCanonicalCatalog } from "../../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
 import { buildProductIdentity } from "../../../catalog/identity.js";
 import { readOfflinePreparation } from "../../../infrastructure/filesystem/preparation/offline-preparation.js";
 import { reviewActiveCampaign } from "../../review.js";

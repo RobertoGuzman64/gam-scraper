@@ -4,8 +4,8 @@ import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 import { describeBatch, runBatch } from "../../../scraping/batch/run.js";
 import { batchHelp, parseBatchOptions } from "../../options/batch.js";
-import { BatchConsole } from "../../reporting/batch-progress.js";
-import { formatBatchSummary } from "../../reporting/batch-summary.js";
+import { BatchConsole } from "../../reporting/progress/batch-progress.js";
+import { formatBatchSummary } from "../../reporting/progress/batch-summary.js";
 
 export const runBatchCli = async (args: readonly string[]): Promise<void> => {
   const options = parseBatchOptions(args);
@@ -18,7 +18,7 @@ export const runBatchCli = async (args: readonly string[]): Promise<void> => {
     for (const provider of describeBatch(options)) printReportLine(`  ${provider.providerId} | ${provider.outputDir} | ${provider.outputPrefix}`);
     return;
   }
-  const scraperScript = fileURLToPath(new URL("../extraction/scrape.js", import.meta.url));
+  const scraperScript = fileURLToPath(new URL("../scrape.js", import.meta.url));
   const { report, reportFile } = await runBatch(options, scraperScript, new BatchConsole());
   for (const line of formatBatchSummary(report, reportFile)) printReportLine(line);
   if (report.status !== "complete") process.exitCode = 1;

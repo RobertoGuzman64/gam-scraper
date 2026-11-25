@@ -4,7 +4,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { runExport } from "../../../cli/commands/legacy-export/export.js";
+import { runExport } from "../../../cli/commands/legacy-export.js";
 import { record, documentFor, readZipXml } from "./export-fixtures.js";
 
 test("CLI genera Excel offline e impide reusar la preparación tras una extracción parcial", async () => {

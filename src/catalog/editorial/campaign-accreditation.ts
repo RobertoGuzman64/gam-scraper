@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import type { InterventionProvenance } from "../../preparation/documents/offline-document.js";
 import type { OfflinePreparation } from "../../preparation/documents/offline-document.js";
-import { gamNewForkliftIdentityIssues } from "./providers/gam/new-forklift-identity.js";
+import { gamNewForkliftIdentityIssues } from "./gam/new-forklift-identity.js";
 import type { PublishableSelection } from "./select-publishable.js";
 
 export type AccreditedSource = {

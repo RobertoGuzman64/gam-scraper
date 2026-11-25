@@ -4,7 +4,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { resolveEditorialFacts } from "../core/editorial-facts.js";
 import { resolveVerifiedEditorialUnitContext } from "../identity/editorial-unit-context.js";
-import { loadEditorialKnowledge } from "../../../infrastructure/filesystem/editorial/knowledge.js";
+import { loadEditorialKnowledge } from "../../../infrastructure/filesystem/editorial-knowledge.js";
 import { resolveKnowledgeEditorial } from "../core/knowledge-editorial.js";
 import { controlledGomarizPlatform, controlledMercaelevaPlatform } from "../core/editorial-contract-records.js";
 

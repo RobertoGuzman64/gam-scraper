@@ -5,7 +5,7 @@ import test from "node:test";
 import { matchesTechnicalDocumentVerification, type TechnicalSpecEvidence } from "../../../contracts/technical-provenance.js";
 import { normalizeSpecKey } from "../../../catalog/normalization/normalize-specs.js";
 import { buildProductIdentity } from "../../../catalog/identity.js";
-import { readVerifiedManainRecordSource } from "../../../infrastructure/filesystem/catalog/manain-record-source.js";
+import { readVerifiedManainRecordSource } from "../../../infrastructure/filesystem/catalog/originals/manain-record-source.js";
 import { prepareImportBatch } from "../../product/batch-identity.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { normalizePreparedTechnicalSpecs } from "../../technical/preparation-technical-stages.js";

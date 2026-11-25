@@ -4,7 +4,7 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import { buildProductIdentity } from "../../identity.js";
 import { prepareImportBatch } from "../../../preparation/product/batch-identity.js";
 import type { OfflinePreparation } from "../../../preparation/documents/offline-document.js";
-import { measurePreparationWork } from "../preparation-work.js";
+import { measurePreparationWork } from "../work/preparation-work.js";
 
 const record = (reference: string): ProductRecord => ({
   providerId: "gam", categoryKey: "plataforma", categoryName: "Plataformas",

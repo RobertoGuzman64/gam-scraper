@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test, { after } from "node:test";
-import { readCampaignReference } from "../../../infrastructure/filesystem/reference/store.js";
+import { readCampaignReference } from "../../../infrastructure/filesystem/campaign/reference-store.js";
 import { deliverActiveCampaign } from "../../delivery/execute.js";
 import { planDeliveredCampaignCleanup } from "../../cleanup.js";
 import { finalizeActiveCampaign } from "../../finalization.js";

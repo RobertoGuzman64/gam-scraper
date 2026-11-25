@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { resolvePublicationDirectory } from "../../infrastructure/filesystem/catalog/publication-identity.js";
+import { resolvePublicationDirectory } from "../../infrastructure/filesystem/catalog/publications/publication-identity.js";
 
 export type AccreditedPublicationProvider = "gam" | "gomariz" | "mercaeleva";
 
