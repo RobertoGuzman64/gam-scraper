@@ -114,6 +114,7 @@ test("el preflight conserva las alertas históricas y reserva las huellas comple
     assert.match(output, /WARN \| REFERENCIAS HISTÓRICAS \| 1 discrepancia de huella; archivos no modificados/);
     assert.match(output, /ERROR \| Diagnóstico de prueba/);
   }
+  assert.match(compact, /\n\nERROR \| Diagnóstico de prueba\n\nWARN \| REFERENCIAS HISTÓRICAS/);
   assert.match(compact, /--detalle/);
   assert.ok(!compact.includes(mismatch.path));
   assert.ok(!compact.includes(mismatch.expectedSha256));

@@ -4,7 +4,7 @@ import { OperationProgress } from "../progress/operation-progress.js";
 
 const capture = (action: () => void): string => {
   const lines: string[] = [];
-  const log = mock.method(console, "log", (message: string) => { lines.push(message); });
+  const log = mock.method(console, "log", (message: string) => { lines.push(`${message}\n`); });
   const write = mock.method(process.stdout, "write", (message: string | Uint8Array) => {
     lines.push(typeof message === "string" ? message : message.toString());
     return true;
@@ -19,7 +19,7 @@ const capture = (action: () => void): string => {
     write.mock.restore();
     log.mock.restore();
   }
-  return lines.join("\n").replace(/\u001b\[[0-9;]*m/g, "");
+  return lines.join("").replace(/\u001b\[[0-9;]*m/g, "");
 };
 
 test("presenta una línea definitiva por proveedor, contador y etapas sin barras", () => {
@@ -123,4 +123,20 @@ test("el progreso compacto resume cada etapa sin perder el contador ni el estado
   assert.match(output, /WARN \| FINISH \| INSPECCIÓN \| 1\/3 proveedores procesados \| \d+s/);
   assert.doesNotMatch(output, /^  (GAM|GOMARIZ|MERCAELEVA) \| .*procesados/gm);
   assert.doesNotMatch(output, /PASS \| FINISH \| INSPECCIÓN|4\/3 proveedores procesados/);
+});
+
+
+test("separa grupos de etapas después de cerrar la anterior, sin perder los tiempos", () => {
+  const output = capture(() => {
+    const progress = new OperationProgress("FINISH");
+    progress.stage("PREFLIGHT", "1 proveedor");
+    progress.update("GAM", 1, 1);
+    progress.stage("ENTREGA", "1 proveedor", "ENTREGA Y ACTIVACIÓN");
+    progress.update("GAM", 1, 1);
+    progress.finish();
+  });
+  assert.match(output, /PASS \| FINISH \| PREFLIGHT[^\n]*\n\nENTREGA Y ACTIVACIÓN\n/);
+  assert.match(output, /PASS \| FINISH \| ENTREGA \| 1\/1 proveedor procesado \| \d+s/);
+  assert.match(output, /PASS \| FINISH \| TOTAL/);
+  assert.equal((output.match(/ENTREGA Y ACTIVACIÓN/g) ?? []).length, 1);
 });

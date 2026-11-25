@@ -24,6 +24,8 @@ test("terminal y Markdown comparten el mismo resultado, con cifras agregadas y t
   const markdown = renderPublishedWorkMarkdown(report);
   assert.match(terminal, /GAM.*specs \+4/);
   assert.match(terminal, /TOTAL.*specs \+8/);
+  assert.match(terminal, /\n\n  TOTAL/);
+  assert.equal(terminal.split("\n")[1]?.indexOf(" · "), terminal.split("\n")[2]?.indexOf(" · "));
   assert.match(markdown, /\| TOTAL \| 6 \| 4 \| 2 \| 2 \|/);
   assert.match(markdown, /\| TOTAL \| 8 \| 4 \| 2 \| 4 \|/);
   assert.match(markdown, /Huellas SHA-256 abreviadas/);

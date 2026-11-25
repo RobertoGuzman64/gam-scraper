@@ -71,7 +71,8 @@ const failureLabels = new Set(["FAIL", "ERROR", "INVÁLIDA", "INVÁLIDO", "FAILE
 
 const sectionLabels = new Set([
   "DOCUMENTACIÓN Y RECURSOS ESENCIALES", "PROVEEDORES", "CAMPAÑAS CONSERVADAS",
-  "CATALOGS/ VERSIONADOS", "OPCIONES DISPONIBLES", "ORIENTACIÓN OPERATIVA"
+  "CATALOGS/ VERSIONADOS", "OPCIONES DISPONIBLES", "ORIENTACIÓN OPERATIVA",
+  "VALIDACIÓN Y ACREDITACIÓN"
 ]);
 
 const metricColors: Readonly<Record<string, TerminalColor>> = {
@@ -147,13 +148,22 @@ export const printReportLine = (message: string): void => {
 };
 
 export const printCommandHeader = (section: string, simulation = false): void => {
+  printReportLine("");
   printReportLine(formatHeader(`${section}${simulation ? " · SIMULACIÓN · SIN ESCRITURAS" : ""}`));
   printReportLine("");
 };
 
 export const printCommandSection = (section: string): void => {
   printReportLine("");
-  printReportLine(section);
+  printReportLine(tint(section, "cyan"));
+};
+
+export const formatCommandColumns = (rows: readonly (readonly string[])[]): readonly string[] => {
+  const widths: number[] = [];
+  for (const row of rows) {
+    row.forEach((value, index) => { widths[index] = Math.max(widths[index] ?? 0, value.length); });
+  }
+  return rows.map((row) => row.map((value, index) => value.padStart(widths[index] ?? value.length)).join(" · "));
 };
 
 export const printCommandProvider = (providerId: string, summary: string): void => {

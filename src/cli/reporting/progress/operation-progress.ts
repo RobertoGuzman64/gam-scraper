@@ -1,5 +1,5 @@
 import { LiveStatus, formatDuration } from "../live-status.js";
-import { printStatus, type TerminalStatus } from "../terminal.js";
+import { printCommandSection, printStatus, type TerminalStatus } from "../terminal.js";
 
 export class OperationProgress {
   private readonly live = new LiveStatus();
@@ -15,9 +15,10 @@ export class OperationProgress {
 
   constructor(private readonly operation: string, private readonly detailed = false) {}
 
-  stage(name: string, detail?: string): void {
+  stage(name: string, detail?: string, section?: string): void {
     if (this.closed) return;
     this.closeStage("PASS");
+    if (section) printCommandSection(section);
     this.stageName = name;
     this.stageStartedAt = Date.now();
     this.lastCompleted = 0;

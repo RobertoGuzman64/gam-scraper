@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { parseIndividualCatalogProviders } from "../../../options/individual-catalog.js";
 import { prepareIndividualCatalogs } from "../../../../preparation/workflow/individual-prepare.js";
 import { checkHistoricalReferenceIntegrity } from "../../../../infrastructure/filesystem/legacy-export/reference-integrity.js";
-import { printCommandHeader, printCommandProvider, printCommandSection, printCommandResult, printCommandWarning, printCommandDeliverable, printReportLine, printStatus } from "../../../reporting/terminal.js";
+import { formatCommandColumns, printCommandHeader, printCommandProvider, printCommandSection, printCommandResult, printCommandWarning, printCommandDeliverable, printReportLine, printStatus } from "../../../reporting/terminal.js";
 import { printCommandError } from "../../../reporting/errors.js";
 import { renderHistoricalReferenceMismatches } from "../../../reporting/catalog/historical-references.js";
 import { OperationProgress } from "../../../reporting/progress/operation-progress.js";
@@ -51,7 +51,11 @@ export const runPrepareIndividual = async (args: readonly string[], workspace: s
   let ready = 0;
   let review = 0;
   let blocked = 0;
-  for (const result of results) {
+  const summaries = formatCommandColumns(results.map(({ summary }) => summary
+    ? [`${summary.sourceCount} originales`, `${summary.ready} ready`, `${summary.review} review`] : []));
+  printCommandSection("PROVEEDORES");
+  for (const [index, result] of results.entries()) {
+    if (index > 0) printReportLine("");
     if (!result.summary) {
       blocked += 1;
       printStatus("FAIL", `${result.providerId.toUpperCase()} | BLOQUEADA | ${result.error}`);
@@ -61,7 +65,7 @@ export const runPrepareIndividual = async (args: readonly string[], workspace: s
     total += summary.sourceCount;
     ready += summary.ready;
     review += summary.review;
-    printCommandProvider(result.providerId, `${summary.sourceCount} originales · ${summary.ready} ready · ${summary.review} review`);
+    printCommandProvider(result.providerId, summaries[index] ?? "");
     if (summary.activeAvailable) {
       printReportLine(`    Frente a vigente: altas ${summary.possibleAdds} · ausencias ${summary.possibleRemovals} · cambios ${summary.possibleChanges}`);
       if (summary.possibleSpecificationLosses > 0) {
@@ -84,6 +88,7 @@ export const runPrepareIndividual = async (args: readonly string[], workspace: s
     }
   }
   if (referenceMismatches?.length) {
+    printReportLine("");
     for (const line of renderHistoricalReferenceMismatches(referenceMismatches, detailed)) printReportLine(line);
   }
   printCommandSection("RESUMEN");

@@ -3,7 +3,7 @@ import { mock } from "node:test";
 import test from "node:test";
 import { BatchConsole } from "../progress/batch-progress.js";
 import type { ProviderRun } from "../../../contracts/batch-report.js";
-import { formatHeader, formatProgressBar, formatReportLine, formatStatus, supportsTerminalColor, supportsAnimation, printCommandHeader, printCommandProvider, printCommandResult, printCommandSection } from "../terminal.js";
+import { formatCommandColumns, formatHeader, formatProgressBar, formatReportLine, formatStatus, supportsTerminalColor, supportsAnimation, printCommandHeader, printCommandProvider, printCommandResult, printCommandSection } from "../terminal.js";
 
 test("estados semánticos mantienen texto legible en salidas sin color", () => {
   assert.equal(formatStatus("PASS", "Entrega verificada", false), "PASS | Entrega verificada");
@@ -104,6 +104,7 @@ test("los bloques terminales son legibles sin TTY ni color y conservan cierre ex
     log.mock.restore();
   }
   const output = lines.join("\n").replace(/\u001b\[[0-9;]*m/g, "");
+  assert.ok(output.startsWith("\n◆ EQUIPZILLA"));
   assert.match(output, /SIMULACIÓN · SIN ESCRITURAS/);
   assert.match(output, /\n\n  MERCAELEVA  221 publicadas\n\nAUDITORÍA POSTERIOR\n\nRESULTADO\nWARN \| Revisión técnica pendiente/);
 });
@@ -152,4 +153,15 @@ test("el lote muestra el contador de proveedores sin barras ni anuncios duplicad
   assert.match(output, /PASS \| GAM \| 983 productos \| 4s \| 1\/3/);
   assert.doesNotMatch(output, /█|░/);
   assert.equal((output.match(/iniciando scraper/g) ?? []).length, 1);
+});
+
+
+test("las columnas se ajustan al contenido sin truncar cifras ni introducir códigos ANSI", () => {
+  const rows = [["976 publicables", "1 excluida", "cambios 225"], ["12000 publicables", "10 excluidas", "cambios 0"]];
+  const aligned = formatCommandColumns(rows);
+  assert.deepEqual(aligned, ["  976 publicables ·   1 excluida · cambios 225", "12000 publicables · 10 excluidas ·   cambios 0"]);
+  assert.equal(aligned[0]?.indexOf(" · "), aligned[1]?.indexOf(" · "));
+  assert.deepEqual(formatCommandColumns([]), []);
+  assert.deepEqual(formatCommandColumns([[], ["1 ready"]]), ["", "1 ready"]);
+  assert.doesNotMatch(aligned.join("\n"), /\u001b/);
 });

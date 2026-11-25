@@ -9,7 +9,7 @@ import { prepareCommercialExportPreflight } from "../../../../commercial/export/
 import { renderCommercialExportPreflight } from "../../../reporting/commercial/commercial-export-preflight.js";
 import { verifyCommercialExportDirectory, verifyCommercialExportSources } from "../../../../commercial/export/commercial-export-verification.js";
 import type { CommercialEnvironment } from "../../../../infrastructure/filesystem/legacy-export/commercial-reference-loader.js";
-import { printCommandHeader, printCommandSection, printCommandResult, printCommandDeliverable, printCommandProvider, printReportLine, formatReportLine } from "../../../reporting/terminal.js";
+import { formatCommandColumns, printCommandHeader, printCommandSection, printCommandResult, printCommandDeliverable, printCommandProvider, printReportLine, formatReportLine } from "../../../reporting/terminal.js";
 import { printCommandError } from "../../../reporting/errors.js";
 import { OperationProgress } from "../../../reporting/progress/operation-progress.js";
 import { writeLocalPanel } from "../../../../panel/application/write-local-panel.js";
@@ -72,12 +72,13 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
     printReportLine("Uso: npm run exportar:comercial -- --entorno develop|production [--simular] [--salida <directorio-nuevo>] [--detalle]\nPor defecto genera un ZIP comercial verificado en el Escritorio (un JSON por proveedor acreditado y manifiesto) y actualiza el informe interno de integración. --salida conserva los archivos sueltos en un directorio nuevo. --simular permite verificar sin elegir entorno. --detalle muestra el progreso por proveedor, rutas, huellas e identificadores. También admite --out, --environment y --dry-run. No publica ni importa en backend.");
     return;
   }
+  printCommandHeader("EXPORTACIÓN COMERCIAL", options.dryRun);
   const progress = new OperationProgress("EXPORTACIÓN COMERCIAL", options.detailed);
   try {
     progress.stage("PREFLIGHT Y PROYECCIÓN", "acreditando y preparando proveedores");
     const { preflight, files } = await prepareCommercialExportPreflight(root, options.environment,
       (providerId, completed, total) => progress.update(providerId.toUpperCase(), completed, total));
-    for (const line of renderCommercialExportPreflight(preflight, options.environment, options.detailed)) progress.log(formatReportLine(line));
+    progress.log(formatReportLine(["", ...renderCommercialExportPreflight(preflight, options.environment, options.detailed), ""].join("\n")));
     if (preflight.failures.length || preflight.globalFailures.length || !isReferenceProviderSet(preflight.publications.map((item) => item.providerId))) {
       throw new Error(`Preflight comercial no conforme: ${preflight.failures.length} incidencias por proveedor y ${preflight.globalFailures.length} globales. No se exportó ningún archivo`);
     }
@@ -93,7 +94,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
       progress.stage("VERIFICACIÓN", "contrastando fuentes comerciales");
       await verifyCommercialExportSources(root, files);
       progress.finish();
-      printCommandHeader("EXPORTACIÓN COMERCIAL", true);
+      printCommandSection("RESULTADO DE SIMULACIÓN");
       printReportLine(`Entorno: ${options.environment ?? "sin companyID"} · ${files.length - 1} proveedores · un manifiesto`);
       for (const entry of files) printReportLine(`  ${entry.name} · ${entry.bytes} bytes · calculado, no escrito`);
       printReportLine(readiness);
@@ -104,9 +105,13 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
       progress.stage("ENTREGA", "generando y verificando ZIP comercial e informe interno");
       const delivered = await deliverCommercialPackages(root, await findDesktopDirectory(), files);
       progress.finish();
-      printCommandHeader("EXPORTACIÓN COMERCIAL");
-      for (const provider of snapshot.providers) {
-        printCommandProvider(provider.providerId, `${provider.summary.exported} productos · ${provider.summary.categorized} categorizados · ${provider.summary.pendingCategory} pendientes · ${provider.summary.attributes} atributos`);
+      printCommandSection("PRODUCTOS POR PROVEEDOR");
+      const summaries = formatCommandColumns(snapshot.providers.map(({ summary }) => [
+        `${summary.exported} productos`, `${summary.categorized} categorizados`,
+        `${summary.pendingCategory} pendientes`, `${summary.attributes} atributos`
+      ]));
+      for (const [index, provider] of snapshot.providers.entries()) {
+        printCommandProvider(provider.providerId, summaries[index] ?? "");
       }
       printCommandSection("TOTAL ACREDITADO");
       printReportLine(`${delivered.exported} productos · ${delivered.attributes} atributos · entorno ${delivered.environment}`);
@@ -115,6 +120,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
       printCommandDeliverable("COMERCIAL", delivered.commercial);
       if (delivered.report) printCommandDeliverable("INFORME INTERNO", delivered.report);
       if (shouldRefreshLocalPanel(options)) {
+        printCommandSection("PANEL LOCAL");
         const panelProgress = new OperationProgress("PANEL LOCAL", options.detailed);
         try {
           panelProgress.stage("EVIDENCIAS", "preparando explorador técnico");
@@ -150,7 +156,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
       throw error;
     }
     progress.finish();
-    printCommandHeader("EXPORTACIÓN COMERCIAL");
+    printCommandSection("RESULTADOS COMERCIALES");
     printReportLine(`${files.length - 1} proveedores · entorno ${options.environment ?? "sin companyID"}`);
     printCommandSection("ARCHIVOS VERIFICADOS");
     for (const entry of files) printReportLine(`  ${entry.name} · ${entry.bytes} bytes`);

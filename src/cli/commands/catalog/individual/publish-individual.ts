@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { resolve, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseIndividualCatalogProviders } from "../../../options/individual-catalog.js";
-import { printCommandHeader, printCommandSection, printCommandProvider, printCommandResult, printCommandDeliverable, printReportLine, printStatus } from "../../../reporting/terminal.js";
+import { formatCommandColumns, printCommandHeader, printCommandSection, printCommandProvider, printCommandResult, printCommandDeliverable, printReportLine, printStatus } from "../../../reporting/terminal.js";
 import { LiveStatus, formatDuration } from "../../../reporting/live-status.js";
 import { OperationProgress } from "../../../reporting/progress/operation-progress.js";
 import { printCommandError } from "../../../reporting/errors.js";
@@ -84,10 +84,15 @@ const withFullDiagnostics = async (
 };
 
 const describeResult = (result: IndividualFinishResult, detailed: boolean): void => {
-  for (const item of result.providers) {
+  const summaries = formatCommandColumns(result.providers.map((item) => [
+    `${item.publishable} publicables`, `${item.excluded} excluidas`, `altas ${item.difference.added.length}`,
+    `bajas ${item.difference.removed.length}`, `cambios ${item.difference.modified.length}`
+  ]));
+  for (const [index, item] of result.providers.entries()) {
     const difference = item.difference;
     const removals = difference.removed.length;
-    printCommandProvider(item.providerId, `${item.status} · ${item.publishable} publicables · ${item.excluded} excluidas · altas ${difference.added.length} · bajas ${removals} · cambios ${difference.modified.length}`);
+    if (detailed && index > 0) printReportLine("");
+    printCommandProvider(item.providerId, `${item.status} · ${summaries[index] ?? ""}`);
     if (removals > 0) printStatus("WARN", `${item.providerId.toUpperCase()} | ${removals} bajas acreditadas en el alcance publicado`);
     if (detailed) {
       printReportLine(`    Especificaciones nuevas ${difference.addedSpecifications.length} · modificadas ${difference.changedSpecifications.length}`);
@@ -129,6 +134,7 @@ export const runPublishIndividual = async (
   const parsed = parseIndividualCatalogProviders(args.filter((arg) => arg !== "--detalle"), true);
   printCommandHeader("PASO 2/2 · FINISH", parsed.dryRun);
   const root = resolve(workspace);
+  printReportLine("VALIDACIÓN Y ACREDITACIÓN");
   const progress = new OperationProgress("FINISH", detailed);
   let result: IndividualFinishResult;
   try {
@@ -164,7 +170,8 @@ export const runPublishIndividual = async (
           }
           if (completed === total && !preflightComplete) preflightComplete = true;
         } else if (stage !== activeStage) {
-          progress.stage(stage, `${total} ${total === 1 ? "proveedor" : "proveedores"}`);
+          progress.stage(stage, `${total} ${total === 1 ? "proveedor" : "proveedores"}`,
+            stage === "ENTREGA" ? "ENTREGA Y ACTIVACIÓN" : undefined);
           activeStage = stage;
         }
         progress.update(providerId.toUpperCase(), completed, total);

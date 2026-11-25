@@ -1,19 +1,26 @@
+import { formatCommandColumns } from "../terminal.js";
 import type { PublishedWorkReport, PublishedWorkSummary } from "../../../catalog/diagnostics/work/published-work.js";
 
 const textChanges = (work: PublishedWorkSummary): number =>
   work.descriptionsGenerated + work.descriptionsTransformed;
 
-export const formatPublishedWorkTerminal = (report: PublishedWorkReport, detailed = false): readonly string[] => [
-  "TRABAJO PUBLICADO · ORIGINAL → FINAL",
-  ...report.providers.map(({ providerId, work }) =>
-    `  ${providerId.toUpperCase()} · ${work.originalProducts} originales → ${work.publishedProducts} publicadas` +
-    ` · transformadas ${work.transformedProducts} · specs +${work.specificationsAdded}` +
-    ` · textos ${textChanges(work)}` + (detailed ? ` · valores ${work.specificationValuesChanged} · títulos ${work.titlesTransformed}` : "")),
-  `  TOTAL · ${report.total.publishedProducts} publicadas · ${report.total.excludedProducts} excluidas` +
-  ` · transformadas ${report.total.transformedProducts} · specs +${report.total.specificationsAdded}` +
-  ` · textos ${textChanges(report.total)}` + (detailed ?
-    ` · valores ${report.total.specificationValuesChanged} · títulos ${report.total.titlesTransformed}` : "")
-];
+export const formatPublishedWorkTerminal = (report: PublishedWorkReport, detailed = false): readonly string[] => {
+  const summaries = formatCommandColumns(report.providers.map(({ work }) => [
+    `${work.originalProducts} originales → ${work.publishedProducts} publicadas`,
+    `transformadas ${work.transformedProducts}`, `specs +${work.specificationsAdded}`,
+    `textos ${textChanges(work)}`, ...(detailed ? [`valores ${work.specificationValuesChanged}`, `títulos ${work.titlesTransformed}`] : [])
+  ]));
+  return [
+    "TRABAJO PUBLICADO · ORIGINAL → FINAL",
+    ...report.providers.map(({ providerId }, index) =>
+      `  ${providerId.toUpperCase().padEnd(11)} · ${summaries[index] ?? ""}`),
+    "",
+    `  TOTAL · ${report.total.publishedProducts} publicadas · ${report.total.excludedProducts} excluidas` +
+    ` · transformadas ${report.total.transformedProducts} · specs +${report.total.specificationsAdded}` +
+    ` · textos ${textChanges(report.total)}` + (detailed ?
+      ` · valores ${report.total.specificationValuesChanged} · títulos ${report.total.titlesTransformed}` : "")
+  ];
+};
 
 const totalsRow = (name: string, work: PublishedWorkSummary): string =>
   `| ${name} | ${work.originalProducts} | ${work.publishedProducts} | ${work.excludedProducts} | ${work.transformedProducts} |`;
