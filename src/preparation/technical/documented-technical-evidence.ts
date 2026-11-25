@@ -14,6 +14,7 @@ import type { EditorialEnergy } from "../editorial/core/editorial-facts.js";
 import { editorialMetricOf, editorialQuantityOf, editorialQuantity } from "../editorial/measurements/editorial-measurements.js";
 import { fold } from "../classification/category-utils.js";
 import { containsEditorialBrandModel, containsEditorialIdentity } from "../editorial/identity/editorial-identity-match.js";
+import { verifiedEditorialUrl } from "../editorial/source/editorial-source-url.js";
 
 export type DocumentedTechnicalUnit = {
   readonly fingerprint: string;
@@ -212,6 +213,15 @@ export const recoverReviewedModelTechnicalSpecs = (
   return result !== specs || !fallback[0] ? result : recoverReviewedModelClaim(original, specs, fallback[0], observe);
 };
 
+const anchoredOfferSlug = (record: ProductRecord): string => {
+  const slug = new URL(record.url).pathname.split("/").filter(Boolean).at(-1) ?? "";
+  if (record.providerId !== "mercaeleva") return slug;
+  const url = verifiedEditorialUrl(record.url, ["sales.mercaeleva.com"]);
+  if (!url || !/^\/(?:es|en)\/for-sale\/machine\/[^/]+\/?$/iu.test(url.pathname) || !record.reference) return "";
+  const suffix = `-${record.reference}`;
+  return slug.toLowerCase().endsWith(suffix.toLowerCase()) ? slug.slice(0, -suffix.length) : "";
+};
+
 const recoverReviewedModelClaim = (
   original: ProductRecord, specs: SpecsMap, claim: ReturnType<typeof reusableReviewedModelClaims>[number],
   observe?: TechnicalRecoveryObservation
@@ -247,7 +257,7 @@ const recoverReviewedModelClaim = (
       expected.familyFromSourcePath ? editorialFamilyOf(new URL(original.url).pathname) : null);
     if (!validYear || !validIdentity ||
       (!containsEditorialBrandModel(new URL(original.url).pathname, original.brand, original.model) && !structuredOffer) ||
-      anchoredOffer && !comparableIdentifier(new URL(original.url).pathname.split("/").filter(Boolean).at(-1) ?? "")
+      anchoredOffer && !comparableIdentifier(anchoredOfferSlug(original))
         .endsWith(comparableIdentifier(structuredOffer ? original.model : `${original.brand}${original.model}`)) ||
       sourceFamily !== expected.family ||
       ((!structuredIdentity || anchoredOffer) && Object.keys(original.specs).length !== Object.keys(expected.sourceAnchors).length) ||

@@ -232,9 +232,16 @@ test("recupera prestaciones de una oferta corroborada sin trasladar otros datos 
   const result = recoverDocumented(record);
   assert.deepEqual(result, { ...record.specs, "Alcance horizontal (m)": "7,1 m", "Sistema de estabilización": "H+H" });
   assert.equal(recoverReviewedModelTechnicalSpecs(record, result), result);
-  assert.deepEqual(recoverDocumented({ ...record, providerId: "mercaeleva", reference: "CONTROL-02",
-    url: "https://sales.mercaeleva.com/es/for-sale/machine/cte-az14-pickup-control-02" }), result);
+  const other: ProductRecord = { ...record, providerId: "mercaeleva", reference: "CONTROL-02",
+    url: "https://sales.mercaeleva.com/es/for-sale/machine/cte-az14-pickup-control-02" };
+  assert.deepEqual(recoverDocumented(other), result);
+  assert.deepEqual(recoverDocumented({ ...other, url: other.url.replace("control-02", "CONTROL-02") }), result);
   const invalidRecords: ProductRecord[] = [
+    { ...other, reference: "CONTROL-03" }, { ...other, reference: null },
+    { ...other, url: other.url.replace("pickup-control", "pickup-fib-control") },
+    { ...other, url: other.url.replace("sales.mercaeleva.com", "example.test") },
+    { ...other, url: other.url.replace("/for-sale/machine/", "/producto/") },
+    { ...other, url: other.url.replace("-control-02", "") },
     { ...record, condition: "Segunda mano" }, { ...record, year: "2023" }, { ...record, serialNumber: "CONTROL" },
     { ...record, shortDescription: "CTE ZED14 nueva." }, { ...record, model: "AZ14 PICKUP FIB" },
     { ...record, longDescription: "Plataforma articulada con alcance lateral de 7,1 metros." },
