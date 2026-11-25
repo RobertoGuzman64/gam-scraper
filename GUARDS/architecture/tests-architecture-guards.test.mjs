@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { inspectEditorialArchitecture } from "./tests-editorial-architecture-guard.mjs";
 import { inspectTestArchitecture } from "./tests-domain-tests-guard.mjs";
-import { inspectModuleIntegrity } from "./tests-module-integrity-guard.mjs";
+import { inspectModuleIntegrity, inspectSourceStructure } from "./tests-module-integrity-guard.mjs";
 import { ts } from "./guards-architecture-core.mjs";
 import { inspectPanelHeavyPreparations } from "../tests-performance-guard.mjs";
 
@@ -1042,4 +1042,97 @@ test("acepta la raíz temporal de un builder de publicaciones sin acreditación 
   write("src/testing/integration/catalog/tests/temporary-publications.test.ts",
     "import assert from 'node:assert/strict'; import { read } from '../../../builders/temporary-publications.js'; const verify = (workspace: string) => { const data = read(workspace); assert.ok(data.length >= 0); }; export { verify };\n");
   assert.deepEqual(inspectTestArchitecture(root).findings, []);
+});
+
+const structureFixture = (t) => {
+  const root = mkdtempSync(join(tmpdir(), "eqz-source-structure-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const write = (path, code) => {
+    const full = join(root, path);
+    mkdirSync(dirname(full), { recursive: true });
+    writeFileSync(full, code);
+  };
+  return { root, write };
+};
+
+test("el tamaño máximo incluye código productivo, suites, estilos y líneas vacías, con finales LF y CRLF equivalentes", (t) => {
+  const { root, write } = structureFixture(t);
+  for (const [path, separator] of [["src/domain/rules.ts", "\n"], ["src/domain/rules.test.ts", "\r\n"], ["src/domain/view.css", "\r"]]) {
+    write(path, Array(500).fill("// línea").join(separator) + separator);
+  }
+  write("src/domain/blank.ts", "\n".repeat(500));
+  assert.deepEqual(inspectSourceStructure(root).findings, []);
+  assert.equal(inspectSourceStructure(root).largest, 500);
+  for (const path of ["src/domain/rules.ts", "src/domain/rules.test.ts", "src/domain/view.css", "src/domain/blank.ts"]) {
+    write(path, "\n".repeat(500) + "última línea");
+  }
+  const result = inspectSourceStructure(root);
+  assert.equal(result.largest, 501);
+  assert.equal(result.findings.length, 4);
+  assert.ok(result.findings.every((finding) => finding.includes("501 líneas; máximo 500")));
+});
+
+test("la estructura solo limita src y no el panel generado, scripts ni guards", (t) => {
+  const { root, write } = structureFixture(t);
+  write("src/domain/a.ts", "export {};");
+  write("src/domain/b.ts", "export {};");
+  for (const path of ["panel/index.html", "guards/architecture/check.mjs", "scripts/testing/run.mjs"]) {
+    write(path, "\n".repeat(900));
+  }
+  const result = inspectSourceStructure(root);
+  assert.equal(result.files, 2);
+  assert.equal(result.largest, 1);
+  assert.deepEqual(result.findings, []);
+});
+
+test("rechaza carpetas vacías, hojas unitarias y niveles intermedios sin contenido propio", (t) => {
+  const { root, write } = structureFixture(t);
+  write("src/domain/a.ts", "");
+  write("src/domain/single/only.test.ts", "");
+  write("src/domain/wrapper/group/a.ts", "");
+  write("src/domain/wrapper/group/b.ts", "");
+  mkdirSync(join(root, "src/domain/empty"));
+  const { findings } = inspectSourceStructure(root);
+  assert.equal(findings.length, 3);
+  assert.ok(findings.some((finding) => finding.includes("single | Directorio con un único fichero")));
+  assert.ok(findings.some((finding) => finding.includes("empty | Directorio vacío")));
+  assert.ok(findings.some((finding) => finding.includes("wrapper | Directorio intermedio")));
+});
+
+test("conserva el contenedor contractual de intervenciones sin extender el permiso a otras rutas", (t) => {
+  const { root, write } = structureFixture(t);
+  for (const path of ["src/catalog/index.ts", "src/catalog/interventions/index.ts", "src/catalog/interventions/records/gam/a.ts", "src/catalog/interventions/records/gam/b.ts"]) write(path, "");
+  assert.deepEqual(inspectSourceStructure(root).findings, []);
+  write("src/catalog/interventions/other/gam/a.ts", "");
+  write("src/catalog/interventions/other/gam/b.ts", "");
+  assert.deepEqual(inspectSourceStructure(root).findings, ["src/catalog/interventions/other | Directorio intermedio con un único subdirectorio"]);
+});
+
+test("la profundidad máxima se cuenta desde src y rechaza un quinto nivel", (t) => {
+  const { root, write } = structureFixture(t);
+  for (const path of ["src/a/a.ts", "src/a/b/b.ts", "src/a/b/c/c.ts", "src/a/b/c/d/d.ts", "src/a/b/c/d/other.ts"]) write(path, "");
+  assert.equal(inspectSourceStructure(root).deepest, 4);
+  assert.deepEqual(inspectSourceStructure(root).findings, []);
+  write("src/a/b/c/d/e/a.ts", "");
+  write("src/a/b/c/d/e/b.ts", "");
+  const result = inspectSourceStructure(root);
+  assert.equal(result.deepest, 5);
+  assert.deepEqual(result.findings, ["src/a/b/c/d/e | Profundidad 5; máximo 4 desde src"]);
+});
+
+test("el guard integrado devuelve error si la estructura incumple sus límites aunque los imports sean correctos", (t) => {
+  const { root, write } = structureFixture(t);
+  write("src/domain/a.ts", "export {};\n");
+  write("src/domain/b.ts", "export {};\n");
+  const guard = fileURLToPath(new URL("./tests-module-integrity-guard.mjs", import.meta.url));
+  const run = () => spawnSync(process.execPath, [guard], { cwd: root, encoding: "utf8" });
+  const valid = run();
+  assert.equal(valid.status, 0, valid.stderr);
+  assert.match(valid.stdout, /PASS \| ESTRUCTURA DE SRC/u);
+  write("src/domain/a.ts", "\n".repeat(500) + "export {};");
+  const invalid = run();
+  assert.equal(invalid.status, 1);
+  assert.match(invalid.stdout, /FAIL \| ESTRUCTURA DE SRC/u);
+  assert.match(invalid.stderr, /src\/domain\/a\.ts \| 501 líneas/u);
+  assert.match(invalid.stdout, /PASS \| INTEGRIDAD DEL REPOSITORIO/u);
 });

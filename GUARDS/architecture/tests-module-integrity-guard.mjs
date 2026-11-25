@@ -13,6 +13,58 @@ const internalTools = new Set(["cli", "testing", "tools"]);
 const portable = (path) => path.split(sep).join("/");
 const sourceExtension = /\.(?:ts|tsx|mts|cts|js|mjs|cjs)$/u;
 
+const maintainedExtension = /\.(?:ts|tsx|mts|cts|js|mjs|cjs|css|html|htm)$/iu;
+const maxSourceLines = 500;
+const maxSourceDepth = 4;
+
+const countLines = (code) => {
+  if (!code.length) return 0;
+  const lines = code.split(/\r\n|\n|\r/u);
+  return lines.length - (lines.at(-1) === "" ? 1 : 0);
+};
+
+export const inspectSourceStructure = (root) => {
+  const source = resolve(root, "src");
+  const findings = [];
+  let files = 0;
+  let directories = 0;
+  let deepest = 0;
+  let largest = 0;
+  const walk = (directory, depth) => {
+    const location = portable(relative(root, directory));
+    const entries = readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name));
+    const children = entries.filter((entry) => entry.isDirectory());
+    const regularFiles = entries.filter((entry) => entry.isFile());
+    if (depth > 0) {
+      directories++;
+      deepest = Math.max(deepest, depth);
+      if (depth > maxSourceDepth) findings.push(`${location} | Profundidad ${depth}; máximo ${maxSourceDepth} desde src`);
+      if (!children.length && regularFiles.length < 2) {
+        findings.push(`${location} | Directorio ${regularFiles.length ? "con un único fichero" : "vacío"}`);
+      }
+      if (children.length === 1 && !regularFiles.length && location !== "src/catalog/interventions/records") {
+        findings.push(`${location} | Directorio intermedio con un único subdirectorio`);
+      }
+    }
+    for (const entry of entries) {
+      const path = resolve(directory, entry.name);
+      if (entry.isSymbolicLink()) {
+        findings.push(`${portable(relative(root, path))} | Enlace simbólico no permitido en src`);
+      } else if (entry.isDirectory()) {
+        walk(path, depth + 1);
+      } else if (entry.isFile() && maintainedExtension.test(entry.name)) {
+        files++;
+        const lines = countLines(readFileSync(path, "utf8"));
+        largest = Math.max(largest, lines);
+        if (lines > maxSourceLines) findings.push(`${portable(relative(root, path))} | ${lines} líneas; máximo ${maxSourceLines}`);
+      }
+    }
+  };
+  if (existsSync(source)) walk(source, 0);
+  else findings.push("src | Directorio fuente ausente");
+  return { files, directories, deepest, largest, findings };
+};
+
 const moduleSpecifiers = (path, code) => {
   const source = ts.createSourceFile(path, code, ts.ScriptTarget.Latest, true);
   const specifiers = [];
@@ -115,6 +167,10 @@ export const inspectModuleIntegrity = (root) => {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const result = inspectModuleIntegrity(process.cwd());
+  const structure = inspectSourceStructure(process.cwd());
+  for (const problem of structure.findings) console.error(`ERROR | ESTRUCTURA DE SRC | ${problem}`);
+  console.log(formatScriptStatus(structure.findings.length ? "FAIL" : "PASS", `ESTRUCTURA DE SRC | ${structure.files} ficheros | ${structure.directories} directorios | máximo ${structure.largest}/${maxSourceLines} líneas | profundidad ${structure.deepest}/${maxSourceDepth} | ${structure.findings.length} infracciones`));
+  if (structure.findings.length) process.exitCode = 1;
   for (const problem of result.missing) console.error(`ERROR | IMPORT AUSENTE | ${problem}`);
   for (const problem of result.boundaries) console.error(`ERROR | FRONTERA ARQUITECTÓNICA | ${problem}`);
   if (result.missing.length || result.boundaries.length) {
