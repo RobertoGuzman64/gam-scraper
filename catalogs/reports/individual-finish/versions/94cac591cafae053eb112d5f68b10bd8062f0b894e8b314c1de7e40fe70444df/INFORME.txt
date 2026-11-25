@@ -1,0 +1,54 @@
+# EQUIPZILLA — Trabajo acumulado publicado
+
+Comparación entre el original canónico y la publicación individual acreditada. Solo se contabilizan fichas publicadas.
+
+## Alcance
+
+| Proveedor | Originales | Publicadas | Excluidas | Fichas transformadas |
+| --- | ---: | ---: | ---: | ---: |
+| GAM | 983 | 976 | 7 | 976 |
+| GOMARIZ | 547 | 546 | 1 | 546 |
+| MERCAELEVA | 221 | 221 | 0 | 221 |
+| MANAIN | 384 | 383 | 1 | 383 |
+| TOTAL | 2135 | 2126 | 9 | 2126 |
+
+## Especificaciones técnicas
+
+| Proveedor | Incorporadas | Claves renombradas | Valores formateados | Valores cambiados |
+| --- | ---: | ---: | ---: | ---: |
+| GAM | 1611 | 0 | 1613 | 85 |
+| GOMARIZ | 170 | 0 | 1685 | 6 |
+| MERCAELEVA | 330 | 0 | 24 | 30 |
+| MANAIN | 0 | 0 | 19 | 35 |
+| TOTAL | 2111 | 0 | 3341 | 156 |
+
+## Contenido y datos comerciales
+
+| Proveedor | Títulos | Descripciones creadas | Descripciones modificadas | Precios | Categorías | Estados | Galerías |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| GAM | 794 | 6 | 1856 | 0 | 0 | 5 | 823 |
+| GOMARIZ | 546 | 546 | 546 | 0 | 0 | 0 | 0 |
+| MERCAELEVA | 216 | 229 | 213 | 0 | 0 | 2 | 0 |
+| MANAIN | 383 | 766 | 0 | 0 | 0 | 0 | 0 |
+| TOTAL | 1939 | 1547 | 2615 | 0 | 0 | 7 | 823 |
+
+## Trazabilidad de origen y publicación
+
+| Proveedor | Original | Aprobación | JSON comercial |
+| --- | --- | --- | --- |
+| GAM | `855865e4a99f` | `2fe61144cdfc` | `0118e924281a` |
+| GOMARIZ | `87e2fc58e39f` | `8abca9d6bfd9` | `ce4ad0912c0e` |
+| MERCAELEVA | `83e0265743ba` | `87f04d9ad82f` | `f4d39df392bc` |
+| MANAIN | `75ac3f526e79` | `a782f5c860e8` | `88f31ebf9ebf` |
+Huellas SHA-256 abreviadas a 12 caracteres para lectura. Los valores completos constan en los originales y manifiestos acreditados.
+
+## Cómo interpretar las cifras
+
+- Cada ficha transformada cuenta una vez, aunque acumule varios cambios.
+- Especificaciones incorporadas: claves nuevas respecto al original tras normalizar sus nombres.
+- La incorporación de una clave no acredita por sí sola una recuperación técnica documentada.
+- Renombrados y formateos se separan de cambios reales de valor.
+- Las descripciones breves y generales se cuentan por separado; pueden superar el total de máquinas.
+- Se ignoran espacios exteriores en textos; precios y estados se comparan normalizados.
+- Las galerías se comparan como conjuntos de URL válidas y por su imagen principal.
+- Las diferencias observadas no son automáticamente juicios de calidad.
