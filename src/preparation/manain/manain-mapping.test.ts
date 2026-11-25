@@ -295,3 +295,59 @@ test("Manain: la familia de apiladores eléctricos se clasifica sin depender del
   assert.equal(category(prepareProduct({ ...source, specs: { ...source.specs, Modelo: "S2" } }, catalog).product.categorySellID), null);
   assert.equal(category(prepareProduct({ ...source, url: "https://manain.com/producto/venta-elevacion-mastil-equiptest-s1/" }, catalog).product.categorySellID), null);
 });
+
+test("Manain: tracción por ruedas solo en familias y configuraciones acreditadas", () => {
+  const target = { name: "Tipo de tracción", type: "SELECT", unit_option: "Ruedas / Orugas / Sobre camión / Empuje manual" } as const;
+  const source = { ...machine("https://manain.com/producto/venta-elevacion-tijera-equiptest-x1/", { "Tracción": "4×4" }, "Plataforma de tijera"), reference: "SYNTHETIC" };
+  assert.equal(resolveAttribute(source, target).value, "Ruedas");
+  assert.equal(resolveAttribute({ ...source, specs: { "Tracción": "4x2" } }, target).value, "Ruedas");
+  for (const traction of ["4x4 / 4x2", "4x4 opcional", "2x2", "Orugas", "4x4 hidrostatico"]) {
+    assert.equal(resolveAttribute({ ...source, specs: { "Tracción": traction } }, target).value, null);
+  }
+  assert.equal(resolveAttribute({ ...source, shortDescription: "Plataforma de tijera sobre orugas" }, target).value, null);
+  assert.equal(resolveAttribute({ ...source, url: "https://manain.com/producto/venta-elevacion-camion-cesta-equiptest-x1/", shortDescription: null }, target).value, null);
+  assert.equal(resolveAttribute({ ...source, specs: { "Tracción": "4x4", "Tipo de tracción": "Orugas" } }, target).value, "Orugas");
+});
+
+test("Manain: longitud de horquillas explícita sin confundir rangos ni familias", () => {
+  const target = { name: "Longitud de horquillas", type: "NUMBER", unit_option: "mm" } as const;
+  const source = { ...machine("https://manain.com/producto/venta-manipulacion-carretilla-equiptest-x1/", { "Largo horquillas": "1200 mm" }, "Carretilla elevadora"), reference: "SYNTHETIC" };
+  assert.equal(resolveAttribute(source, target).value, 1200);
+  for (const length of ["920-2200 mm", "1200 kg", "1200", "0 mm"]) {
+    assert.equal(resolveAttribute({ ...source, specs: { "Largo horquillas": length } }, target).value, null);
+  }
+  assert.equal(resolveAttribute({ ...source, url: "https://manain.com/producto/venta-elevacion-tijera-equiptest-x1/" }, target).value, null);
+  assert.equal(resolveAttribute({ ...source, specs: { "Largo horquillas": "1200 mm", "Longitud de horquillas": "1400 mm" } }, target).value, 1400);
+});
+
+test("Manain: conserva las tres dimensiones explícitas de la cesta de camión", () => {
+  const target = { name: "Dimensiones de la cesta", type: "TEXT", unit_option: "m" } as const;
+  const source = machine("https://manain.com/producto/venta-elevacion-camion-cesta-equiptest-x1/", { "Longitud cesta": "1,2 m", "Ancho cesta": "0,8 m", "Alto cesta": "1,3 m" }, "Camión cesta");
+  assert.equal(resolveAttribute(source, target).value, "1,2 x 0,8 x 1,3 m");
+  assert.equal(resolveAttribute({ ...source, specs: { ...source.specs, "Alto cesta": "1-2 m" } }, target).value, null);
+  assert.equal(resolveAttribute({ ...source, specs: { ...source.specs, "Longitud plataforma": "2 m" } }, target).value, null);
+  assert.equal(resolveAttribute({ ...source, specs: { ...source.specs, "Dimensiones de la cesta": "1 x 1 m" } }, target).value, "1 x 1 m");
+});
+
+test("Manain: proyecta cotas explícitas de mástil y anchura en su familia", () => {
+  const mast = { name: "Altura mástil replegado", type: "NUMBER", unit_option: "mm" } as const;
+  const width = { name: "Ancho de la máquina", type: "NUMBER", unit_option: "mm" } as const;
+  const source = machine("https://manain.com/producto/venta-manipulacion-retractil-equiptest-x1/", { "Mastil replegado": "2,45 m" }, "Carretilla retráctil");
+  assert.equal(resolveAttribute(source, mast).value, 2450);
+  assert.equal(resolveAttribute({ ...source, specs: { "Mastil replegado": "2-3 m" } }, mast).value, null);
+  const loader = machine("https://manain.com/producto/venta-movimiento-tierra-minicargadora-equiptest-x1/", { Ancho: "1430 mm" }, "Minicargadora");
+  assert.equal(resolveAttribute(loader, width).value, 1430);
+  assert.equal(resolveAttribute({ ...loader, specs: { Ancho: "1430 kg" } }, width).value, null);
+  assert.equal(resolveAttribute({ ...source, specs: { Ancho: "1430 mm" } }, width).value, null);
+});
+
+test("Manain: recupera un par de batería explícito sin elegir alternativas", () => {
+  const target = { name: "Batería (V / Ah)", type: "TEXT", unit_option: "V / Ah" } as const;
+  const source = machine("https://manain.com/producto/venta-manipulacion-transpaletas-equiptest-x1/", { Motor: "Eléctrico", Bateria: "litio 24v 40ah" }, "Transpaleta eléctrica");
+  assert.equal(resolveAttribute(source, target).value, "24 V / 40 Ah");
+  for (const raw of ["24v / 40-60ah", "24v", "4 x 12v 40ah", "24v 0ah"]) {
+    assert.equal(resolveAttribute({ ...source, specs: { Motor: "Eléctrico", Bateria: raw } }, target).value, null);
+  }
+  assert.equal(resolveAttribute({ ...source, specs: { ...source.specs, Voltios: "48 v" } }, target).value, null);
+  assert.equal(resolveAttribute({ ...source, specs: { ...source.specs, Motor: "Diésel" } }, target).value, null);
+});

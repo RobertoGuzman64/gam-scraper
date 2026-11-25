@@ -103,6 +103,17 @@ export const resolveManainEditorialDomainSource = (record: ProductRecord): Edito
   };
 };
 
+export const manainHorizontalReach = (record: ProductRecord): number | null => {
+  const family = manainSourceFamily(record);
+  const telehandler = family === "manipulacion-manipulador";
+  const boom = family === "elevacion-brazo-articulado" || family === "elevacion-brazo-telescopico" ||
+    family === "elevacion-camion-cesta";
+  if (!boom && !telehandler) return null;
+  const reach = editorialQuantityOf(record.specs, telehandler ? ["Alcance maximo"] :
+    ["Alcance horizontal max.", "Alcance horizontal"], "m");
+  return reach !== null && reach >= 0.5 && reach <= 60 ? reach : null;
+};
+
 export const reconcileManainEditorialSourceSpecs = (record: ProductRecord): ProductRecord => {
   if (!resolveManainEditorialDomainSource(record)) return record;
   const family = manainSourceFamily(record);
@@ -116,12 +127,9 @@ export const reconcileManainEditorialSourceSpecs = (record: ProductRecord): Prod
     }
   }
   const telehandler = family === "manipulacion-manipulador";
-  const boom = family === "elevacion-brazo-articulado" || family === "elevacion-brazo-telescopico" ||
-    family === "elevacion-camion-cesta";
-  if ((boom || telehandler) && absent(["Alcance lateral", "Alcance Lateral"])) {
-    const reach = editorialQuantityOf(record.specs, telehandler ? ["Alcance maximo"] :
-      ["Alcance horizontal max.", "Alcance horizontal"], "m");
-    if (reach !== null && reach >= 0.5 && reach <= 60) additions["Alcance Lateral"] = `${formatEditorialQuantity(reach)} m`;
+  if (absent(["Alcance lateral", "Alcance Lateral"])) {
+    const reach = manainHorizontalReach(record);
+    if (reach !== null) additions["Alcance Lateral"] = `${formatEditorialQuantity(reach)} m`;
   }
   const forklift = family === "manipulacion-carretilla" || family === "manipulacion-carretilla-4x4" ||
     family === "manipulacion-retractil";

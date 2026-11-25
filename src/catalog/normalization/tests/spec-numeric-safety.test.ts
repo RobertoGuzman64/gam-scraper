@@ -99,3 +99,171 @@ test("la batería no atribuye voltajes únicos a alternativas ni pierde decimale
   assert.equal(Object.values(SPEC_RULES).includes("battery"), false);
   assert.equal(normalizeSpecsObject({ Batería: "24/48 V" }).normalized.Batería, "24/48 V");
 });
+
+
+test("las horas de uso reconocen alias y agrupaciones completas sin resolver conflictos", () => {
+  for (const key of ["Horas laborales", "Horas de uso", "horas (h)", "Horómetro"]) {
+    for (const raw of ["1 234 h", "1\u00a0234 horas", "1\u202f234 h"]) {
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized["Horas (h)"], 1234);
+    }
+  }
+  for (const raw of ["12 34 h", "1 234 km", "1 234 / 2 345 h", "Horómetro sustituido", "-1 h"]) {
+    assert.equal(normalizeSpecsObject({ "Horas laborales": raw }).normalized["Horas (h)"], undefined);
+  }
+  assert.equal(parseNumber("1 234 kg", "kg"), null);
+  assert.deepEqual(normalizeSpecsObject({ "Horas laborales": "1 234 h", Horas: "1235 h" }).conflictingKeys,
+    [{ key: "Horas (h)", sources: ["Horas", "Horas laborales"] }]);
+});
+
+test("los depósitos respetan la dimensión volumétrica sin mezclar masa, energía o alternativas", () => {
+  for (const key of ["Depósito de combustible", "Depósito de solución", "Depósito de recuperación"]) {
+    assert.equal(normalizeSpecsObject({ [key]: "15,5 litros" }).normalized[key], 15.5);
+    assert.equal(normalizeSpecsObject({ [key]: 15 }).normalized[key], 15);
+    for (const raw of ["15 kg", "15 kW", "15 / 20 l", "15-20 l", "15 l opcionales"])
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
+  }
+  assert.equal(normalizeSpecsObject({ "Capacidad de la tolva": "15 kg" }).normalized["Capacidad de la tolva"], 15);
+});
+
+test("interpreta configuraciones V/Ah completas sin reducir opciones a capacidades nominales", () => {
+  const key = "Batería (V / Ah)";
+  for (const [raw, expected] of [
+    ["48V / 300Ah(V/Ah)", "48 V / 300 Ah"],
+    ["24V / 200-300Ah | Li-ion 24V / 150Ah(V/Ah)", "24 V / 200-300 Ah | Li-ion 24 V / 150 Ah"],
+    ["Li-ion 51.2 V / 250,5 AH", "Li-ion 51,2 V / 250,5 Ah"]
+  ]) {
+    assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], expected);
+  }
+  for (const raw of ["48/300 V/Ah", "48V / 300A", "48V / 300h", "48V / 300-200Ah", "48V / 0Ah", "48V / 300Ah | 400Ah", "48V / 300Ah opcional", "48V / 3.000Ah", ["48 V / 300 Ah", "24 V / 100 Ah"]]) {
+    assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
+  }
+  assert.equal(normalizeSpecsObject({ "Capacidad de la batería (Ah)": "48 V / 300 Ah" }).normalized["Capacidad de la batería (Ah)"], undefined);
+});
+
+test("las lecturas de kilometraje agrupadas conservan su magnitud y no aceptan horas", () => {
+  for (const raw of ["12 345 km", "12\u00a0345 kilómetros", "12\u202f345 kms"]) {
+    assert.equal(normalizeSpecsObject({ Kilometraje: raw }).normalized["Kilómetros (km)"], 12345);
+  }
+  for (const raw of ["12 34 km", "12 345 h", "12 345 / 14 000 km", "12 345 km opcionales"]) {
+    assert.equal(normalizeSpecsObject({ Kilometraje: raw }).normalized["Kilómetros (km)"], undefined);
+  }
+});
+
+test("los alias de tiro conservan conceptos y conflictos independientes", () => {
+  const output = normalizeSpecsObject({ "Tiro a la barra nominal": "1200 N", "Máximo tiro a la barra": "2400 N" });
+  assert.deepEqual(output.normalized, { "Tiro a la barra nominal (N)": 1200, "Máximo tiro a la barra (N)": 2400 });
+  assert.deepEqual(normalizeSpecsObject({ "Tiro a la barra nominal": "1200 N", "Tiro a la barra nominal (N)": "1300 N" }).conflictingKeys,
+    [{ key: "Tiro a la barra nominal (N)", sources: ["Tiro a la barra nominal", "Tiro a la barra nominal (N)"] }]);
+  assert.equal(normalizeSpecsObject({ "Tiro a la barra nominal": "1200 kg" }).normalized["Tiro a la barra nominal (N)"], undefined);
+});
+
+
+test("las revoluciones del cepillo no interpretan magnitudes incompatibles", () => {
+  for (const key of ["RPM cepillo", "RPM del cepillo"]) {
+    assert.equal(normalizeSpecsObject({ [key]: "250 RPM" }).normalized[key], 250);
+    assert.equal(normalizeSpecsObject({ [key]: "125,5" }).normalized[key], 125.5);
+    for (const raw of ["250 kg", "250 kW", "250 h", "250-300 rpm", "250 rpm opcionales"])
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
+  }
+});
+
+test("las alternativas de anchura y pasillo AST conservan todos sus valores en orden", () => {
+  assert.deepEqual(normalizeSpecsObject({ "Ancho promedio": "1150 / 1250 / 1350mm", "AST (mm)": "2200 / 2400 mm" }).normalized,
+    { "Ancho promedio (mm)": [1150, 1250, 1350], "AST (mm)": [2200, 2400] });
+  for (const raw of ["1200-1500 mm", "1200 / 1500 kg", "1200 / 1500 cm", "1200 / 0 mm", "1.200 / 1.500 mm", "1200 / 1500 mm opcional", "1200 / / 1500 mm"])
+    assert.equal(normalizeSpecsObject({ "Ancho promedio": raw }).normalized["Ancho promedio (mm)"], undefined);
+  assert.deepEqual(normalizeSpecsObject({ "Ancho promedio": "1200 / 1500", "Ancho medio": "1200 / 1600" }).conflictingKeys,
+    [{ key: "Ancho promedio (mm)", sources: ["Ancho medio", "Ancho promedio"] }]);
+});
+
+
+test("interpreta funciones de seguridad independientes sin atribuir opciones ni confundir recuentos", () => {
+  const keys = ["Control de estabilidad", "Autocargable", "Giratorio", "Descarga altura", "Certificación CE"];
+  for (const key of keys) {
+    const alias = key.normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toUpperCase();
+    assert.deepEqual(normalizeSpecsObject({ [alias]: "Sí" }).normalized, { [key]: true });
+    assert.deepEqual(normalizeSpecsObject({ [key]: "False" }).normalized, { [key]: false });
+    for (const raw of ["Opcional", "Sí / No", "Según configuración", "4 mm"]) {
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
+    }
+  }
+  assert.deepEqual(normalizeSpecsObject({ "Control de estabilidad": true, "Sistema antivuelco ACS": false,
+    Estabilizadores: false, "Estabilizadores hidráulicos": true }).normalized, {
+    "Control de estabilidad": true, "Sistema antivuelco ACS": false, Estabilizadores: false
+  });
+  for (const key of ["Polos", "Número de ruedas", "Número de estabilizadores hidráulicos"]) {
+    assert.equal(normalizeSpecsObject({ [key]: "4,00" }).normalized[key], 4);
+    for (const raw of ["4 kg", "4 V", "4.000", 4.5, "4/6", -4]) {
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
+    }
+  }
+});
+
+test("interpreta magnitudes eléctricas y de almacenamiento con unidades propias", () => {
+  for (const [key, raw, expected, invalid] of [
+    ["Frecuencia nominal", "60 Hz", 60, "60 V"],
+    ["Corriente del cargador", "25 A", 25, "25 Ah"],
+    ["Voltaje del cargador", "48 V", 48, "48 A"],
+    ["Potencia absorbida", "750 W", 750, "750 kVA"],
+    ["Régimen nominal del motor", "1800 rpm", 1800, "1800 Hz"],
+    ["Anchura de bandeja", "2,4 m", 2400, "2400 kg"],
+    ["Anchura exterior del almacén", "300 cm", 3000, "300 kg"],
+    ["Profundidad de bandeja", "800 mm", 800, "800 l"],
+    ["Paso de almacenamiento de bandejas", "2 cm", 20, "2 kg"],
+    ["Carga neta por bandeja", "300 kg", 300, "300 l"],
+    ["Masa máxima autorizada del vehículo", "4.200 kg", 4200, "4200 mm"]
+  ] as const) {
+    assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], expected);
+    assert.equal(normalizeSpecsObject({ [key]: invalid }).normalized[key], undefined);
+  }
+  assert.equal(normalizeSpecsObject({ "Factor de potencia nominal": "0.875" }).normalized["Factor de potencia nominal"], 0.875);
+  for (const raw of ["0,8 kW", "80 %", "1,2", "0,8 / 1", -0.5]) {
+    assert.equal(normalizeSpecsObject({ "Factor de potencia nominal": raw }).normalized["Factor de potencia nominal"], undefined);
+  }
+  assert.deepEqual(normalizeSpecsObject({ "Voltaje del cargador": "48 V", "Voltaje batería (V)": "24 V",
+    "Corriente del cargador": "25 A", "Capacidad de la batería (Ah)": "500 Ah" }).normalized, {
+    "Voltaje del cargador": 48, "Voltaje batería (V)": 24, "Corriente del cargador": 25, "Capacidad de la batería (Ah)": [500]
+  });
+});
+
+test("interpreta cotas independientes de implementos, cesta y transporte sin fusionarlas", () => {
+  const millimeterFields = ["Cazo 1 limpieza", "Cazo 2", "Cazo 3", "Largo horquillas", "Ancho horquillas",
+    "Grosor horquillas", "Longitud de tenedor", "Diámetro nominal de herramienta compatible"];
+  for (const key of millimeterFields) {
+    assert.equal(normalizeSpecsObject({ [key]: "25 cm" }).normalized[key], 250);
+    assert.equal(normalizeSpecsObject({ [key]: "0,25 m" }).normalized[key], 250);
+    for (const raw of ["250 kg", "250 l", "250-350 mm", "250 mm opcional", "-250 mm", "250 x 350 mm"]) {
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
+    }
+  }
+  for (const key of ["Alto cesta", "Ancho cesta", "Longitud cesta", "Altura transporte", "Longitud al tablero", "Longitud de cable de alimentación"]) {
+    assert.equal(normalizeSpecsObject({ [key]: "250 cm" }).normalized[key], 2.5);
+    assert.equal(normalizeSpecsObject({ [key]: "2500 mm" }).normalized[key], 2.5);
+    assert.equal(normalizeSpecsObject({ [key]: "2500 kg" }).normalized[key], undefined);
+    assert.equal(normalizeSpecsObject({ [key]: "2,5/3 m" }).normalized[key], undefined);
+  }
+  assert.deepEqual(normalizeSpecsObject({ "Cazo 1 limpieza": "1 m", "Cazo 2": "50 cm", "Cazo 3": "300 mm",
+    "Largo horquillas": "1200 mm", "Ancho horquillas": "100 mm", "Grosor horquillas": "40 mm" }).normalized,
+  { "Cazo 1 limpieza": 1000, "Cazo 2": 500, "Cazo 3": 300, "Largo horquillas": 1200, "Ancho horquillas": 100, "Grosor horquillas": 40 });
+});
+
+test("separa capacidad de depósito, tensiones declaradas y potencia máxima del equipo", () => {
+  const fields = [
+    ["Capacidad depósito", "75 litros", 75, "75 kg"],
+    ["Capacidad del depósito", "30 l", 30, "30 Ah"],
+    ["Voltaje de la batería", "24 V", 24, "24 A"],
+    ["Tensión nominal de batería", "48 V", 48, "48 Ah"],
+    ["Potencia eléctrica máxima del equipo", "900 W", 900, "900 kVA"]
+  ] as const;
+  for (const [key, raw, expected, invalid] of fields) {
+    assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], expected);
+    assert.equal(normalizeSpecsObject({ [key]: invalid }).normalized[key], undefined);
+    assert.equal(normalizeSpecsObject({ [key]: "24 / 48 V" }).normalized[key], undefined);
+  }
+  const input = { "Capacidad depósito": "75 l", "Depósito de combustible": "50 l", "Voltaje de la batería": "24 V",
+    "Tensión nominal de batería": "48 V", "Voltaje del cargador": "36 V", "Potencia eléctrica máxima del equipo": "900 W" };
+  const normalized = normalizeSpecsObject(input).normalized;
+  assert.deepEqual(normalized, { "Capacidad depósito": 75, "Depósito de combustible": 50, "Voltaje de la batería": 24,
+    "Tensión nominal de batería": 48, "Voltaje del cargador": 36, "Potencia eléctrica máxima del equipo": 900 });
+  assert.deepEqual(normalizeSpecsObject(normalized).normalized, normalized);
+});

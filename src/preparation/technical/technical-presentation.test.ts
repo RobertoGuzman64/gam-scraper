@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
-import { normalizeOriginalEnergyPresentation, normalizeOriginalLengthPresentation, normalizeOriginalMassPresentation, normalizeTechnicalPresentation, rejectImplausibleTechnicalWeight } from "./technical-presentation.js";
+import { normalizeOriginalPercentagePresentation, normalizeOriginalEnergyPresentation, normalizeOriginalLengthPresentation, normalizeOriginalMassPresentation, normalizeTechnicalPresentation, normalizeOriginalTravelPresentation, normalizeOriginalRotationPresentation, rejectImplausibleTechnicalWeight } from "./technical-presentation.js";
 import { normalizePreparedTechnicalSpecs } from "./preparation-technical-stages.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 
@@ -198,10 +198,10 @@ test("uniforma categorías técnicas inequívocas sin transformar alternativas n
 test("presenta recuentos y horas integrales sin eliminar decimales significativos ni millares ambiguos", () => {
   const input: SpecsMap = { "Número de ruedas": "4.0", Horas: "3916.0000", Modelo: "4.0", "Horas laborales": "4.0" };
   const output = normalizeTechnicalPresentation(input);
-  assert.deepEqual(output, { ...input, "Número de ruedas": "4", Horas: "3916" });
+  assert.deepEqual(output, { ...input, "Número de ruedas": "4", Horas: "3916 h" });
   assert.equal(normalizeTechnicalPresentation(output), output);
   assert.deepEqual(normalizeTechnicalPresentation({ "Número de ruedas": "3,00", Horas: "0.0000" }),
-    { "Número de ruedas": "3", Horas: "0" });
+    { "Número de ruedas": "3", Horas: "0 h" });
   for (const value of ["4.000", "4.001", "4.5", "4.0001", "4-6", "4 ruedas", "-4.0"]) {
     const uncertain: SpecsMap = { "Número de ruedas": value, Horas: value };
     assert.equal(normalizeTechnicalPresentation(uncertain), uncertain);
@@ -274,7 +274,7 @@ test("uniforma el separador decimal de cotas explícitas conservando unidades y 
     "Altura plataforma": "5.80 m", "Radio de giro": "6.02 m", Modelo: "2.50 m", "Altura de trabajo (m)": "2.5 mm" };
   const before = structuredClone(input);
   const output = normalizeOriginalLengthPresentation(input, input);
-  assert.deepEqual(output, { ...input, Altura: "2,50 m", Anchura: "1,18 m", Longitud: "3,7 metros",
+  assert.deepEqual(output, { ...input, Altura: "2,50 m", Anchura: "1,18 m", Longitud: "3,7 m",
     "Altura plataforma": "5,80 m", "Radio de giro": "6,02 m" });
   assert.equal(normalizeOriginalLengthPresentation(output, input), output);
   assert.deepEqual(input, before);
@@ -329,4 +329,153 @@ test("conserva motorizaciones y potencias recuperadas y presenta los datos direc
     assert.deepEqual(output.technicalProvenance?.entries, []);
     assert.deepEqual(record.specs, original);
   }
+});
+
+test("uniforma geometría directa conservando unidades, ejes, precisión y precedencias", () => {
+  const input: SpecsMap = {
+    "Dimensiones Cesta": "2,40X1,17 metros", "Dimensiones Horquillas": "1100x100x40 mm",
+    "Radio de giro": "1955mm", "Altura plataforma": "8m", Horquillas: "1,2×0,1×0,04 m",
+    Modelo: "1955mm", "Altura de trabajo (m)": "12000mm"
+  };
+  const expected: SpecsMap = { ...input, "Dimensiones Cesta": "2,40 x 1,17 m",
+    "Dimensiones Horquillas": "1100 x 100 x 40 mm", "Radio de giro": "1955 mm",
+    "Altura plataforma": "8 m", Horquillas: "1,2 x 0,1 x 0,04 m" };
+  const before = structuredClone(input);
+  const output = normalizeOriginalLengthPresentation(input, input);
+  assert.deepEqual(output, expected);
+  assert.equal(normalizeOriginalLengthPresentation(output, input), output);
+  assert.deepEqual(input, before);
+  const recovered = { ...input, "Radio de giro": "2100mm" };
+  assert.equal(normalizeOriginalLengthPresentation(recovered, input)["Radio de giro"], "2100mm");
+  for (const raw of ["1.200x700 mm", "2,4x1,17 m opcional", "1,2 x 0,7 kg", "1,2 x 0,7", "1,2 x 0 m", "1400x700x1100 metros"]) {
+    const uncertain: SpecsMap = { "Dimensiones Cesta": raw };
+    assert.equal(normalizeOriginalLengthPresentation(uncertain, uncertain), uncertain);
+  }
+});
+
+
+test("las lecturas de uso integrales comparten unidad sin confundir estados ni condiciones", () => {
+  const input: SpecsMap = { Horas: "1200", "Horómetro": "1200 horas", "Horas laborales": "1 200 h",
+    "Horas de uso": "1\u202f200h", "Horas (h)": "0", Modelo: "1200", "Autonomía máxima (h)": "8 horas" };
+  const output = normalizeTechnicalPresentation(input);
+  assert.deepEqual(output, { ...input, Horas: "1200 h", "Horómetro": "1200 h", "Horas laborales": "1200 h",
+    "Horas de uso": "1200 h", "Horas (h)": "0 h" });
+  assert.equal(normalizeTechnicalPresentation(output), output);
+  for (const value of ["Horómetro sustituido", "1 20 h", "1200/1500 h", "1200 km", "-1 h", "4.001 h", "4,5 h", "1200 h aproximadas"]) {
+    const uncertain: SpecsMap = { "Horas laborales": value };
+    assert.equal(normalizeTechnicalPresentation(uncertain), uncertain);
+  }
+});
+
+test("las unidades explícitas de longitud y masa conservan la prestación, precisión y precedencia", () => {
+  const input: SpecsMap = { Altura: "12 metros", "Altura de elevación (m)": "4,50 metros", "Anchura trabajo": "0,85 metros",
+    "Capacidad carga": "250KG", "Capacidad de arrastre": "4000 KG", "Peso del rodillo": "1500 KG", Modelo: "12 metros" };
+  const expected = { ...input, Altura: "12 m", "Altura de elevación (m)": "4,50 m", "Anchura trabajo": "0,85 m",
+    "Capacidad carga": "250 kg", "Capacidad de arrastre": "4000 kg", "Peso del rodillo": "1500 kg" };
+  const output = normalizeOriginalLengthPresentation(normalizeOriginalMassPresentation(input, input), input);
+  assert.deepEqual(output, expected);
+  assert.equal(normalizeOriginalLengthPresentation(output, input), output);
+  for (const raw of ["2.168 metros", "9225 metros", "12 metros / 15 metros", "12 metros opcionales"]) {
+    const uncertain: SpecsMap = { Altura: raw };
+    assert.equal(normalizeOriginalLengthPresentation(uncertain, uncertain), uncertain);
+  }
+  assert.equal(normalizeOriginalLengthPresentation({ Altura: "15 metros" }, input).Altura, "15 metros");
+});
+
+test("los porcentajes explícitos no convierten grados, rangos ni condiciones en pendientes nominales", () => {
+  const input: SpecsMap = { "Pendiente superable": "25%", "Estado baterías": "80%", "Pendiente superable con carga (%)": "12.5%", Modelo: "25%" };
+  const output = normalizeOriginalPercentagePresentation(input, input);
+  assert.deepEqual(output, { ...input, "Pendiente superable": "25 %", "Estado baterías": "80 %", "Pendiente superable con carga (%)": "12,5 %" });
+  assert.equal(normalizeOriginalPercentagePresentation(output, input), output);
+  for (const raw of ["25 grados", "25-30%", "25% con carga", "25", "-25%", "2.500%"]) {
+    const ambiguous: SpecsMap = { "Pendiente superable": raw };
+    assert.equal(normalizeOriginalPercentagePresentation(ambiguous, ambiguous), ambiguous);
+  }
+  assert.equal(normalizeOriginalPercentagePresentation({ "Pendiente superable": "30%" }, input)["Pendiente superable"], "30%");
+  const impossible: SpecsMap = { "Estado baterías": "101%" };
+  assert.equal(normalizeOriginalPercentagePresentation(impossible, impossible), impossible);
+});
+
+
+test("presenta tensiones explícitas y configuraciones de batería directas sin alterar sus claves", () => {
+  const original: SpecsMap = { Voltios: "400/230 v", "Voltaje del cargador": "24v", Baterías: "24V / 200-300Ah | Li-ion 24V / 150Ah(V/Ah)", Modelo: "24v" };
+  const expected: SpecsMap = { ...original, Voltios: "400 / 230 V", "Voltaje del cargador": "24 V", Baterías: "24 V / 200-300 Ah | Li-ion 24 V / 150 Ah" };
+  assert.deepEqual(normalizeOriginalEnergyPresentation(original, original), expected);
+  assert.equal(normalizeOriginalEnergyPresentation(expected, original), expected);
+  for (const raw of ["400/230", "400/230 v v", "400 V opcional", "0 V", "24 V / 20 Ah"]) {
+    const input: SpecsMap = { Voltios: raw };
+    assert.equal(normalizeOriginalEnergyPresentation(input, input), input);
+  }
+  const recovered: SpecsMap = { Baterías: "24V / 200-300Ah(V/Ah)" };
+  assert.equal(normalizeOriginalEnergyPresentation(recovered, {}), recovered);
+});
+
+test("las medidas de maniobra con unidad contractual conservan alternativas y precedencias", () => {
+  const original: SpecsMap = { "Radio de giro": "1955", "Ancho promedio": "2082", Modelo: "1955" };
+  const expected: SpecsMap = { ...original, "Radio de giro": "1955 mm", "Ancho promedio": "2082 mm" };
+  assert.deepEqual(normalizeOriginalLengthPresentation(original, original), expected);
+  assert.equal(normalizeOriginalLengthPresentation(expected, original), expected);
+  for (const raw of ["1955 / 2100", "1955 kg", "1.955", "1,95", "1955 opcional", "0"]) {
+    const input: SpecsMap = { "Radio de giro": raw, "Ancho promedio": raw };
+    assert.equal(normalizeOriginalLengthPresentation(input, input), input);
+  }
+  const recovered: SpecsMap = { "Radio de giro": "2200" };
+  assert.equal(normalizeOriginalLengthPresentation(recovered, original), recovered);
+});
+
+test("la velocidad con y sin carga conserva orden, precisión y unidad", () => {
+  const key = "Velocidad de desplazamiento con/sin carga";
+  const original: SpecsMap = { [key]: "10/18 km/h", Velocidad: "10/18 km/h" };
+  const expected = { ...original, [key]: "10 / 18 km/h" };
+  assert.deepEqual(normalizeOriginalTravelPresentation(original, original), expected);
+  assert.equal(normalizeOriginalTravelPresentation(expected, original), expected);
+  for (const raw of ["10/18", "10/18 m", "10/18 km/h opcional", "10-18 km/h", "10/18/20 km/h"]) {
+    const input: SpecsMap = { [key]: raw };
+    assert.equal(normalizeOriginalTravelPresentation(input, input), input);
+  }
+});
+
+
+test("el kilometraje explícito y las revoluciones del cepillo conservan magnitudes y precedencias", () => {
+  const original: SpecsMap = { Kilómetros: "12 345 KM", "RPM cepillo": "250", "RPM del cepillo": "125.5 RPM", Modelo: "250" };
+  const travel = normalizeOriginalTravelPresentation(original, original);
+  const output = normalizeOriginalRotationPresentation(travel, original);
+  assert.deepEqual(output, { ...original, Kilómetros: "12345 km", "RPM cepillo": "250 rpm", "RPM del cepillo": "125,5 rpm" });
+  assert.equal(normalizeOriginalRotationPresentation(output, original), output);
+  for (const raw of ["12 34 km", "500 h", "2.500 km", "500/800 km", "500 km opcionales"]) {
+    const input: SpecsMap = { Kilómetros: raw };
+    assert.equal(normalizeOriginalTravelPresentation(input, input), input);
+  }
+  for (const raw of ["250 W", "250-300 rpm", "250 rpm opcionales", "2.500 rpm", "-250 rpm"]) {
+    const input: SpecsMap = { "RPM cepillo": raw };
+    assert.equal(normalizeOriginalRotationPresentation(input, input), input);
+  }
+  assert.equal(normalizeOriginalRotationPresentation({ "RPM cepillo": "300" }, original)["RPM cepillo"], "300");
+});
+
+test("la potencia escalar con unidad declarada en la clave no absorbe alternativas ni multiplicidades", () => {
+  const original: SpecsMap = { "Potencia Motor (KW)": "2,5", "Potencia Motor (CV)": "3.2", Potencia: "30" };
+  assert.deepEqual(normalizeOriginalEnergyPresentation(original, original), { ...original, "Potencia Motor (KW)": "2,5 kW", "Potencia Motor (CV)": "3,2 CV" });
+  for (const raw of ["2x4,3", "30 / 40", "2.500", "30 kVA", "30 opcional"]) {
+    const input: SpecsMap = { "Potencia Motor (KW)": raw };
+    assert.equal(normalizeOriginalEnergyPresentation(input, input), input);
+  }
+});
+
+test("las alternativas de longitud y capacidades escalares explícitas conservan todas sus magnitudes", () => {
+  const original: SpecsMap = { Anchura: "1500/1700 mm", "Ancho promedio": "1200 / 1400mm",
+    "Capacidad de carga (kg)": "1500/2000 KG", Capacidad: "230kg", Peso: "1200/1300 KG", Modelo: "1500/1700 mm" };
+  const mass = normalizeOriginalMassPresentation(original, original);
+  const output = normalizeOriginalLengthPresentation(mass, original);
+  assert.deepEqual(output, { ...original, Anchura: "1500 / 1700 mm", "Ancho promedio": "1200 / 1400 mm",
+    "Capacidad de carga (kg)": "1500/2000 KG", Capacidad: "230 kg", Peso: "1200/1300 KG" });
+  assert.equal(normalizeOriginalLengthPresentation(output, original), output);
+  assert.equal(normalizeOriginalMassPresentation(output, original), output);
+  for (const value of ["1200-1500 mm", "1200 / 1500", "1200 / 1500 kg", "1200 / 1500 mm opcional", "1.200/1.500 mm", "1200 / 0 mm"]) {
+    const uncertain: SpecsMap = { Anchura: value };
+    assert.equal(normalizeOriginalLengthPresentation(uncertain, uncertain), uncertain);
+  }
+  const incompatible: SpecsMap = { "Altura de trabajo (m)": "1200/1500 mm", "AST (mm)": "1/2 m", "Ancho promedio": "1/2 m" };
+  assert.equal(normalizeOriginalLengthPresentation(incompatible, incompatible), incompatible);
+  assert.equal(normalizeOriginalLengthPresentation({ Anchura: "1000/1200 mm" }, original).Anchura, "1000/1200 mm");
 });

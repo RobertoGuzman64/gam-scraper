@@ -89,3 +89,38 @@ test("Gomariz: combustible etiquetado como motor solo para generadores y torres 
   assert.equal(value(product(towerUrl, { Motor: "Diésel", "Altura de trabajo": "8.5 m" }), "Altura del mástil"), null);
   assert.equal(value(product(url("carretilla-industrial", "nissan"), { Motor: "Diésel" }), "Combustible"), null);
 });
+
+test("Gomariz: las capacidades conservan su significado en rutas públicas y de producto acreditadas", () => {
+  const lift = product("https://www.gomarizrent.com/manipulacion-de-materiales/carretilla-industrial/equiptest-tx2/", { Capacidad: "1800 kg" });
+  const platform = product("https://www.gomarizrent.com/elevacion-y-trabajos-en-altura/elevador-tijera/equiptest-tx2/", { Capacidad: "230 kg" });
+  const handler = { ...product("https://www.gomarizrent.com/producto/equiptest-tx2/", { Capacidad: "3500 kg" },
+    "Manipuladores. Unifica las características de una carretilla elevadora."),
+    brand: "EQUIPTEST", model: "TX2", title: "EQUIPTEST TX2" };
+  assert.equal(value(lift, "Capacidad de carga"), 1800);
+  assert.equal(value(lift, "Capacidad de la cesta"), null);
+  assert.equal(value({ ...lift, url: lift.url.replace("carretilla-industrial", "carretilla-todoterreno") }, "Capacidad de carga"), 1800);
+  assert.equal(value(platform, "Capacidad de la cesta"), 230);
+  assert.equal(value(platform, "Capacidad de carga"), null);
+  assert.equal(value(handler, "Capacidad máxima"), 3500);
+  assert.equal(value({ ...handler, model: "TX3" }, "Capacidad máxima"), null);
+  assert.equal(value({ ...handler, longDescription: null }, "Capacidad máxima"), null);
+  assert.equal(value({ ...handler, specs: { Capacidad: "3500 kg", "Capacidad máxima": "4000 kg" } }, "Capacidad máxima"), null);
+  for (const raw of ["3500 l", "3500 / 4000 kg", "3500", "0 kg"]) {
+    assert.equal(value({ ...lift, specs: { Capacidad: raw } }, "Capacidad de carga"), null);
+  }
+  for (const invalidUrl of [lift.url.replace("gomarizrent.com", "example.org"),
+    lift.url.replace("manipulacion-de-materiales", "limpieza"), `${lift.url}?otra=unidad`]) {
+    assert.equal(value({ ...lift, url: invalidUrl }, "Capacidad de carga"), null);
+  }
+});
+
+test("Gomariz: depósitos y combustible se resuelven en rutas acreditadas sin confundir familias", () => {
+  const group = product("https://www.gomarizrent.com/energia-electrica-e-iluminacion/generador/equiptest-tx2/",
+    { Capacidad: "120 l", Motor: "Diésel" });
+  assert.equal(value(group, "Capacidad del depósito"), 120);
+  assert.equal(value(group, "Combustible"), "Diésel");
+  assert.equal(value({ ...group, specs: { Capacidad: "120 kg" } }, "Capacidad del depósito"), null);
+  assert.equal(value({ ...group, url: group.url.replace("generador", "torre-de-luz") }, "Capacidad del depósito"), null);
+  const scrubber = product("https://www.gomarizrent.com/limpieza/fregadora/equiptest-tx2/", { "Anchura limpieza": "0,81 m" });
+  assert.equal(value(scrubber, "Ancho de trabajo"), 810);
+});

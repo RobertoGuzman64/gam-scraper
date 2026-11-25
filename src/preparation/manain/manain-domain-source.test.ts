@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 
 import test from "node:test";
 
-import type { ProductRecord } from "../../contracts/catalog.js";
+import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
 
 import { prepareSourceProduct } from "../prepare-product.js";
 
@@ -11,6 +11,7 @@ import { normalizePreparedTechnicalSpecs } from "../technical/preparation-techni
 import { resolveEditorialFacts } from "../editorial/core/editorial-facts.js";
 
 import { reconcileManainEditorialSourceSpecs } from "./domain-source.js";
+import { resolveAttribute } from "../classification/attribute-mapping.js";
 
 test("Manain: capacidad de carga por unidad en familias compatibles, sin alterar specs ni propagar variantes", () => {
   const source: ProductRecord = {
@@ -168,4 +169,54 @@ test("Manain: altura de elevación y mástil se adaptan por familia y unidad sin
   assert.equal(reconcileManainEditorialSourceSpecs(canonical).specs?.["Tipo Mástil"], undefined);
   const pump = { ...record, url: record.url.replace("manipulacion-carretilla", "pequena-maquinaria-bomba-sumergible") };
   assert.equal(reconcileManainEditorialSourceSpecs(pump), pump);
+});
+
+const geometrySource = (family: string, specs: SpecsMap): ProductRecord => ({
+  providerId: "manain", categoryKey: "venta", categoryName: "Maquinaria en venta",
+  url: `https://manain.com/producto/venta-${family}-equiptest-x1/`,
+  title: "X1", shortDescription: null, longDescription: null, price: null,
+  condition: "Segunda mano", reference: "CONTROL-GEOMETRIA", brand: "EQUIPTEST", model: "X1",
+  year: null, location: null, country: null, horometer: null, serialNumber: null, image: null, specs
+});
+
+const reachAttribute = { name: "Alcance horizontal", type: "NUMBER", unit_option: "m" } as const;
+const maxReachAttribute = { ...reachAttribute, name: "Alcance máximo horizontal" };
+const extensionAttribute = { ...reachAttribute, name: "Extensión de plataforma" };
+const basketAttribute = { name: "Dimensiones de la cesta", type: "TEXT", unit_option: "m" } as const;
+
+test("Manain: el alcance acreditado se comparte con los atributos sin modificar la fuente", () => {
+  const source = geometrySource("elevacion-brazo-articulado", { "Alcance horizontal max.": "8,2 m" });
+  const before = JSON.stringify(source);
+  assert.deepEqual(resolveAttribute(source, reachAttribute), { status: "resolved", value: 8.2 });
+  assert.equal(JSON.stringify(source), before);
+  assert.equal(resolveAttribute(geometrySource("elevacion-brazo-telescopico", source.specs ?? {}), reachAttribute).value, 8.2);
+  assert.equal(resolveAttribute(geometrySource("manipulacion-manipulador", { "Alcance maximo": "4,5 m" }), maxReachAttribute).value, 4.5);
+  for (const raw of ["8/9 m", "8 mm", "90 m", "8", "0 m"]) {
+    assert.equal(resolveAttribute({ ...source, specs: { "Alcance horizontal max.": raw } }, reachAttribute).value, null);
+  }
+  assert.equal(resolveAttribute({ ...source, specs: { ...source.specs, "Alcance lateral": "7 m" } }, reachAttribute).value, null);
+  assert.equal(resolveAttribute(geometrySource("elevacion-tijera", source.specs ?? {}), reachAttribute).value, null);
+  assert.equal(resolveAttribute({ ...source, providerId: "gomariz" }, reachAttribute).value, null);
+  assert.equal(resolveAttribute(geometrySource("manipulacion-manipulador", { "Alcance maximo": "3/4 m" }), maxReachAttribute).value, null);
+});
+
+test("Manain: dimensiones y extensiones de plataforma conservan magnitud, familia y precedencia", () => {
+  const source = geometrySource("elevacion-tijera", {
+    "Longitud plataforma": "2,4 m", "Ancho plataforma": "1,2 m", "Longitud extensión": "0,8 m"
+  });
+  assert.equal(resolveAttribute(source, basketAttribute).value, "2,4 x 1,2 m");
+  assert.equal(resolveAttribute(source, extensionAttribute).value, 0.8);
+  assert.equal(resolveAttribute({ ...source, specs: { ...source.specs, "Dimensiones de la cesta": "2 x 1 m" } }, basketAttribute).value, "2 x 1 m");
+  for (const specs of [
+    { "Longitud plataforma": "2,4 m" },
+    { ...source.specs, "Ancho plataforma": "0,8/1,2 m" },
+    { ...source.specs, "Anchura de plataforma": "1,4 m" },
+    { ...source.specs, "Ancho plataforma": "1,2 mm" }
+  ]) assert.equal(resolveAttribute({ ...source, specs }, basketAttribute).value, null);
+  for (const raw of ["0,8/1,2 m", "n/a m", "3 m", "0,8 mm"]) {
+    assert.equal(resolveAttribute({ ...source, specs: { ...source.specs, "Longitud extensión": raw } }, extensionAttribute).value, null);
+  }
+  assert.equal(resolveAttribute(geometrySource("movimiento-tierra-miniexcavadora", source.specs ?? {}), basketAttribute).value, null);
+  assert.equal(resolveAttribute(geometrySource("elevacion-brazo-articulado", source.specs ?? {}), extensionAttribute).value, null);
+  assert.equal(resolveAttribute({ ...source, shortDescription: "Miniexcavadora compacta" }, basketAttribute).value, null);
 });

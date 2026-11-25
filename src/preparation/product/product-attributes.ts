@@ -1,10 +1,11 @@
-import type { ProductRecord } from "../../contracts/catalog.js";
+import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
 import type { ImportCatalog, ImportCandidate } from "../../commercial/legacy-export/contracts.js";
 import { resolveAttribute } from "../classification/attribute-mapping.js";
 import type { AttributeResolution } from "../classification/attribute-types.js";
 import { validateCommercialAttributeValue } from "../classification/attribute-value-validation.js";
 
-export const productAttributes = (record: ProductRecord, category: ImportCatalog["categories"][number] | null, catalog: ImportCatalog): {
+export const productAttributes = (record: ProductRecord, category: ImportCatalog["categories"][number] | null, catalog: ImportCatalog,
+  reviewedModelSpecs: SpecsMap = {}, recoveredUnitSpecs: SpecsMap = {}): {
   readonly attributes: ImportCandidate["attributes"];
   readonly missingRequired: readonly string[];
   readonly qualityIssues: readonly string[];
@@ -21,7 +22,7 @@ export const productAttributes = (record: ProductRecord, category: ImportCatalog
   const qualityIssues: string[] = [];
   const missingDetails: { attributeID: number; name: string; status: Exclude<AttributeResolution["status"], "resolved"> }[] = [];
   for (const attribute of catalog.attributes.filter((item) => activeIds.has(item.id))) {
-    const resolution = resolveAttribute(record, attribute);
+    const resolution = resolveAttribute(record, attribute, reviewedModelSpecs, recoveredUnitSpecs);
     if (resolution.status !== "resolved") {
       if (resolution.status === "contradiction") qualityIssues.push(`Atributo contradictorio: ${attribute.name}`);
       if (resolution.status === "invalid") qualityIssues.push(`Atributo no normalizable: ${attribute.name}`);

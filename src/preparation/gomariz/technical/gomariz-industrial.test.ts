@@ -127,3 +127,11 @@ test("Gomariz: las torres bajo URL pública mantienen la potencia acreditada por
     publicUrl.replace("www.gomarizrent.com", "www.gomarizrent.com:8443")
   ]) assert.equal(value({ ...original, url: invalidUrl }, "Potencia"), null, invalidUrl);
 });
+
+test("Gomariz: reutiliza el ámbito industrial acreditado en rutas públicas", () => {
+  const forklift = source("carretilla-industrial", material, { Motor: "Eléctrico" });
+  const current = { ...forklift, url: forklift.url.replace("/venta/", "/") };
+  assert.equal(value(current, "Motorización / Energía"), "Eléctrico");
+  assert.equal(value({ ...current, specs: { Motor: "Eléctrico", "Tipo de motor": "Diésel" } }, "Motorización / Energía"), null);
+  assert.equal(value({ ...current, url: current.url.replace(material, "limpieza") }, "Motorización / Energía"), null);
+});

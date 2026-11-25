@@ -139,3 +139,15 @@ test("GAM energía: utiliza un motor eléctrico literal sin introducir conflicto
   assert.equal(resolved({ ...source, specs: { "Tipo motor": "Eléctrico", "Motorización / Energía": "Eléctrico" } },
     "Motorización / Energía"), "Eléctrico");
 });
+
+test("GAM manutención: longitud de horquillas sin elegir entre medidas alternativas", () => {
+  const source = { ...example("Carretilla elevadora EQUIPTEST X1", "Carretilla elevadora", { "Dimensiones Horquillas": "1200 mm" }),
+    reference: "SYNTHETIC", url: "https://online.gamrentals.com/es/carretillas-elevadoras-electricas-segunda-mano/equiptest-x1", brand: "EQUIPTEST", model: "X1" };
+  assert.equal(resolved(source, "Longitud de horquillas"), 1200);
+  assert.equal(resolved({ ...source, specs: { "Dimensiones Horquillas": "1200 x 100 x 40 mm" } }, "Longitud de horquillas"), 1200);
+  for (const value of ["1200/1400 mm", "1200 x 1500 x 45 mm", "1200 x 100 mm", "1200", "1200 kg"]) {
+    assert.equal(resolved({ ...source, specs: { "Dimensiones Horquillas": value } }, "Longitud de horquillas"), null);
+  }
+  assert.equal(resolved({ ...source, specs: { "Dimensiones Horquillas": "1200 mm", "Longitud de horquillas": "1400 mm" } }, "Longitud de horquillas"), 1400);
+  assert.equal(resolved({ ...source, categoryKey: "elevacion", title: "Plataforma elevadora" }, "Longitud de horquillas"), null);
+});

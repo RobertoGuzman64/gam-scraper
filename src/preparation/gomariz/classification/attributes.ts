@@ -4,6 +4,7 @@ import { fold, scalar, numberToken } from "../../classification/attribute-utils.
 import { invalidGomarizPlatformHeight, verifiedGomarizPlatformHeight } from "../../../catalog/normalization/gomariz/technical.js";
 import { editorialFamilyFromSourceGeneral } from "../../editorial/core/editorial-families.js";
 import { verifiedEditorialUrl } from "../../editorial/source/editorial-source-url.js";
+import { gomarizTechnicalSourceFamily } from "./source-category.js";
 import { gomarizElevationCandidate } from "../technical/elevation.js";
 import { gomarizIndustrialCandidate, gomarizTowerPower } from "../technical/industrial.js";
 
@@ -12,17 +13,17 @@ export const applyGomarizAliases = (record: ProductRecord, attribute: Attribute,
   if (elevation) candidates.push(elevation);
   const industrial = gomarizIndustrialCandidate(record, attribute);
   if (industrial) candidates.push(industrial);
-  let family = "";
-  try { family = new URL(record.url).pathname.split("/").filter(Boolean)[2] ?? ""; } catch { family = ""; }
-  if (attribute.name === "Capacidad de carga" && ["carretilla-industrial", "carretilla-retractil"].includes(family)) keys.add(fold("Capacidad"));
-  if (family === "manipulador-telescopico" && attribute.name === "Capacidad máxima") {
+  const family = gomarizTechnicalSourceFamily(record);
+  if (family && attribute.type === "NUMBER" && attribute.unit_option === "kg") {
     const raw = record.specs?.Capacidad;
     const capacity = raw === undefined ? null : scalar(raw);
-    if (typeof capacity === "string" && /^\d[\d., ]*\s*kg$/i.test(capacity.trim())) {
-      keys.add(fold("Capacidad"));
+    const mass = typeof capacity === "string" ? /^([\d., ]+)\s*kg$/iu.exec(capacity.trim()) : null;
+    if (mass?.[1] && (numberToken(mass[1]) ?? 0) > 0) {
+      if (attribute.name === "Capacidad de carga" && ["carretilla-industrial", "carretilla-retractil", "carretilla-todoterreno"].includes(family)) keys.add(fold("Capacidad"));
+      if (attribute.name === "Capacidad máxima" && family === "manipulador-telescopico") keys.add(fold("Capacidad"));
+      if (attribute.name === "Capacidad de la cesta" && ["elevador-tijera", "brazo-articulado", "brazo-articulado-boom-lift", "brazo-telescopico", "oruga", "camion-plataforma"].includes(family)) keys.add(fold("Capacidad"));
     }
   }
-  if (attribute.name === "Capacidad de la cesta" && ["elevador-tijera", "brazo-articulado", "brazo-articulado-boom-lift", "brazo-telescopico", "oruga", "camion-plataforma"].includes(family)) keys.add(fold("Capacidad"));
   if (["Alcance horizontal", "Alcance máximo horizontal"].includes(attribute.name)) {
     const reach = record.specs?.["Alcance lateral"];
     if (typeof reach === "string" && /^\d+(?:[.,]\d{1,2})?\s*m$/i.test(reach.trim()) &&
@@ -34,19 +35,8 @@ export const applyGomarizAliases = (record: ProductRecord, attribute: Attribute,
     keys.add(fold("Anchura limpieza"));
     keys.add(fold("Ancho de limpieza"));
   }
-  if (family === "generador" && attribute.name === "Capacidad del depósito") {
-    try {
-      const source = new URL(record.url);
-      const path = source.pathname.split("/").filter(Boolean);
-      if (source.protocol === "https:" && ["gomarizrent.com", "www.gomarizrent.com"].includes(source.hostname) &&
-        path.length === 4 && path[0] === "venta" && path[1] === "energia-electrica-e-iluminacion") {
-        keys.add(fold("Capacidad"));
-      }
-    } catch {
-      family = "";
-    }
-  }
-  if (["generador", "torre-de-luz"].includes(family) && attribute.name === "Combustible") {
+  if (family === "generador" && attribute.name === "Capacidad del depósito") keys.add(fold("Capacidad"));
+  if (family && ["generador", "torre-de-luz"].includes(family) && attribute.name === "Combustible") {
     const motor = String(record.specs?.Motor ?? "").trim();
     if (/^(?:Diésel|Diesel|Gasolina|Eléctrico|GLP)$/i.test(motor)) {
       candidates.push({ key: "Motor", value: motor });

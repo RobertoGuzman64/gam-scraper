@@ -1,5 +1,7 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../classification/attribute-types.js";
+import { parseDimension } from "../../../catalog/normalization/spec-parsers.js";
+import { SPEC_KEY_NORMALIZATION } from "../../../catalog/normalization/spec-rules.js";
 import { fold, numberToken } from "../../classification/attribute-utils.js";
 
 export const relevantGamHandlingRecord = (record: ProductRecord): boolean => {
@@ -153,9 +155,26 @@ const electricEnergy = (record: ProductRecord): string | null => {
   return url.pathname.split("/").filter(Boolean)[1] === "carretillas-trilaterales-yale" ? "Eléctrico" : null;
 };
 
+const declaredForkLength = (record: ProductRecord): number | null => {
+  const specs = record.specs ?? {};
+  if (["Largo horquillas", "Ancho horquillas", "Anchura de horquillas", "Grosor horquillas", "Grosor de horquillas"]
+    .some((key) => specs[key] !== undefined)) return null;
+  const matching = Object.entries(specs).filter(([key]) =>
+    SPEC_KEY_NORMALIZATION[fold(key)] === "Dimensiones horquillas (mm)");
+  const raw = matching.length === 1 ? matching[0]?.[1] : undefined;
+  if (typeof raw !== "string" || !/^\d{3,4}(?:\s*[x×]\s*\d{2,3}\s*[x×]\s*\d{2,3})?\s*mm$/iu.test(raw.trim())) return null;
+  const dimensions = parseDimension(raw);
+  if (!dimensions || dimensions.largo === null || dimensions.largo < 400 || dimensions.largo > 4000) return null;
+  if (dimensions.ancho === null && dimensions.grosor === null) return dimensions.largo;
+  if (dimensions.ancho === null || dimensions.grosor === null || dimensions.ancho < 50 || dimensions.ancho > 400 ||
+    dimensions.grosor < 10 || dimensions.grosor > 150 || dimensions.grosor > dimensions.ancho) return null;
+  return dimensions.largo;
+};
+
 export const gamHandlingCandidate = (record: ProductRecord, attribute: Attribute): Candidate | null => {
   if (!relevantGamHandlingRecord(record)) return null;
   let value: string | number | null = null;
+  if (attribute.name === "Longitud de horquillas" && attribute.type === "NUMBER" && attribute.unit_option === "mm") value = declaredForkLength(record);
   if (attribute.name === "Tipo de mástil" && attribute.type === "SELECT") value = mastFromDescription(record);
   if (attribute.name === "Altura de elevación" && attribute.type === "NUMBER" && attribute.unit_option === "mm") value = liftHeight(record);
   if (attribute.name === "Capacidad de carga" && attribute.type === "NUMBER" && attribute.unit_option === "kg") value = loadCapacity(record);

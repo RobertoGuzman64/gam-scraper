@@ -10,7 +10,7 @@ import { normalizeGamRows } from "../../tools/gam/normalization/normalize-rows.j
 
 import { resolveAttributeValue } from "./attribute-mapping.js";
 
-import { numberToken } from "./attribute-utils.js";
+import { basketDimensions, numberToken } from "./attribute-utils.js";
 
 import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
 
@@ -161,4 +161,14 @@ test("la normalización de CSV GAM publica medidas en la unidad de su clave sin 
   assert.equal(row.title, "XCMG XGA43K");
   assert.equal(row["spec__Radio de giro (mm)"], "6020");
   assert.equal(row["spec__Altura plataforma (mm)"], undefined);
+});
+
+
+test("las dimensiones de cesta comparten la interpretación de millares y decimales con el parser técnico", () => {
+  assert.equal(basketDimensions("1.400 x 700 mm"), "1,4 x 0,7 m");
+  assert.equal(basketDimensions("1,4 x 0.700 m"), "1,4 x 0,7 m");
+  assert.equal(basketDimensions("1400 x 700 x 1100 mm"), "1,4 x 0,7 x 1,1 m");
+  assert.equal(basketDimensions("1.200 x 0,7 m"), null);
+  assert.equal(basketDimensions("1400 x 700 x 1100 metros"), null);
+  assert.equal(basketDimensions("1400 x 700 kg"), null);
 });

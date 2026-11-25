@@ -1,4 +1,5 @@
 import type { SpecScalar, SpecValue } from "../../contracts/catalog.js";
+import { parseMeasuredLength } from "../../catalog/normalization/spec-parsers.js";
 
 const foldCache = new Map<string, string>();
 export const fold = (value: string): string => {
@@ -41,9 +42,8 @@ export const basketDimensions = (value: SpecScalar): string | null => {
   if (!match?.[1] || !match[2] || !match[4]) return null;
   const unit = match[4].toLowerCase();
   if (match[3] && unit.startsWith("metro")) return null;
-  const ratio = unit === "mm" ? 1000 : unit === "cm" ? 100 : 1;
   const values = [match[1], match[2], match[3]].filter((part): part is string => part !== undefined)
-    .map((part) => Number(part.replace(",", ".")) / ratio);
-  if (values.some((dimension) => !Number.isFinite(dimension) || dimension <= 0 || dimension > 20)) return null;
+    .map((part) => parseMeasuredLength(`${part} ${unit}`, "", "m"));
+  if (!values.every((dimension): dimension is number => dimension !== null && dimension > 0 && dimension <= 20)) return null;
   return `${values.map((dimension) => String(dimension).replace(".", ",")).join(" x ")} m`;
 };

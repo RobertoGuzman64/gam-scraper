@@ -129,3 +129,19 @@ export const captureTechnicalProvenance = (original: ProductRecord): {
   };
 };
 
+
+const recoveredVolumeFields = new Set(["Depósito de solución", "Depósito de recuperación", "Capacidad de la tolva"]);
+const recoveredLitreMechanisms = new Set([
+  "src/preparation/gam/technical/operations/cleaning-tank-evidence.ts",
+  "src/preparation/gam/technical/operations/verified-unit-performance-specs.ts"
+]);
+
+export const recoveredUnitAttributeSpecs = (original: ProductRecord, provenance: ProductTechnicalProvenance): SpecsMap => {
+  if (provenance.originalRecordSha256 !== originalRecordFingerprint(original)) return {};
+  return Object.fromEntries(provenance.entries.flatMap((entry) =>
+    entry.scope === "unit" && entry.sourceField === "longDescription" && entry.sourceValue === original.longDescription &&
+    (entry.field !== "Rendimiento de limpieza (m²/h)" || original.providerId === "gam" &&
+      entry.mechanism === "src/preparation/gam/technical/operations/cleaning-productivity-evidence.ts") &&
+    (!recoveredVolumeFields.has(entry.field) || original.providerId === "gam" && recoveredLitreMechanisms.has(entry.mechanism))
+      ? [[entry.field, entry.value]] : []));
+};

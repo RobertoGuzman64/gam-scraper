@@ -9,7 +9,7 @@ import { readVerifiedManainRecordSource } from "../../../infrastructure/filesyst
 import { prepareImportBatch } from "../../product/batch-identity.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { normalizePreparedTechnicalSpecs } from "../../technical/preparation-technical-stages.js";
-import { normalizeOriginalEnergyPresentation, normalizeOriginalLengthPresentation, normalizeOriginalMassPresentation } from "../../technical/technical-presentation.js";
+import { normalizeOriginalTechnicalPresentation } from "../../technical/technical-presentation.js";
 import { captureSourceEditorialEvidence } from "../../editorial/claims/source-editorial-evidence.js";
 import { resolveEditorialSource } from "../../editorial/core/editorial-source.js";
 import { prepareVerifiedManainRecord } from "../prepare.js";
@@ -51,8 +51,7 @@ test("Manain: el original verificado atraviesa íntegramente el motor editorial 
     assert.deepEqual(prepared.product.images, source.images);
     const originalSpecs = source.specs ?? {};
     const normalizedSpecs = normalizePreparedTechnicalSpecs(source, originalSpecs);
-    const expectedSpecs = normalizeOriginalEnergyPresentation(normalizeOriginalLengthPresentation(
-      normalizeOriginalMassPresentation(normalizedSpecs, originalSpecs), originalSpecs), originalSpecs);
+    const expectedSpecs = normalizeOriginalTechnicalPresentation(normalizedSpecs, originalSpecs);
     for (const [key, value] of Object.entries(expectedSpecs)) {
       assert.deepEqual(prepared.product.spec[key], value, key);
     }

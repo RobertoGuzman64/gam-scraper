@@ -20,11 +20,15 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
 
     "Batería": "string",
     "Baterías": "string",
+    "Batería (V / Ah)": "string",
     "Tipo de batería": "enum",
     "Capacidad de la batería (Ah)": "number_array",
     "Energía de batería (kWh)": "number",
     "Capacidad batería (Ah)": "number_array",
     "Voltaje batería (V)": "number",
+    "Voltaje": "number_array",
+    "Voltios": "number_array",
+    "Potencia": "string",
     "Cargador de batería": "string",
 
     "Tipo motor": "enum",
@@ -143,6 +147,12 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Depósito de combustible": "number",
     "Rotación de torreta": "string",
     "Rotación de plataforma": "string",
+    "Rotación de la cesta": "string",
+    "Rotación de torre": "string",
+    "Rotación hidráulica de cesta": "string",
+    "Rotación del cabezal trilateral": "string",
+    "Rotación de bidón": "string",
+    "Rotación": "string",
     "Pendiente con carga, nominal 3 min (%)": "number",
     "Pendiente sin carga, nominal 3 min (%)": "number",
     "Altura de elevación máxima (mm)": "number",
@@ -174,8 +184,58 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Par motor (Nm)": "number",
 
     "Nº de serie": "string",
-    "Estado baterías": "string"
+    "Estado baterías": "string",
+    "Control de estabilidad": "bool",
+    "Autocargable": "bool",
+    "Giratorio": "bool",
+    "Descarga altura": "bool",
+    "Certificación CE": "bool",
+    "Número de estabilizadores hidráulicos": "number",
+    "Polos": "number",
+    "Factor de potencia nominal": "number",
+    "Frecuencia nominal": "number",
+    "Corriente del cargador": "number",
+    "Voltaje del cargador": "number",
+    "Potencia absorbida": "number",
+    "Régimen nominal del motor": "number",
+    "Anchura de bandeja": "number",
+    "Anchura exterior del almacén": "number",
+    "Profundidad de bandeja": "number",
+    "Paso de almacenamiento de bandejas": "number",
+    "Carga neta por bandeja": "number",
+    "Masa máxima autorizada del vehículo": "number",
+    "Cazo 1 limpieza": "number",
+    "Cazo 2": "number",
+    "Cazo 3": "number",
+    "Largo horquillas": "number",
+    "Ancho horquillas": "number",
+    "Grosor horquillas": "number",
+    "Longitud de tenedor": "number",
+    "Diámetro nominal de herramienta compatible": "number",
+    "Alto cesta": "number",
+    "Ancho cesta": "number",
+    "Longitud cesta": "number",
+    "Altura transporte": "number",
+    "Longitud al tablero": "number",
+    "Longitud de cable de alimentación": "number",
+    "Capacidad depósito": "number",
+    "Capacidad del depósito": "number",
+    "Voltaje de la batería": "number",
+    "Tensión nominal de batería": "number",
+    "Potencia eléctrica máxima del equipo": "number",
+    "Tipo de motor": "string",
+    "Propulsión": "string",
+    "Accionamiento de elevación": "string",
+    "Tipo de cabina": "string",
+    "Posición del conductor": "string",
+    "Tipo de tracción": "string",
+    "Tipo brazo": "string"
 };
+
+export const SPEC_ANGULAR_FIELDS: ReadonlySet<string> = new Set([
+    "Rotación de torreta", "Rotación de plataforma", "Rotación de cesta", "Rotación de la cesta",
+    "Rotación de torre", "Rotación hidráulica de cesta", "Rotación del cabezal trilateral", "Rotación de bidón", "Rotación"
+]);
 
 export const SPEC_LENGTH_UNITS: Readonly<Partial<Record<string, "m" | "mm">>> = {
     "Longitud de plataforma": "m",
@@ -195,12 +255,58 @@ export const SPEC_LENGTH_UNITS: Readonly<Partial<Record<string, "m" | "mm">>> = 
     "Longitud extensión": "m",
     "Largo": "mm",
     "Alto": "mm",
-    "Altura máxima de elevación": "mm"
+    "Altura máxima de elevación": "mm",
+    "Anchura de bandeja": "mm",
+    "Anchura exterior del almacén": "mm",
+    "Profundidad de bandeja": "mm",
+    "Paso de almacenamiento de bandejas": "mm",
+    "Cazo 1 limpieza": "mm",
+    "Cazo 2": "mm",
+    "Cazo 3": "mm",
+    "Largo horquillas": "mm",
+    "Ancho horquillas": "mm",
+    "Grosor horquillas": "mm",
+    "Longitud de tenedor": "mm",
+    "Diámetro nominal de herramienta compatible": "mm",
+    "Alto cesta": "m",
+    "Ancho cesta": "m",
+    "Longitud cesta": "m",
+    "Altura transporte": "m",
+    "Longitud al tablero": "m",
+    "Longitud de cable de alimentación": "m"
 };
 
 export const SPEC_MASS_UNITS: Readonly<Partial<Record<string, "kg">>> = {
     "Capacidad máxima de plataforma": "kg",
-    "Capacidad máxima de elevación": "kg"
+    "Capacidad máxima de elevación": "kg",
+    "Carga neta por bandeja": "kg",
+    "Masa máxima autorizada del vehículo": "kg"
+};
+
+export const SPEC_VOLUME_UNITS: Readonly<Partial<Record<string, "l">>> = {
+    "Depósito de combustible": "l",
+    "Depósito de solución": "l",
+    "Depósito de recuperación": "l",
+    "Capacidad depósito": "l",
+    "Capacidad del depósito": "l"
+};
+
+export const SPEC_ROTATION_UNITS: Readonly<Partial<Record<string, "rpm">>> = {
+    "RPM cepillo": "rpm",
+    "RPM del cepillo": "rpm",
+    "Régimen nominal del motor": "rpm"
+};
+
+export const SPEC_ELECTRICAL_UNITS: Readonly<Partial<Record<string, "Hz" | "A" | "V" | "W">>> = {
+    "Frecuencia nominal": "Hz",
+    "Corriente del cargador": "A",
+    "Voltaje del cargador": "V",
+    "Voltaje": "V",
+    "Voltios": "V",
+    "Potencia absorbida": "W",
+    "Voltaje de la batería": "V",
+    "Tensión nominal de batería": "V",
+    "Potencia eléctrica máxima del equipo": "W"
 };
 
 export { SPEC_KEY_NORMALIZATION } from "./spec-key-normalization.js";

@@ -1,11 +1,17 @@
-import { SPEC_KEY_NORMALIZATION, SPEC_LENGTH_UNITS, SPEC_MASS_UNITS, SPEC_RULES, type SpecRuleType } from "./spec-rules.js";
+import { SPEC_KEY_NORMALIZATION, SPEC_ANGULAR_FIELDS, SPEC_LENGTH_UNITS, SPEC_MASS_UNITS, SPEC_VOLUME_UNITS, SPEC_ROTATION_UNITS, SPEC_ELECTRICAL_UNITS, SPEC_RULES, type SpecRuleType } from "./spec-rules.js";
 import {
   cleanEnum,
+  normalizeBatteryChemistryLabel,
   parseBattery,
+  parseBatteryConfiguration,
+  parseExplicitPowerPresentation,
+  parseExplicitAngularPresentation,
+  parseExplicitVoltagePresentation,
   parseBoolean,
   parseDimension,
   parseDimensionRect,
   parseMeasuredLength,
+  parseMillimeterAlternatives,
   parseNumber,
   parseNumberArray,
   parseYear
@@ -72,7 +78,10 @@ const isInvalidStringValue = (v: string): boolean => {
 
 const specUnit = (key: string): string | undefined =>
   key.match(/\(([^)]+)\)$/)?.[1] ?? (Object.hasOwn(SPEC_LENGTH_UNITS, key) ? SPEC_LENGTH_UNITS[key] : undefined) ??
-  (Object.hasOwn(SPEC_MASS_UNITS, key) ? SPEC_MASS_UNITS[key] : undefined);
+  (Object.hasOwn(SPEC_MASS_UNITS, key) ? SPEC_MASS_UNITS[key] : undefined) ??
+  (Object.hasOwn(SPEC_VOLUME_UNITS, key) ? SPEC_VOLUME_UNITS[key] : undefined) ??
+  (Object.hasOwn(SPEC_ROTATION_UNITS, key) ? SPEC_ROTATION_UNITS[key] : undefined) ??
+  (Object.hasOwn(SPEC_ELECTRICAL_UNITS, key) ? SPEC_ELECTRICAL_UNITS[key] : undefined);
 
 const rejectionReason = (value: unknown, key: string, rule: SpecRuleType): DiscardReason => {
   if (typeof value !== "string") return "invalid_value";
@@ -93,6 +102,16 @@ const applyRule = (type: SpecRuleType, value: unknown, rawKey: string, normalize
   switch (type) {
     case "number": {
       if (normalizedKey === "Año") return parseYear(value);
+      if (["Número de estabilizadores hidráulicos", "Polos", "Número de ruedas"].includes(normalizedKey)) {
+        if (typeof value !== "number" && (typeof value !== "string" || !/^\d+(?:[.,]0{1,2})?$/u.test(value.trim()))) return null;
+        const count = parseNumber(value);
+        return count !== null && Number.isSafeInteger(count) && count >= 0 ? count : null;
+      }
+      if (normalizedKey === "Factor de potencia nominal") {
+        if (typeof value !== "number" && (typeof value !== "string" || !/^(?:0|1)(?:[.,]\d+)?$/u.test(value.trim()))) return null;
+        const factor = typeof value === "number" ? value : Number(value.trim().replace(",", "."));
+        return Number.isFinite(factor) && factor >= 0 && factor <= 1 ? factor : null;
+      }
       const measure = specUnit(normalizedKey);
       if (measure === "mm" || measure === "m") return parseMeasuredLength(value, rawKey, measure);
       const unit = measure;
@@ -101,7 +120,15 @@ const applyRule = (type: SpecRuleType, value: unknown, rawKey: string, normalize
     }
     case "number_array": {
       const unit = normalizedKey.match(/\(([^)]+)\)$/)?.[1];
-      const numbers = parseNumberArray(value, unit, normalizedKey === "Velocidad de desplazamiento con/sin carga (km/h)");
+      if (normalizedKey === "Voltaje" || normalizedKey === "Voltios") {
+        const presentation = parseExplicitVoltagePresentation(value);
+        if (typeof value === "string" && presentation === null && parseNumber(value, "V") === null) return null;
+        const numbers = parseNumberArray(presentation ?? value, "V", presentation !== null);
+        return numbers && numbers.length <= 2 && numbers.every((number) => number > 0) ? numbers : null;
+      }
+      const alternatives = normalizedKey === "Ancho promedio (mm)" || normalizedKey === "AST (mm)"
+        ? parseMillimeterAlternatives(value) : null;
+      const numbers = alternatives ?? parseNumberArray(value, unit, normalizedKey === "Velocidad de desplazamiento con/sin carga (km/h)");
       return numbers?.every((number) => number >= 0) ? numbers : null;
     }
     case "dimension":
@@ -113,10 +140,19 @@ const applyRule = (type: SpecRuleType, value: unknown, rawKey: string, normalize
     case "bool":
       return parseBoolean(value);
     case "enum":
+      if (normalizedKey === "Tipo de batería" && typeof value === "string") return normalizeBatteryChemistryLabel(value.trim());
       return cleanEnum(value);
     case "location":
       return typeof value === "string" ? value.trim() : null;
     case "string":
+      if (normalizedKey === "Batería (V / Ah)") return parseBatteryConfiguration(value);
+      if (normalizedKey === "Potencia") return parseExplicitPowerPresentation(value);
+      if (SPEC_ANGULAR_FIELDS.has(normalizedKey)) {
+        const angle = parseExplicitAngularPresentation(value);
+        if (angle !== null) return angle;
+        if (!["Rotación de torreta", "Rotación de plataforma", "Rotación de cesta"].includes(normalizedKey)) return null;
+      }
+      return typeof value === "string" ? value.trim() : null;
     default:
       return typeof value === "string" ? value.trim() : null;
   }
@@ -169,7 +205,7 @@ export const normalizeSpecsObject = (spec: unknown): NormalizeResult => {
       }
       value = s;
     }
-    if (rule === "string" && Array.isArray(value)) {
+    if (rule === "string" && normKey !== "Batería (V / Ah)" && !SPEC_ANGULAR_FIELDS.has(normKey) && Array.isArray(value)) {
       const s = value
         .filter((v): v is string => typeof v === "string")
         .filter((v) => !isInvalidStringValue(v))

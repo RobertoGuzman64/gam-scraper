@@ -7,7 +7,7 @@ import { projectCommercialPresentation } from "../../../commercial/projection/pr
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 import { analyzePresentationConsistency } from "../../../commercial/diagnostics/presentation-consistency.js";
 import { hasLoadCapacityDisagreement, inspectTechnicalSpecifications } from "../../../commercial/validation/technical-specifications.js";
-import { normalizeTechnicalPresentation, normalizeOriginalMassPresentation, normalizeOriginalLengthPresentation, normalizeOriginalEnergyPresentation } from "../../../preparation/technical/technical-presentation.js";
+import { normalizeOriginalTechnicalPresentation, normalizeTechnicalPresentation } from "../../../preparation/technical/technical-presentation.js";
 import { projectPresentableSpecifications } from "../../../commercial/projection/spec-projection.js";
 
 const publication = async (providerId: string): Promise<readonly ImportCandidate[]> => {
@@ -247,13 +247,13 @@ test("la cohorte GAM saneada conserva las especificaciones válidas sin requerir
       assert.equal(sourceSpecs["Capacidad de carga (kg)"], "8000 KG", reference);
       assert.equal(product.spec["Capacidad de arrastre"], reconciledArrastre, reference);
     }
-    const normalizedSource = normalizeOriginalEnergyPresentation(normalizeOriginalLengthPresentation(
-      normalizeOriginalMassPresentation(normalizeTechnicalPresentation(sourceSpecs), sourceSpecs), sourceSpecs), sourceSpecs);
+    const normalizedSource = normalizeOriginalTechnicalPresentation(normalizeTechnicalPresentation(sourceSpecs), sourceSpecs);
+    const comparablePublication = normalizeOriginalTechnicalPresentation(product.spec, sourceSpecs);
     for (const [key, value] of Object.entries(normalizedSource)) {
       if (removed.includes(key)) continue;
       if (key === "Capacidad de carga (kg)" && reconciledArrastre !== null &&
         product.spec[key] === undefined) continue;
-      assert.deepEqual(product.spec[key], value, `${reference}:${key}`);
+      assert.deepEqual(comparablePublication[key], value, `${reference}:${key}`);
     }
     assert.deepEqual(projectPresentableSpecifications(product.spec, source), product.spec, reference);
     assert.deepEqual(inspectTechnicalSpecifications(product.spec), [], reference);

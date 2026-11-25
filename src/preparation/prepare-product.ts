@@ -11,13 +11,13 @@ import { preparedTechnicalConsistencyIssues } from "./technical/technical-consis
 import { resolveCommercialCondition } from "./product/condition.js";
 import type { ImportCandidate, ImportCatalog } from "../commercial/legacy-export/contracts.js";
 import type { PreparedProduct } from "./contracts.js";
-import { captureTechnicalProvenance } from "./provenance/technical-provenance.js";
+import { captureTechnicalProvenance, recoveredUnitAttributeSpecs } from "./provenance/technical-provenance.js";
 import { applyReconciledTechnicalSpecs } from "./technical/technical-specifications.js";
 import { captureSourceEditorialEvidence } from "./editorial/claims/source-editorial-evidence.js";
 import { reconcileSourceCategoryTitle, reconcileVerifiedSourceReviewClaims, reconcileVerifiedSourceFamily, reconcileVerifiedSourceFuel, reconcileVerifiedSourceIdentity, reconcileVerifiedManufacturerSourceLoad, reconcileInitialTechnicalEvidence, resolveSourceTechnicalSemanticRecord, reconcileTechnicalSourceForRecovery, reconcileTechnicalBeforeEditorial, reconcileTechnicalAfterEditorial, normalizePreparedTechnicalSpecs } from "./technical/preparation-technical-stages.js";
 import { publicationConflictForMercaeleva } from "./mercaeleva/technical/mercaeleva.js";
 import { hasDocumentedGomarizPriceOnRequest } from "./gomariz/price-on-request.js";
-import { normalizeOriginalEnergyPresentation, normalizeOriginalLengthPresentation, normalizeOriginalMassPresentation } from "./technical/technical-presentation.js";
+import { normalizeOriginalTechnicalPresentation } from "./technical/technical-presentation.js";
 import { recoverSourceCleaningConfiguration } from "./technical/recovery/cleaning-family-specifications.js";
 import { reconcileHandlingFamilySpecs, recoverSourceHandlingConfiguration } from "./technical/recovery/handling-family-specifications.js";
 import { presentGamVerifiedRestrictedCapacity } from "./gam/reconciliation/gam-verified-capacity-coherence.js";
@@ -76,17 +76,18 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
       ? excludeGomarizForeignCover(sourceImages, record.reference) : sourceImages;
   const price = normalizePrice(record.price);
   const reference = record.reference?.trim() || null;
-  const attributeResult = catalog ? productAttributes(qualityRecord, category, catalog) : null;
   const normalizedSpecs = normalizePreparedTechnicalSpecs(record, reconciledSpecs, technicalProvenance.observe);
   const limitedSpecs = presentGamVerifiedRestrictedCapacity(record, normalizedSpecs);
   const handledSpecs = reconcileHandlingFamilySpecs(editorialRecord, limitedSpecs);
   technicalProvenance.observe(limitedSpecs, handledSpecs,
     "src/preparation/shared/technical/reconciliation/handling-family-specifications.ts",
     { spec: "Capacidad de carga (kg)" });
-  const presentedSpecs = normalizeOriginalEnergyPresentation(normalizeOriginalLengthPresentation(
-    normalizeOriginalMassPresentation(handledSpecs, originalRecord.specs ?? {}), originalRecord.specs ?? {}), originalRecord.specs ?? {});
+  const presentedSpecs = normalizeOriginalTechnicalPresentation(handledSpecs, originalRecord.specs ?? {});
   const editorialProvenance = technicalProvenance.finalize(presentedSpecs, recoverySource);
-  const editorial = resolvePreparedEditorial(editorialRecord, restoredFamily ? originalRecord : sourceUnitRecord, sourceEditorial, originalRecord, reviewedModelEditorialSpecs(originalRecord, editorialProvenance));
+  const reviewedSpecs = reviewedModelEditorialSpecs(originalRecord, editorialProvenance);
+  const attributeResult = catalog ? productAttributes(qualityRecord, category, catalog, reviewedSpecs,
+    recoveredUnitAttributeSpecs(originalRecord, editorialProvenance)) : null;
+  const editorial = resolvePreparedEditorial(editorialRecord, restoredFamily ? originalRecord : sourceUnitRecord, sourceEditorial, originalRecord, reviewedSpecs);
   const descriptions = { short: editorial.preparedShort, general: editorial.preparedLong };
   const product: ImportCandidate = {
     providerId: record.providerId,
@@ -122,7 +123,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   if (price === null && /\d/.test(record.price ?? "") &&
     !hasDocumentedGomarizPriceOnRequest(originalRecord)) issues.push("Precio publicado inválido");
   issues.push(...(catalog === null ? sourceTechnicalQualityIssues(blockingQualityRecord) :
-    category ? (weightOmitted ? productAttributes(blockingQualityRecord, category, catalog).qualityIssues : attributeResult!.qualityIssues) :
+    category ? (weightOmitted ? productAttributes(blockingQualityRecord, category, catalog, reviewedSpecs).qualityIssues : attributeResult!.qualityIssues) :
       sourceAttributeQualityIssues(blockingQualityRecord, catalog)));
 
   issues.push(...preparedTechnicalConsistencyIssues(qualityRecord, reconciledSpecs));

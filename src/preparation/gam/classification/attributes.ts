@@ -137,7 +137,7 @@ export const applyGamAliasesDetailed = (record: ProductRecord, attribute: Attrib
     if (!generatorPower) return "rejected";
     candidates.push(generatorPower);
   }
-  if (["Tipo de mástil", "Altura de elevación", "Capacidad de carga", "Marca", "Modelo", "Motorización / Energía"].includes(attribute.name)) {
+  if (["Tipo de mástil", "Altura de elevación", "Capacidad de carga", "Marca", "Modelo", "Motorización / Energía", "Longitud de horquillas"].includes(attribute.name)) {
     const hasDirectValue = Object.entries(record.specs ?? {}).some(([key]) =>
       keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key))
     );

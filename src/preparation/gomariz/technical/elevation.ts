@@ -1,6 +1,7 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../classification/attribute-types.js";
 import { fold } from "../../classification/attribute-utils.js";
+import { gomarizTechnicalSourceFamily } from "../classification/source-category.js";
 
 const platformFamilies = new Set([
   "elevador-tijera", "brazo-articulado", "brazo-articulado-boom-lift", "brazo-telescopico",
@@ -8,18 +9,8 @@ const platformFamilies = new Set([
 ]);
 
 const platformFamily = (record: ProductRecord): string | null => {
-  if (record.providerId !== "gomariz") return null;
-  try {
-    const url = new URL(record.url);
-    const path = url.pathname.split("/").filter(Boolean);
-    const family = path[2];
-    if (!["gomarizrent.com", "www.gomarizrent.com"].includes(url.hostname) ||
-      path[0] !== "venta" || path[1] !== "elevacion-y-trabajos-en-altura" ||
-      path.length !== 4 || !family || !platformFamilies.has(family)) return null;
-    return family;
-  } catch {
-    return null;
-  }
+  const family = gomarizTechnicalSourceFamily(record);
+  return family !== null && platformFamilies.has(family) ? family : null;
 };
 
 const electricMotor = (record: ProductRecord, family: string): string | null => {

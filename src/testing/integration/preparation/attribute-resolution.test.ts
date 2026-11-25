@@ -12,6 +12,10 @@ import { productAttributes } from "../../../preparation/product/product-attribut
 
 import { prepareProduct } from "../../../commercial/legacy-export/prepare-product.js";
 
+import { originalRecordFingerprint } from "../../../catalog/identity-fingerprint.js";
+import { recoveredUnitAttributeSpecs } from "../../../preparation/provenance/technical-provenance.js";
+import type { ProductTechnicalProvenance } from "../../../contracts/technical-provenance.js";
+
 import { gamSourceYear } from "../../../catalog/normalization/gam/year.js";
 
 const catalog = await loadImportCatalog();
@@ -187,4 +191,144 @@ test("GAM: preserva años acreditados en descripción y ficha y los declarados e
   }
   const spec = { ...title, title: "Carretilla 2000 kg", specs: { "Año de fabricación": "2018" } };
   assert.deepEqual(resolveAttribute(spec, year), { status: "resolved", value: 2018 });
+});
+
+
+test("la geometría de modelo acreditada completa únicamente atributos sin evidencia directa", () => {
+  const record = { ...gamRecord(), reference: "SYNTHETIC", brand: "EQUIPTEST", model: "X1", title: "Plataforma de tijera", shortDescription: null, longDescription: null };
+  const height = attribute("Altura de plataforma");
+  const extension = attribute("Extensión de plataforma");
+  const reach = attribute("Alcance horizontal");
+  const energy = attribute("Motorización / Energía");
+  const evidence: SpecsMap = { [height.name]: "5,8 m", [extension.name]: "0,9 m", [reach.name]: "2,5 m", [energy.name]: "Eléctrico" };
+  assert.deepEqual(resolveAttribute(record, height, evidence), { status: "resolved", value: 5.8 });
+  assert.deepEqual(resolveAttribute(record, extension, evidence), { status: "resolved", value: 0.9 });
+  assert.deepEqual(resolveAttribute(record, reach, evidence), { status: "resolved", value: 2.5 });
+  assert.equal(resolveAttribute(record, energy, evidence).status, "not_observed");
+  assert.equal(resolveAttribute(record, height).status, "not_observed");
+  for (const raw of ["5,8 kg", "5,8/6 m", "0 m", "5,8", "5,8 m opcional"]) {
+    assert.equal(resolveAttribute(record, height, { [height.name]: raw }).status, "not_observed");
+  }
+  assert.deepEqual(resolveAttribute({ ...record, specs: { "Altura plataforma": "6 m" } }, height, evidence), { status: "resolved", value: 6 });
+  assert.equal(resolveAttribute({ ...record, specs: { "Altura plataforma": "6 kg" } }, height, evidence).status, "invalid");
+  assert.equal(resolveAttribute({ ...record, specs: { "Altura plataforma": ["6 m", "7 m"] } }, height, evidence).status, "rejected");
+  assert.equal(resolveAttribute({ ...record, specs: { "Altura plataforma": "n/a" } }, height, evidence).status, "not_observed");
+  assert.equal(resolveAttribute(record, { ...height, unit_option: "mm" }, evidence).status, "not_observed");
+  const category = catalog.categories[0];
+  assert.ok(category);
+  const contract = { categories: [category], attributes: [height, extension], relations: [{ categoryID: category.id, attributeID: height.id }] };
+  assert.deepEqual(productAttributes(record, category, contract, evidence).attributes, [{ attributeID: height.id, value: 5.8 }]);
+});
+
+
+test("los atributos recuperados de unidad conservan el ámbito, las unidades y las precedencias", () => {
+  const record = { ...gamRecord(), reference: "SYNTHETIC", brand: "EQUIPTEST", model: "X1", title: "Equipo X1", shortDescription: null,
+    longDescription: "Depósito de solución de 35 litros. Neumáticos no marcantes." };
+  const tank = attribute("Depósito de solución");
+  const tyres = attribute("Neumáticos");
+  const angle = attribute("Rotación de torreta");
+  const evidence: SpecsMap = { [tank.name]: "35", [tyres.name]: "No marcantes", [angle.name]: "345°" };
+  assert.deepEqual(resolveAttribute(record, tank, {}, evidence), { status: "resolved", value: 35 });
+  assert.deepEqual(resolveAttribute(record, tyres, {}, evidence), { status: "resolved", value: "No marcantes" });
+  assert.deepEqual(resolveAttribute(record, angle, {}, evidence), { status: "resolved", value: 345 });
+  assert.equal(resolveAttribute(record, tank, evidence).status, "not_observed");
+  assert.equal(resolveAttribute(record, { ...tank, unit_option: "kg / l" }, {}, evidence).status, "not_observed");
+  assert.equal(resolveAttribute(record, { ...tyres, unit_option: "Macizos / Superelásticos" }, {}, evidence).status, "not_observed");
+  assert.equal(resolveAttribute(record, angle, {}, { [angle.name]: "180° / 360°" }).status, "not_observed");
+  assert.equal(resolveAttribute(record, angle, {}, { [angle.name]: "720°" }).status, "not_observed");
+  assert.deepEqual(resolveAttribute({ ...record, specs: { [tank.name]: 40 } }, tank, {}, evidence), { status: "resolved", value: 40 });
+  assert.equal(resolveAttribute({ ...record, specs: { [tank.name]: [40, 45] } }, tank, {}, evidence).status, "rejected");
+  assert.equal(resolveAttribute({ ...record, specs: { [tank.name]: "n/a" } }, tank, {}, evidence).status, "not_observed");
+  const provenance: ProductTechnicalProvenance = { originalRecordSha256: originalRecordFingerprint(record), entries: [
+    { field: tank.name, value: "35", mechanism: "src/preparation/gam/technical/operations/cleaning-tank-evidence.ts",
+      scope: "unit", sourceField: "longDescription", sourceValue: record.longDescription },
+    { field: tyres.name, value: "No marcantes", mechanism: "src/preparation/gam/technical/mobility/non-marking-tyres-evidence.ts",
+      scope: "unit", sourceField: "longDescription", sourceValue: "Otra descripción" },
+    { field: "Capacidad de la tolva", value: "90", mechanism: "src/preparation/technical/example.ts",
+      scope: "unit", sourceField: "longDescription", sourceValue: record.longDescription },
+    { field: angle.name, value: "345°", mechanism: "src/preparation/technical/example.ts", scope: "unknown", sourceField: null, sourceValue: null }
+  ] };
+  assert.deepEqual(recoveredUnitAttributeSpecs(record, provenance), { [tank.name]: "35" });
+  assert.deepEqual(recoveredUnitAttributeSpecs({ ...record, longDescription: "Otro equipo" }, provenance), {});
+});
+
+test("los atributos de unidad aprovechan motorización y medidas explícitas sin sustituir datos de origen", () => {
+  const record: ProductRecord = { ...gamRecord(), reference: "SYNTHETIC", brand: "EQUIPTEST", model: "X1",
+    url: "https://online.gamrentals.com/es/plataformas-elevadoras-tijera-electricas-segunda-mano/synthetic-equipment",
+    title: "Equipo eléctrico EQUIPTEST X1", shortDescription: "Equipo eléctrico", longDescription: "Radio de giro 1500 mm." };
+  const energy = attribute("Motorización / Energía");
+  const centre = attribute("Centro de carga");
+  const radius = attribute("Radio de giro");
+  const height = attribute("Altura de elevación");
+  const slope = attribute("Pendiente superable");
+  const evidence: SpecsMap = { Motorización: "Eléctrico", "Centro de carga (mm)": "600 mm", "Radio de giro (mm)": "1500 mm",
+    "Altura de elevación (mm)": "4500 mm", "Pendiente superable (%)": "25 %" };
+  assert.deepEqual(resolveAttribute(record, energy, {}, evidence), { status: "resolved", value: "Eléctrico" });
+  for (const [target, value] of [[centre, 600], [radius, 1500], [height, 4500], [slope, 25]] as const) {
+    assert.deepEqual(resolveAttribute(record, target, {}, evidence), { status: "resolved", value });
+    assert.equal(resolveAttribute(record, target, evidence).status, "not_observed");
+  }
+  assert.equal(resolveAttribute(record, energy, evidence).status, "not_observed");
+  assert.equal(resolveAttribute({ ...record, specs: { Motor: "Diésel" } }, energy, {}, evidence).status, "not_observed");
+  assert.equal(resolveAttribute(record, energy, {}, { ...evidence, "Tipo motor": "Diésel" }).status, "not_observed");
+  assert.equal(resolveAttribute({ ...record, title: "Equipo diésel" }, energy, {}, evidence).status, "not_observed");
+  assert.equal(resolveAttribute(record, { ...energy, unit_option: "Diésel" }, {}, evidence).status, "not_observed");
+  assert.deepEqual(resolveAttribute({ ...record, specs: { "Centro de carga": "500 mm" } }, centre, {}, evidence), { status: "resolved", value: 500 });
+  assert.equal(resolveAttribute({ ...record, specs: { "Centro de carga": "n/a" } }, centre, {}, evidence).status, "not_observed");
+  assert.equal(resolveAttribute({ ...record, specs: { "Centro de carga": ["500 mm", "600 mm"] } }, centre, {}, evidence).status, "rejected");
+  for (const raw of ["1500", "1500 kg", "1500 / 1600 mm", "1500 mm opcional", "15000 mm"]) {
+    assert.equal(resolveAttribute(record, radius, {}, { "Radio de giro (mm)": raw }).status, "not_observed");
+  }
+  assert.equal(resolveAttribute(record, radius, {}, { ...evidence, "Radio de giro": "1600 mm" }).status, "not_observed");
+  assert.equal(resolveAttribute(record, { ...radius, unit_option: "m" }, {}, evidence).status, "not_observed");
+});
+
+test("las prestaciones operativas de unidad se proyectan sin inferir configuraciones ni sustituir medidas", () => {
+  const source: ProductRecord = { ...gamRecord(), reference: "SYNTHETIC", brand: "EQUIPTEST", model: "X1", title: "Equipo X1",
+    shortDescription: null, longDescription: "Equipo eléctrico", categoryKey: "manutencion", specs: {} };
+  const position = { name: "Posición del operario", type: "SELECT", unit_option: "Acompañante / Plataforma / Sentado" } as const;
+  const power = { name: "Potencia del motor", type: "NUMBER", unit_option: "kW" } as const;
+  const coverage = { name: "Rendimiento teórico", type: "NUMBER", unit_option: "m²/h" } as const;
+  const speed = { name: "Velocidad máxima", type: "NUMBER", unit_option: "km/h" } as const;
+  const towing = { name: "Capacidad de arrastre", type: "NUMBER", unit_option: "kg" } as const;
+  const handling = { ...source, categoryKey: "carretillas-nuevas" };
+  const cleaning = { ...source, categoryKey: "limpieza-fregadoras" };
+  const road = { ...source, categoryKey: "maquinaria", longDescription: "Scooter eléctrico. Velocidad máxima de 45 km/h." };
+  const evidence: SpecsMap = { "Posición de conducción": "Operador a pie", "Potencia (kW)": "55 kW",
+    "Rendimiento de limpieza (m²/h)": "1500", "Velocidad de desplazamiento (km/h)": "45 km/h", "Capacidad de arrastre (kg)": "2500 kg" };
+  assert.equal(resolveAttribute(source, position, {}, evidence).value, "Acompañante");
+  assert.equal(resolveAttribute(handling, power, {}, evidence).value, 55);
+  assert.equal(resolveAttribute(cleaning, coverage, {}, evidence).value, 1500);
+  assert.equal(resolveAttribute(road, speed, {}, evidence).value, 45);
+  assert.equal(resolveAttribute(source, towing, {}, evidence).value, 2500);
+  assert.equal(resolveAttribute(source, position, evidence).value, null);
+  assert.equal(resolveAttribute(source, position, {}, { "Posición de conducción": "Operador a bordo" }).value, null);
+  assert.equal(resolveAttribute({ ...source, specs: { "Tipo de conducción": "Sentado" } }, position, {}, evidence).value, null);
+  assert.equal(resolveAttribute({ ...handling, specs: { "Potencia de tracción (kW)": "15 kW" } }, power, {}, evidence).value, null);
+  assert.equal(resolveAttribute(handling, power, {}, { ...evidence, "Potencia nominal del motor": "60 kW" }).value, null);
+  assert.equal(resolveAttribute(handling, power, {}, { "Potencia (kW)": "2 x 15 kW" }).value, null);
+  assert.equal(resolveAttribute(cleaning, coverage, {}, { "Rendimiento de limpieza (m²/h)": "1500 / 2000" }).value, null);
+  assert.equal(resolveAttribute({ ...cleaning, specs: { "Productividad": "n/a" } }, coverage, {}, evidence).value, null);
+  assert.equal(resolveAttribute({ ...road, longDescription: "Equipo industrial" }, speed, {}, evidence).value, null);
+  assert.equal(resolveAttribute(road, speed, {}, { "Velocidad de desplazamiento (km/h)": "45 km/h sin carga" }).value, null);
+  assert.equal(resolveAttribute(source, towing, {}, { "Capacidad de arrastre (kg)": "2500 N" }).value, null);
+  assert.equal(resolveAttribute({ ...source, providerId: "manain" }, towing, {}, evidence).value, null);
+});
+
+
+test("la rodadura acreditada se proyecta sin seleccionar neumáticos opcionales", () => {
+  const source: ProductRecord = { ...gamRecord(), reference: "SYNTHETIC", brand: "EQUIPTEST", model: "X1", title: "Plataforma EQUIPTEST X1",
+    shortDescription: null, longDescription: "Plataforma con tracción en las cuatro ruedas.", categoryKey: "elevacion-nueva", specs: {} };
+  const traction = { name: "Tipo de tracción", type: "SELECT", unit_option: "Ruedas / Orugas / Sobre camión / Empuje manual" } as const;
+  const tyres = { name: "Neumáticos", type: "SELECT", unit_option: "Macizos / Superelásticos / Neumáticos" } as const;
+  assert.equal(resolveAttribute(source, traction, {}, { "Tracción 4x4": "true" }).value, "Ruedas");
+  assert.equal(resolveAttribute({ ...source, longDescription: "Tracción 4x4 opcional." }, traction, {}, { "Tracción 4x4": "true" }).value, null);
+  assert.equal(resolveAttribute({ ...source, longDescription: "Tracción 4x4 sobre orugas." }, traction, {}, { "Tracción 4x4": "true" }).value, null);
+  assert.equal(resolveAttribute(source, traction, {}, { "Tracción 4x4": "false" }).value, null);
+  for (const value of ["Sólidos", "Bandaje macizo"]) assert.equal(resolveAttribute(source, tyres, {}, { Neumáticos: value }).value, "Macizos");
+  assert.equal(resolveAttribute(source, tyres, {}, { Neumáticos: "8.25x15-14PR (ruedas neumáticas)" }).value, "Neumáticos");
+  for (const value of ["Sólidos anti-marcado", "Macizos o neumáticos", "8.25x15-14PR (configuración estándar)"]) {
+    assert.equal(resolveAttribute(source, tyres, {}, { Neumáticos: value }).value, null);
+  }
+  assert.equal(resolveAttribute({ ...source, specs: { Ruedas: "n/a" } }, tyres, {}, { Neumáticos: "Sólidos" }).value, null);
 });

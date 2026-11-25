@@ -348,3 +348,37 @@ test("normaliza prestaciones de conducción y tecnología sin fusionar conceptos
   assert.deepEqual(normalizeSpecsObject({ ...specs, "Tipo motor": "Eléctrico", "Dirección asistida": false }).normalized,
     { ...specs, "Tipo motor": "Eléctrico", "Dirección asistida": false });
 });
+
+test("interpreta unidades dimensionales compactas y decimales inferiores a uno sin suponer millares", () => {
+  assert.deepEqual(parseDimensionRect("1,83x0,76m"), { ancho: 1830, largo: 760 });
+  assert.deepEqual(parseDimensionRect("1.4m x 0.700m"), { ancho: 1400, largo: 700 });
+  assert.deepEqual(parseDimension("1200 x 100 x 0.125 mm"), { largo: 1200, ancho: 100, grosor: 0.125 });
+  assert.equal(parseDimensionRect("1.200x0,7m"), null);
+  assert.equal(parseDimensionRect("01.200x0,7m"), null);
+  assert.equal(parseDimensionRect("1400x700"), null);
+  assert.equal(parseDimensionRect("1400x700kg"), null);
+});
+
+
+test("interpreta configuraciones operativas independientes sin fusionar accionamiento, tracción ni cabina", () => {
+  const input = {
+    "Tipo de motor": "Diésel", "Tipo motor": "Eléctrico", "Propulsión": "Manual",
+    "Accionamiento de elevación": "Hidráulico manual", "Tipo de cabina": "Guardia superior",
+    "Posición del conductor": "Peatonal", "Tipo de tracción": "4x4 conectable", "Tipo brazo": "articulada"
+  };
+  const result = normalizeSpecsObject(input);
+  assert.deepEqual(result.normalized, input);
+  assert.deepEqual(result.unknownKeys, []);
+  assert.deepEqual(result.conflictingKeys, []);
+  assert.deepEqual(normalizeSpecsObject(result.normalized).normalized, input);
+  assert.deepEqual(normalizeSpecsObject({ "PROPULSION": "Eléctrica", "POSICION DEL CONDUCTOR": "Plataforma opcional" }).normalized,
+    { "Propulsión": "Eléctrica", "Posición del conductor": "Plataforma opcional" });
+  for (const key of Object.keys(input).filter((key) => key !== "Tipo motor")) {
+    for (const value of [true, 24, "", "N/A", "Modelo"]) {
+      assert.equal(normalizeSpecsObject({ [key]: value }).normalized[key], undefined);
+    }
+  }
+  const conflict = normalizeSpecsObject({ "Tipo de motor": "Diésel", "TIPO DE MOTOR": "Eléctrico" });
+  assert.equal(conflict.normalized["Tipo de motor"], undefined);
+  assert.equal(conflict.conflictingKeys.length, 1);
+});

@@ -22,9 +22,10 @@ export const parseMeasuredLength = (value: unknown, sourceKey: string, target: "
   if (unit && fromKey && unit !== fromKey) return null;
   const from = unit ?? fromKey ?? target;
   const literal = match[1];
-  if (from === "m" && /^\d{1,3}\.\d{3}$/.test(literal)) return null;
+  const grouped = /^\d{1,3}\.\d{3}$/.test(literal) && !literal.startsWith("0.");
+  if (from === "m" && grouped) return null;
   let numeric: number;
-  if (/^\d{1,3}\.\d{3}$/.test(literal) && from !== "m") numeric = Number(literal.replace(".", ""));
+  if (grouped && from !== "m") numeric = Number(literal.replace(".", ""));
   else numeric = Number(literal.replace(",", "."));
   if (!Number.isFinite(numeric) || numeric < 0 || (from === "m" && numeric >= 1000)) return null;
   if (from === target) return numeric;
@@ -34,6 +35,9 @@ export const parseMeasuredLength = (value: unknown, sourceKey: string, target: "
 const unitAlternatives: Readonly<Record<string, readonly string[]>> = {
   kg: ["kg", "kilogramo", "kilogramos"],
   kw: ["kw"],
+  w: ["w"],
+  hz: ["hz"],
+  a: ["a"],
   cv: ["cv"],
   v: ["v", "voltio", "voltios"],
   ah: ["ah"],
@@ -66,7 +70,17 @@ export const parseNumber = (v: unknown, expectedUnit?: string): number | null =>
   if (v === null || v === undefined || typeof v === "boolean") return null;
   if (typeof v === "number") return Number.isFinite(v) ? v : null;
   if (typeof v !== "string") return null;
-  const matched = v.trim().match(/^([+-]?\d[\d.,]*)(?:\s*(.*))?$/u);
+  const text = v.trim();
+  const groupedUnit = expectedUnit?.toLowerCase();
+  const groupedUsage = groupedUnit === "h" || groupedUnit === "km"
+    ? /^(\d{1,3}(?:[ \u00a0\u202f]\d{3})+)(?:\s*(.*))?$/iu.exec(text) : null;
+  if (groupedUsage?.[1] && groupedUnit) {
+    const suffix = groupedUsage[2]?.trim().toLowerCase();
+    if (suffix && !unitAlternatives[groupedUnit]?.includes(suffix)) return null;
+    const usage = Number(groupedUsage[1].replace(/[ \u00a0\u202f]/gu, ""));
+    return Number.isSafeInteger(usage) ? usage : null;
+  }
+  const matched = text.match(/^([+-]?\d[\d.,]*)(?:\s*(.*))?$/u);
   if (!matched?.[1]) return null;
   const value = parseNumericLiteral(matched[1]);
   if (value === null) return null;
@@ -122,6 +136,14 @@ export const parseNumberArray = (
   return single === null ? null : [single];
 };
 
+export const parseMillimeterAlternatives = (value: unknown): readonly number[] | null => {
+  if (typeof value !== "string") return null;
+  const match = /^(\d+(?:\s*\/\s*\d+)+)\s*(?:mm)?$/iu.exec(value.trim());
+  if (!match?.[1]) return null;
+  const values = match[1].split("/").map((part) => parseMeasuredLength(part.trim(), "", "mm"));
+  return values.every((number): number is number => number !== null && number > 0 && Number.isSafeInteger(number)) ? values : null;
+};
+
 export type Dimension = {
   readonly largo: number | null;
   readonly ancho: number | null;
@@ -167,8 +189,65 @@ export const parseDimensionRect = (v: unknown): DimensionRect | null => {
   if (typeof v !== "string") return null;
   const text = v.trim().replace(/(mm|cm|m)\s+metros?$/iu, "$1");
   const axes = parseDimensionAxes(text, 2, 2);
-  if (!axes || !/\b(?:mm|cm|m|metros?)$/iu.test(text)) return null;
+  if (!axes || !/(?:mm|cm|m|metros?)$/iu.test(text)) return null;
   return { ancho: axes[0] ?? null, largo: axes[1] ?? null };
+};
+
+export const parseBatteryConfiguration = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const options = value.trim().replace(/(?:\s*\(V\s*\/\s*Ah\))+$/iu, "").split(/\s*\|\s*/u);
+  const formatted: string[] = [];
+  for (const option of options) {
+    const match = /^(Li-ion\s+)?(\d+(?:,\d+|\.\d{1,2})?)\s*V\s*\/\s*(\d+(?:,\d+|\.\d{1,2})?)(?:\s*([-–])\s*(\d+(?:,\d+|\.\d{1,2})?))?\s*Ah$/iu.exec(option);
+    if (!match?.[2] || !match[3]) return null;
+    const voltage = parseNumber(match[2], "V");
+    const minimum = parseNumber(match[3], "Ah");
+    const maximum = match[5] ? parseNumber(match[5], "Ah") : minimum;
+    if (voltage === null || voltage <= 0 || minimum === null || minimum <= 0 || maximum === null || maximum < minimum) return null;
+    const decimal = (literal: string): string => literal.replace(".", ",");
+    formatted.push(`${match[1] ? "Li-ion " : ""}${decimal(match[2])} V / ${decimal(match[3])}${match[5] ? `${match[4]}${decimal(match[5])}` : ""} Ah`);
+  }
+  return formatted.join(" | ");
+};
+
+export const parseExplicitVoltagePresentation = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const match = /^(\d+(?:,\d+|\.\d{1,2})?)(?:\s*\/\s*(\d+(?:,\d+|\.\d{1,2})?))?\s*v$/iu.exec(value.trim());
+  if (!match?.[1]) return null;
+  const parts = [match[1], match[2]].filter((part): part is string => part !== undefined);
+  if (parts.some((part) => (parseNumber(part, "V") ?? 0) <= 0)) return null;
+  return `${parts.map((part) => part.replace(".", ",")).join(" / ")} V`;
+};
+
+export const parseExplicitPowerPresentation = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const match = /^(?:([1-9]\d*)\s*[x×]\s*)?(\d+(?:,\d+|\.\d{1,2})?)\s*(w|kw|kva|cv)$/iu.exec(value.trim());
+  if (!match?.[2] || !match[3]) return null;
+  const units: Readonly<Record<string, string>> = { w: "W", kw: "kW", kva: "kVA", cv: "CV" };
+  const unit = units[match[3].toLowerCase()];
+  if (!unit || (parseNumber(match[2]) ?? -1) < 0 || (match[1] && !Number.isSafeInteger(Number(match[1])))) return null;
+  return `${match[1] ? `${match[1]} x ` : ""}${match[2].replace(".", ",")} ${unit}`;
+};
+
+export const parseExplicitAngularPresentation = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const match = /^(±\s*)?(\d+(?:,\d+|\.\d{1,2})?)\s*[°º](?:\s*\+\s*(\d+(?:,\d+|\.\d{1,2})?)\s*[°º]|\s+(a cada lado|\(continua\)))?$/iu.exec(value.trim());
+  if (!match?.[2] || (match[1] && (match[3] || match[4]))) return null;
+  const parts = [match[2], match[3]].filter((part): part is string => part !== undefined);
+  if (parts.some((part) => (parseNumber(part) ?? -1) < 0)) return null;
+  const angles = parts.map((part) => `${part.replace(".", ",")}°`);
+  return `${match[1] ? "±" : ""}${angles.join(" + ")}${match[4] ? ` ${match[4].toLocaleLowerCase("es")}` : ""}`;
+};
+
+export const normalizeBatteryChemistryLabel = (value: string): string => {
+  const text = value.trim().normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toLocaleLowerCase("es");
+  if (/^(?:bateria de )?litio$/u.test(text)) return "Litio";
+  if (/^(?:bateria de )?plomo$/u.test(text)) return "Plomo";
+  if (/^(?:bateria de )?plomo[- ]acido$/u.test(text)) return "Plomo-ácido";
+  if (/^(?:li-ion|ion[- ]litio)$/u.test(text)) return "Ion-litio";
+  if (/^(?:baterias? )?agm$/u.test(text)) return "AGM";
+  if (text === "gel") return "Gel";
+  return value;
 };
 
 export type Battery = {

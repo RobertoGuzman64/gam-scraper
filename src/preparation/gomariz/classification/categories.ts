@@ -1,29 +1,11 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { fold, energy } from "../../classification/category-utils.js";
-import { gomarizDocumentedElectricScissor, gomarizProductFamily } from "./product-family.js";
+import { gomarizDocumentedElectricScissor } from "./product-family.js";
 
-const currentRouteFamilies: Readonly<Record<string, readonly string[]>> = {
-  "elevacion-y-trabajos-en-altura": [
-    "elevador-tijera", "brazo-articulado", "brazo-articulado-boom-lift", "brazo-telescopico",
-    "elevador-mastil-vertical", "camion-plataforma", "oruga"
-  ],
-  "manipulacion-de-materiales": ["carretilla-industrial", "carretilla-todoterreno", "manipulador-telescopico", "carretilla-retractil"],
-  "energia-electrica-e-iluminacion": ["generador", "torre-de-luz"],
-  "movimiento-de-tierras-demolicion-y-compactacion": ["rodillo", "dumper"],
-  limpieza: ["fregadora"]
-};
-
-const sourceFamily = (record: ProductRecord, path: readonly string[]): string | null => {
-  const documentedFamily = gomarizProductFamily(record, path);
-  if (documentedFamily || path[0] === "producto") return documentedFamily;
-  if (path[0] === "venta" && path.length >= 4) return path[2] ?? null;
-  if (path.length !== 3) return null;
-  const [section, family] = path;
-  return family && currentRouteFamilies[section ?? ""]?.includes(family) ? family : null;
-};
+import { gomarizSourceFamily } from "./source-category.js";
 
 export const gomarizCategorySlug = (record: ProductRecord, path: readonly string[], hostname: string): string | null => {
-  const family = sourceFamily(record, path);
+  const family = gomarizSourceFamily(record, path);
   if (record.providerId === "gomariz" && ["gomarizrent.com", "www.gomarizrent.com"].includes(hostname) && family) {
     const motor = fold(String(record.specs?.Motor ?? ""));
     const advertisedPower = energy(`${record.title ?? ""} ${path.at(-1) ?? ""}`);

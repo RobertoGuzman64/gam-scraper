@@ -66,3 +66,17 @@ test("Gomariz: no afecta a otros proveedores, ramas, hosts ni categorías sin de
   assert.equal(prepareProduct(lift, catalog).product.price, null);
   assert.equal(prepareProduct(source, catalog).product.condition, "Segunda_Mano");
 });
+
+test("Gomariz: las plataformas con familia acreditada conservan su motorización en rutas actuales", () => {
+  const base: ProductRecord = { ...record("elevador-tijera", { Motor: "Eléctrico" }),
+    brand: "EQUIPTEST", model: "TX2", title: "EQUIPTEST TX2",
+    longDescription: "Las Tijeras Eléctricas están diseñadas para trabajar en interiores." };
+  const publicRecord = { ...base, url: "https://www.gomarizrent.com/elevacion-y-trabajos-en-altura/elevador-tijera/equiptest-tx2/" };
+  const productRecord = { ...base, url: "https://www.gomarizrent.com/producto/equiptest-tx2/" };
+  for (const current of [publicRecord, productRecord]) {
+    assert.equal(value(current, "Motorización / Energía"), "Eléctrico");
+    assert.equal(value({ ...current, specs: { Motor: "Eléctrico", Combustible: "Diésel" } }, "Motorización / Energía"), null);
+  }
+  assert.equal(value({ ...productRecord, model: "TX3" }, "Motorización / Energía"), null);
+  assert.equal(value({ ...productRecord, longDescription: null }, "Motorización / Energía"), null);
+});

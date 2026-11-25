@@ -1,43 +1,17 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../classification/attribute-types.js";
 import { fold } from "../../classification/attribute-utils.js";
+import { gomarizTechnicalSourceFamily } from "../classification/source-category.js";
 
-const earthworksFamilies = new Set(["dumper", "rodillo", "retroexcavadora"]);
+const industryFamilies = new Set(["carretilla-industrial", "carretilla-retractil", "carretilla-todoterreno",
+  "manipulador-telescopico", "fregadora", "dumper", "rodillo", "retroexcavadora"]);
 
-const industryFamily = (record: ProductRecord): string | null => {
-  if (record.providerId !== "gomariz") return null;
-  try {
-    const url = new URL(record.url);
-    const path = url.pathname.split("/").filter(Boolean);
-    if (!["gomarizrent.com", "www.gomarizrent.com"].includes(url.hostname) ||
-      path.length !== 4 || path[0] !== "venta") return null;
-    const family = path[2];
-    if (!family) return null;
-    if (path[1] === "manipulacion-de-materiales" &&
-      ["carretilla-industrial", "carretilla-retractil", "manipulador-telescopico"].includes(family)) return family;
-    if (path[1] === "limpieza" && family === "fregadora") return family;
-    if (path[1] === "movimiento-de-tierras-demolicion-y-compactacion" &&
-      earthworksFamilies.has(family)) return family;
-    return null;
-  } catch {
-    return null;
-  }
+const industryFamily = (record: ProductRecord): boolean => {
+  const family = gomarizTechnicalSourceFamily(record);
+  return family !== null && industryFamilies.has(family);
 };
 
-const towerFamily = (record: ProductRecord): boolean => {
-  if (record.providerId !== "gomariz") return false;
-  try {
-    const url = new URL(record.url);
-    const path = url.pathname.split("/").filter(Boolean);
-    return url.protocol === "https:" && ["gomarizrent.com", "www.gomarizrent.com"].includes(url.hostname) &&
-      !url.username && !url.password && !url.port && !url.search && !url.hash && (
-        path.length === 4 && path[0] === "venta" && path[1] === "energia-electrica-e-iluminacion" && path[2] === "torre-de-luz" ||
-        path.length === 3 && path[0] === "energia-electrica-e-iluminacion" && path[1] === "torre-de-luz"
-      );
-  } catch {
-    return false;
-  }
-};
+const towerFamily = (record: ProductRecord): boolean => gomarizTechnicalSourceFamily(record) === "torre-de-luz";
 
 const towerLamps = (record: ProductRecord): { count: number; watts: number } | null => {
   if (!towerFamily(record)) return null;
