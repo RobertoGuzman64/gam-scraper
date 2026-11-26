@@ -11,6 +11,8 @@ import { requireIndividualPreparationContext } from "../individual-context.js";
 import { parseIndividualCatalogProviders } from "../../../cli/options/individual-catalog.js";
 import { prepareIndividualCatalogs } from "../individual-prepare.js";
 import { reuseWorkspaceTestFixture } from "../../../testing/builders/reusable-workspace-fixture.js";
+import { seedHistoricalPlatformPublication } from "../../../testing/builders/publication-version-fixture.js";
+import type { ProductRecord } from "../../../contracts/catalog.js";
 import { copyCampaignTestCatalog } from "../../../campaign/tests/campaign-catalog-fixture.js";
 
 const files = ["scrape-gomariz-catalog.json", "scrape-gomariz-catalog.manifest.json", "scrape-gomariz-summary.json"] as const;
@@ -21,7 +23,7 @@ const fixtureCache = reuseWorkspaceTestFixture(async () => {
   try {
     await mkdir(source);
     await copyCampaignTestCatalog(source, "gomariz", "scrape-gomariz");
-    await consolidatePortableOriginal(root, join(source, files[0]));
+    await changeOriginal(source, root, (item) => ({ ...item, specs: { "Altura de trabajo": "8 m", "Altura plataforma": "6,2 m" } }));
     return { root, source, cleanup: () => rm(root, { recursive: true, force: true }) };
   } catch (error) {
     await rm(root, { recursive: true, force: true });
@@ -47,11 +49,13 @@ const runGomariz = (root: string, dryRun = false, onProgress?: ProviderProgress)
   workspace: root, providers: ["gomariz"], dryRun, ...(onProgress ? { onProgress } : {})
 });
 
-const firstPreparation = async (root: string): Promise<string> => {
+const firstPreparation = async (root: string, reconciled = 0): Promise<string> => {
   const [result] = await runGomariz(root);
   assert.equal(result?.error, null);
   assert.equal(result.summary?.status, "generada");
   assert.equal(result.summary.sourceCount, 4);
+  assert.equal(result.summary.possibleSpecificationLosses, 0);
+  assert.equal(result.summary.reconciledSpecificationChanges, reconciled);
   assert.ok(result.summary.preparationFile);
   return result.summary.preparationFile;
 };
@@ -63,11 +67,13 @@ const preparedFile = async (root: string): Promise<string> => {
   return join(folder, prepared[0]!);
 };
 
-const changeOriginal = async (source: string, root: string): Promise<void> => {
+const changeOriginal = async (source: string, root: string,
+  transform: (item: ProductRecord) => ProductRecord = (item) => ({ ...item, title: "Título revisado" })
+): Promise<void> => {
   const file = join(source, files[0]);
   const current = await readCanonicalCatalog(file);
-  const endedAt = "2026-11-03T09:00:00Z";
-  const products = current.products.map((item, index) => index === 0 ? { ...item, title: "Título revisado" } : item);
+  const endedAt = new Date(Date.parse(current.endedAt) + 60_000).toISOString();
+  const products = current.products.map((item, index) => index === 0 ? transform(item) : item);
   const hash = await writeCanonicalCatalog(source, "scrape-gomariz", current.scope, current.startedAt, endedAt, products);
   await writeFile(join(source, files[2]), JSON.stringify({
     startedAt: current.startedAt, endedAt, quality: { status: "complete", published: true },
@@ -76,15 +82,25 @@ const changeOriginal = async (source: string, root: string): Promise<void> => {
   await consolidatePortableOriginal(root, file);
 };
 
+const seedHistorical = async (root: string): Promise<void> => {
+  const catalog = await readCanonicalCatalog(join(root, "catalogs", "providers", "gomariz", "original", files[0]));
+  const product = catalog.products[0];
+  assert.ok(product);
+  await seedHistoricalPlatformPublication(root, product);
+};
+
 test("prepara desde original portátil sin storage, reutiliza bytes intactos y soporta cambio de carpeta", async () => {
   await withWorkspace(async (root) => {
     await assert.rejects(requireIndividualPreparationContext(root, "gomariz"), /catalogo:preparar/);
-    const file = await firstPreparation(root);
+    await seedHistorical(root);
+    const file = await firstPreparation(root, 1);
     const before = await readFile(file);
     const beforeSha = createHash("sha256").update(before).digest("hex");
     const firstStat = await lstat(file);
     const repeated = await runGomariz(root);
     assert.equal(repeated[0]?.summary?.status, "reutilizada");
+    assert.equal(repeated[0]?.summary?.possibleSpecificationLosses, 0);
+    assert.equal(repeated[0]?.summary?.reconciledSpecificationChanges, 1);
     assert.equal(repeated[0]?.summary?.preparationFile, file);
     assert.equal(createHash("sha256").update(await readFile(file)).digest("hex"), beforeSha);
     assert.equal((await lstat(file)).mtimeMs, firstStat.mtimeMs);
@@ -104,14 +120,23 @@ test("simulación offline no crea carpetas, archivos ni cambia el original", asy
   await withWorkspace(async (root) => {
     const original = join(root, "catalogs", "providers", "gomariz", "original", files[0]);
     const before = await readFile(original);
+    await seedHistorical(root);
+    const publications = join(root, "catalogs", "providers", "gomariz", "publications");
+    const activeIndex = join(publications, "active.json");
+    const initialIndex = await readFile(activeIndex, "utf8");
+    const versions = await readdir(publications);
     const updates: string[] = [];
     const result = await runGomariz(root, true,
       (providerId, completed, total) => { updates.push(`${providerId} ${completed}/${total}`); });
     assert.deepEqual(updates, ["gomariz 0/1", "gomariz 1/1"]);
     assert.equal(result[0]?.summary?.status, "simulada");
+    assert.equal(result[0]?.summary?.possibleSpecificationLosses, 0);
+    assert.equal(result[0]?.summary?.reconciledSpecificationChanges, 1);
     assert.equal(result[0]?.summary?.preparationFile, null);
     await assert.rejects(lstat(join(root, "storage")), { code: "ENOENT" });
     assert.deepEqual(await readFile(original), before);
+    assert.equal(await readFile(activeIndex, "utf8"), initialIndex);
+    assert.deepEqual(await readdir(publications), versions);
   });
 });
 

@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "providerId": "manain",
+  "runId": "individual-manain-818f601b8b77811aafb5dfed55ce7c6c",
+  "source": {
+    "providerId": "manain",
+    "prefix": "manain-record",
+    "scope": "75ac3f526e794f1f",
+    "catalogSha256": "75ac3f526e794f1f2e37ae8ded03ed11826c27d0c659cb8eeecbbeca54681348",
+    "productCount": 384,
+    "record": {
+      "quality": "partial",
+      "technicalSha256": "d316a7ebcdc7e2bbdd8024cb8c6318f4494074b231267232ce2250925d55ad72",
+      "sourceCsvSha256": "6143d9d92a4308549d20aa544d6babaad731973d0a99270b1530bc0d5a89a775",
+      "discoveredProductUrls": 387,
+      "discardedUrls": [
+        "https://manain.com/producto/venta-elevacion-brazo-articulado-haulotte-ha-20-px-5/",
+        "https://manain.com/producto/venta-elevacion-mastil-haulotte-star-10-2/",
+        "https://manain.com/producto/venta-elevacion-mastil-haulotte-star-10/"
+      ]
+    }
+  },
+  "preparationSha256": "66acabfbef935931cdd58e1a26638063deccbb1ebc3ce75d735476aaf76ffadb",
+  "approvalSha256": "573140ff34093123ebbe2061bc38d91a2fd977be3e4cd7c9f602a11618faebc2",
+  "totals": {
+    "original": 384,
+    "ready": 383,
+    "review": 1,
+    "publishable": 383,
+    "excluded": 1
+  },
+  "files": {
+    "manain-publishable.json": "8b95dceea872221d9347486c8a2609994361b9c44cd97b091f0235d1a7a03736",
+    "accreditation.json": "573140ff34093123ebbe2061bc38d91a2fd977be3e4cd7c9f602a11618faebc2",
+    "technical-provenance.json": "ff9a5a353a2cd3ad9eacdf06ece66b4a9e0e0138ec7b1469fba178e6eb0ec7a1"
+  }
+}

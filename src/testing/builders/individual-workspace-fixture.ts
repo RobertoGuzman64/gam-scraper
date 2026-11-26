@@ -51,7 +51,8 @@ const createOriginals = async (
     const products: ProductRecord[] = ["11111", "22222", "33333"].map((reference, index) => ({
       ...product(reference, index === 2 ? null : serialNumber),
       providerId: id,
-      url: `https://example.test/${id}/producto-${reference}`
+      url: `https://example.test/${id}/producto-${reference}`,
+      ...(id === "gomariz" && index === 2 ? { specs: { "Altura de trabajo": "8 m", "Altura plataforma": "6,2 m" } } : {})
     }));
     const scraped: CategoryScrapeResult = {
       category, products, discoveredProductUrls: products.length, failures: []

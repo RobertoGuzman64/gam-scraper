@@ -11,7 +11,7 @@ export const formatSpecificationCoverageReport = (coverage: SpecificationCoverag
   const verifiedTransformations = totals.accreditedReconciliations - unusableSources;
   const lines = [
     `SPECS | revisar ${requiresReview.length} | pendientes de activar ${pendingActivation.length} | reconciliaciones acreditadas ${totals.accreditedReconciliations} (origen no utilizable ${unusableSources}, transformación acreditada ${verifiedTransformations}) | hipótesis familiares solo en --detalle o --json`,
-    `SPECS | originales canónicos ${totals.canonicalOriginals} | fuentes reconstruidas ${totals.reconstructedSources} | diferencias origen/preparación ${totals.sourceNotPreserved} | pérdidas frente al final ${totals.lostAfterPublication} | normalizaciones ambiguas ${totals.ambiguousNormalization}`
+    `SPECS | originales canónicos ${totals.canonicalOriginals} | registros parciales verificados ${totals.partialOriginals} | fuentes reconstruidas ${totals.reconstructedSources} | diferencias origen/preparación ${totals.sourceNotPreserved} | pérdidas frente al final ${totals.lostAfterPublication} | normalizaciones ambiguas ${totals.ambiguousNormalization}`
   ];
   if (requiresReview.length === 0 && pendingActivation.length === 0) {
     lines.push("SPECS | SIN INCIDENCIAS TÉCNICAS PENDIENTES DE REVISIÓN NI ACTIVACIÓN en esta comparación");

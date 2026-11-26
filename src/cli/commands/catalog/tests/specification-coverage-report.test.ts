@@ -7,7 +7,7 @@ const report: SpecificationCoverage = {
   note: "Cobertura observada, no obligatoria",
   criteria: { minimumFamily: 5, minimumObserved: 3, minimumCoveragePercent: 60 },
   totals: {
-    products: 5, canonicalOriginals: 5, reconstructedSources: 0,
+    products: 5, canonicalOriginals: 5, partialOriginals: 0, reconstructedSources: 0,
     pendingPublication: 0, sourceNotPreserved: 0, accreditedReconciliations: 0,
     lostAfterPublication: 0, ambiguousNormalization: 0, observationalMissing: 1
   },

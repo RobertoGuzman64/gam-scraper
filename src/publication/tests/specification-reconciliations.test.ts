@@ -166,3 +166,20 @@ test("las retiradas de medidas válidas siguen bloqueadas y las medidas vacías 
   const after = { ...before, spec: Object.fromEntries(Object.entries(before.spec).filter(([key]) => key !== field)) };
   assert.equal(evaluateIndividualPublicationDifference(source.providerId, differenceBetween("before", "after", [before], [after]), [before], [after], null, [valid]).accepted, false);
 });
+
+
+test("la corrección compuesta histórica exige todos los destinos acreditados", () => {
+  const old = previous.find((item) => item.reference === "2218");
+  const updated = next.find((item) => item.reference === "2218");
+  assert.ok(old && updated);
+  const evaluate = (candidate: ImportCandidate) => {
+    const delta = differenceBetween("before", "after", [old], [candidate]);
+    return evaluateIndividualPublicationDifference("gam", delta, [old], [candidate], undefined);
+  };
+  assert.equal(evaluate(updated).accepted, true);
+  for (const field of ["Voltaje batería (V)", "Capacidad de la batería (Ah)"]) {
+    const spec: ImportCandidate["spec"] = Object.fromEntries(Object.entries(updated.spec).filter(([key]) => key !== field));
+    assert.equal(evaluate({ ...updated, spec }).accepted, false);
+  }
+  assert.equal(evaluate({ ...updated, spec: { ...updated.spec, "Capacidad de la batería (Ah)": "735 Ah" } }).accepted, false);
+});

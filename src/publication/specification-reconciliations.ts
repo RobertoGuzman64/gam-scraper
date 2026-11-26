@@ -1,5 +1,6 @@
 import { isDeepStrictEqual } from "node:util";
 import type { ProductRecord } from "../contracts/catalog.js";
+import { accreditPublishedTechnicalPresentation } from "../preparation/provenance/accredited-technical-presentation.js";
 import { prepareSourceProduct } from "../preparation/prepare-product.js";
 import { editorialHasImplausibleWeight } from "../preparation/editorial/core/editorial-facts.js";
 import { isEmptyTechnicalMeasure } from "../preparation/technical/technical-presentation.js";
@@ -16,8 +17,14 @@ export type SpecificationReconciliation = {
 const caseIdentity = (product: ImportCandidate): string =>
   product.reference?.trim() ? `ref:${product.reference.trim().toLowerCase()}` : `url:${product.sourceUrl}`;
 
-const byIdentity = (products: readonly ImportCandidate[]): ReadonlyMap<string, ImportCandidate> =>
-  new Map(products.map((product) => [caseIdentity(product), product]));
+const byIdentity = (products: readonly ImportCandidate[]): ReadonlyMap<string, ImportCandidate | null> => {
+  const result = new Map<string, ImportCandidate | null>();
+  for (const product of products) {
+    const identity = caseIdentity(product);
+    result.set(identity, result.has(identity) ? null : product);
+  }
+  return result;
+};
 
 const verifiedCorrections: Readonly<Record<string, {
   readonly model: string;
@@ -113,6 +120,7 @@ export const reconcileRemovedSpecifications = (
     const key = `ref:${item.reference.trim().toLowerCase()}`;
     originals.set(key, originals.has(key) ? null : item);
   }
+  const causal = new Map<string, ReturnType<typeof accreditPublishedTechnicalPresentation>>();
   const resolved: string[] = [];
   const unresolved: string[] = [];
   for (const key of difference.removedSpecifications) {
@@ -139,13 +147,26 @@ export const reconcileRemovedSpecifications = (
       resolved.push(key);
       continue;
     }
-    if (!rule || !old || !updated || old.sourceUrl !== updated.sourceUrl ||
-      old.reference !== updated.reference || old.spec["Modelo"] !== rule.model ||
-      updated.spec["Modelo"] !== (rule.replacement["Modelo"] ?? rule.model) ||
-      old.spec[removedKey] !== rule.previous || Object.hasOwn(updated.spec, removedKey) ||
-      !Object.entries(rule.replacement).every(([name, value]) => updated.spec[name] === value)) {
-      unresolved.push(key);
-    } else resolved.push(key);
+    if (rule && old && updated && old.sourceUrl === updated.sourceUrl &&
+      old.reference === updated.reference && old.spec["Modelo"] === rule.model &&
+      updated.spec["Modelo"] === (rule.replacement["Modelo"] ?? rule.model) &&
+      old.spec[removedKey] === rule.previous && !Object.hasOwn(updated.spec, removedKey) &&
+      Object.entries(rule.replacement).every(([name, value]) => updated.spec[name] === value)) {
+      resolved.push(key);
+      continue;
+    }
+    if (source && old && updated && source.providerId === providerId) {
+      let accredited = causal.get(identity);
+      if (!accredited) {
+        accredited = accreditPublishedTechnicalPresentation(source, old, updated);
+        causal.set(identity, accredited);
+      }
+      if (accredited.has(removedKey)) {
+        resolved.push(key);
+        continue;
+      }
+    }
+    unresolved.push(key);
   }
   return { resolved, unresolved };
 };

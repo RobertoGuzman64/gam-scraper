@@ -17,11 +17,6 @@ import { captureSourceEditorialEvidence } from "./editorial/claims/source-editor
 import { reconcileSourceCategoryTitle, reconcileVerifiedSourceReviewClaims, reconcileVerifiedSourceFamily, reconcileVerifiedSourceFuel, reconcileVerifiedSourceIdentity, reconcileVerifiedManufacturerSourceLoad, reconcileInitialTechnicalEvidence, resolveSourceTechnicalSemanticRecord, reconcileTechnicalSourceForRecovery, reconcileTechnicalBeforeEditorial, reconcileTechnicalAfterEditorial, normalizePreparedTechnicalSpecs } from "./technical/preparation-technical-stages.js";
 import { publicationConflictForMercaeleva } from "./mercaeleva/technical/mercaeleva.js";
 import { hasDocumentedGomarizPriceOnRequest } from "./gomariz/price-on-request.js";
-import { reconcileGamWorkingHeightPresentation } from "./gam/measurements/evidence/work-height-evidence.js";
-import { reconcileGamBasketCapacityPresentation } from "./gam/reconciliation/gam-capacity.js";
-import { reconcileManainMassCapacityPresentation } from "./manain/normalization.js";
-import { reconcileGomarizMassCapacityPresentation } from "./gomariz/technical/gomariz.js";
-import { normalizeOriginalTechnicalPresentation } from "./technical/technical-presentation.js";
 import { recoverSourceCleaningConfiguration } from "./technical/recovery/cleaning-family-specifications.js";
 import { reconcileHandlingFamilySpecs, recoverSourceHandlingConfiguration } from "./technical/recovery/handling-family-specifications.js";
 import { presentGamVerifiedRestrictedCapacity } from "./gam/reconciliation/gam-verified-capacity-coherence.js";
@@ -34,8 +29,10 @@ import { normalizePreparedEditorialPresentation } from "./editorial/writing/prep
 import { reconcileUsedHandlingSource } from "./editorial/identity/source-used-handling.js";
 import { hasVerifiedPublishedEditorialLoadConflict } from "./editorial/measurements/coherence/prepared-editorial-load-consistency.js";
 import { reconcileManainEditorialSourceSpecs } from "./manain/domain-source.js";
+import { reconcileOriginalTechnicalPresentation } from "./technical/original-technical-presentation.js";
+import type { TechnicalRecoveryObservation } from "./provenance/technical-recovery-observation.js";
 
-const prepare = (record: ProductRecord, catalog: ImportCatalog | null): PreparedProduct => {
+const prepare = (record: ProductRecord, catalog: ImportCatalog | null, observePresentation?: TechnicalRecoveryObservation): PreparedProduct => {
   const originalRecord = record;
   const technicalProvenance = captureTechnicalProvenance(originalRecord);
   const categorizedSource = reconcileSourceCategoryTitle(record);
@@ -86,11 +83,10 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   technicalProvenance.observe(limitedSpecs, handledSpecs,
     "src/preparation/shared/technical/reconciliation/handling-family-specifications.ts",
     { spec: "Capacidad de carga (kg)" });
-  const originalPresentation = reconcileGamWorkingHeightPresentation(originalRecord,
-    normalizeOriginalTechnicalPresentation(handledSpecs, originalRecord.specs ?? {}, technicalProvenance.observe), technicalProvenance.observe);
-  const presentedSpecs = reconcileManainMassCapacityPresentation(originalRecord,
-    reconcileGomarizMassCapacityPresentation(originalRecord,
-      reconcileGamBasketCapacityPresentation(originalRecord, originalPresentation, technicalProvenance.observe), technicalProvenance.observe), technicalProvenance.observe);
+  const presentedSpecs = reconcileOriginalTechnicalPresentation(originalRecord, handledSpecs, (...observation) => {
+    technicalProvenance.observe(...observation);
+    observePresentation?.(...observation);
+  });
   const editorialProvenance = technicalProvenance.finalize(presentedSpecs, recoverySource);
   const reviewedSpecs = reviewedModelEditorialSpecs(originalRecord, editorialProvenance);
   const reviewedAttributes = catalog ? reviewedModelAttributeSpecs(originalRecord, editorialProvenance, reviewedSpecs) : reviewedSpecs;
@@ -155,4 +151,5 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
 };
 
 export const prepareWithCatalog = (record: ProductRecord, catalog: ImportCatalog): PreparedProduct => prepare(record, catalog);
-export const prepareSourceProduct = (record: ProductRecord): PreparedProduct => prepare(record, null);
+export const prepareSourceProduct = (record: ProductRecord, observePresentation?: TechnicalRecoveryObservation): PreparedProduct =>
+  prepare(record, null, observePresentation);

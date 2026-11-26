@@ -16,7 +16,7 @@ export const formatCatalogAuditClosureReport = (
   if (hasUnresolvedCatalogAuditContracts(coverage, priorities, specifications)) {
     lines.push("CIERRE AUDITOR | REQUIERE INTERVENCIÓN: hay contratos pendientes; revisar los casos existentes del informe");
   } else if (!hasCompleteCatalogAuditEvidence(coverage, specifications)) {
-    lines.push("CIERRE AUDITOR | ALCANCE LIMITADO: faltan originales canónicos o fichas comparables; no se acredita cierre técnico completo");
+    lines.push("CIERRE AUDITOR | ALCANCE LIMITADO: faltan originales canónicos o fichas comparables, o hay registros parciales; no se acredita cierre técnico completo");
   } else {
     lines.push(`CIERRE AUDITOR | CONFORME EN ALCANCE COMPARADO: ${coverage.totals.products} fichas, sin incidencias obligatorias abiertas`);
   }

@@ -1,6 +1,6 @@
 import { buildProductIdentity } from "../../identity.js";
 import { normalizedSpecKey, specHasValue } from "./content-gaps-source.js";
-import { familyOf } from "./description-coverage.js";
+import { familyOf, hasIndependentDescriptionSource } from "./description-coverage.js";
 import { accreditedSpecificationReconciliations, type AccreditedSpecificationReconciliation } from "./accredited-specification-reconciliations.js";
 import type { DescriptionCoverageInput } from "./description-coverage.js";
 import type { SpecValue } from "../../../contracts/catalog.js";
@@ -48,6 +48,7 @@ export type SpecificationCoverage = {
   readonly totals: {
     readonly products: number;
     readonly canonicalOriginals: number;
+    readonly partialOriginals: number;
     readonly reconstructedSources: number;
     readonly pendingPublication: number;
     readonly sourceNotPreserved: number;
@@ -86,6 +87,7 @@ export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverag
   const cases: SpecificationCase[] = [];
   const patterns: SpecificationPattern[] = [];
   let canonicalOriginals = 0;
+  let partialOriginals = 0;
   let reconstructedSources = 0;
   for (const input of inputs) {
     const identity = buildProductIdentity(input.source).key;
@@ -98,6 +100,7 @@ export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverag
       throw new Error(`Identidad inconsistente en auditor técnico: ${identity}`);
     }
     if (input.origin === "original_canonico") canonicalOriginals++;
+    else if (input.origin === "registro_parcial_verificado") partialOriginals++;
     else reconstructedSources++;
     const family = familyOf(input).family;
     const groupKey = JSON.stringify([input.source.providerId, family, input.origin]);
@@ -130,7 +133,7 @@ export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverag
         if (inPublished) publishedCount++;
         let stage: Stage | null = null;
         if (item.ambiguous.has(key)) stage = "normalizacion_ambigua";
-        else if (inSource && !inPrepared && item.input.origin === "original_canonico") stage =
+        else if (inSource && !inPrepared && hasIndependentDescriptionSource(item.input.origin)) stage =
           item.reconciliations.has(key) ? "reconciliacion_acreditada" : "diferencia_origen_preparacion";
         else if (inPrepared && !inPublished) stage = "pendiente_publicacion";
         else if (inPublished && !inPrepared) stage = "perdida_tras_publicacion";
@@ -157,9 +160,9 @@ export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverag
     compare(a.providerId, b.providerId) || compare(a.family, b.family) || compare(a.key, b.key));
   const count = (stage: Stage): number => cases.filter((item) => item.stage === stage).length;
   return {
-    note: "Cobertura observada, no atributos obligatorios. Las reconciliaciones acreditadas distinguen valores originales no utilizables de transformaciones verificadas; conservan la clave y el valor original, y contrastan las claves de destino con la preparación. No se contabilizan como pérdidas. Las fuentes reconstruidas no acreditan recuperación desde un original independiente. Las claves equivalentes se agrupan sin transferir valores entre fichas.",
+    note: "Cobertura observada, no atributos obligatorios. Las reconciliaciones acreditadas distinguen valores originales no utilizables de transformaciones verificadas; conservan la clave y el valor original, y contrastan las claves de destino con la preparación. No se contabilizan como pérdidas. Los registros parciales verificados acreditan únicamente sus fichas comparadas, no la cobertura del catálogo completo. Las fuentes reconstruidas no acreditan recuperación desde un original independiente. Las claves equivalentes se agrupan sin transferir valores entre fichas.",
     criteria: { minimumFamily: MIN_FAMILY, minimumObserved: MIN_OBSERVED, minimumCoveragePercent: MIN_PERCENT },
-    totals: { products: inputs.length, canonicalOriginals, reconstructedSources,
+    totals: { products: inputs.length, canonicalOriginals, partialOriginals, reconstructedSources,
       pendingPublication: count("pendiente_publicacion"), sourceNotPreserved: count("diferencia_origen_preparacion"),
       accreditedReconciliations: count("reconciliacion_acreditada"),
       lostAfterPublication: count("perdida_tras_publicacion"), ambiguousNormalization: count("normalizacion_ambigua"),

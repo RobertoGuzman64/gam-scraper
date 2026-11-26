@@ -10,7 +10,8 @@ import { reconcileMercaelevaVerifiedPlatformSourceSpecs } from "../../../prepara
 import { reconcileMercaelevaNonUsableSentinels } from "../../../preparation/mercaeleva/technical/mercaeleva.js";
 import { inspectTechnicalCoherence } from "../../validation/technical-specifications.js";
 import { normalizedSpecKey, specHasValue } from "./content-gaps-source.js";
-import type { DescriptionCoverageInput } from "./description-coverage.js";
+import { hasIndependentDescriptionSource, type DescriptionCoverageInput } from "./description-coverage.js";
+import { accreditSourceTechnicalPresentation } from "../../../preparation/provenance/accredited-technical-presentation.js";
 
 export type AccreditedSpecificationReconciliation = {
   readonly originalValue: SpecValue;
@@ -41,10 +42,9 @@ const reconciledSource = (source: ProductRecord, sourceUnits = true): ProductRec
   return specs === reconciled.specs ? reconciled : { ...reconciled, specs };
 };
 
-export const accreditedSpecificationReconciliations = (
+const legacyReconciliations = (
   input: DescriptionCoverageInput
 ): ReadonlyMap<string, AccreditedSpecificationReconciliation> => {
-  if (input.origin !== "original_canonico") return new Map();
   const original = presentSpecs(input.source.specs ?? {});
   const reconciled = presentSpecs(reconciledSource(input.source).specs ?? {});
   const sourceHorometer = reconcileGamHorometer(input.source);
@@ -89,6 +89,28 @@ export const accreditedSpecificationReconciliations = (
       originalValue, destinationKeys: unusable ? [] : destinations.sort(),
       classification: unusable ? "origen_no_utilizable" : "transformacion_acreditada"
     });
+  }
+  return result;
+};
+
+export const accreditedSpecificationReconciliations = (
+  input: DescriptionCoverageInput
+): ReadonlyMap<string, AccreditedSpecificationReconciliation> => {
+  if (!hasIndependentDescriptionSource(input.origin)) return new Map();
+  const original = presentSpecs(input.source.specs ?? {});
+  const prepared = presentSpecs(input.prepared.product.spec);
+  if (![...original.keys()].some((key) => !prepared.has(key))) return new Map();
+  const result = new Map(legacyReconciliations(input));
+  const sourceFields = Object.keys(input.source.specs ?? {});
+  const preparedFields = Object.keys(input.prepared.product.spec);
+  for (const proof of accreditSourceTechnicalPresentation(input.source, input.prepared.product).values()) {
+    const key = normalizedSpecKey(proof.sourceField);
+    const destination = normalizedSpecKey(proof.destinationField);
+    if (!original.has(key) || prepared.has(key) || !prepared.has(destination) ||
+      sourceFields.filter((field) => normalizedSpecKey(field) === key).length !== 1 ||
+      preparedFields.filter((field) => normalizedSpecKey(field) === destination).length !== 1) continue;
+    result.set(key, { originalValue: proof.originalValue, destinationKeys: [destination],
+      classification: "transformacion_acreditada" });
   }
   return result;
 };

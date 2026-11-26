@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "runId": "individual-manain-818f601b8b77811aafb5dfed55ce7c6c",
+  "approved": true,
+  "approvalReason": "Acreditación automática de exclusiones históricas coincidentes, con evidencia y preparación verificadas",
+  "sources": [
+    {
+      "providerId": "manain",
+      "catalogSha256": "75ac3f526e794f1f2e37ae8ded03ed11826c27d0c659cb8eeecbbeca54681348",
+      "preparationSha256": "66acabfbef935931cdd58e1a26638063deccbb1ebc3ce75d735476aaf76ffadb",
+      "productCount": 384
+    }
+  ],
+  "exclusions": [
+    {
+      "providerId": "manain",
+      "reference": "MA3727",
+      "sourceUrl": "https://manain.com/producto/venta-manipulacion-manipulador-jcb-540v140-3/",
+      "status": "review",
+      "issues": [
+        "Atributo no normalizable: Alcance máximo"
+      ],
+      "decision": "excluir",
+      "reason": "Alcance maximo ambiguo sin interpretacion tecnica acreditada",
+      "evidenceUrls": [
+        "https://manain.com/producto/venta-manipulacion-manipulador-jcb-540v140-3/"
+      ]
+    }
+  ]
+}

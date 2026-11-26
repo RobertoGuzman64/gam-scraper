@@ -5,6 +5,7 @@ import type { DescriptionCoverageInput } from "../coverage/description-coverage.
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { SpecValue } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
+import { prepareSourceProduct } from "../../../preparation/prepare-product.js";
 
 const input = (reference: string, sourceSpecs: Readonly<Record<string, SpecValue>>,
   preparedSpecs: Readonly<Record<string, SpecValue>>, publishedSpecs: Readonly<Record<string, SpecValue>>,
@@ -176,4 +177,49 @@ test("el horómetro no disponible requiere evidencia del origen y no acredita re
   const reconstructed = analyzeSpecificationCoverage([{ ...verified, origin: "reconstruccion_publicada" }]);
   assert.equal(reconstructed.totals.accreditedReconciliations, 0);
   assert.equal(reconstructed.totals.canonicalOriginals, 0);
+});
+
+const presentationInput = (providerId: "gomariz" | "manain"): DescriptionCoverageInput => {
+  const source: ProductRecord = { ...input("CONTROL-TX2", {}, {}, {}).source,
+    providerId, title: providerId === "manain" ? "TX2" : "EQUIPTEST TX2", price: "20000 €", brand: "EQUIPTEST", model: "TX2", condition: "Segunda mano",
+    categoryKey: "venta", categoryName: "Maquinaria en venta",
+    url: providerId === "gomariz" ? "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/equiptest-tx2/" :
+      "https://manain.com/producto/venta-elevacion-tijera-equiptest-tx2/",
+    specs: providerId === "gomariz" ? { Capacidad: "230kg", "Altura de trabajo": "8 m", "Altura plataforma": "6.2 m" } :
+      { Marca: "EQUIPTEST", Modelo: "TX2", Motor: "Eléctrico", "Nueva o usada": "usada", "Altura trabajo": "9 m",
+        "Capacidad carga": "230 kg", "Longitud plataforma": "2,4 m", "Ancho plataforma": "0,8 m" } };
+  const prepared = prepareSourceProduct(source);
+  return { source, prepared, published: { ...prepared.product, spec: {} },
+    origin: providerId === "manain" ? "registro_parcial_verificado" : "original_canonico" };
+};
+
+test("la cobertura acredita la transformación productiva desde origen sin exigir el valor en la publicación anterior", () => {
+  const item = presentationInput("gomariz");
+  const snapshot = structuredClone(item);
+  const result = analyzeSpecificationCoverage([item]);
+  const proof = result.cases.find((entry) => entry.key === "Capacidad");
+  assert.equal(proof?.stage, "reconciliacion_acreditada");
+  assert.deepEqual(proof?.reconciliation, { originalValue: "230kg", destinationKeys: ["Capacidad de la cesta"],
+    classification: "transformacion_acreditada" });
+  assert.deepEqual(item, snapshot);
+  for (const spec of [{ ...item.prepared.product.spec, "Capacidad de la cesta": "231 kg" },
+    { ...item.prepared.product.spec, "Capacidad de la cesta": "230 m" }]) {
+    const changed = analyzeSpecificationCoverage([{ ...item, prepared: { ...item.prepared, product: { ...item.prepared.product, spec } } }]);
+    assert.equal(changed.cases.find((entry) => entry.key === "Capacidad")?.stage, "diferencia_origen_preparacion");
+  }
+  const reconstructed = analyzeSpecificationCoverage([{ ...item, origin: "reconstruccion_publicada" }]);
+  assert.equal(reconstructed.totals.accreditedReconciliations, 0);
+});
+
+test("un registro parcial acredita solo su propia transformación y no se convierte en original canónico", () => {
+  const item = presentationInput("manain");
+  const report = analyzeSpecificationCoverage([item]);
+  assert.equal(report.totals.products, 1);
+  assert.equal(report.totals.canonicalOriginals, 0);
+  assert.equal(report.totals.partialOriginals, 1);
+  assert.equal(report.totals.reconstructedSources, 0);
+  assert.ok(report.cases.some((entry) => entry.origin === "registro_parcial_verificado" &&
+    entry.stage === "reconciliacion_acreditada" && entry.reconciliation?.originalValue === "230 kg"));
+  const invalid = { ...item, source: { ...item.source, specs: { ...item.source.specs, "Capacidad carga": "231 kg" } } };
+  assert.equal(analyzeSpecificationCoverage([invalid]).totals.accreditedReconciliations, 0);
 });

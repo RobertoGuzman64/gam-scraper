@@ -1,6 +1,6 @@
 import { buildProductIdentity } from "../../identity.js";
 import { findBrandTypo } from "../../normalization/technical-title-identity.js";
-import type { DescriptionCoverageInput } from "../coverage/description-coverage.js";
+import { hasIndependentDescriptionSource, type DescriptionCoverageInput } from "../coverage/description-coverage.js";
 
 type TitlePriority = "P0" | "P1" | "P2";
 type TitleStage = "pendiente" | "resuelto_preparacion" | "aparecido_preparacion";
@@ -64,7 +64,7 @@ const familyPatterns: readonly { readonly label: string; readonly source: RegExp
 ];
 
 const familyEvidence = (input: DescriptionCoverageInput): { label: string; origin: string } | null => {
-  const originalText = input.origin === "original_canonico" ?
+  const originalText = hasIndependentDescriptionSource(input.origin) ?
     input.source.shortDescription ?? input.source.longDescription : null;
   const text = originalText;
   if (!text?.trim()) return null;
@@ -95,7 +95,7 @@ const diagnose = (title: string | null, input: DescriptionCoverageInput): readon
   const brandTerms = normalize(brand ?? "").split(" ").filter((word) => word.length > 1);
   if (brand && compact(brand).length >= 3 && !compact(value).includes(compact(brand)) &&
     !brandTerms.every((word) => folded.split(" ").includes(word)) &&
-    input.origin === "original_canonico" &&
+    hasIndependentDescriptionSource(input.origin) &&
     (containsOriginal(input.source.shortDescription, brand) && containsOriginal(input.source.longDescription, brand) ||
       (typeof input.source.specs?.Marca === "string" && compact(input.source.specs.Marca) === compact(brand) &&
         findBrandTypo(value, brand) !== null))) {
@@ -103,7 +103,7 @@ const diagnose = (title: string | null, input: DescriptionCoverageInput): readon
   }
   const model = input.source.model?.trim();
   const normalizedModel = compact(model ?? "");
-  if (model && input.origin === "original_canonico" && normalizedModel.length >= 4 && /\d/u.test(normalizedModel) &&
+  if (model && hasIndependentDescriptionSource(input.origin) && normalizedModel.length >= 4 && /\d/u.test(normalizedModel) &&
     !compact(value).includes(normalizedModel) && !hasModelVariant(value, model) &&
     containsOriginal(input.source.shortDescription, model) && containsOriginal(input.source.longDescription, model)) {
     result.push({ code: "modelo_no_identificado", priority: "P1", evidence: `Modelo en original: ${model}` });

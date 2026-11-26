@@ -19,4 +19,4 @@ export const hasCompleteCatalogAuditEvidence = (
 ): boolean => coverage.totals.products > 0 &&
   coverage.totals.products === specifications.totals.products &&
   specifications.totals.canonicalOriginals === specifications.totals.products &&
-  specifications.totals.reconstructedSources === 0;
+  specifications.totals.partialOriginals === 0 && specifications.totals.reconstructedSources === 0;

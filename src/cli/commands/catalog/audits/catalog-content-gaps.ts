@@ -29,7 +29,7 @@ import { formatSpecificationOpportunitiesReport } from "./specification-opportun
 import { formatSpecificationCoverageReport } from "./specification-coverage-report.js";
 import { formatCatalogAuditClosureReport } from "./catalog-audit-closure-report.js";
 import { analyzeDescriptionCoverage } from "../../../../catalog/diagnostics/coverage/description-coverage.js";
-import type { DescriptionCoverageInput } from "../../../../catalog/diagnostics/coverage/description-coverage.js";
+import { hasIndependentDescriptionSource, type DescriptionCoverageInput } from "../../../../catalog/diagnostics/coverage/description-coverage.js";
 import { reconstructMercaelevaSource } from "../../../../catalog/diagnostics/coverage/description-source.js";
 import { analyzeDescriptionPriorities } from "../../../../catalog/diagnostics/coverage/description-priorities.js";
 import { analyzeTechnicalDensity } from "../../../../catalog/diagnostics/technical/technical-density.js";
@@ -108,7 +108,8 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
     if (sources === null && publication.providerId !== "mercaeleva") {
       throw new Error(`No existe original canónico para comparar ${publication.providerId}; no se atribuye fuente inexistente`);
     }
-    const origin = sources === null ? "reconstruccion_publicada" : "original_canonico";
+    const origin = sources === null ? "reconstruccion_publicada" :
+      publication.providerId === "manain" ? "registro_parcial_verificado" : "original_canonico";
     const inputs: DescriptionCoverageInput[] = [];
     for (const published of publication.products) {
       const identity = buildProductIdentity({ providerId: published.providerId, reference: published.reference,
@@ -133,7 +134,7 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
   markAuditProviderFailures(inspected.failures);
   const { fingerprints } = await loadPreparationInputs();
   const provenance = { source: "comparacion_publicaciones_y_preparacion", publications: sourceProvenance,
-    rulesSha256: fingerprints.rulesSha256, preparation: "Recalculada; Mercaeleva reconstruida únicamente desde campos de su publicación, no desde un original canónico" };
+    rulesSha256: fingerprints.rulesSha256, preparation: "Recalculada; Manain limitado al registro parcial verificado; Mercaeleva, si no dispone de original, reconstruida desde su publicación" };
   if (publications.length === 0) {
     if (options.json) console.log(JSON.stringify({ version: 1, analyzedAt: new Date().toISOString(), provenance, auditCoverage: sourceCoverage }, null, 2));
     else printReportLine(`HUECOS | comparación no evaluable · ${sourceCoverage.incompleteSource} fuentes ausentes · ${sourceCoverage.errors} errores`);
@@ -154,7 +155,7 @@ const reportDescriptionComparison = async (paths: readonly string[], options: Co
   const products = publications.flatMap((item) => item.products);
   const editorial = analyzePublishedEditorialQuality(products);
   const editorialPrepared = analyzeEditorialQuality(inputs);
-  const editorialReuse = analyzeEditorialReuse(inputs.filter((item) => item.origin === "original_canonico"));
+  const editorialReuse = analyzeEditorialReuse(inputs.filter((item) => hasIndependentDescriptionSource(item.origin)));
   const technicalDensity = analyzeTechnicalDensity(products);
   const priorities = analyzeDescriptionPriorities(inputs, editorial, editorialPrepared);
   const technicalSpecs = options.specs ? analyzeSpecificationCoverage(inputs) : null;

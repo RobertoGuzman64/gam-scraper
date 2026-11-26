@@ -10,7 +10,6 @@ import { readAccreditedPublication, resolveAccreditedPublication } from "../infr
 import { publicationApprovalSha, resolvePublicationDirectory } from "../infrastructure/filesystem/catalog/publications/publication-identity.js";
 import { evaluateIndividualPublicationDifference, PublicationAcceptanceError } from "./publication-acceptance.js";
 import type { PublicationAcceptance } from "./publication-acceptance.js";
-import { isEmptyTechnicalMeasure } from "../preparation/technical/technical-presentation.js";
 
 import type { PublicationDifference } from "./publication-contracts.js";
 export type { PublicationDifference } from "./publication-contracts.js";
@@ -116,6 +115,7 @@ const validateVersion = async (root: string, providerId: string, sha: string): P
 const describe = async (root: string, providerId: string, sha: string): Promise<{
   readonly difference: PublicationDifference;
   readonly acceptance: PublicationAcceptance;
+  readonly candidateProducts: readonly ImportCandidate[];
 }> => {
   const candidate = await validateVersion(root, providerId, sha);
   const global = await readActiveCatalogIndex(root);
@@ -127,10 +127,8 @@ const describe = async (root: string, providerId: string, sha: string): Promise<
   const old = current ? (await readAccreditedPublication(current)).products : [];
   const difference = differenceBetween(previous, sha, old, candidate.products);
   const approval: unknown = JSON.parse(await readFile(join(dirname(candidate.path), "accreditation.json"), "utf8"));
-  const removedSpecifications = new Set(difference.removedSpecifications);
-  const needsOriginal = difference.removedSpecifications.some((key) => key.endsWith(":Peso")) ||
-    old.some((product) => Object.entries(product.spec).some(([field, value]) =>
-      removedSpecifications.has(`${productIdentity(product)}:${field}`) && isEmptyTechnicalMeasure(field, value)));
+  const withoutOriginal = evaluateIndividualPublicationDifference(providerId, difference, old, candidate.products, approval);
+  const needsOriginal = difference.removedSpecifications.length > 0 && !withoutOriginal.accepted;
   const originalDirectory = join(root, "catalogs", "providers", providerId, "original");
   const originalAvailable = needsOriginal && await lstat(originalDirectory).then(() => true, (error: unknown) => {
     if (missing(error)) return false;
@@ -140,8 +138,9 @@ const describe = async (root: string, providerId: string, sha: string): Promise<
     ? (await readVerifiedManainRecordSource(root)).originalProducts
     : originalAvailable || (providerId === "gomariz" && difference.removed.length > 0)
       ? (await readPortableOriginal(root, providerId)).products : undefined;
-  const acceptance = evaluateIndividualPublicationDifference(providerId, difference, old, candidate.products, approval, originalProducts);
-  return { difference, acceptance };
+  const acceptance = originalProducts === undefined ? withoutOriginal :
+    evaluateIndividualPublicationDifference(providerId, difference, old, candidate.products, approval, originalProducts);
+  return { difference, acceptance, candidateProducts: candidate.products };
 };
 
 const writeAtomicSelection = async (target: string, contents: string): Promise<void> => {
@@ -176,7 +175,7 @@ export const selectActivePublication = async (
   rootDirectory: string, providerId: string, approvalSha256: string, activate = false
 ): Promise<PublicationActivation> => {
   const root = resolve(rootDirectory);
-  const { difference, acceptance } = await describe(root, providerId, approvalSha256);
+  const { difference, acceptance, candidateProducts } = await describe(root, providerId, approvalSha256);
   if (!activate) return { status: "simulation", providerId, difference, acceptance };
   const folder = join(root, "catalogs", "providers", providerId, "publications");
   const lockPath = join(folder, ".active.lock");
@@ -189,7 +188,8 @@ export const selectActivePublication = async (
   try {
     return await withActiveCatalogLock(root, async () => {
       const latest = await describe(root, providerId, approvalSha256);
-      if (!isDeepStrictEqual(latest.difference, difference) || !isDeepStrictEqual(latest.acceptance, acceptance)) {
+      if (!isDeepStrictEqual(latest.difference, difference) || !isDeepStrictEqual(latest.acceptance, acceptance) ||
+        !isDeepStrictEqual(latest.candidateProducts, candidateProducts)) {
         throw new Error("La publicación vigente cambió durante la selección; vuelve a simular");
       }
       const global = await readActiveCatalogIndex(root);
@@ -201,6 +201,9 @@ export const selectActivePublication = async (
       const accepted = latest.acceptance;
       if (!accepted.accepted) throw new PublicationAcceptanceError(accepted.blockers);
       const candidate = await validateVersion(root, providerId, approvalSha256);
+      if (!isDeepStrictEqual(candidate.products, latest.candidateProducts)) {
+        throw new Error("La candidata cambió durante la selección; vuelve a simular");
+      }
       if (current === candidate.path && (global?.providers[providerId]?.approvalSha256 === approvalSha256 ||
         (!global && await readSelectionSnapshot(activePath) !== null))) {
         return { status: "unchanged", providerId, difference: latest.difference, acceptance: accepted };

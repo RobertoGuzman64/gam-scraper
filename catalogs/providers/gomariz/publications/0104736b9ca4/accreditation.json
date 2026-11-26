@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "runId": "individual-gomariz-db728c8b3bb43efeb1cf7df166b5d98d",
+  "approved": true,
+  "approvalReason": "Acreditación automática de exclusiones históricas coincidentes, con evidencia y preparación verificadas",
+  "sources": [
+    {
+      "providerId": "gomariz",
+      "catalogSha256": "87e2fc58e39f9f00d7226e623ead5a154f933c3880b8503de2dc1a2375c3901b",
+      "preparationSha256": "f092b45363275ce2d82276b36a47e8858178f0bacb68e2dfd8e5dc7674377ef4",
+      "productCount": 547
+    }
+  ],
+  "exclusions": [
+    {
+      "providerId": "gomariz",
+      "reference": "CA1459",
+      "sourceUrl": "https://www.gomarizrent.com/producto/maximal-fd25t/",
+      "status": "review",
+      "issues": [
+        "Atributo no normalizable: Peso operativo",
+        "Atributo no normalizable: Peso"
+      ],
+      "decision": "excluir",
+      "reason": "Peso y peso operativo expresados con una unidad incompatible; magnitudes tecnicas sin normalizacion fiable.",
+      "evidenceUrls": [
+        "https://www.gomarizrent.com/producto/maximal-fd25t/"
+      ]
+    }
+  ]
+}

@@ -26,6 +26,9 @@ test("el cierre exige originales canónicos y cobertura completa, no recuentos h
   assert.equal(hasCompleteCatalogAuditEvidence(completeCoverage, {
     ...completeSpecifications, totals: { ...completeSpecifications.totals, canonicalOriginals: 0 }
   }), false);
+  assert.equal(hasCompleteCatalogAuditEvidence(completeCoverage, {
+    ...completeSpecifications, totals: { ...completeSpecifications.totals, canonicalOriginals: 0, partialOriginals: 1 }
+  }), false);
 });
 
 test("las contradicciones y pérdidas bloquean el cierre; las observaciones no", () => {

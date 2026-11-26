@@ -2,7 +2,7 @@ import { buildProductIdentity } from "../../identity.js";
 import type { EditorialAnalysis, EditorialIssueCode } from "../editorial/editorial-quality.js";
 import { EDITORIAL_CRITERIA } from "../editorial/editorial-quality.js";
 import { familyOf } from "./description-coverage.js";
-import type { DescriptionCoverageInput } from "./description-coverage.js";
+import { hasIndependentDescriptionSource, type DescriptionCoverageInput } from "./description-coverage.js";
 
 type DescriptionField = "description" | "description_general";
 type Stage = "P0" | "P1" | "P2";
@@ -122,14 +122,14 @@ const issueIndex = (analysis: EditorialAnalysis): Map<string, ReadonlySet<Editor
 const evidenceOf = (input: DescriptionCoverageInput, signal: Signal, preparedWords: number): string => {
   if (signal === "general_muy_breve" || signal === "general_insuficiente_en_familia" || signal === "general_ausente") {
     const originalWords = countWords(input.source.longDescription);
-    if (input.origin === "original_canonico" && originalWords > preparedWords + 20) return "original canónico con texto adicional; contrastar contenido";
+    if (hasIndependentDescriptionSource(input.origin) && originalWords > preparedWords + 20) return "origen independiente con texto adicional; contrastar contenido";
     if (Object.values(input.source.specs ?? {}).some((value) => value !== null && value !== undefined && String(value).trim())) {
-      return input.origin === "original_canonico" ? "especificaciones presentes; contrastar antes de ampliar" :
+      return hasIndependentDescriptionSource(input.origin) ? "especificaciones presentes; contrastar antes de ampliar" :
         "especificaciones publicadas; sin original independiente";
     }
     return "sin ampliación acreditada; requiere investigación";
   }
-  if (signal === "corta_ausente") return countWords(input.source.shortDescription) > 0 && input.origin === "original_canonico" ?
+  if (signal === "corta_ausente") return countWords(input.source.shortDescription) > 0 && hasIndependentDescriptionSource(input.origin) ?
     "texto corto presente en original; revisar preparación" : "requiere investigación o redacción respaldada";
   return "revisión de proporción y síntesis; conservar hechos acreditados";
 };

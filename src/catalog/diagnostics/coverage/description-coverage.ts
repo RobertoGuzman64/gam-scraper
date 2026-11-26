@@ -3,7 +3,10 @@ import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 import type { PreparedProduct } from "../../../preparation/contracts.js";
 
-export type DescriptionSourceOrigin = "original_canonico" | "reconstruccion_publicada";
+export type DescriptionSourceOrigin = "original_canonico" | "registro_parcial_verificado" | "reconstruccion_publicada";
+export const hasIndependentDescriptionSource = (origin: DescriptionSourceOrigin): boolean =>
+  origin === "original_canonico" || origin === "registro_parcial_verificado";
+
 export type DescriptionCoverageInput = {
   readonly published: ImportCandidate;
   readonly source: ProductRecord;
