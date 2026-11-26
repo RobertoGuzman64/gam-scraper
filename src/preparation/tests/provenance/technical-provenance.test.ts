@@ -7,9 +7,12 @@ import { reconcileGomarizMassCapacityPresentation } from "../../gomariz/technica
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { controlledGomarizPlatform } from "../../editorial/core/editorial-contract-records.js";
 import { applyDocumentedTechnicalEvidence, recoverReviewedModelTechnicalSpecs, type DocumentedTechnicalUnit } from "../../technical/evidence/documented-technical-evidence.js";
-import { isProductTechnicalProvenance, recoveredUnitAttributeSpecs } from "../../provenance/technical-provenance.js";
+import { captureTechnicalProvenance, isProductTechnicalProvenance, recoveredUnitAttributeSpecs } from "../../provenance/technical-provenance.js";
 import { buildPublicationTechnicalProvenance, isPublicationTechnicalProvenance } from "../../provenance/publication-technical-provenance.js";
 import { originalRecordFingerprint } from "../../../catalog/identity-fingerprint.js";
+import { SPEC_KEY_NORMALIZATION } from "../../../catalog/normalization/spec-key-normalization.js";
+import { reviewedModelDocumentClaims } from "../../technical/evidence/reviewed-model-claims.js";
+import { classifyPublishedTechnicalSpec } from "../../provenance/technical-spec-classification.js";
 import type { ProductTechnicalProvenance } from "../../../contracts/technical-provenance.js";
 import { resolveAttribute } from "../../classification/attribute-mapping.js";
 import type { OfflinePreparation } from "../../documents/offline-document.js";
@@ -411,4 +414,43 @@ test("la geometría de cesta de unidad conserva su evidencia común y no sustitu
     const recovered = recoveredUnitAttributeSpecs(original, { originalRecordSha256: fingerprint, entries });
     assert.equal(recovered[target.name], undefined);
   }
+});
+
+
+test("los alias nuevos conservan la afirmación firmada y no acreditan valores, variantes o destinos ambiguos", (t) => {
+  const claim = reviewedModelDocumentClaims().find((entry) => entry.field === "Longitud de horquillas");
+  assert.ok(claim);
+  const original = { ...record("CONTROL-ALIAS"), brand: claim.document.brand, model: claim.document.model };
+  const canonical = "Largo horquillas";
+  const alias = "longitud de horquillas";
+  const prior = SPEC_KEY_NORMALIZATION[alias];
+  t.after(() => { if (prior === undefined) delete SPEC_KEY_NORMALIZATION[alias]; else SPEC_KEY_NORMALIZATION[alias] = prior; });
+  SPEC_KEY_NORMALIZATION[alias] = canonical;
+  const observe = (source = original, value = claim.value) => {
+    const capture = captureTechnicalProvenance(source);
+    capture.observe({}, { [claim.field]: value }, "src/preparation/technical/documented-technical-evidence.ts", undefined,
+      { scope: "model-document", document: claim.document });
+    return capture;
+  };
+  const capture = observe();
+  const final = capture.finalize({ [canonical]: claim.value }, original);
+  assert.ok(isProductTechnicalProvenance(final));
+  const entry = final.entries[0];
+  assert.ok(entry?.scope === "model-document");
+  assert.equal(entry.field, claim.field);
+  assert.deepEqual(entry.verification, claim.verification);
+  assert.equal(classifyPublishedTechnicalSpec(original, final, canonical, claim.value), "reused");
+  assert.equal(classifyPublishedTechnicalSpec(original, final, canonical, `${claim.value} alterado`), "pending");
+  assert.equal(classifyPublishedTechnicalSpec(original, { ...final, entries: [{ ...entry, field: canonical }] }, canonical, claim.value), "pending");
+  assert.equal(classifyPublishedTechnicalSpec(original, { ...final, entries: [entry,
+    { field: canonical, value: claim.value, mechanism: entry.mechanism, scope: "unknown", sourceField: null, sourceValue: null }] }, canonical, claim.value), "pending");
+  assert.deepEqual(capture.finalize({ [canonical]: claim.value, [claim.field]: claim.value }, original).entries, []);
+  assert.deepEqual(capture.finalize({ [canonical]: `${claim.value} alterado` }, original).entries, []);
+  const other = { ...original, model: "VARIANTE INCOMPATIBLE" };
+  const foreign = observe(other).finalize({ [canonical]: claim.value }, other).entries[0];
+  assert.equal(foreign?.scope, "unknown");
+  const wrong = `${claim.value} alterado`;
+  const unverified = observe(original, wrong).finalize({ [canonical]: wrong }, original).entries[0];
+  assert.ok(unverified?.scope === "model-document");
+  assert.equal(unverified.verification, undefined);
 });

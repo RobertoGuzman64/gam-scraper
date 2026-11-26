@@ -203,3 +203,23 @@ test("Manain: diferencia carga de manipulación y máxima de elevación sin inco
   const conflict = { ...specs, "Capacidad máxima de elevación": "3000 kg" };
   assert.equal(reconcileManainMassCapacityPresentation({ ...manipulator, specs: conflict }, conflict), conflict);
 });
+
+
+test("Manain: los grupos electrógenos conservan potencia aparente y tensiones con sufijo duplicado de origen", () => {
+  const specs: SpecsMap = { Potencia: "80kva kva", Voltios: "400/230v v", Otro: "24v v" };
+  const source = { ...record, url: "https://manain.com/producto/venta-energia-grupo-electrogeno-equiptest-g1/", specs };
+  const expected = { ...specs, Potencia: "80 kVA", Voltios: "400 / 230 V" };
+  const normalized = normalizeManainTechnicalSpecs(source, specs);
+  assert.deepEqual(normalized, expected);
+  assert.equal(normalizeManainTechnicalSpecs(source, normalized), normalized);
+  assert.deepEqual(source.specs, { Potencia: "80kva kva", Voltios: "400/230v v", Otro: "24v v" });
+  assert.equal(normalizeManainTechnicalSpecs({ ...record, specs }, specs), specs);
+  assert.equal(normalizeManainTechnicalSpecs({ ...source, providerId: "gam" }, specs), specs);
+  assert.equal(normalizeManainTechnicalSpecs({ ...source, specs: {} }, specs), specs);
+  for (const invalid of [
+    { Potencia: "80kva kw", Voltios: "400/230v a" },
+    { Potencia: "80/90kva kva", Voltios: "400-230v v" },
+    { Potencia: "80kva kva kva", Voltios: "400/230v v v" },
+    { Potencia: "80kva kva opcional", Voltios: "400/0v v" }
+  ]) assert.equal(normalizeManainTechnicalSpecs({ ...source, specs: invalid }, invalid), invalid);
+});

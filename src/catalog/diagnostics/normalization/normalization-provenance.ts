@@ -1,7 +1,9 @@
 import { isDeepStrictEqual } from "node:util";
 import type { ProductRecord, SpecValue } from "../../../contracts/catalog.js";
 import { matchesTechnicalDocumentVerification, matchesTechnicalUnitListingVerification, type ProductTechnicalProvenance, type TechnicalSpecEvidence } from "../../../contracts/technical-provenance.js";
+import { findTechnicalSpecEvidence } from "../../../preparation/provenance/technical-provenance.js";
 import { matchesDocumentedTechnicalIdentity } from "../../../preparation/technical/evidence/reviewed-catalog-model-identity.js";
+import { normalizeSpecKey } from "../../normalization/normalize-specs.js";
 import { buildProductIdentity } from "../../identity.js";
 import { originalRecordFingerprint } from "../../identity-fingerprint.js";
 import type { NormalizationAuditStage, NormalizationSpecObservation, NormalizationStageObservation } from "./normalization-audit.js";
@@ -82,9 +84,12 @@ const traceFindings = (source: ProductRecord, provenance: ProductTechnicalProven
     targetsByKey.set(target.canonicalKey, targets);
   }
   const findings: NormalizationCheckFinding[] = provenance.entries.map((entry) => {
-    const targets = targetsByKey.get(entry.field) ?? [];
+    const targets = targetsByKey.get(normalizeSpecKey(entry.field)) ?? [];
     const { sourceValue: _sourceValue, value: _value, ...metadata } = entry;
-    const assessment = assessTarget(entry, targets) ?? assessSource(source, entry, provenance.originalRecordSha256);
+    const assessment: Assessment = findTechnicalSpecEvidence(provenance.entries, entry.field, entry.value) !== entry
+      ? { assessment: "no_evaluable", cause: "procedencia-destino-ambiguo",
+        reason: "Más de una traza comparte la clave canónica de destino" }
+      : assessTarget(entry, targets) ?? assessSource(source, entry, provenance.originalRecordSha256);
     return { ...assessment, specificationKey: entry.field, stage, circuit: stage === "preparacion" ? "procedencia-preparacion-actual" : "procedencia-publicacion-acreditada",
       applicability: stage === "preparacion" ? "Traza de recuperación de la preparación recalculada, no de la publicación histórica"
         : "Traza histórica del manifiesto de la publicación acreditada, no de la preparación recalculada",
@@ -129,7 +134,7 @@ export const hasAccreditedPublicationLink = (context: NormalizationCheckContext,
     published.sourceUrl !== source.url || published.reference !== source.reference) return false;
   const destination = observation.publication.observation;
   const candidates = publishedProvenance.entries.filter((entry) => entry.scope === "unit" && entry.sourceField === specification.rawKey &&
-    entry.sourceValue === specification.rawValue && assessSource(source, entry, publishedProvenance.originalRecordSha256).assessment === "diferencia_legitima" &&
-    assessTarget(entry, destination.specifications.filter((target) => target.canonicalKey === entry.field)) === null);
+    entry.sourceValue === specification.rawValue && findTechnicalSpecEvidence(publishedProvenance.entries, entry.field, entry.value) === entry && assessSource(source, entry, publishedProvenance.originalRecordSha256).assessment === "diferencia_legitima" &&
+    assessTarget(entry, destination.specifications.filter((target) => target.canonicalKey === normalizeSpecKey(entry.field))) === null);
   return candidates.length === 1 && contextMatches(context, publishedProvenance);
 };

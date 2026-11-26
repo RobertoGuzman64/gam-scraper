@@ -159,3 +159,31 @@ test("la coherencia de alturas de Gomariz evalúa ambas denominaciones sin ocult
   assert.equal(preparedTechnicalConsistencyIssues(record, { ...work, "Altura plataforma": "11 m", "Altura de plataforma": "8 m" }).length, 1);
   assert.deepEqual(preparedTechnicalConsistencyIssues(record, { "Altura de plataforma": "11 m" }), []);
 });
+
+
+test("la presentación separa disponibilidad de elevación libre de una magnitud sin inventar una altura", () => {
+  const key = "Elevación libre";
+  const target = "Elevación libre disponible";
+  for (const [raw, expected] of [["SI", true], ["No", false], ["Yes", true]] as const) {
+    const original: SpecsMap = { [key]: raw };
+    const current: SpecsMap = { [key]: raw === "SI" ? "Sí" : raw };
+    const changes: string[] = [];
+    const output = normalizeOriginalTechnicalPresentation(current, original, (_before, _after, _mechanism, field) => {
+      if (typeof field === "object") changes.push(field.spec);
+    });
+    assert.deepEqual(output, { [target]: expected });
+    assert.deepEqual(changes, [key]);
+    assert.deepEqual(normalizeSpecsObject(output).normalized, { [target]: expected });
+    assert.equal(normalizeOriginalTechnicalPresentation(output, original), output);
+  }
+  for (const raw of ["1600 mm", "1", "Sí / No", "Opcional", "Sí mm", true]) {
+    const specs: SpecsMap = { [key]: raw };
+    assert.equal(normalizeOriginalTechnicalPresentation(specs, specs), specs);
+  }
+  const original: SpecsMap = { [key]: "Sí" };
+  for (const other of [{ [key]: "No" }, { ...original, [target]: true },
+    { ...original, "Elevacion libre": "1500 mm" }, { ...original, "Elevación libre (mm)": "1500 mm" }]) {
+    assert.equal(normalizeOriginalTechnicalPresentation(other, original), other);
+    assert.equal(normalizeOriginalTechnicalPresentation(original, other), original);
+  }
+});

@@ -8,8 +8,9 @@ import { resolveAttribute } from "../../../preparation/classification/attribute-
 import { validateCommercialAttributeValue } from "../../../preparation/classification/attribute-value-validation.js";
 import { classificationProvider } from "../../../preparation/classification/classification-provider.js";
 import { fold, scalar } from "../../../preparation/classification/attribute-utils.js";
-import { recoveredUnitAttributeSpecs } from "../../../preparation/provenance/technical-provenance.js";
+import { findTechnicalSpecEvidence, recoveredUnitAttributeSpecs } from "../../../preparation/provenance/technical-provenance.js";
 import { reviewedModelAttributeSpecs, reviewedModelEditorialSpecs } from "../../../preparation/technical/evidence/documented-technical-evidence.js";
+import { normalizeSpecKey } from "../../normalization/normalize-specs.js";
 import type { NormalizationSpecObservation } from "./normalization-audit.js";
 import { canonicalNormalizationUnit } from "./normalization-dimensional.js";
 import { inspectSemanticConservation } from "./normalization-semantic.js";
@@ -132,12 +133,11 @@ const recoveredOpportunity = (source: ProductRecord, recovery: ReturnType<typeof
       const reduced = scope === "modelo" ? resolveAttribute(source, item.attribute, without(model, key), unit)
         : resolveAttribute(source, item.attribute, model, without(unit, key));
       if (same(item.attribute, reduced, resolution)) return [];
-      const traces = provenance.entries.filter((entry) => entry.field === key && entry.value === value &&
-        (scope === "modelo" ? entry.scope === "model-document" : entry.scope === "unit"));
-      const destinations = specs.filter((spec) => spec.canonicalKey === key && spec.rawValue === value);
-      const trace = traces.length === 1 ? traces[0] : undefined;
-      const spec = destinations.length === 1 ? destinations[0] : undefined;
-      return trace && spec ? [{ scope, trace, spec }] : [];
+      const trace = typeof value === "string" ? findTechnicalSpecEvidence(provenance.entries, key, value) : undefined;
+      const destinations = specs.filter((spec) => spec.canonicalKey === normalizeSpecKey(key));
+      const spec = destinations.length === 1 && destinations[0]?.rawValue === value ? destinations[0] : undefined;
+      return trace && spec && (scope === "modelo" ? trace.scope === "model-document" : trace.scope === "unit")
+        ? [{ scope, trace, spec }] : [];
     }));
   const candidate = candidates.length === 1 ? candidates[0] : undefined;
   return candidate ? { spec: candidate.spec, stage: "preparacion", resolution, circuit: `atributo-recuperacion-${candidate.scope}-proyeccion`, extra: [

@@ -18,15 +18,31 @@ type RecoveryStep = { readonly before: SpecsMap; readonly after: SpecsMap; reado
   readonly sourceField: TechnicalRecoverySourceField | null; readonly source: DocumentedTechnicalSource | null;
   readonly editorialRuleId: string | null };
 const display = (value: SpecValue): string => typeof value === "string" ? value : JSON.stringify(value);
-const index = (specs: SpecsMap): ReadonlyMap<string, readonly SpecValue[]> => {
-  const grouped = new Map<string, SpecValue[]>();
+type IndexedSpec = { readonly field: string; readonly value: SpecValue };
+const index = (specs: SpecsMap): ReadonlyMap<string, readonly IndexedSpec[]> => {
+  const grouped = new Map<string, IndexedSpec[]>();
   for (const [field, value] of Object.entries(specs)) {
     const key = normalizeSpecKey(field);
     const values = grouped.get(key) ?? [];
-    values.push(value);
+    values.push({ field, value });
     grouped.set(key, values);
   }
   return grouped;
+};
+
+export const findTechnicalSpecEvidence = (entries: readonly TechnicalSpecEvidence[], field: string, value: string): TechnicalSpecEvidence | undefined => {
+  const canonical = normalizeSpecKey(field);
+  const matches = entries.filter((entry) => normalizeSpecKey(entry.field) === canonical);
+  return matches.length === 1 && matches[0]?.value === value ? matches[0] : undefined;
+};
+
+const observedEvidence = <T>(observed: string, canonical: string, resolve: (field: string) => T | null):
+  { readonly field: string; readonly evidence: T } | null => {
+  const exact = resolve(observed);
+  if (exact !== null) return { field: observed, evidence: exact };
+  if (observed === canonical) return null;
+  const equivalent = resolve(canonical);
+  return equivalent === null ? null : { field: canonical, evidence: equivalent };
 };
 
 const attributedSource = (
@@ -89,35 +105,40 @@ export const captureTechnicalProvenance = (original: ProductRecord): {
         for (const [field, values] of index(step.after)) {
           if (previous.has(field) || source.has(field) || values.length !== 1 ||
             final.get(field)?.length !== 1 || seen.has(field)) continue;
-          const value = display(values[0]!);
-          if (display(final.get(field)![0]!) !== value) continue;
+          const observed = values[0];
+          const destination = final.get(field)?.[0];
+          if (!observed || !destination) continue;
+          const value = display(observed.value);
+          if (display(destination.value) !== value) continue;
           seen.add(field);
           const documentedSource = step.source;
           const document = documentedSource?.document;
           const rule = step.editorialRuleId ?? verifiedReconciledSourceTechnicalRule(
             original, field, value, step.mechanism);
           const editorialRule = rule === null ? {} : { editorialRuleId: rule };
-          const originalDescriptionEvidence = reviewedUnitDescriptionEvidence(original, field, value);
+          const originalDescriptionEvidence = observedEvidence(observed.field, field,
+            (key) => reviewedUnitDescriptionEvidence(original, key, value));
           const listingDocument = { url: original.url, brand: original.brand, model: original.model };
           const listingVerification = (step.mechanism ===
             "src/preparation/gam/technical/models/documented-multi-unit-lot-specs.ts" || step.mechanism ===
             "src/preparation/gam/technical/models/documented-electric-mobility-and-truck-access-specs.ts")
-              ? reviewedUnitListingVerification(original, listingDocument, field, value) : null;
+              ? observedEvidence(observed.field, field, (key) => reviewedUnitListingVerification(original, listingDocument, key, value)) : null;
           if (originalDescriptionEvidence) {
-            entries.push({ field, value, mechanism: step.mechanism, ...originalDescriptionEvidence, ...editorialRule });
+            entries.push({ field: originalDescriptionEvidence.field, value, mechanism: step.mechanism,
+              ...originalDescriptionEvidence.evidence, ...editorialRule });
           } else if (listingVerification) {
-            entries.push({ field, value, mechanism: step.mechanism, scope: "unit-document",
-              sourceField: null, sourceValue: null, document: listingDocument, verification: listingVerification,
+            entries.push({ field: listingVerification.field, value, mechanism: step.mechanism, scope: "unit-document",
+              sourceField: null, sourceValue: null, document: listingDocument, verification: listingVerification.evidence,
               ...editorialRule });
           } else if (document && documentedSource && matchesDocumentedTechnicalIdentity(original, documentedSource)) {
-            const verification = documentedSource.scope === "model-document" || documentedSource.scope === "unit-document" ||
+            const claim = documentedSource.scope === "model-document" || documentedSource.scope === "unit-document" ||
               documentedSource.scope === "document-reference" && typeof document.model === "string"
-              ? reviewedModelDocumentVerification(document, field, value) : null;
-            const scope = verification && documentedSource.scope === "unit-document"
+              ? observedEvidence(observed.field, field, (key) => reviewedModelDocumentVerification(document, key, value)) : null;
+            const scope = claim && documentedSource.scope === "unit-document"
               ? "model-document" : documentedSource.scope;
-            entries.push({ field, value, mechanism: step.mechanism, scope,
+            entries.push({ field: claim?.field ?? field, value, mechanism: step.mechanism, scope,
               sourceField: null, sourceValue: null, document,
-              ...(verification === null ? {} : { verification }), ...editorialRule });
+              ...(claim === null ? {} : { verification: claim.evidence }), ...editorialRule });
           } else {
             entries.push({ field, value, mechanism: step.mechanism,
               ...attributedSource(original, recoveredFrom, step.mechanism, field, value, step.sourceField, step.before),
@@ -152,8 +173,9 @@ export const recoveredUnitAttributeSpecs = (original: ProductRecord, provenance:
   );
   const specs: Record<string, SpecValue> = Object.fromEntries(entries.map((entry) => [entry.field, entry.value]));
   const geometryMechanism = "src/preparation/technical/platform-geometry-recovery.ts";
-  const basket = entries.filter((entry) => ["Dimensiones de cesta", "Dimensiones de la cesta"].includes(entry.field));
-  if (basket.length === 1 && basket[0]?.field === "Dimensiones de cesta" && basket[0].mechanism === geometryMechanism) {
+  const basket = entries.filter((entry) => ["Dimensiones de cesta", "Dimensiones de la cesta"].some((field) =>
+    normalizeSpecKey(field) === normalizeSpecKey(entry.field)));
+  if (basket.length === 1 && basket[0] && normalizeSpecKey(basket[0].field) === normalizeSpecKey("Dimensiones de cesta") && basket[0].mechanism === geometryMechanism) {
     specs["Dimensiones de la cesta"] = basket[0].value;
   } else if (basket.length === 0) {
     const lengths = entries.filter((entry) => entry.field === "Longitud de plataforma");

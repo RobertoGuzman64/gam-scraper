@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
 import { technicalDocumentClaimSha256, type TechnicalSpecEvidence } from "../../../contracts/technical-provenance.js";
 import { createPreparedSourceFixture } from "../../../testing/builders/prepared-source-fixture.js";
+import { SPEC_KEY_NORMALIZATION } from "../../normalization/spec-key-normalization.js";
 import { originalRecordFingerprint } from "../../identity-fingerprint.js";
 import { attachNormalizationPublication, inspectNormalizationProduct } from "../normalization/normalization-audit.js";
 import { inspectPreparationProvenance, inspectPublicationProvenance } from "../normalization/normalization-provenance.js";
@@ -128,4 +129,28 @@ test("la cobertura histórica ausente o fallida se distingue y el impacto se ded
   const coverage = summarizeNormalizationChecks(normalizationEquivalenceChecks, ["gam"], evaluateNormalizationChecks(normalizationEquivalenceChecks, "gam", [failed]));
   assert.equal(coverage.failures[0]?.check, "procedencia-publicacion");
   assert.equal(coverage.checks.find(({ check }) => check === "procedencia-publicacion")?.errors, 1);
+});
+
+
+test("la traza histórica se concilia con el diccionario vigente sin cambiar su clave ni tolerar colisiones", (t) => {
+  const alias = "dimensiones de cesta";
+  const canonical = "Dimensiones cesta (mm)";
+  const field = "Dimensiones de cesta";
+  const value = "2 x 1 m";
+  const prior = SPEC_KEY_NORMALIZATION[alias];
+  t.after(() => { if (prior === undefined) delete SPEC_KEY_NORMALIZATION[alias]; else SPEC_KEY_NORMALIZATION[alias] = prior; });
+  SPEC_KEY_NORMALIZATION[alias] = canonical;
+  const historical = trace({ field, value });
+  const publication = { specs: { [field]: value }, entries: [historical] };
+  const input = context(original, { [canonical]: value }, [trace({ field: canonical, value })], publication);
+  const before = JSON.stringify(input);
+  assert.equal(findings(inspectPublicationProvenance(input))[0]?.cause, "procedencia-unidad-conciliada");
+  assert.equal(findings(inspectPreparationProvenance(input))[0]?.cause, "procedencia-unidad-conciliada");
+  assert.equal(findings(inspectPublicationProvenance(context(original, {}, [],
+    { ...publication, specs: { [field]: "2000 x 1000 mm" } })))[0]?.assessment, "defecto_reproducible");
+  assert.equal(findings(inspectPublicationProvenance(context(original, {}, [],
+    { ...publication, specs: { [field]: value, [canonical]: value } })))[0]?.assessment, "no_evaluable");
+  assert.equal(findings(inspectPublicationProvenance(context(original, {}, [],
+    { ...publication, entries: [historical, trace({ field: canonical, value })] })))[0]?.assessment, "no_evaluable");
+  assert.equal(JSON.stringify(input), before);
 });

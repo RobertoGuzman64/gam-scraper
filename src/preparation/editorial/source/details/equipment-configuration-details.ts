@@ -1,3 +1,4 @@
+import { normalizeEmissionStage } from "../../../../catalog/normalization/spec-parsers.js";
 import type { ProductRecord } from "../../../../contracts/catalog.js";
 import type { EditorialFamily } from "../../core/editorial-families.js";
 import { editorialQuantity, formatEditorialQuantity } from "../../measurements/editorial-measurements.js";
@@ -41,11 +42,7 @@ export const resolveEquipmentConfigurationDetails = (
   } else if (family === "grupo-electrogeno") {
     if (!/\b(?:stage|emisiones|homologaci[oó]n|normativa)\b/iu.test(text)) {
       const classification = declaredConfiguration(source, prepared,
-        ["Stage", "Normativa de emisiones", "Nivel de emisiones"], (value) => {
-          const match = /^(?:stage\s+)?(i|ii|iiia|iiib|iv|v)(\s+flex)?$/u.exec(value);
-          if (!match?.[1] || match[2] && match[1] !== "v") return null;
-          return `${match[1].toUpperCase()}${match[2] ? " Flex" : ""}`;
-        });
+        ["Stage", "Normativa de emisiones", "Nivel de emisiones"], normalizeEmissionStage);
       if (classification !== null) details.push(`clasificación de emisiones declarada Stage ${classification}`);
     }
     const competingVoltageKeys = ["Voltaje", "Voltaje de la batería"];

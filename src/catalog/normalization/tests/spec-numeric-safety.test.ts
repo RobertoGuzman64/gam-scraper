@@ -123,6 +123,18 @@ test("los depósitos respetan la dimensión volumétrica sin mezclar masa, energ
     for (const raw of ["15 kg", "15 kW", "15 / 20 l", "15-20 l", "15 l opcionales"])
       assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
   }
+  for (const [alias, key] of [["Capacidad del depósito de combustible", "Depósito de combustible"],
+    ["Capacidad del depósito de solución", "Depósito de solución"], ["Capacidad del depósito de recuperación", "Depósito de recuperación"]] as const) {
+    const result = normalizeSpecsObject({ [alias]: "15,5 litros" });
+    assert.deepEqual(result.normalized, { [key]: 15.5 });
+    assert.deepEqual(normalizeSpecsObject(result.normalized).normalized, result.normalized);
+    assert.equal(normalizeSpecsObject({ [alias]: "15 l", [key]: "20 l" }).conflictingKeys.length, 1);
+    for (const raw of ["15 kg", "15 kW", "15 / 20 l", "15-20 l", "15 l opcionales"])
+      assert.deepEqual(normalizeSpecsObject({ [alias]: raw }).normalized, {});
+  }
+  assert.deepEqual(normalizeSpecsObject({ "Capacidad del depósito de solución": "50 l", "Capacidad del depósito de recuperación": "60 l",
+    "Capacidad del depósito de combustible": "40 l", "Capacidad del depósito": "70 l" }).normalized,
+    { "Depósito de solución": 50, "Depósito de recuperación": 60, "Depósito de combustible": 40, "Capacidad del depósito": 70 });
   assert.equal(normalizeSpecsObject({ "Capacidad de la tolva": "15 kg" }).normalized["Capacidad de la tolva"], 15);
 });
 
@@ -375,4 +387,108 @@ test("las masas específicas conservan su significado, unidad y valor entre norm
     }
   }
   assert.deepEqual(normalizeSpecsObject({ "Peso operativo": "1000 kg", "PESO OPERATIVO": "1200 kg" }).conflictingKeys.map(({ key }) => key), ["Peso operativo"]);
+});
+
+
+test("la anchura de limpieza se interpreta como anchura de trabajo sin mezclar anchuras exteriores", () => {
+  for (const key of ["Anchura limpieza", "Ancho de limpieza"]) {
+    const normalized = normalizeSpecsObject({ [key]: "0,93 m", Anchura: "1250 mm" }).normalized;
+    assert.deepEqual(normalized, { "Anchura trabajo (mm)": 930, "Anchura (mm)": 1250 });
+    assert.deepEqual(normalizeSpecsObject(normalized).normalized, normalized);
+    assert.equal(parseSpecByRule(key, "93 cm"), 930);
+    for (const value of ["93 kg", "93/110 cm", "93 cm opcional"]) {
+      assert.deepEqual(normalizeSpecsObject({ [key]: value }).normalized, {});
+    }
+    assert.equal(normalizeSpecsObject({ [key]: "93 cm", "Anchura de trabajo": "1100 mm" }).conflictingKeys.length, 1);
+  }
+});
+
+
+test("normaliza alias geométricos explícitos sin mezclar condiciones ni perder ejes", () => {
+  for (const [alias, canonical, raw, expected] of [
+    ["Longitud de horquillas", "Largo horquillas", "1,2 m", 1200],
+    ["Longitud de transporte", "Longitud transporte", "2980 mm", 2.98],
+    ["Alcance horizontal máximo", "Alcance horizontal max.", "12,5 m", 12.5],
+    ["Dimensiones de cesta", "Dimensiones cesta (mm)", "1,4 x 0,7 x 1,1 m", "1400 x 700 x 1100 mm"],
+    ["Dimensiones de la cesta", "Dimensiones cesta (mm)", "1400 x 700 x 1100 mm", "1400 x 700 x 1100 mm"]
+  ] as const) {
+    const result = normalizeSpecsObject({ [alias]: raw });
+    assert.deepEqual(result.normalized, { [canonical]: expected });
+    assert.deepEqual(normalizeSpecsObject(result.normalized).normalized, result.normalized);
+    assert.equal(parseSpecByRule(alias, raw), expected);
+    for (const invalid of ["1200 kg", "1–2 m", "Opcional"]) {
+      assert.equal(normalizeSpecsObject({ [alias]: invalid }).normalized[canonical], undefined);
+    }
+  }
+  assert.deepEqual(normalizeSpecsObject({ "Dimensiones de la cesta": "2,4 x 0,9 m" }).normalized,
+    { "Dimensiones cesta (mm)": { ancho: 2400, largo: 900 } });
+  assert.deepEqual(normalizeSpecsObject({ "Longitud de transporte": "2,98 m", Longitud: "4 m", "Longitud sin horquillas": "3 m" }).normalized,
+    { "Longitud transporte": 2.98, "Longitud (mm)": 4000, "Longitud sin horquillas": 3000 });
+  assert.equal(normalizeSpecsObject({ "Longitud de horquillas": "1200 mm", "Largo horquillas": "1500 mm" }).conflictingKeys.length, 1);
+  assert.equal(normalizeSpecsObject({ "Alcance horizontal máximo": "8 m", "Alcance lateral": "6 m" }).normalized["Alcance lateral"], 6);
+});
+
+
+test("las prestaciones de limpieza conservan la dimensión y el alcance funcional", () => {
+  const result = normalizeSpecsObject({
+    "Caudal de aire de aspiración": "55,6 l/s",
+    "Anchura del cepillo principal": "81 cm",
+    "Anchura del cepillo lateral": "510 mm",
+    "Anchura de barrido con cepillo principal": "0,7 m",
+    "Anchura máxima de fregado con escobilla lateral": "1,37 m"
+  });
+  assert.deepEqual(result.normalized, {
+    "Caudal de aire de aspiración (l/s)": 55.6,
+    "Anchura del cepillo principal (mm)": 810,
+    "Anchura del cepillo lateral (mm)": 510,
+    "Anchura de barrido con cepillo principal": 700,
+    "Anchura máxima de fregado con cepillo lateral": 1370
+  });
+  assert.deepEqual(normalizeSpecsObject(result.normalized).normalized, result.normalized);
+  for (const raw of ["55,6 l", "55,6 l/min", "55,6 m³/h", "40–60 l/s", "55 l/s opcional"]) {
+    assert.equal(normalizeSpecsObject({ "Caudal de aire de aspiración": raw }).normalized["Caudal de aire de aspiración (l/s)"], undefined, raw);
+  }
+  for (const raw of ["500 kg", "500/600 mm", "500 mm opcional"]) {
+    assert.equal(normalizeSpecsObject({ "Anchura del cepillo principal": raw }).normalized["Anchura del cepillo principal (mm)"], undefined, raw);
+  }
+  assert.equal(normalizeSpecsObject({ "Anchura máxima de fregado con escobilla lateral": "1,37 m",
+    "Anchura máxima de fregado con cepillo lateral": "1200 mm" }).conflictingKeys.length, 1);
+  assert.equal(normalizeSpecsObject({ "Medida del cepillo lateral de barrido": "530 mm" }).unknownKeys.length, 1);
+});
+
+
+test("conserva los rangos hidráulicos de diseño sin confundir presión y caudal", () => {
+  const pressure = "Presión de aceite de trabajo del modelo";
+  const flow = "Caudal de aceite del modelo";
+  const expected = { [pressure]: "80-120 bar", [flow]: "25,5-40 l/min" };
+  assert.deepEqual(normalizeSpecsObject({ [pressure]: "80–120 BAR", [flow]: "25.5 – 40 L/min" }).normalized, expected);
+  assert.deepEqual(normalizeSpecsObject(expected).normalized, expected);
+  for (const value of ["120-80 bar", "0-120 bar", "80-120", "80-120 l/min", "80/120 bar", "80-120 bar opcional", "1.234-120 bar", ["80-120 bar"]]) {
+    assert.equal(normalizeSpecsObject({ [pressure]: value }).normalized[pressure], undefined);
+  }
+  for (const value of ["40-25 l/min", "25-40 l/s", "25-40 bar", "25-40 l", "25-40 l/min según modelo"]) {
+    assert.equal(normalizeSpecsObject({ [flow]: value }).normalized[flow], undefined);
+  }
+  assert.deepEqual(normalizeSpecsObject({ "Presión hidráulica": "80-120 bar", "Caudal nominal": "25-40 l/min" }).normalized, {});
+});
+
+
+test("los rangos dimensionales admitidos conservan los extremos y las condiciones de la prestación", () => {
+  for (const key of ["Altura de trabajo con caja inclinada", "Anchura de caja admitida", "Diámetro admitido de bidón"]) {
+    const normalized = { [key]: "300-600 mm" };
+    assert.deepEqual(normalizeSpecsObject({ [key]: "300–600 mm" }).normalized, normalized);
+    assert.deepEqual(normalizeSpecsObject(normalized).normalized, normalized);
+    assert.equal(parseSpecByRule(key, "300–600 mm"), "300-600 mm");
+    for (const invalid of ["600-300 mm", "0-300 mm", "300/600 mm", "300-600 kg", "300-600", "300-600 mm opcional", ["300-600 mm"]]) {
+      assert.equal(normalizeSpecsObject({ [key]: invalid }).normalized[key], undefined);
+    }
+  }
+  const key = "Recorrido de elevación";
+  assert.deepEqual(normalizeSpecsObject({ [key]: "0,8 m", "Altura de elevación (mm)": "1050 mm" }).normalized,
+    { [key]: 800, "Altura de elevación (mm)": 1050 });
+  assert.equal(parseSpecByRule(key, "80 cm"), 800);
+  assert.equal(normalizeSpecsObject({ [key]: 800 }).normalized[key], 800);
+  for (const invalid of ["300-600 mm", "300 kg", "300/600 mm"]) {
+    assert.equal(normalizeSpecsObject({ [key]: invalid }).normalized[key], undefined);
+  }
 });

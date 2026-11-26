@@ -1,4 +1,6 @@
 import { isDeepStrictEqual } from "node:util";
+import { findTechnicalSpecEvidence } from "../../../preparation/provenance/technical-provenance.js";
+import { normalizeSpecKey } from "../../normalization/normalize-specs.js";
 import type { TechnicalSpecEvidence } from "../../../contracts/technical-provenance.js";
 import type { NormalizationAssessment, NormalizationAuditStage, NormalizationProductObservation,
   NormalizationSpecObservation, NormalizationStageObservation } from "./normalization-audit.js";
@@ -42,8 +44,9 @@ const compareField = (source: NormalizationSpecObservation, sourceIndex: ReturnT
   const target = targets[0];
   if (!target) {
     const traced = evidence.flatMap((entry) => {
-      if (entry.scope !== "unit" || entry.sourceField !== source.rawKey || entry.sourceValue !== source.rawValue) return [];
-      const destinations = targetIndex.get(entry.field) ?? [];
+      if (entry.scope !== "unit" || entry.sourceField !== source.rawKey || entry.sourceValue !== source.rawValue ||
+        findTechnicalSpecEvidence(evidence, entry.field, entry.value) !== entry) return [];
+      const destinations = targetIndex.get(normalizeSpecKey(entry.field)) ?? [];
       const destination = destinations.length === 1 ? destinations[0] : undefined;
       return destination && (typeof destination.rawValue === "string" ? destination.rawValue : JSON.stringify(destination.rawValue)) === entry.value
         ? [{ entry, destination }] : [];

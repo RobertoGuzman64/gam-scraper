@@ -1,13 +1,117 @@
 export type SpecRuleType = "string" | "number" | "number_array" | "dimension" | "dimension_rect" | "battery" | "bool" | "enum" | "location";
-
+type ScopedMeasurementUnit = "m" | "mm" | "kg" | "l" | "V" | "Hz" | "km/h" | "Ah" | "Nm" | "N" | "%" | "h";
+const scopedMeasurementUnits: Readonly<Record<string, ScopedMeasurementUnit>> = {
+    "Ancho con ejes": "m",
+    "Altura máxima de cesta": "m", "Anchura en transporte": "m",
+    "Alcance lateral máximo del modelo": "m", "Alcance lateral del modelo": "m",
+    "Altura sobre obstáculos": "m", "Alcance lateral máximo declarado": "m",
+    "Altura máxima de preparación": "m", "Anchura de la máquina": "m",
+    "Longitud replegada": "m", "Extensión máxima de plataforma": "m",
+    "Altura de plataforma según catálogo técnico": "m", "Longitud según catálogo técnico": "m",
+    "Anchura según catálogo técnico": "m", "Anchura de transporte": "m",
+    "Longitud exterior anunciada": "m", "Anchura exterior anunciada": "m",
+    "Alcance horizontal máximo sin restricción de carga": "m", "Distancia del centro de gravedad": "mm",
+    "Radio de giro (exterior)": "mm", "Ancho bandeja": "mm",
+    "Distancia entre ejes del modelo": "mm", "Anchura exterior del modelo": "mm",
+    "Amplitud nominal de vibración": "mm", "Altura mínima de horquillas": "mm",
+    "Diámetro máximo de bobina": "mm", "Anchura máxima de bobina": "mm",
+    "Anchura de la boquilla de aspiración": "mm", "Elevación de las horquillas": "mm",
+    "Distancia al suelo": "mm",
+    "Altura de acoplamiento": "mm", "Longitud exterior del modelo": "mm",
+    "Altura exterior del modelo": "mm", "Altura del asiento": "mm",
+    "Diámetro de cepillos": "mm", "Amplitud de vibración": "mm",
+    "Diametro del tambor": "mm", "Diametro max. disco": "mm",
+    "Largo bandeja": "mm", "Anchura mínima del chasis": "mm",
+    "Anchura máxima del chasis extendido": "mm", "Altura de elevación según texto comercial": "mm",
+    "Anchura de máquina": "mm", "Radio de giro exterior del modelo": "mm",
+    "Elevación de horquillas": "mm", "Alcance máximo de excavación": "mm",
+    "Capacidad de carga a más de 470 mm": "kg", "Masa mínima autorizada del camión soporte": "kg",
+    "Capacidad a máxima altura de elevación": "kg", "Capacidad nominal según texto comercial": "kg",
+    "Capacidad del elevador de paneles": "kg", "Capacidad máxima de carga de la tolva": "kg",
+    "Masa del camión soporte anunciada": "kg", "Carga máxima admitida": "kg",
+    "Capacidad nominal de la plataforma estándar": "kg", "Capacidad de carga de plataforma según catálogo técnico": "kg",
+    "Masa máxima autorizada declarada": "kg", "Depósito de agua limpia estándar": "l",
+    "Capacidad de bandeja de residuos": "l",
+    "Capacidad volumétrica de tolva": "l", "Capacidad de tolva": "l",
+    "Capacidad de tolva colmada": "l", "Capacidad de tolva rasa": "l",
+    "Tensión de alimentación de batería": "V", "Tensión nominal del motor": "V",
+    "Toma eléctrica de cesta": "V", "Tensión del sistema de batería": "V",
+    "Frecuencia de vibración del modelo": "Hz", "Frecuencia de vibración": "Hz",
+    "Velocidad máxima de desplazamiento": "km/h", "Velocidad máxima anunciada": "km/h",
+    "Velocidad máxima del modelo": "km/h", "Velocidad máxima de asistencia": "km/h",
+    "Capacidad de batería (20 h)": "Ah",
+    "Tensión nominal": "V",
+    "Par motor máximo": "Nm", "Par motor máximo del modelo": "Nm",
+    "Esfuerzo nominal en barra de tracción": "N", "Pendiente superable del modelo": "%",
+    "Precisión del sistema de pesaje": "%", "Tiempo de carga anunciado": "h",
+    "Altura aproximada de cesta": "m", "Mastil replegado": "m", "Capacidad nominal": "kg", "Velocidad máxima": "km/h",
+};
+export const scopedNumericSpecUnit = (key: string): ScopedMeasurementUnit | undefined =>
+    Object.hasOwn(scopedMeasurementUnits, key) ? scopedMeasurementUnits[key] : undefined;
+const scopedUnits = <U extends ScopedMeasurementUnit>(...units: readonly U[]): Readonly<Partial<Record<string, U>>> =>
+    Object.fromEntries(Object.entries(scopedMeasurementUnits).flatMap(([field, unit]) =>
+        units.filter((candidate) => candidate === unit).map((candidate) => [field, candidate])));
+export const SPEC_COUNT_FIELDS: ReadonlySet<string> = new Set([
+    "Número de estabilizadores hidráulicos", "Polos", "Número de ruedas",
+    "Asientos cabina", "Número de extensiones telescópicas", "Número de estabilizadores",
+    "Células de pesaje", "Número de plataformas de carga", "Número de plazas del modelo", "Número de ejes"
+]);
+export const SPEC_EXPLICIT_PRESENTATION_UNITS: Readonly<Record<string, readonly string[]>> = {
+    "Autonomía máxima anunciada": ["km", "h", "min"],
+    "Autonomía máxima anunciada en ciudad": ["km", "h", "min"],
+    "Autonomía anunciada por carga": ["km", "h", "min"],
+    "Autonomía máxima anunciada por carga": ["km", "h", "min"],
+    "Capacidad nominal de batería": ["Ah", "kWh"],
+    "Potencia del motor": ["W", "kW", "CV"],
+    "Potencia máxima del motor": ["W", "kW", "CV"],
+    "Potencia máxima DIN": ["W", "kW", "CV"],
+    "Potencia aparente nominal anunciada": ["kVA"],
+    "Cilindrada del motor": ["cm³", "l"],
+    "Fuerza máxima de excavación en cuchara": ["N", "kN"],
+    "Fuerza centrífuga": ["N", "kN"],
+    "Bomba eléctrica de emergencia": ["V"],
+    "Presion max.": ["bar"], "Caudal nominal": ["l/min"],
+};
+export const SPEC_DIMENSION_PRESENTATION_AXES: Readonly<Partial<Record<string, 2 | 3>>> = {
+    "Dimensiones exteriores": 3, "Dimensiones de cesta de fibra": 3, "Dimensiones del panel admitido": 3,
+    "Dimensiones de plataforma según catálogo técnico": 2, "Tamaño máximo del panel": 2
+};
+export const SPEC_QUALIFIED_PRESENTATION_UNITS: Readonly<Partial<Record<string, readonly ["Hasta" | "Inferior a", string]>>> = {
+    "Inclinación de cajas": ["Hasta", "°"], "Nivel sonoro de desplazamiento": ["Inferior a", "dB(A)"],
+    "Aislamiento eléctrico del brazo": ["Hasta", "V"], "Aislamiento eléctrico declarado del brazo": ["Hasta", "V"],
+    "Capacidad de carga anunciada, conductor incluido": ["Hasta", "kg"], "Volumen de carga anunciado": ["Hasta", "l"]
+};
+export const SPEC_TEXT_CONFIGURATION_FIELDS: ReadonlySet<string> = new Set([
+    "Enganche", "Tipo de tablero", "Tipo estabilizador", "Sistema de estabilización",
+    "Conducción con timón vertical", "Controlador de tracción", "Dirección", "Tipo enchufe cargador",
+    "Configuración de horquillas", "Material del chasis de horquillas", "Protección de pies", "Tipos de enganche compatibles",
+    "Interfaz de control", "Sistema de filtración de polvo", "Configuración de ruedas", "Descenso de carga",
+    "Material de ejes y anclaje", "Plataforma de operador", "Timón y bomba de pistones", "Freno de servicio",
+    "Material de cesta", "Configuración de remolque", "Condición de liberación de bobina", "Superficie de agarre",
+    "Velocidad de volteo", "Patas envolventes", "Acabado de bomba", "Configuración de ruedas de carga",
+    "Funciones de pesaje", "Material de ruedas", "Protección de las células de carga", "Ruedas de carga",
+    "Sistema de elevación", "Timón y grupo de elevación", "Tipo de motor de tracción", "Accionamiento de traslación",
+    "Tecnología de batería", "Sistema de frenos anunciado", "Tipo de frenos", "Tipo de motor anunciado",
+    "Construcción de horquillas", "Timón y componentes de elevación", "Caja de cambios del modelo", "Caja de cambios",
+    "Transmisión del modelo", "Ejes direccionales", "Material de bidón admitido", "Soportes de caja",
+    "Chasis", "Control de tracción", "Sistema antivuelco", "Programación de volteo",
+    "Control de aceleración y deceleración", "Parada de inclinación", "Ajuste de agarres", "Seguridad de agarres",
+    "Freno de estacionamiento", "Freno de motor", "Acceso del operador", "Panel de control", "Montaje del soporte",
+    "Restantes componentes exteriores", "Reducción de transmisión del modelo", "Transporte del carro", "Transporte de los carros",
+    "Carga y descarga", "Bloqueo del carro", "Transporte de plataforma rodante", "Accionamiento", "Modos de conducción",
+    "Batería anunciada", "Modelo de motor", "Ubicación de la puerta", "Climatización instalada según anuncio",
+    "Configuración de ejes declarada", "Arquitectura del motor declarada", "Pendiente máxima con/sin carga", "Bloqueo de inclinación por altura del centro de rotación",
+]);
+export const SPEC_EXPLICIT_BOOLEAN_FIELDS: ReadonlySet<string> = new Set(["Elevación inicial", "Elevación proporcional", "Batería extraíble", "Primer eje elevable", "Piso móvil", "Frenado en posición neutra del modelo", "Cargador a bordo del modelo"]);
 export const SPEC_RULES: Record<string, SpecRuleType> = {
-    "Marca": "string",
-    "Modelo": "string",
-    "País": "string",
-    "Año": "number",
-    "Matrícula": "string",
-    "Ubicación": "location",
-
+    ...Object.fromEntries([...SPEC_EXPLICIT_BOOLEAN_FIELDS].map((field): [string, SpecRuleType] => [field, "bool"])),
+    ...Object.fromEntries([...SPEC_TEXT_CONFIGURATION_FIELDS].map((field): [string, SpecRuleType] => [field, "string"])),
+    ...Object.fromEntries(Object.keys(scopedMeasurementUnits).map((field): [string, SpecRuleType] => [field, "number"])),
+    ...Object.fromEntries([...SPEC_COUNT_FIELDS].map((field): [string, SpecRuleType] => [field, "number"])),
+    ...Object.fromEntries(Object.keys({ ...SPEC_EXPLICIT_PRESENTATION_UNITS, ...SPEC_QUALIFIED_PRESENTATION_UNITS, ...SPEC_DIMENSION_PRESENTATION_AXES }).map((field): [string, SpecRuleType] => [field, "string"])),
+    "Velocidad de barrido": "string", "Velocidad de avance y retroceso del modelo": "string",
+    "Stage": "string",
+    "Marca": "string", "Modelo": "string", "País": "string", "Año": "number", "Matrícula": "string", "Ubicación": "location",
     "Capacidad de carga (kg)": "number_array",
     "Capacidad de la cesta": "number",
     "Capacidad de plataforma": "number",
@@ -28,7 +132,6 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Peso con batería": "number",
     "Peso en orden de marcha del modelo": "number",
     "Peso neto del portapaneles": "number",
-
     "Batería": "string",
     "Baterías": "string",
     "Batería (V / Ah)": "string",
@@ -41,7 +144,6 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Voltios": "number_array",
     "Potencia": "string",
     "Cargador de batería": "string",
-
     "Tipo motor": "enum",
     "Tecnología del motor": "string",
     "Tecnología del motor de tracción": "string",
@@ -50,7 +152,6 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Marca del motor": "string",
     "Marca del alternador": "string",
     "Consumo": "string",
-
     "Altura (mm)": "number",
     "Altura de elevación (mm)": "number",
     "Altura de elevación (m)": "number",
@@ -73,7 +174,6 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Alcance lateral": "number",
     "Alcance lateral máximo": "number",
     "Alcance horizontal max.": "number",
-
     "Longitud transporte": "number",
     "Longitud de plumín": "number",
     "Longitud (mm)": "number",
@@ -90,18 +190,15 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Radio de giro (mm)": "number",
     "Radio de giro exterior": "string",
     "AST (mm)": "number_array",
-
     "Dimensiones horquillas (mm)": "dimension",
     "Longitud de horquillas (mm)": "number",
     "Dimensiones cesta (mm)": "dimension_rect",
     "Longitud de plataforma": "number",
     "Anchura de plataforma": "number",
     "Extensión de plataforma": "number",
-
     "Elevación libre (mm)": "number",
     "Elevación libre disponible": "bool",
     "Características de elevación": "string",
-
     "Autonomía máxima (km)": "number",
     "Autonomía máxima (h)": "number",
     "Autonomía aproximada (h)": "number",
@@ -111,7 +208,6 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Velocidad de desplazamiento con/sin carga (km/h)": "number_array",
     "Velocidad de avance (km/h)": "number",
     "Velocidad de marcha atrás (km/h)": "number",
-
     "Máximo tiro a la barra (N)": "number",
     "Tiro a la barra nominal (N)": "number",
 
@@ -152,7 +248,9 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
 
     "Neumáticos": "string",
     "Ruedas": "string",
-    "Número de ruedas": "number",
+    "Caudal de aire de aspiración (l/s)": "number",
+    "Anchura de barrido con cepillo principal": "number",
+    "Anchura máxima de fregado con cepillo lateral": "number",
     "Anchura del cepillo principal (mm)": "number",
     "Anchura del cepillo lateral (mm)": "number",
     "Anchura de barrido con un cepillo lateral (mm)": "number",
@@ -169,9 +267,21 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Rotación del cabezal trilateral": "string",
     "Rotación de bidón": "string",
     "Rotación": "string",
+    "Ángulo máximo de inclinación": "string",
     "Pendiente con carga, nominal 3 min (%)": "number",
     "Pendiente sin carga, nominal 3 min (%)": "number",
     "Altura de elevación máxima (mm)": "number",
+    "Recorrido de elevación": "number",
+    "Apertura máxima de brazos": "number",
+    "Altura máxima de descarga": "number",
+    "Profundidad máxima de excavación": "number",
+    "Longitud del cepillo principal": "number",
+    "Anchura total del chasis": "number",
+    "Altura máxima de descarga de la tolva": "number",
+    "Diámetro admitido de bobina": "string",
+    "Altura de trabajo con caja inclinada": "string",
+    "Anchura de caja admitida": "string",
+    "Diámetro admitido de bidón": "string",
     "Altura máxima de elevación": "number",
     "Velocidad máxima sin carga (km/h)": "number",
     "Autonomía según batería": "string",
@@ -199,6 +309,14 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Horas (h)": "number",
     "Kilómetros (km)": "number",
 
+    "Potencia nominal del motor": "number",
+    "Potencia continua del generador": "number",
+    "Potencia de motor publicada para la unidad": "number",
+    "Potencia del motor de elevación": "number",
+    "Potencia del motor de elevación anunciada": "number",
+    "Potencia del motor de tracción": "number",
+    "Potencia del motor de tracción (S2 60 min)": "number",
+    "Potencia del motor de tracción anunciada": "number",
     "Potencia (kW)": "number_array",
     "Potencia de tracción (kW)": "number_array",
     "Potencia de elevación (kW)": "number_array",
@@ -216,8 +334,6 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Autocargable": "bool",
     "Giratorio": "bool",
     "Descarga altura": "bool",
-    "Número de estabilizadores hidráulicos": "number",
-    "Polos": "number",
     "Factor de potencia nominal": "number",
     "Frecuencia nominal": "number",
     "Corriente del cargador": "number",
@@ -238,6 +354,8 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Grosor horquillas": "number",
     "Longitud de tenedor": "number",
     "Diámetro nominal de herramienta compatible": "number",
+    "Presión de aceite de trabajo del modelo": "string",
+    "Caudal de aceite del modelo": "string",
     "Alto cesta": "number",
     "Ancho cesta": "number",
     "Longitud cesta": "number",
@@ -249,10 +367,7 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
     "Voltaje de la batería": "number",
     "Tensión nominal de batería": "number",
     "Potencia eléctrica máxima del equipo": "number",
-    "Tipo de motor": "string",
-    "Propulsión": "string",
-    "Accionamiento de elevación": "string",
-    "Tipo de cabina": "string",
+    "Tipo de motor": "string", "Propulsión": "string", "Accionamiento de elevación": "string", "Tipo de cabina": "string",
     "Posición del conductor": "string",
     "Tipo de tracción": "string",
     "Tipo brazo": "string"
@@ -260,10 +375,21 @@ export const SPEC_RULES: Record<string, SpecRuleType> = {
 
 export const SPEC_ANGULAR_FIELDS: ReadonlySet<string> = new Set([
     "Rotación de torreta", "Rotación de plataforma", "Rotación de cesta", "Rotación de la cesta",
-    "Rotación de torre", "Rotación hidráulica de cesta", "Rotación del cabezal trilateral", "Rotación de bidón", "Rotación"
+    "Rotación de torre", "Rotación hidráulica de cesta", "Rotación del cabezal trilateral", "Rotación de bidón", "Rotación", "Ángulo máximo de inclinación"
 ]);
 
+export const SPEC_EXPLICIT_RANGE_UNITS: Readonly<Partial<Record<string, "bar" | "l/min" | "mm" | "km/h" | "mph">>> = {
+    "Presión de aceite de trabajo del modelo": "bar",
+    "Caudal de aceite del modelo": "l/min",
+    "Altura de trabajo con caja inclinada": "mm",
+    "Anchura de caja admitida": "mm",
+    "Diámetro admitido de bidón": "mm",
+    "Diámetro admitido de bobina": "mm",
+    "Velocidad de barrido": "km/h", "Velocidad de avance y retroceso del modelo": "mph"
+};
+
 export const SPEC_LENGTH_UNITS: Readonly<Partial<Record<string, "m" | "mm">>> = {
+    ...scopedUnits("m", "mm"),
     "Longitud de plataforma": "m",
     "Anchura de plataforma": "m",
     "Extensión de plataforma": "m",
@@ -282,6 +408,13 @@ export const SPEC_LENGTH_UNITS: Readonly<Partial<Record<string, "m" | "mm">>> = 
     "Alcance lateral máximo": "m",
     "Alcance horizontal max.": "m",
     "Centro de carga nominal del modelo": "mm",
+    "Recorrido de elevación": "mm",
+    "Apertura máxima de brazos": "mm",
+    "Altura máxima de descarga": "mm",
+    "Profundidad máxima de excavación": "mm",
+    "Longitud del cepillo principal": "mm",
+    "Anchura total del chasis": "mm",
+    "Altura máxima de descarga de la tolva": "mm",
     "Longitud sin horquillas": "mm",
     "Longitud extensión": "m",
     "Largo": "mm",
@@ -304,10 +437,13 @@ export const SPEC_LENGTH_UNITS: Readonly<Partial<Record<string, "m" | "mm">>> = 
     "Longitud cesta": "m",
     "Altura transporte": "m",
     "Longitud al tablero": "m",
-    "Longitud de cable de alimentación": "m"
+    "Longitud de cable de alimentación": "m",
+    "Anchura de barrido con cepillo principal": "mm",
+    "Anchura máxima de fregado con cepillo lateral": "mm"
 };
 
 export const SPEC_MASS_UNITS: Readonly<Partial<Record<string, "kg">>> = {
+    ...scopedUnits("kg"),
     "Capacidad de la cesta": "kg",
     "Capacidad de plataforma": "kg",
     "Capacidad nominal de carga": "kg",
@@ -326,6 +462,7 @@ export const SPEC_MASS_UNITS: Readonly<Partial<Record<string, "kg">>> = {
 };
 
 export const SPEC_VOLUME_UNITS: Readonly<Partial<Record<string, "l">>> = {
+    ...scopedUnits("l"),
     "Depósito de combustible": "l",
     "Depósito de solución": "l",
     "Depósito de recuperación": "l",
@@ -339,12 +476,21 @@ export const SPEC_ROTATION_UNITS: Readonly<Partial<Record<string, "rpm">>> = {
     "Régimen nominal del motor": "rpm"
 };
 
-export const SPEC_ELECTRICAL_UNITS: Readonly<Partial<Record<string, "Hz" | "A" | "V" | "W">>> = {
+export const SPEC_ELECTRICAL_UNITS: Readonly<Partial<Record<string, "Hz" | "A" | "V" | "W" | "kW">>> = {
+    ...scopedUnits("V", "Hz"),
     "Frecuencia nominal": "Hz",
     "Corriente del cargador": "A",
     "Voltaje del cargador": "V",
     "Voltaje": "V",
     "Voltios": "V",
+    "Potencia nominal del motor": "kW",
+    "Potencia continua del generador": "kW",
+    "Potencia de motor publicada para la unidad": "kW",
+    "Potencia del motor de elevación": "kW",
+    "Potencia del motor de elevación anunciada": "kW",
+    "Potencia del motor de tracción": "kW",
+    "Potencia del motor de tracción (S2 60 min)": "kW",
+    "Potencia del motor de tracción anunciada": "kW",
     "Potencia absorbida": "W",
     "Voltaje de la batería": "V",
     "Tensión nominal de batería": "V",

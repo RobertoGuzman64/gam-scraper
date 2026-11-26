@@ -10,6 +10,7 @@ import { compareOriginalToPublished } from "../explorer/field-differences.js";
 import { productIdentity } from "../explorer/explorer-identity.js";
 import { fromOriginal, fromPublication } from "../explorer/explorer-product-view.js";
 import { buildPublishedTechnicalEditorialCohort, classifyPublishedTechnicalAdditions } from "../../preparation/provenance/technical-spec-classification.js";
+import { findTechnicalSpecEvidence } from "../../preparation/provenance/technical-provenance.js";
 import { prepareSourceProduct } from "../../preparation/prepare-product.js";
 import { explorerTechnicalEvidenceCachePath } from "./explorer-technical-evidence-cache.js";
 import type { ExplorerTechnicalEvidenceCache } from "./explorer-technical-evidence-cache.js";
@@ -70,7 +71,7 @@ export const prepareExplorerTechnicalEvidence = async (workspace: string): Promi
       const additions = changes.filter((difference) => difference.group === "technical" && difference.change === "added")
         .map((difference) => ({ field: difference.field, value: difference.after ?? "" }));
       if (original && publishedTrace && publishedTrace.entries.some((entry) => !additions.some((addition) =>
-        addition.field === entry.field && addition.value === entry.value))) {
+        findTechnicalSpecEvidence(publishedTrace.entries, addition.field, addition.value) === entry))) {
         throw new Error(`Traza técnica incompatible con publicación: ${identity}`);
       }
       const trace = publishedTrace ?? (original && additions.length

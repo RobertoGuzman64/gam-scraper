@@ -87,7 +87,6 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "cargador de batería": "Cargador de batería",
 
     "capacidad bateria": "Capacidad de la batería (Ah)",
-    "capacidad de la batería": "Capacidad de la batería (Ah)",
     "capacidad de la bateria": "Capacidad de la batería (Ah)",
     "capacidad batería": "Capacidad de la batería (Ah)",
     "capacidad batería (ah)": "Capacidad de la batería (Ah)",
@@ -143,7 +142,6 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "altura": "Altura (mm)",
     "altura total": "Altura (mm)",
     "altura maxima": "Altura (mm)",
-    "altura máxima": "Altura (mm)",
 
     "altura elevacion": "Altura de elevación (mm)",
     "altura de elevacion": "Altura de elevación (mm)",
@@ -191,6 +189,7 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "altura de articulacion (cm)": "Altura articulacion",
     "altura de articulacion (mm)": "Altura articulacion",
     "longitud transporte": "Longitud transporte",
+    "longitud de transporte": "Longitud transporte",
     "longitud transporte (m)": "Longitud transporte",
     "longitud transporte (cm)": "Longitud transporte",
     "longitud transporte (mm)": "Longitud transporte",
@@ -219,6 +218,7 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "alcance lateral (mm)": "Alcance lateral",
     "alcance lateral maximo": "Alcance lateral máximo",
     "alcance horizontal max.": "Alcance horizontal max.",
+    "alcance horizontal maximo": "Alcance horizontal max.",
     "alcance horizontal max. (m)": "Alcance horizontal max.",
     "alcance horizontal max. (cm)": "Alcance horizontal max.",
     "alcance horizontal max. (mm)": "Alcance horizontal max.",
@@ -237,6 +237,8 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
 
     "anchura trabajo": "Anchura trabajo (mm)",
     "anchura de trabajo": "Anchura trabajo (mm)",
+    "anchura limpieza": "Anchura trabajo (mm)",
+    "ancho de limpieza": "Anchura trabajo (mm)",
 
     "ancho promedio": "Ancho promedio (mm)",
     "ancho medio": "Ancho promedio (mm)",
@@ -267,6 +269,8 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "dimensiones horquillas (mm)": "Dimensiones horquillas (mm)",
 
     "dimensiones cesta": "Dimensiones cesta (mm)",
+    "dimensiones de cesta": "Dimensiones cesta (mm)",
+    "dimensiones de la cesta": "Dimensiones cesta (mm)",
     "dim cesta": "Dimensiones cesta (mm)",
     "dimensiones cesta (mm)": "Dimensiones cesta (mm)",
 
@@ -367,6 +371,10 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "transmision": "Transmisión",
     "transmisión": "Transmisión",
 
+    "anchura del cepillo principal": "Anchura del cepillo principal (mm)",
+    "anchura del cepillo lateral": "Anchura del cepillo lateral (mm)",
+    "caudal de aire de aspiracion": "Caudal de aire de aspiración (l/s)",
+    "anchura maxima de fregado con escobilla lateral": "Anchura máxima de fregado con cepillo lateral",
     "capacidad de la tolva": "Capacidad de la tolva",
     "capacidad tolva": "Capacidad de la tolva",
     "neumaticos": "Neumáticos",
@@ -453,6 +461,7 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "cazo 2": "Cazo 2",
     "cazo 3": "Cazo 3",
     "largo horquillas": "Largo horquillas",
+    "longitud de horquillas": "Largo horquillas",
     "ancho horquillas": "Ancho horquillas",
     "grosor horquillas": "Grosor horquillas",
     "longitud de tenedor": "Longitud de tenedor",
@@ -464,6 +473,9 @@ export const SPEC_KEY_NORMALIZATION: Record<string, string> = {
     "altura transporte": "Altura transporte",
     "longitud al tablero": "Longitud al tablero",
     "longitud de cable de alimentacion": "Longitud de cable de alimentación",
+    "capacidad del deposito de combustible": "Depósito de combustible",
+    "capacidad del deposito de solucion": "Depósito de solución",
+    "capacidad del deposito de recuperacion": "Depósito de recuperación",
     "capacidad deposito": "Capacidad depósito",
     "capacidad del deposito": "Capacidad del depósito",
     "voltaje de la bateria": "Voltaje de la batería",

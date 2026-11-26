@@ -1,5 +1,5 @@
 import type { ClassificationProvider } from "../../classification/classification-provider-types.js";
-import { applyGomarizAliases, convertGomarizCandidate } from "./attributes.js";
+import { applyGomarizAliases, convertGomarizCandidate, excludeGomarizSpec } from "./attributes.js";
 import { gomarizCategorySlug } from "./categories.js";
 import { gomarizUsedConditionEvidence } from "./condition.js";
 
@@ -7,7 +7,7 @@ export const gomarizClassificationProvider: ClassificationProvider = {
   attribute: {
     suppress: () => false,
     addAliases: (record, attribute, keys, candidates) => applyGomarizAliases(record, attribute, keys, candidates) ? "accepted" : "rejected",
-    excludeSpec: () => false,
+    excludeSpec: excludeGomarizSpec,
     unmeasured: () => false,
     convert: convertGomarizCandidate,
     sourceYear: (record) => record.year?.trim() ?? null

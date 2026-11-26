@@ -1,3 +1,4 @@
+import { parseExplicitPowerPresentation, parseExplicitVoltagePresentation } from "../../catalog/normalization/spec-parsers.js";
 import type { ProductRecord, SpecsMap, SpecValue } from "../../contracts/catalog.js";
 import { editorialQuantity, formatEditorialQuantity } from "../editorial/measurements/editorial-measurements.js";
 
@@ -29,6 +30,18 @@ const normalizeMetricPresentation = (key: string, value: SpecValue): SpecValue =
   return metres === null ? value : `${formatEditorialQuantity(metres)} m`;
 };
 
+const normalizeGeneratorElectricalPresentation = (record: ProductRecord, key: string, value: SpecValue): SpecValue => {
+  if (typeof value !== "string" || record.specs?.[key] !== value ||
+    manainSourceFamily(record) !== "energia-grupo-electrogeno" || manainSourceDescriptionContradictsFamily(record, "energia-grupo-electrogeno")) return value;
+  if (key === "Potencia" && /kva\s+kva$/iu.test(value.trim())) {
+    return parseExplicitPowerPresentation(value.trim().replace(/\s+kva$/iu, "")) ?? value;
+  }
+  if (key === "Voltios" && /v\s+v$/iu.test(value.trim())) {
+    return parseExplicitVoltagePresentation(value.trim().replace(/\s+v$/iu, "")) ?? value;
+  }
+  return value;
+};
+
 export const normalizeManainTechnicalSpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap => {
   if (record.providerId !== "manain") return specs;
   const weight = editorialQuantity(specs.Peso, "kg");
@@ -43,7 +56,7 @@ export const normalizeManainTechnicalSpecs = (record: ProductRecord, specs: Spec
     const repeatedModel = key === "Modelo" && typeof value === "string" && value === record.model ?
       /^([^,]{2,80}),\s*([^,]{2,80})$/u.exec(value.trim()) : null;
     const formatted = repeatedModel?.[1]?.trim() && repeatedModel[1].trim() === repeatedModel[2]?.trim() ?
-      repeatedModel[1].trim() : normalizeMetricPresentation(key, value);
+      repeatedModel[1].trim() : normalizeMetricPresentation(key, normalizeGeneratorElectricalPresentation(record, key, value));
     if (formatted === value) continue;
     normalized ??= { ...specs };
     normalized[key] = formatted;

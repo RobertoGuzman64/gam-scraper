@@ -1,6 +1,6 @@
 import type { ProductRecord, SpecsMap, SpecValue } from "../../contracts/catalog.js";
 import { SPEC_ANGULAR_FIELDS } from "../../catalog/normalization/spec-rules.js";
-import { normalizeSpecKey, reconcileSourceBatteryConfiguration } from "../../catalog/normalization/normalize-specs.js";
+import { normalizeSpecKey, reconcileSourceBatteryConfiguration, reconcileSourceFreeLiftAvailability } from "../../catalog/normalization/normalize-specs.js";
 import { parseBatteryConfiguration, parseExplicitAngularPresentation, parseExplicitPowerPresentation, parseDimension, normalizeBatteryChemistryLabel, normalizeEnergyLabel, parseExplicitPercentagePresentation, normalizeMastLabel, normalizeWheelTractionLabel, parseExplicitVoltagePresentation, parseMeasuredLength, parseNumber, parseNumberArray, parseExplicitLengthAlternatives } from "../../catalog/normalization/spec-parsers.js";
 import type { TechnicalRecoveryObservation } from "../provenance/technical-recovery-observation.js";
 import { basketDimensions, numberToken, fold as foldAttribute } from "../classification/attribute-utils.js";
@@ -261,7 +261,11 @@ const normalizeOriginalConditionedGeometry = (specs: SpecsMap, originalSpecs: Sp
       (key) => fold(key) === fold(canonical), observe), specs);
 
 export const normalizeOriginalTechnicalPresentation = (specs: SpecsMap, originalSpecs: SpecsMap, observe?: TechnicalRecoveryObservation): SpecsMap => {
-  const mass = normalizeOriginalMassPresentation(specs, originalSpecs);
+  const availability = reconcileSourceFreeLiftAvailability(specs, originalSpecs);
+  const source = availability.rename?.from;
+  const reconciled = source && typeof originalSpecs[source] === "string" ? availability.specs : specs;
+  if (source && reconciled !== specs) observe?.(specs, reconciled, "src/preparation/technical/technical-presentation.ts", { spec: source });
+  const mass = normalizeOriginalMassPresentation(reconciled, originalSpecs);
   const length = normalizeOriginalLengthPresentation(mass, originalSpecs);
   const elevation = normalizeOriginalPlatformHeightPresentation(length, originalSpecs, observe);
   const axes = normalizeOriginalPlatformAxisPresentation(elevation, originalSpecs, observe);

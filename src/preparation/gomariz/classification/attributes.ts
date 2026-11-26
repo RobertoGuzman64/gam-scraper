@@ -24,10 +24,6 @@ export const applyGomarizAliases = (record: ProductRecord, attribute: Attribute,
       keys.add(fold("Alcance lateral"));
     }
   }
-  if (family === "fregadora" && attribute.name === "Ancho de trabajo") {
-    keys.add(fold("Anchura limpieza"));
-    keys.add(fold("Ancho de limpieza"));
-  }
   if (family === "generador" && attribute.name === "Capacidad del depósito") keys.add(fold("Capacidad"));
   if (family && ["generador", "torre-de-luz"].includes(family) && attribute.name === "Combustible") {
     const motor = String(record.specs?.Motor ?? "").trim();
@@ -49,6 +45,10 @@ const generatorPowerSource = (record: ProductRecord): boolean => {
     path.length === 2 && path[0] === "producto" &&
     editorialFamilyFromSourceGeneral(record.longDescription) === "grupo-electrogeno";
 };
+
+export const excludeGomarizSpec = (record: ProductRecord, attribute: Attribute, rawKey: string): boolean =>
+  attribute.name === "Ancho de trabajo" && ["anchura limpieza", "ancho de limpieza"].includes(fold(rawKey)) &&
+  gomarizTechnicalSourceFamily(record) !== "fregadora";
 
 export const convertGomarizCandidate = (
   record: ProductRecord, attribute: Attribute, candidate: Candidate, fallback: string | number | boolean | null

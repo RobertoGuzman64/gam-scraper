@@ -60,7 +60,8 @@ const unitAlternatives: Readonly<Record<string, readonly string[]>> = {
   "m²/h": ["m²/h", "m2/h"],
   mm: ["mm"],
   m: ["m", "metro", "metros"],
-  l: ["l", "litro", "litros"]
+  l: ["l", "litro", "litros"],
+  "l/s": ["l/s"]
 };
 
 export const canonicalNumericUnit = (raw: string): string | null => {
@@ -104,6 +105,34 @@ export const parseNumber = (v: unknown, expectedUnit?: string): number | null =>
     return compatible?.includes(suffix) ? value : null;
   }
   return Object.values(unitAlternatives).some((units) => units.includes(suffix)) ? value : null;
+};
+
+export const parseExplicitScalarPresentation = (value: unknown, units: readonly string[]): string | null => {
+  if (typeof value !== "string") return null;
+  const match = /^(\d+(?:,\d+|\.\d{1,2})?)\s*(\S+)$/u.exec(value.trim());
+  if (!match?.[1] || !match[2]) return null;
+  const suffix = match[2].toLowerCase();
+  const unit = units.find((candidate) => candidate.toLowerCase() === suffix ||
+    canonicalNumericUnit(suffix) === candidate.toLowerCase());
+  const number = parseNumber(match[1]);
+  if (unit === undefined || number === null || number < 0) return null;
+  return `${match[1].replace(".", ",")} ${unit}`;
+};
+
+export const parseQualifiedScalarPresentation = (value: unknown, qualifier: "Hasta" | "Inferior a", unit: string): string | null => {
+  if (typeof value !== "string") return null;
+  const match = /^(Hasta|Inferior a)\s+(.+)$/iu.exec(value.trim());
+  if (!match?.[2] || match[1]?.toLowerCase() !== qualifier.toLowerCase()) return null;
+  const raw = unit === "°" ? match[2].replace(/º$/u, "°") : match[2];
+  const scalar = parseExplicitScalarPresentation(raw, [unit]);
+  return scalar === null ? null : `${qualifier} ${unit === "°" ? scalar.replace(" °", "°") : scalar}`;
+};
+
+export const normalizeEmissionStage = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const match = /^(?:stage\s+)?(i|ii|iiia|iiib|iv|v)(\s+flex)?$/iu.exec(value.trim());
+  if (!match?.[1] || match[2] && match[1].toLowerCase() !== "v") return null;
+  return `${match[1].toUpperCase()}${match[2] ? " Flex" : ""}`;
 };
 
 export const parseYear = (value: unknown): number | null => {
@@ -247,13 +276,15 @@ export const parseDimensionRect = (v: unknown): DimensionRect | null => {
   return { ancho: axes[0] ?? null, largo: axes[1] ?? null };
 };
 
-export const parseThreeAxisBasketPresentation = (value: unknown): string | null => {
+export const parseExplicitDimensionPresentation = (value: unknown, axisCount: 2 | 3): string | null => {
   if (typeof value !== "string") return null;
   const text = value.trim().replace(/(mm|cm|m)\s+metros?$/iu, "$1");
   if (!/(?:mm|cm|m)$/iu.test(text)) return null;
-  const axes = parseDimensionAxes(text, 3, 3, true);
+  const axes = parseDimensionAxes(text, axisCount, axisCount, true);
   return axes ? `${axes.map((axis) => String(axis).replace(".", ",")).join(" x ")} mm` : null;
 };
+
+export const parseThreeAxisBasketPresentation = (value: unknown): string | null => parseExplicitDimensionPresentation(value, 3);
 
 export const parseBatteryConfiguration = (value: unknown): string | null => {
   if (typeof value !== "string") return null;
@@ -405,15 +436,39 @@ export const parseExplicitPercentagePresentation = (value: unknown, maximum?: nu
   return `${match[1].replace(".", ",")} %`;
 };
 
-export const parseExplicitBatteryCapacityRange = (value: unknown): string | null => {
+export const parseLoadedUnloadedGrade = (value: unknown): string | null => {
   if (typeof value !== "string") return null;
-  const match = /^(\d+(?:,\d+|\.\d{1,2})?)\s*[-–]\s*(\d+(?:,\d+|\.\d{1,2})?)\s*Ah$/iu.exec(value.trim());
-  if (!match?.[1] || !match[2]) return null;
-  const minimum = parseNumber(match[1], "Ah");
-  const maximum = parseNumber(match[2], "Ah");
-  if (minimum === null || maximum === null || minimum <= 0 || maximum < minimum) return null;
-  return `${match[1].replace(".", ",")}-${match[2].replace(".", ",")} Ah`;
+  const parts = value.trim().split(/\s*\/\s*/u);
+  if (parts.length !== 2) return null;
+  const loaded = parseExplicitPercentagePresentation(parts[0]);
+  const unloaded = parseExplicitPercentagePresentation(parts[1]);
+  return loaded !== null && unloaded !== null ? `${loaded} / ${unloaded}` : null;
 };
+
+export const parseTiltHeightLock = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const match = /^Por debajo de (.+?) o por encima de (.+)$/iu.exec(value.trim());
+  if (!match?.[1] || !match[2]) return null;
+  const lower = parseExplicitScalarPresentation(match[1], ["mm"]);
+  const upper = parseExplicitScalarPresentation(match[2], ["mm"]);
+  if (lower === null || upper === null) return null;
+  const minimum = parseNumber(lower, "mm");
+  const maximum = parseNumber(upper, "mm");
+  return minimum !== null && minimum > 0 && maximum !== null && maximum > minimum
+    ? `Por debajo de ${lower} o por encima de ${upper}` : null;
+};
+
+export const parseExplicitPositiveRange = (value: unknown, unit: "Ah" | "bar" | "l/min" | "mm" | "km/h" | "mph"): string | null => {
+  if (typeof value !== "string") return null;
+  const match = /^(\d+(?:,\d+|\.\d{1,2})?)\s*[-–]\s*(\d+(?:,\d+|\.\d{1,2})?)\s*(Ah|bar|l\/min|mm|km\/h|mph)$/iu.exec(value.trim());
+  if (!match?.[1] || !match[2] || match[3]?.toLowerCase() !== unit.toLowerCase()) return null;
+  const minimum = parseNumber(match[1]);
+  const maximum = parseNumber(match[2]);
+  if (minimum === null || maximum === null || minimum < 0 || (minimum === 0 && unit !== "km/h" && unit !== "mph") || maximum < minimum) return null;
+  return `${match[1].replace(".", ",")}-${match[2].replace(".", ",")} ${unit}`;
+};
+
+export const parseExplicitBatteryCapacityRange = (value: unknown): string | null => parseExplicitPositiveRange(value, "Ah");
 
 export const normalizeBatteryReplacementLabel = (value: string): string => {
   const text = value.trim().normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toLocaleLowerCase("es");
