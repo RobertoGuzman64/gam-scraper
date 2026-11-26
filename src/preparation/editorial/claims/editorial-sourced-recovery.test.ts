@@ -444,3 +444,52 @@ test("distingue el giro del cabezal trilateral de otras rotaciones", () => {
   const other = { ...original, title: "Carretilla elevadora MARCA MODELO10" };
   assert.equal(resolveDocumentedModelGeneral(other, { ...other, specs: reviewed }, general, reviewed), null);
 });
+
+
+test("aprovecha el giro documentado de torreta sin atribuir giro de cesta ni continuidad", () => {
+  for (const source of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const original: ProductRecord = { ...source, title: "Plataforma articulada eléctrica MARCA MODELO10", specs: { "Altura de trabajo": "10 m" } };
+    const general = "La ficha técnica de plataforma articulada eléctrica MARCA MODELO10 indica altura de trabajo de 10 m.";
+    const reviewed = { "Rotación de torreta": "355°" };
+    const prepared = { ...original, specs: { ...original.specs, ...reviewed } };
+    const result = resolveDocumentedModelGeneral(original, prepared, general, reviewed);
+    assert.equal(result, `${general}\n\nEl modelo presenta rotación de torreta de 355°.`);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, result, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, general, {}), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, general, { "Rotación de cesta": "355°" }), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, general, { "Rotación de torreta": "360°" }), null);
+    assert.equal(resolveDocumentedModelGeneral({ ...original, specs: { ...original.specs, "Rotación de torreta": "350°" } }, prepared, general, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, { ...prepared, reference: "OTRA" }, general, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, `${general} Giro de la torre de 355°.`, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral({ ...original, longDescription: "La torreta ha sido modificada." }, prepared, general, reviewed), null);
+    for (const invalid of ["0°", "361°", "±180°", "350-355°", "355 m"]) {
+      const facts = { "Rotación de torreta": invalid };
+      assert.equal(resolveDocumentedModelGeneral(original, { ...prepared, specs: { ...prepared.specs, ...facts } }, general, facts), null);
+    }
+    const scissors = { ...original, title: "Plataforma de tijera eléctrica MARCA MODELO10" };
+    assert.equal(resolveDocumentedModelGeneral(scissors, { ...scissors, specs: prepared.specs }, general.replace("articulada", "de tijera"), reviewed), null);
+  }
+});
+
+test("la rotación de cesta documentada conserva su identidad técnica y no se confunde con la torreta", () => {
+  for (const source of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const original: ProductRecord = { ...source, title: "Plataforma articulada eléctrica MARCA MODELO10", specs: { "Altura de trabajo": "10 m" } };
+    const general = "La ficha técnica de plataforma articulada eléctrica MARCA MODELO10 indica altura de trabajo de 10 m.";
+    const reviewed = { "Rotación de cesta": "160°", "Rotación de torreta": "355°" };
+    const prepared = { ...original, specs: { ...original.specs, ...reviewed } };
+    const result = resolveDocumentedModelGeneral(original, prepared, general, reviewed);
+    assert.equal(result, `${general}\n\nEl modelo presenta rotación de torreta de 355° y rotación de cesta de 160°.`);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, result, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, general, {}), null);
+    const basket = { "Rotación de cesta": "160°" };
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, `${general} Giro de torreta de 355°.`, basket), `${general} Giro de torreta de 355°.\n\nEl modelo presenta rotación de cesta de 160°.`);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, `${general} Cesta giratoria.`, basket), null);
+    assert.equal(resolveDocumentedModelGeneral({ ...original, longDescription: "Giro de cesta opcional." }, prepared, general, basket), null);
+    assert.equal(resolveDocumentedModelGeneral({ ...original, specs: { ...original.specs, "Rotación de cesta": "140°" } }, prepared, general, basket), null);
+    assert.equal(resolveDocumentedModelGeneral(original, { ...prepared, reference: "OTRA" }, general, basket), null);
+    for (const value of ["0°", "361°", "±80°", "80° + 80°", "160 m"]) {
+      const facts = { "Rotación de cesta": value };
+      assert.equal(resolveDocumentedModelGeneral(original, { ...prepared, specs: { ...prepared.specs, ...facts } }, general, facts), null);
+    }
+  }
+});

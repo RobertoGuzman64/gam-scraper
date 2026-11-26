@@ -2,6 +2,40 @@ import type { ReviewedModelDocument } from "./types.js";
 
 export const lgmgDocuments: readonly ReviewedModelDocument[] = [
   {
+    url: "https://www.lgmglifts.com/product/pro-detail-616.htm", brand: "LGMG", model: "A14JE", reviewedOn: "2026-11-26", facts: [
+      { field: "Rotación de torreta", value: "355°", support: "LGMG A14JE, tabla Specifications, Productivity: giro de torreta 355°. Corroborado en catálogo LGMG de junio de 2023, tabla Part 3, misma variante y cotas exteriores; no acredita rotación de cesta ni equipamiento opcional." }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-617.htm", brand: "LGMG", model: "AR16J", reviewedOn: "2026-11-26", facts: [
+      { field: "Rotación de torreta", value: "355°", support: "LGMG AR16J, tabla Specifications, Productivity: giro de torreta 355°. Corroborado en catálogo LGMG de junio de 2023, tabla Part 4, misma variante y cotas exteriores; no acredita rotación de cesta ni equipamiento opcional." }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/product/pro-detail-1026.htm", brand: "LGMG", model: "AR14J", reviewedOn: "2026-11-26", facts: [
+      { field: "Rotación de torreta", value: "355°", support: "LGMG AR14J, tabla Specifications, Productivity: giro de torreta 355°. Corroborado en catálogo LGMG de junio de 2023, tabla Part 4, misma variante y cotas exteriores; no acredita rotación de cesta ni equipamiento opcional." }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/upload/file/2023/07/10/7941a4ef86594f629807ca92598867e3.pdf", brand: "LGMG", model: "S0607EII", reviewedOn: "2026-11-26",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 7.8,
+      lengthM: 1.86, widthM: 0.76, loadCapacityKg: 230, weightKg: 1610, firstYear: 2022, lastYear: 2024 },
+      fields: ["Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Longitud de plataforma", value: "1,64 m", support: "LGMG S0607EII, folleto mayo 2023, p. 2 cota B; corroborada en folleto Generation II 2022, p. 2. Se mantienen las cotas exteriores declaradas por el vendedor (1,86 × 0,76 m), no se confunden con la superficie de trabajo." },
+      { field: "Anchura de plataforma", value: "0,73 m", support: "LGMG S0607EII, folleto mayo 2023, p. 2 cota C; corroborada en folleto Generation II 2022, p. 2. La anchura exterior nominal del fabricante (0,79 m) no sustituye la declarada por el vendedor." },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "LGMG S0607EII, folleto mayo 2023, p. 2 cota H; corroborada en folleto Generation II 2022, p. 2. No se atribuye configuración de batería." }
+    ]
+  },
+  {
+    url: "https://www.lgmglifts.com/upload/file/2025/04/lgmg-scissorlift-en-S0607E-2.pdf", brand: "LGMG", model: "S0607E-2", reviewedOn: "2026-11-26",
+    reuse: { compatibility: { family: "plataforma-tijera", energy: "eléctrica", workingHeightM: 7.8,
+      lengthM: 1.64, widthM: 0.73, loadCapacityKg: 230, weightKg: 1550, firstYear: 2025, lastYear: 2025 },
+      fields: ["Altura de plataforma", "Extensión de plataforma"] }, facts: [
+      { field: "Altura de plataforma", value: "5,8 m", support: "LGMG S0607E-2, ficha técnica abril 2025, p. 1 cota A; altura de trabajo 7,8 m. Las cotas genéricas del vendedor coinciden con B y E; no se duplican ni se sustituyen por las exteriores F y G." },
+      { field: "Extensión de plataforma", value: "0,9 m", support: "LGMG S0607E-2, ficha técnica abril 2025, p. 1 cota C; no se confunde con la longitud de plataforma extendida (2,54 m)." }
+    ]
+  },
+  {
     url: "https://www.lgmglifts.com/it/upload/file/2021/10/26/fb2440684c9e40fbb1a2a2814dd37fe7.pdf", brand: "LGMG", model: "SR1018D", reviewedOn: "2026-11-25",
     reuse: { fallback: true, compatibility: { family: "plataforma-tijera", energy: "diésel", workingHeightM: 12,
       invariantGeometry: true, firstYear: 2022, lastYear: 2022 }, fields: ["Longitud de plataforma", "Anchura de plataforma"] }, facts: [
@@ -116,7 +150,7 @@ export const lgmgDocuments: readonly ReviewedModelDocument[] = [
     url: "https://www.lgmglifts.com/product/pro-detail-616.htm",
     brand: "LGMG", model: "A14JE", reviewedOn: "2026-11-21",
     reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 15.8,
-      lengthM: 6.66, widthM: 1.8, loadCapacityKg: 230 }, fields: ["Altura de plataforma"] }, facts: [
+      lengthM: 6.66, widthM: 1.8, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Rotación de torreta"] }, facts: [
       { field: "Alcance horizontal (m)", value: "7,81 m", support: "LGMG A14JE, Specifications: Horizontal Outreach 7.81m" },
       { field: "Altura de plataforma", value: "13,8 m", support: "LGMG A14JE, Specifications: Platform Height 13.8m" },
       { field: "Anchura (mm)", value: "1,8 m", support: "LGMG A14JE, Specifications: B-Overall Width 1.8m" },
@@ -127,7 +161,7 @@ export const lgmgDocuments: readonly ReviewedModelDocument[] = [
     url: "https://www.lgmglifts.com/product/pro-detail-617.htm",
     brand: "LGMG", model: "AR16J", reviewedOn: "2026-11-21",
     reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 17.7,
-      lengthM: 7.56, widthM: 2.31, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      lengthM: 7.56, widthM: 2.31, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Rotación de torreta"] }, facts: [
       { field: "Alcance horizontal (m)", value: "9,39 m", support: "LGMG AR16J, Specifications: Horizontal Outreach 9.39m" },
       { field: "Altura de plataforma", value: "15,7 m", support: "LGMG AR16J, Specifications: Platform Height 15.7m" },
       { field: "Anchura (mm)", value: "2,31 m", support: "LGMG AR16J, Specifications: B-Stowed Width 2.31m" },
@@ -194,7 +228,7 @@ export const lgmgDocuments: readonly ReviewedModelDocument[] = [
   {
     url: "https://www.lgmglifts.com/product/pro-detail-1026.htm", brand: "LGMG", model: "AR14J", reviewedOn: "2026-11-24",
     reuse: { compatibility: { family: "plataforma-articulada", energy: "diésel", workingHeightM: 16.09,
-      lengthM: 6.77, widthM: 2.31, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma"] }, facts: [
+      lengthM: 6.77, widthM: 2.31, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Longitud de plataforma", "Anchura de plataforma", "Rotación de torreta"] }, facts: [
       { field: "Altura de plataforma", value: "14,09 m", support: "LGMG AR14J, Specifications, Measurements: Platform Height 14.09m" },
       { field: "Longitud de plataforma", value: "1,83 m", support: "LGMG AR14J, Specifications, Measurements: D-Platform Size Length 1.83m" },
       { field: "Anchura de plataforma", value: "0,76 m", support: "LGMG AR14J, Specifications, Measurements: E-Platform Size Width 0.76m" }

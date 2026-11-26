@@ -120,3 +120,97 @@ test("las cotas nuevas no se narran con dimensiones incompatibles ni con evidenc
   assert.equal(resolveEditorialFacts(handling)?.basketLengthM, null);
   assert.equal(resolveEditorialFacts(handling)?.storedHeightM, null);
 });
+
+test("la descripción general conserva la clase de peso acreditada de la unidad", () => {
+  for (const [family, field, label] of [
+    ["miniexcavadora", "Peso operativo", "peso operativo declarado"],
+    ["minicargadora", "Peso sin carga", "peso sin carga declarado"]
+  ] as const) {
+    const source: ProductRecord = {
+      ...controlledGomarizPlatform(), providerId: "manain", categoryKey: "venta", categoryName: "Maquinaria en venta",
+      url: `https://manain.com/producto/venta-movimiento-tierra-${family}-marca-modelo10/`, title: "MODELO10",
+      specs: { Marca: "MARCA", Modelo: "MODELO10", "Nueva o usada": "usada", Motor: "Diésel",
+        Peso: "2000 kg", [field]: "2.000 kg", Longitud: "3 m" }
+    };
+    const original = JSON.stringify(source);
+    const { [field]: omitted, ...genericSpecs } = source.specs ?? {};
+    assert.ok(omitted);
+    const generic = { ...source, specs: genericSpecs };
+    const expected = resolveReusableEditorial(generic);
+    assert.ok(expected.general);
+    assert.match(expected.general, /peso declarado de 2\.000 kg/u);
+    const result = resolveReusableEditorial(source);
+    assert.equal(result.general, expected.general.replace("peso declarado", label));
+    assert.equal(result.short, expected.short);
+    assert.equal(JSON.stringify(source), original);
+    const alternative = field === "Peso operativo" ? "Peso sin carga" : "Peso operativo";
+    for (const variant of [
+      generic,
+      { ...source, reference: "OTRA-UNIDAD" },
+      { ...source, specs: { ...source.specs, [field]: "2100 kg" } },
+      { ...source, specs: { ...source.specs, [alternative]: "2000 kg" } },
+      { ...source, specs: { ...source.specs, [field]: "2000" } },
+      { ...source, specs: { ...source.specs, "Peso maquina": "2100 kg" } },
+      { ...source, longDescription: "Peso pendiente de confirmar." }
+    ]) {
+      assert.equal(resolveReusableEditorial(source, null, variant).general, expected.general);
+      assert.doesNotMatch(resolveReusableEditorial(variant, null, source).general ?? "", /peso (?:operativo|sin carga) declarado/u);
+    }
+  }
+});
+
+
+test("ambas descripciones distinguen el alcance horizontal máximo corroborado", () => {
+  const original: ProductRecord = {
+    ...controlledGomarizPlatform(), title: "Plataforma articulada eléctrica MARCA MODELO10",
+    specs: { "Altura de trabajo": "10 m", Capacidad: "230 kg", Motor: "Eléctrico",
+      "Alcance lateral": "6 m", "Alcance horizontal max.": "6 m" }
+  };
+  const { ["Alcance horizontal max."]: maximum, ...genericSpecs } = original.specs ?? {};
+  assert.ok(maximum);
+  const prepared = { ...original, specs: { ...genericSpecs, "Alcance horizontal máximo": "6 m" } };
+  const generic = { ...original, specs: genericSpecs };
+  const baseline = resolveReusableEditorial(generic);
+  const improved = resolveReusableEditorial(prepared, null, original);
+  assert.match(baseline.general ?? "", /alcance lateral de 6 m/u);
+  assert.equal(improved.general, baseline.general?.replace("alcance lateral", "alcance horizontal máximo declarado"));
+  assert.equal(improved.short, baseline.short?.replace("alcance lateral", "alcance horizontal máximo"));
+  for (const source of [generic, { ...original, reference: "OTRA-UNIDAD" },
+    { ...original, specs: { ...original.specs, "Alcance horizontal max.": "7 m" } },
+    { ...original, specs: { ...original.specs, "Alcance horizontal": "5 m" } },
+    { ...original, specs: { ...original.specs, "Alcance horizontal max.": "6/7 m" } },
+    { ...original, longDescription: "Alcance pendiente de confirmar." }]) {
+    assert.deepEqual(resolveReusableEditorial(prepared, null, source), baseline);
+  }
+  assert.deepEqual(resolveReusableEditorial(generic, null, original), baseline);
+});
+
+test("las dimensiones totales de plataforma se distinguen de las cotas de cesta sin alterar la corta", () => {
+  for (const base of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const source: ProductRecord = { ...base, specs: { ...base.specs, Longitud: "3 m", Anchura: "1,2 m",
+      "Longitud de plataforma": "2 m", "Anchura de plataforma": "0,8 m" } };
+    const explicit = { ...source, specs: { ...source.specs, "Longitud total": "3000 mm", "Ancho total": "1,2 m" } };
+    const prepared = { ...source, specs: { ...source.specs, "Longitud total": "3 m", "Anchura total": "1200 mm" } };
+    const baseline = resolveReusableEditorial(source);
+    const result = resolveReusableEditorial(prepared, null, explicit);
+    assert.equal(result.general, baseline.general?.replace("longitud de 3 m", "longitud total: 3 m")
+      .replace("anchura de 1,2 m", "anchura total: 1,2 m"));
+    assert.match(result.general ?? "", /longitud total: 3 m, anchura total: 1,2 m.*plataforma de 2 × 0,8 m/u);
+    assert.equal(result.short, baseline.short);
+    for (const other of [source, { ...explicit, reference: "OTRA" },
+      { ...explicit, longDescription: "Dimensiones pendientes de comprobar." },
+      { ...explicit, specs: { ...explicit.specs, "Longitud total": "2/3 m", "Ancho total": "1,3 m" } }]) {
+      assert.doesNotMatch(resolveReusableEditorial(prepared, null, other).general ?? "", /(?:longitud|anchura) total:/u);
+    }
+  }
+});
+
+test("la pendiente superable conserva su significado editorial con la clave técnica compartida", () => {
+  const source = controlledGomarizPlatform();
+  const legacy = { ...source, specs: { ...source.specs, "Pendiente superable": "25 %" } };
+  const canonical = { ...source, specs: { ...source.specs, "Pendiente superable (%)": "25 %" } };
+  assert.equal(resolveEditorialFacts(legacy)?.gradeabilityPercent, 25);
+  assert.equal(resolveEditorialFacts(canonical)?.gradeabilityPercent, 25);
+  assert.deepEqual(resolveReusableEditorial(canonical), resolveReusableEditorial(legacy));
+  assert.equal(resolveEditorialFacts({ ...legacy, specs: { ...legacy.specs, "Pendiente superable (%)": "40 %" } })?.gradeabilityPercent, null);
+});

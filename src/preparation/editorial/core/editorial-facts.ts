@@ -267,7 +267,7 @@ export const resolveEditorialFacts = (record: ProductRecord, familyOverride: Edi
     editorialMetricOf({ Altura: source.equipmentHeight }, ["Altura"]);
   const voltage = editorialQuantityOf(record.specs, ["Voltaje de la batería", "Voltaje"], "V");
   const power = editorialQuantityOf(record.specs, ["Potencia", "Potencia nominal"], "kVA");
-  const gradeability = editorialQuantityOf(record.specs, ["Pendiente superable"], "%");
+  const gradeability = editorialQuantityOf(record.specs, ["Pendiente superable", "Pendiente superable (%)"], "%");
   const loadCenter = hasHandlingMeasurements(family) ? corroboratedMillimetres(record.specs?.["Centro de carga"], record.longDescription, "Centro de carga", 350, 2000) : null;
   const turningRadius = isHandling(family) ? corroboratedMillimetres(record.specs?.["Radio de giro"], record.longDescription, "Radio de giro", 750, 7500) : null;
   const basket = platform ? verifiedPlatformDimensions(record) : null;

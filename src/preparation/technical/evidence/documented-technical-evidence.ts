@@ -412,13 +412,17 @@ const recoverReviewedModelClaim = (
           [...fold(String(value)).matchAll(energyPattern)].some((match) => energyIdentifier(match[0]) !== expected.energy);
     }))) return specs;
   } else {
-    if (facts.lengthM !== expected.lengthM || facts.widthM !== expected.widthM) return specs;
+    if (facts.lengthM !== expected.lengthM || facts.widthM !== expected.widthM || expected.weightKg !== undefined && facts.weightKg !== expected.weightKg) return specs;
+    const verifiedFamilyListing = expected.weightKg !== undefined && source && original.condition === "Segunda mano" &&
+      comparableIdentifier(original.title ?? "") === comparableIdentifier(`${original.brand}${original.model}`) && !original.shortDescription?.trim() &&
+      new RegExp(`^${fold(`${original.brand}-${original.model}`).replace(/[^a-z0-9]+/gu, "-")}(?:-\\d+)?(?:-tijera-electrica-scissor-lift)?$`, "u").test(fold(new URL(original.url).pathname).split("/").filter(Boolean).at(-1) ?? "") && generalFamily === expected.family &&
+      /^las?\s+tijeras?\s+electricas?\b/u.test(fold(original.longDescription ?? "")) && !/\b[a-z]+-?\d{2,}|\b(?:variante|modificad[oa]|sustituid[oa]|convertid[oa])\b/u.test(fold(original.longDescription ?? ""));
     if (expected.firstYear !== undefined || expected.lastYear !== undefined) {
       if (!original.year || !/^\d{4}$/u.test(original.year) || facts.year !== Number(original.year) ||
         expected.firstYear !== undefined && facts.year < expected.firstYear ||
         expected.lastYear !== undefined && facts.year > expected.lastYear ||
         !containsEditorialBrandModel(original.title ?? "", original.brand, original.model) ||
-        !containsEditorialBrandModel(original.longDescription ?? "", original.brand, original.model) ||
+        !containsEditorialBrandModel(original.longDescription ?? "", original.brand, original.model) && !verifiedFamilyListing ||
         declaredEnergies.size !== 1 || !expected.energy || !declaredEnergies.has(expected.energy) ||
         /\b(?:sin|no (?:es|usa|utiliza|funciona con)|convertid[oa] a)\s+(?:motor (?:de )?)?(?:glp|lpg|diesel|gasoil|gasolina|electric[oa]s?|bateria)\b/u.test(energyText) ||
         Object.entries(original.specs).some(([key, value]) => /^(?:ano|ano de fabricacion|ano del modelo)$/u.test(fold(key)) && String(value).trim() !== original.year)) return specs;

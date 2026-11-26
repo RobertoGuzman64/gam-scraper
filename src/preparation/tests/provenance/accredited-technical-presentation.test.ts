@@ -47,7 +47,7 @@ test("acredita las capacidades y alturas mediante la observación real y su repr
   const cases: readonly { readonly source: ProductRecord; readonly replacements: readonly [string, string, SpecValue][] }[] = [
     { source: gam, replacements: [["Capacidad de carga (kg)", "Capacidad de la cesta", "230 kg"], ["Altura de elevación (m)", "Altura de trabajo (m)", "12 m"]] },
     { source: gomariz, replacements: [["Capacidad", "Capacidad de la cesta", "230 kg"], ["Altura plataforma", "Altura de plataforma", "6,2 m"]] },
-    { source: manain, replacements: [["Capacidad carga", "Capacidad de la cesta", "230 kg"], ["Longitud plataforma", "Longitud de plataforma", "2,4 m"],
+    { source: manain, replacements: [["Altura trabajo", "Altura de trabajo", "9 m"], ["Capacidad carga", "Capacidad de la cesta", "230 kg"], ["Longitud plataforma", "Longitud de plataforma", "2,4 m"],
       ["Ancho plataforma", "Anchura de plataforma", "0,8 m"], ["Ancho total", "Anchura total", "1 m"]] }
   ];
   for (const { source, replacements } of cases) {
@@ -189,4 +189,19 @@ test("una batería repartida entre destinos no se acredita por inferencia ni por
   assert.equal(accreditPublishedTechnicalPresentation(source, previous, divided).size, 0);
   const competing = { ...source, specs: { ...source.specs, "Capacidad de la batería (Ah)": "315-375 Ah" } };
   assert.equal(accreditPublishedTechnicalPresentation(competing, previous, candidate).size, 0);
+});
+
+
+test("acredita la extensión de plataforma de tijera sin modificar la medida histórica", () => {
+  const source: ProductRecord = { ...manain, specs: { ...manain.specs, "Longitud extensión": "0,9 m" } };
+  const candidate = preparedCandidate(source);
+  const previous = previousFrom(candidate, [["Longitud extensión", "Extensión de plataforma", "0,9 m"]]);
+  for (const result of [accreditSourceTechnicalPresentation(source, candidate), accreditPublishedTechnicalPresentation(source, previous, candidate)]) {
+    const proof = result.get("Longitud extensión");
+    assert.equal(proof?.destinationField, "Extensión de plataforma");
+    assert.equal(proof?.value, "0,9 m");
+    assert.equal(proof?.originalValue, "0,9 m");
+  }
+  const conflict = { ...previous, spec: { ...previous.spec, "Extensión de plataforma": "1,2 m" } };
+  assert.equal(accreditPublishedTechnicalPresentation(source, conflict, candidate).has("Longitud extensión"), false);
 });

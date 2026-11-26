@@ -163,26 +163,29 @@ test("recupera alturas documentadas de plataformas articuladas sin atribuir conf
 
 
 test("recupera la cota común de cesta Haulotte IP sin atribuir la dimensión variable", () => {
-  for (const [brand, model, height, length, width, platformHeight] of [
-    ["Haulotte", "HA12IP", "12 m", "5,45 m", "1,35 m", "10 m"],
-    ["Haulotte", "HA15IP", "15 m", "6,6 m", "1,5 m", "13 m"],
-    ["HAULOTTE", "HA 15 IP", "15 m", "6,6 m", "1,5 m", "13 m"]
+  for (const [brand, model, height, length, width, platformHeight, rotation] of [
+    ["Haulotte", "HA12IP", "12 m", "5,45 m", "1,35 m", "10 m", "355°"],
+    ["Haulotte", "HA15IP", "15 m", "6,6 m", "1,5 m", "13 m", "350°"],
+    ["HAULOTTE", "HA 15 IP", "15 m", "6,6 m", "1,5 m", "13 m", "350°"]
   ] as const) {
     const slug = `${brand}-${model}`.toLowerCase().replaceAll(" ", "-");
     const record = { ...documentedPlatform(), brand, model, title: `Plataforma articulada eléctrica ${brand} ${model}`,
       url: `https://www.gomarizrent.com/producto/${slug}/`,
       specs: { "Altura de trabajo": height, Capacidad: "230 kg", Motor: "Eléctrico", Longitud: length, Anchura: width } };
     const before = structuredClone(record);
-    const additions = { "Altura de plataforma": platformHeight, "Anchura de plataforma": "0,8 m" };
+    const additions = { "Altura de plataforma": platformHeight, "Anchura de plataforma": "0,8 m", "Rotación de torreta": rotation };
     const output = recoverDocumented(record);
     assert.deepEqual(output, { ...record.specs, ...additions });
     assert.equal(recoverReviewedModelTechnicalSpecs(record, output), output);
     assert.deepEqual(record, before);
     const other = { ...documentedManainJlgPlatform(brand, model, height, "230 kg", length, width, "0,8 m", "1,5 m"),
       url: `https://manain.com/producto/venda-elevacio-bracos-articulats-${slug}/` };
-    assert.deepEqual(recoverDocumented(other), { ...other.specs, "Altura de plataforma": platformHeight });
+    assert.deepEqual(recoverDocumented(other), { ...other.specs, "Altura de plataforma": platformHeight, "Rotación de torreta": rotation });
     const existing = { ...record, specs: { ...record.specs, "Altura plataforma": platformHeight } };
-    assert.deepEqual(recoverDocumented(existing), { ...existing.specs, "Anchura de plataforma": "0,8 m" });
+    assert.deepEqual(recoverDocumented(existing), { ...existing.specs, "Anchura de plataforma": "0,8 m", "Rotación de torreta": rotation });
+    const withRotation = { ...record, specs: { ...record.specs, "Giro de torreta": rotation } };
+    assert.deepEqual(recoverDocumented(withRotation), { ...withRotation.specs, "Altura de plataforma": platformHeight, "Anchura de plataforma": "0,8 m" });
+    assert.equal("Rotación de cesta" in output, false);
     const prepared = prepareSourceProduct(record);
     for (const [field, value] of Object.entries(additions)) {
       assert.equal(prepared.product.spec[field], value);
@@ -197,6 +200,7 @@ test("recupera la cota común de cesta Haulotte IP sin atribuir la dimensión va
       { ...record, specs: { ...record.specs, Capacidad: "200 kg" } },
       { ...record, specs: { ...record.specs, Anchura: "3 m" } },
       { ...record, specs: { ...record.specs, "Ancho plataforma": "0,9 m" } },
+      { ...record, specs: { ...record.specs, "Giro de torreta": "360°" } },
       { ...record, longDescription: "Cesta sustituida." }
     ]) assert.equal(recoverDocumented(invalid), invalid.specs);
   }
@@ -243,4 +247,27 @@ test("recupera geometría Haulotte DX y RTJ PRO con cotas compatibles", () => {
     const existing = { ...record, specs: { ...record.specs, ...additions } };
     assert.equal(recoverDocumented(existing), existing.specs);
   }
+});
+
+test("acredita la rotación de torreta LGMG sin inferir rotación de cesta ni duplicar valores", () => {
+  const record = { ...documentedPlatform(), model: "A14JE", title: "Plataforma articulada eléctrica LGMG A14JE",
+    url: "https://www.gomarizrent.com/producto/lgmg-a14je/",
+    specs: { "Altura de trabajo": "15,8 m", Capacidad: "230 kg", Motor: "Eléctrico", Longitud: "6,66 m", Anchura: "1,8 m" } };
+  const output = recoverDocumented(record);
+  assert.equal(output["Rotación de torreta"], "355°");
+  assert.equal(output["Rotación de cesta"], undefined);
+  assert.equal(recoverReviewedModelTechnicalSpecs(record, output), output);
+  const entry = prepareSourceProduct(record).technicalProvenance?.entries.find((item) => item.field === "Rotación de torreta");
+  assert.equal(entry?.scope, "model-document");
+  assert.equal(entry?.verification?.kind, "reviewed-model-fact");
+  for (const value of ["355°", "360°"]) {
+    const existing = { ...record, specs: { ...record.specs, "Giro de torreta": value } };
+    assert.equal(recoverDocumented(existing)["Rotación de torreta"], undefined);
+  }
+  for (const invalid of [
+    { ...record, model: "A14JE-Li" },
+    { ...record, title: "Plataforma articulada eléctrica LGMG A14JE-2" },
+    { ...record, specs: { ...record.specs, Anchura: "2 m" } },
+    { ...record, specs: { ...record.specs, Capacidad: "300 kg" } }
+  ]) assert.equal(recoverDocumented(invalid)["Rotación de torreta"], undefined);
 });

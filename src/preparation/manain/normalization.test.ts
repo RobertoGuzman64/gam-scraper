@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
 import { prepareSourceProduct } from "../prepare-product.js";
-import { normalizeManainTechnicalSpecs, reconcileManainMassCapacityPresentation } from "./normalization.js";
+import { normalizeManainTechnicalSpecs, reconcileManainMassCapacityPresentation, reconcileManainScissorExtensionPresentation } from "./normalization.js";
 
 const record: ProductRecord = {
   providerId: "manain",
@@ -49,6 +49,31 @@ test("Manain: elimina únicamente medidas de peso idénticas con unidades explí
   assert.equal(normalized["Peso carretilla en vacio"], "1550");
   assert.equal(JSON.stringify(record), original);
   assert.equal(sourceSpecs["Peso maquina"], "1550 kg");
+});
+
+test("Manain: conserva el significado del peso acreditado en movimiento de tierras", () => {
+  for (const [family, field] of [
+    ["miniexcavadora", "Peso operativo"], ["minicargadora", "Peso sin carga"]
+  ] as const) {
+    const specs: SpecsMap = { Peso: "1.550 kg", [field]: "1550 kg", "Peso maquina": "1550 kg" };
+    const source: ProductRecord = { ...record, specs,
+      url: `https://manain.com/producto/venta-movimiento-tierra-${family}-equiptest-tx2/` };
+    const original = JSON.stringify(source);
+    const expected = { [field]: "1550 kg" };
+    const normalized = normalizeManainTechnicalSpecs(source, specs);
+    assert.deepEqual(normalized, expected);
+    assert.equal(normalizeManainTechnicalSpecs(source, normalized), normalized);
+    assert.equal(JSON.stringify(source), original);
+    const different: SpecsMap = { ...specs, [field]: "1600 kg" };
+    assert.deepEqual(normalizeManainTechnicalSpecs({ ...source, specs: different }, different),
+      { Peso: "1.550 kg", [field]: "1600 kg" });
+    const changed: SpecsMap = { ...specs, Peso: "1600 kg" };
+    assert.equal(normalizeManainTechnicalSpecs(source, changed), changed);
+    const ambiguous: SpecsMap = { ...specs, "Peso carretilla en vacio": "1550" };
+    assert.equal(normalizeManainTechnicalSpecs({ ...source, specs: ambiguous }, ambiguous).Peso, "1.550 kg");
+    const contradictory = { ...source, shortDescription: "Plataforma de tijera" };
+    assert.equal(normalizeManainTechnicalSpecs(contradictory, specs).Peso, "1.550 kg");
+  }
 });
 
 test("Manain: conserva discrepancias, unidades ausentes y formatos no comparables", () => {
@@ -129,7 +154,8 @@ test("Manain: la preparación presenta metros con coma y preserva las magnitudes
   const original = JSON.stringify(source);
   const prepared = prepareSourceProduct(source);
   assert.equal(prepared.status, "ready");
-  assert.equal(prepared.product.spec["Altura trabajo"], "9,5 m");
+  assert.equal(prepared.product.spec["Altura de trabajo"], "9,5 m");
+  assert.equal(prepared.product.spec["Altura trabajo"], undefined);
   assert.equal(prepared.product.spec["Longitud de plataforma"], "1,42 m");
   assert.equal(prepared.product.spec["Longitud plataforma"], undefined);
   assert.equal(JSON.stringify(source), original);
@@ -222,4 +248,41 @@ test("Manain: los grupos electrógenos conservan potencia aparente y tensiones c
     { Potencia: "80kva kva kva", Voltios: "400/230v v v" },
     { Potencia: "80kva kva opcional", Voltios: "400/0v v" }
   ]) assert.equal(normalizeManainTechnicalSpecs({ ...source, specs: invalid }, invalid), invalid);
+});
+
+
+test("Manain: la extensión de tijera conserva la medida original y su procedencia", () => {
+  const specs: SpecsMap = { ...record.specs, "Longitud extensión": "0,9 m", "Longitud plataforma": "2,4 m" };
+  const source = { ...record, specs };
+  const result = prepareSourceProduct(source);
+  assert.equal(result.product.spec["Longitud extensión"], undefined);
+  assert.equal(result.product.spec["Extensión de plataforma"], "0,9 m");
+  assert.equal(result.product.spec["Longitud de plataforma"], "2,4 m");
+  assert.deepEqual(result.technicalProvenance?.entries.find((entry) => entry.field === "Extensión de plataforma"), {
+    field: "Extensión de plataforma", value: "0,9 m", scope: "unit", sourceField: "Longitud extensión",
+    sourceValue: "0,9 m", mechanism: "src/preparation/technical/technical-presentation.ts"
+  });
+  assert.equal(reconcileManainScissorExtensionPresentation(source, result.product.spec), result.product.spec);
+  assert.equal(source.specs["Longitud extensión"], "0,9 m");
+});
+
+test("Manain: la extensión no se extrapola ni sustituye magnitudes ambiguas o concurrentes", () => {
+  const specs: SpecsMap = { ...record.specs, "Longitud extensión": "0,9 m" };
+  const source = { ...record, specs };
+  for (const incompatible of [
+    { ...source, providerId: "gam" as const }, { ...source, url: source.url.replace("tijera", "unipersonal") },
+    { ...source, url: source.url.replace("tijera", "brazo-articulado") },
+    { ...source, shortDescription: "Miniexcavadora compacta" }, { ...source, model: "OTRO" }
+  ]) assert.equal(reconcileManainScissorExtensionPresentation(incompatible, specs), specs);
+  for (const raw of ["0 m", "0,9/1,2 m", "900 mm", "0,9", "0,9 m opcional"]) {
+    const invalid = { ...specs, "Longitud extensión": raw };
+    assert.equal(reconcileManainScissorExtensionPresentation({ ...source, specs: invalid }, invalid), invalid);
+  }
+  for (const alias of ["Extensión de plataforma", "Longitud de extensión", "Extensión de cesta"]) {
+    const conflict = { ...specs, [alias]: "1,2 m" };
+    assert.equal(reconcileManainScissorExtensionPresentation({ ...source, specs: conflict }, specs), specs);
+    assert.equal(reconcileManainScissorExtensionPresentation(source, conflict), conflict);
+  }
+  const changed = { ...specs, "Longitud extensión": "1,2 m" };
+  assert.equal(reconcileManainScissorExtensionPresentation(source, changed), changed);
 });

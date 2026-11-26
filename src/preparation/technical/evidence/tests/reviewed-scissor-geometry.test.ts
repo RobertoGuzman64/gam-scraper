@@ -22,6 +22,7 @@ test("reutiliza geometría LGMG corroborada sin inferir variantes de longitud ni
     assert.equal(output["Longitud de plataforma"], platformLength);
     assert.equal(output["Anchura de plataforma"], platformWidth);
     assert.equal(output["Extensión de plataforma"], extension);
+    assert.equal(output["Rotación de torreta"], family === "articulada" ? "355°" : undefined);
     assert.equal(recoverReviewedModelTechnicalSpecs(record, output), output);
     const prepared = prepareSourceProduct(record);
     for (const [field, value] of Object.entries(output).filter(([field]) => !(field in (record.specs ?? {})))) {
@@ -38,6 +39,7 @@ test("reutiliza geometría LGMG corroborada sin inferir variantes de longitud ni
         "Ancho plataforma": platformWidth, "Nueva o usada": "usada" } };
     assert.equal(recoverDocumented(other)["Altura de plataforma"], platformHeight);
     assert.equal(recoverDocumented(other)["Anchura de plataforma"], undefined);
+    assert.equal(recoverDocumented(other)["Rotación de torreta"], family === "articulada" ? "355°" : undefined);
     for (const invalid of [
       { ...record, model: `${model}-2` },
       { ...record, title: `${record.title}-2` },
@@ -459,4 +461,35 @@ test("distingue la Compact 12 de 300 kg de otras generaciones y conserva su cest
     { ...record, specs: { ...record.specs, "Extensión de plataforma": "1,2 m" } },
     { ...record, longDescription: `${record.longDescription} Extensión de plataforma opcional.` }
   ]) assert.equal(recoverDocumented(invalid), invalid.specs);
+});
+
+test("acredita geometría de tijera mediante identidad, año, peso y dimensiones de una oferta con texto de familia", () => {
+  for (const [model, year, length, width, weight, additions] of [
+    ["S0607EII", "2023", "1,86 m", "0,76 m", "1610 kg", { "Longitud de plataforma": "1,64 m", "Anchura de plataforma": "0,73 m", "Extensión de plataforma": "0,9 m" }],
+    ["S0607E-2", "2025", "1,64 m", "0,73 m", "1550 kg", { "Altura de plataforma": "5,8 m", "Extensión de plataforma": "0,9 m" }]
+  ] as const) {
+    const record: ProductRecord = { ...controlledGomarizPlatform(), brand: "LGMG", model, year, title: `LGMG ${model}`,
+      url: `https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-${model.toLowerCase()}/`,
+      longDescription: "Las tijeras eléctricas facilitan el acceso desde los 5 m en interiores.",
+      specs: { "Altura de trabajo": "7,8 m", Motor: "Eléctrico", Capacidad: "230 kg", Longitud: length, Anchura: width, Peso: weight } };
+    const before = structuredClone(record);
+    const output = recoverDocumented(record);
+    assert.deepEqual(output, { ...record.specs, ...additions });
+    assert.equal(recoverReviewedModelTechnicalSpecs(record, output), output);
+    assert.deepEqual(record, before);
+    const prepared = prepareSourceProduct(record);
+    for (const [field, value] of Object.entries(additions)) {
+      assert.equal(prepared.product.spec[field], value);
+      const entry = prepared.technicalProvenance?.entries.find((item) => item.field === field);
+      assert.equal(entry?.scope, "model-document");
+      assert.equal(entry?.verification?.kind, "reviewed-model-fact");
+    }
+    for (const invalid of [
+      { ...record, year: "2019" }, { ...record, url: record.url.replace(/\/$/u, "-li/") },
+      { ...record, title: `LGMG ${model} LI` }, { ...record, specs: { ...record.specs, Peso: "1800 kg" } },
+      { ...record, specs: { ...record.specs, Anchura: "1 m" } },
+      { ...record, longDescription: `${record.longDescription} Plataforma sustituida.` },
+      { ...record, specs: { ...record.specs, "Extensión de plataforma": "1,2 m" } }
+    ]) assert.equal(recoverDocumented(invalid), invalid.specs);
+  }
 });

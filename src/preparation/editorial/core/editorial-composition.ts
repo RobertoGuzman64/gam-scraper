@@ -1,7 +1,7 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { hasPlatformRetractedHeight, hasSeparatePlatformDimensions, resolveEditorialFacts } from "./editorial-facts.js";
 import { editorialFamilyFromSourceGeneral, editorialFamilyIsMasculine, editorialFamilyName, editorialFamilyOf } from "./editorial-families.js";
-import { editorialQuantity, formatEditorialQuantity } from "../measurements/editorial-measurements.js";
+import { editorialMetricOf, editorialQuantity, formatEditorialQuantity } from "../measurements/editorial-measurements.js";
 import { hasUnconditionalEditorialClaim } from "../claims/editorial-claim-evidence.js";
 import type { EditorialFacts } from "./editorial-facts.js";
 import { sameEditorialUnit } from "./editorial-source-contract.js";
@@ -12,14 +12,14 @@ import { corroboratedAnnouncedUnitSummary } from "../source/context/editorial-so
 import type { EditorialFamily } from "./editorial-families.js";
 import { resolveEquipmentConfigurationDetails, resolveHandlingOperationalDetails, resolvePlatformOperationalDetails, resolveTransportOperationalDetails } from "../source/details/editorial-sourced-equipment-details.js";
 
-const quantity = (value: number | null, unit: string, label: string): string | null =>
-  value === null ? null : `${label} de ${formatEditorialQuantity(value)} ${unit}`;
+const quantity = (value: number | null, unit: string, label: string, separator = " de "): string | null =>
+  value === null ? null : `${label}${separator}${formatEditorialQuantity(value)} ${unit}`;
 
-const asserted = (facts: EditorialFacts): readonly string[] => {
+const asserted = (facts: EditorialFacts, reachLabel = "alcance lateral"): readonly string[] => {
   const metrics = [
     quantity(facts.workingHeightM, "m", "altura de trabajo"),
     quantity(facts.platformHeightM, "m", "altura de plataforma"),
-    quantity(facts.lateralReachM, "m", "alcance lateral"),
+    quantity(facts.lateralReachM, "m", reachLabel),
     quantity(facts.liftingHeightM, "m", "altura de elevación"),
     quantity(facts.loadCapacityKg, "kg", facts.family === "tractor-arrastre" ? "capacidad de arrastre" :
       facts.family.includes("plataforma") ? "capacidad" : "capacidad de carga"),
@@ -29,11 +29,53 @@ const asserted = (facts: EditorialFacts): readonly string[] => {
   return metrics.filter((item): item is string => item !== null);
 };
 
-const details = (facts: EditorialFacts, battery: string | null, record: ProductRecord): readonly string[] => [
-  quantity(facts.weightKg, "kg", "peso declarado"),
+const generalReachLabel = (facts: EditorialFacts, record: ProductRecord, source: ProductRecord): string => {
+  const reach = facts.lateralReachM;
+  const maximumKeys = ["Alcance horizontal max.", "Alcance horizontal máximo"];
+  const reachKeys = [...maximumKeys, "Alcance horizontal", "Alcance horizontal (m)", "Alcance lateral", "Alcance Lateral", "Alcance maximo"];
+  if (reach === null || !["plataforma-articulada", "plataforma-telescopica", "camion-cesta"].includes(facts.family) ||
+    !sameEditorialUnit(source, record) || source.shortDescription?.trim() || source.longDescription?.trim() ||
+    record.shortDescription?.trim() || record.longDescription?.trim() ||
+    resolveEditorialFacts(source)?.family !== facts.family ||
+    ![source, record].every(({ specs }) => editorialMetricOf(specs, maximumKeys) === reach &&
+      editorialMetricOf(specs, reachKeys) === reach)) return "alcance lateral";
+  return "alcance horizontal máximo declarado";
+};
+
+const generalWeightLabel = (facts: EditorialFacts, record: ProductRecord, source: ProductRecord): string => {
+  const field = facts.family === "miniexcavadora" ? "Peso operativo" :
+    facts.family === "cargadora" ? "Peso sin carga" : null;
+  if (field === null || facts.weightKg === null || !sameEditorialUnit(source, record) ||
+    source.shortDescription?.trim() || source.longDescription?.trim() ||
+    record.shortDescription?.trim() || record.longDescription?.trim() ||
+    resolveEditorialFacts(source)?.family !== facts.family) return "peso declarado";
+  const weight = facts.weightKg;
+  const alternative = field === "Peso operativo" ? "Peso sin carga" : "Peso operativo";
+  if (![source, record].every(({ specs }) =>
+    editorialQuantity(specs?.Peso, "kg") === weight && editorialQuantity(specs?.[field], "kg") === weight &&
+    specs?.[alternative] === undefined && specs?.["Peso carretilla en vacio"] === undefined &&
+    (specs?.["Peso maquina"] === undefined || editorialQuantity(specs["Peso maquina"], "kg") === weight))) return "peso declarado";
+  return field === "Peso operativo" ? "peso operativo declarado" : "peso sin carga declarado";
+};
+
+const generalDimensionLabels = (facts: EditorialFacts, record: ProductRecord, source: ProductRecord): readonly [string, string] => {
+  if (!facts.family.startsWith("plataforma-") || !verifiedEditorialUnitPair(source, record) ||
+    source.shortDescription?.trim() || source.longDescription?.trim() ||
+    record.shortDescription?.trim() || record.longDescription?.trim() ||
+    resolveEditorialFacts(source)?.family !== facts.family) return ["longitud", "anchura"];
+  const explicit = (value: number | null, total: readonly string[], aliases: readonly string[]): boolean =>
+    value !== null && [source, record].every(({ specs }) =>
+      editorialMetricOf(specs, total) === value && editorialMetricOf(specs, [...total, ...aliases]) === value);
+  return [explicit(facts.lengthM, ["Longitud total"], ["Longitud", "Largo"]) ? "longitud total" : "longitud",
+    explicit(facts.widthM, ["Anchura total", "Ancho total"], ["Anchura", "Ancho"]) ? "anchura total" : "anchura"];
+};
+
+const details = (facts: EditorialFacts, battery: string | null, record: ProductRecord, weightLabel = "peso declarado",
+  dimensionLabels: readonly [string, string] = ["longitud", "anchura"]): readonly string[] => [
+  quantity(facts.weightKg, "kg", weightLabel),
   quantity(facts.discDiameterMm, "mm", "diámetro máximo de disco"),
-  quantity(facts.lengthM, "m", "longitud"),
-  quantity(facts.widthM, "m", "anchura"),
+  quantity(facts.lengthM, "m", dimensionLabels[0], dimensionLabels[0] === "longitud total" ? ": " : " de "),
+  quantity(facts.widthM, "m", dimensionLabels[1], dimensionLabels[1] === "anchura total" ? ": " : " de "),
   quantity(facts.heightM, "m", "altura del equipo"),
   quantity(facts.storedHeightM, "m", hasPlatformRetractedHeight(record, facts.family) ? "altura replegada" : "altura de almacenaje"),
   quantity(facts.voltageV, "V", "voltaje declarado"),
@@ -133,10 +175,11 @@ export const resolveReusableEditorial = (
   };
   const family = editorialFamilyName(facts.family);
   const name = `${facts.brand} ${facts.model}`;
-  const measures = [...asserted(facts), ...towerMeasures(record, sourceUnitRecord, facts)];
-  const extras = details(facts, resolveDocumentedBatteryConfiguration(
-    sourceUnitRecord, record, facts.family, facts.voltageV
-  ), record);
+  const tower = towerMeasures(record, sourceUnitRecord, facts);
+  const reachLabel = generalReachLabel(facts, record, sourceUnitRecord);
+  const measures = [...asserted(facts, reachLabel === "alcance lateral" ? reachLabel : "alcance horizontal máximo"), ...tower];
+  const battery = resolveDocumentedBatteryConfiguration(sourceUnitRecord, record, facts.family, facts.voltageV);
+  const extras = details(facts, battery, record);
   if (measures.length === 0 && extras.length === 0) return { short: null, general: null };
   const fuel = facts.energy === "eléctrica" ? editorialFamilyIsMasculine(facts.family) ? " eléctrico" : " eléctrica" :
     facts.energy === "diésel" ? " diésel" :
@@ -154,7 +197,12 @@ export const resolveReusableEditorial = (
   const unit = [facts.year !== null ? `año de fabricación ${facts.year}` : null,
     facts.hours !== null ? `${formatEditorialQuantity(facts.hours)} ${facts.hours === 1 ? "hora registrada" : "horas registradas"}` : null]
     .filter((value): value is string => value !== null);
-  const generalClauses = [...measures, ...extras, ...resolvePlatformOperationalDetails(sourceUnitRecord, record, facts.family),
+  const weightLabel = generalWeightLabel(facts, record, sourceUnitRecord);
+  const dimensionLabels = generalDimensionLabels(facts, record, sourceUnitRecord);
+  const generalExtras = weightLabel === "peso declarado" && dimensionLabels[0] === "longitud" && dimensionLabels[1] === "anchura" ?
+    extras : details(facts, battery, record, weightLabel, dimensionLabels);
+  const generalMeasures = reachLabel === "alcance lateral" ? measures : [...asserted(facts, reachLabel), ...tower];
+  const generalClauses = [...generalMeasures, ...generalExtras, ...resolvePlatformOperationalDetails(sourceUnitRecord, record, facts.family),
     ...resolveHandlingOperationalDetails(sourceUnitRecord, record, facts.family),
     ...resolveTransportOperationalDetails(sourceUnitRecord, record, facts.family, facts.heightM !== null),
     ...resolveEquipmentConfigurationDetails(sourceUnitRecord, record, facts.family)];

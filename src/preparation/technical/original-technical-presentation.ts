@@ -3,7 +3,7 @@ import type { TechnicalRecoveryObservation } from "../provenance/technical-recov
 import { reconcileGamWorkingHeightPresentation } from "../gam/measurements/evidence/work-height-evidence.js";
 import { reconcileGamBasketCapacityPresentation } from "../gam/reconciliation/gam-capacity.js";
 import { reconcileGomarizMassCapacityPresentation } from "../gomariz/technical/gomariz.js";
-import { reconcileManainMassCapacityPresentation } from "../manain/normalization.js";
+import { reconcileManainMassCapacityPresentation, reconcileManainScissorExtensionPresentation } from "../manain/normalization.js";
 import { normalizeOriginalTechnicalPresentation } from "./technical-presentation.js";
 
 export const reconcileOriginalTechnicalPresentation = (original: ProductRecord, specs: SpecsMap,
@@ -12,5 +12,6 @@ export const reconcileOriginalTechnicalPresentation = (original: ProductRecord, 
   const height = reconcileGamWorkingHeightPresentation(original, normalized, observe);
   const capacity = reconcileGamBasketCapacityPresentation(original, height, observe);
   const gomariz = reconcileGomarizMassCapacityPresentation(original, capacity, observe);
-  return reconcileManainMassCapacityPresentation(original, gomariz, observe);
+  const manain = reconcileManainMassCapacityPresentation(original, gomariz, observe);
+  return reconcileManainScissorExtensionPresentation(original, manain, observe);
 };

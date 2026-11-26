@@ -4,7 +4,7 @@ import { editorialQuantity, formatEditorialQuantity } from "../editorial/measure
 
 import { resolveManainEditorialDomainSource } from "./domain-source.js";
 import { manainSourceFamily, manainSourceDescriptionContradictsFamily } from "./source.js";
-import { reconcileOriginalMassCapacityPresentation } from "../technical/technical-presentation.js";
+import { normalizeOriginalScissorExtensionPresentation, reconcileOriginalMassCapacityPresentation } from "../technical/technical-presentation.js";
 import type { TechnicalRecoveryObservation } from "../provenance/technical-recovery-observation.js";
 
 export const reconcileManainMassCapacityPresentation = (original: ProductRecord, specs: SpecsMap,
@@ -21,7 +21,26 @@ export const reconcileManainMassCapacityPresentation = (original: ProductRecord,
     "src/preparation/manain/normalization.ts", observe);
 };
 
+export const reconcileManainScissorExtensionPresentation = (original: ProductRecord, specs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  if (!Object.keys(specs).some((key) => /^longitud extensi[oó]n$/iu.test(key.trim())) ||
+    manainSourceFamily(original) !== "elevacion-tijera" ||
+    manainSourceDescriptionContradictsFamily(original, "elevacion-tijera") || !resolveManainEditorialDomainSource(original)) return specs;
+  return normalizeOriginalScissorExtensionPresentation(specs, original.specs ?? {}, observe);
+};
+
 const weightAliases = ["Peso maquina", "Peso operativo", "Peso sin carga", "Peso carretilla en vacio"] as const;
+
+const preferredWeightField = (record: ProductRecord, specs: SpecsMap, weight: number): string | null => {
+  const family = manainSourceFamily(record);
+  const field = family === "movimiento-tierra-miniexcavadora" ? "Peso operativo" :
+    family === "movimiento-tierra-minicargadora" ? "Peso sin carga" : null;
+  if (!family || !field || manainSourceDescriptionContradictsFamily(record, family) || weight <= 0 ||
+    record.specs?.Peso !== specs.Peso || record.specs?.[field] !== specs[field] ||
+    weightAliases.some((key) => key !== "Peso maquina" && key !== field &&
+      (record.specs?.[key] !== undefined || specs[key] !== undefined))) return null;
+  return editorialQuantity(specs[field], "kg") === weight ? field : null;
+};
 
 const normalizeMetricPresentation = (key: string, value: SpecValue): SpecValue => {
   if (typeof value !== "string" || ["Marca", "Modelo", "Referencia"].includes(key) ||
@@ -45,8 +64,10 @@ const normalizeGeneratorElectricalPresentation = (record: ProductRecord, key: st
 export const normalizeManainTechnicalSpecs = (record: ProductRecord, specs: SpecsMap): SpecsMap => {
   if (record.providerId !== "manain") return specs;
   const weight = editorialQuantity(specs.Peso, "kg");
-  const redundant = weight === null ? [] :
-    weightAliases.filter((key) => editorialQuantity(specs[key], "kg") === weight);
+  const preferred = weight === null ? null : preferredWeightField(record, specs, weight);
+  const redundant: string[] = weight === null ? [] :
+    weightAliases.filter((key) => key !== preferred && editorialQuantity(specs[key], "kg") === weight);
+  if (preferred !== null) redundant.push("Peso");
   let normalized: Record<string, SpecValue> | null = null;
   for (const key of redundant) {
     normalized ??= { ...specs };

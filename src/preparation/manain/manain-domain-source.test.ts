@@ -46,9 +46,10 @@ test("Manain: capacidad de carga por unidad en familias compatibles, conservando
   const prepared = prepareSourceProduct(source);
   assert.equal(prepared.status, "ready");
   assert.match(prepared.product.description_general ?? "", /capacidad de 230 kg/u);
-  const { ["Capacidad carga"]: capacity, ...remaining } = normalizePreparedTechnicalSpecs(source, source.specs ?? {});
+  const { ["Capacidad carga"]: capacity, ["Altura trabajo"]: workHeight, ...remaining } = normalizePreparedTechnicalSpecs(source, source.specs ?? {});
   assert.equal(capacity, "230 kg");
-  assert.deepEqual(prepared.product.spec, { ...remaining, "Capacidad de la cesta": capacity });
+  assert.equal(workHeight, "10 m");
+  assert.deepEqual(prepared.product.spec, { ...remaining, "Capacidad de la cesta": capacity, "Altura de trabajo": workHeight });
   assert.equal(JSON.stringify(source), original);
 
   const next: ProductRecord = {
@@ -117,9 +118,10 @@ test("Manain: el alcance horizontal de una plataforma alimenta la narrativa comp
   assert.equal(resolveEditorialFacts(adapted)?.lateralReachM, 8.2);
   assert.equal(reconcileManainEditorialSourceSpecs(adapted), adapted);
   const prepared = prepareSourceProduct(record);
-  assert.match(prepared.product.description ?? "", /alcance lateral de 8,2 m/u);
-  assert.match(prepared.product.description_general ?? "", /alcance lateral de 8,2 m/u);
-  assert.equal(prepared.product.spec["Alcance horizontal max."], "8,20 m");
+  assert.match(prepared.product.description ?? "", /alcance horizontal máximo de 8,2 m/u);
+  assert.match(prepared.product.description_general ?? "", /alcance horizontal máximo declarado de 8,2 m/u);
+  assert.equal(prepared.product.spec["Alcance horizontal máximo"], "8,20 m");
+  assert.equal(prepared.product.spec["Alcance horizontal max."], undefined);
   assert.equal(prepared.product.spec["Alcance Lateral"], undefined);
   assert.equal(JSON.stringify(record), original);
   for (const specs of [
@@ -160,7 +162,8 @@ test("Manain: altura de elevación y mástil se adaptan por familia y unidad sin
   assert.match(prepared.product.description_general ?? "", /mástil tríplex declarado/u);
   assert.equal(prepared.product.spec["Altura elevacion"], "4750 mm");
   assert.equal(prepared.product.spec["Altura de elevación (m)"], undefined);
-  assert.equal(prepared.product.spec["Tipo Mástil"], undefined);
+  assert.equal(prepared.product.spec["Tipo Mástil"], "Tríplex");
+  assert.equal(prepared.product.spec["Tipo mastil"], undefined);
   assert.equal(JSON.stringify(record), original);
   const invalid = { ...record, specs: { ...record.specs, "Altura elevacion": "4/5 m", "Tipo mastil": "desconocido" } };
   const rejected = reconcileManainEditorialSourceSpecs(invalid);

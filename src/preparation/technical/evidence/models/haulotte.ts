@@ -195,25 +195,40 @@ export const haulotteDocuments: readonly ReviewedModelDocument[] = [
   {
     url: "https://irp.cdn-website.com/18c68e09/files/uploaded/Haulotte-HA12IP-UK-BD.pdf", brand: "Haulotte", model: "HA12IP", reviewedOn: "2026-11-24",
     reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 12,
-      lengthM: 5.45, widthM: 1.35, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Anchura de plataforma"] }, facts: [
+      lengthM: 5.45, widthM: 1.35, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Anchura de plataforma", "Rotación de torreta"] }, facts: [
       { field: "Altura de plataforma", value: "10 m", support: "Haulotte HA12IP, ficha 03/2012, página 2, datos técnicos: altura de plataforma 10 m, trabajo 12 m, largo 5,45 m, ancho 1,35 m y capacidad 230 kg" },
       { field: "Anchura de plataforma", value: "0,8 m", support: "Haulotte HA12IP, ficha 03/2012, página 2, cota G: 0,8 m tanto en cesta estándar 1,2 x 0,8 m como en opción 1,5 x 0,8 m; no atribuye la dimensión F variable" }
     ]
   },
   {
+    url: "https://irp.cdn-website.com/18c68e09/files/uploaded/Haulotte-HA12IP-UK-BD.pdf", brand: "Haulotte", model: "HA12IP", reviewedOn: "2026-11-26", facts: [
+      { field: "Rotación de torreta", value: "355°", support: "Haulotte HA12IP, ficha 03/2012, p. 2, rotación de torreta 355°; corroborada en ficha 09/2016 (https://vamenoleggio.it/images/mezzi/Piattaforme-Aeree/schede-tecniche/24-Scheda-tecnica-Haulotte-ha12ip-it.pdf). Solo geometría compatible con la tabla; no equivale a rotación de cesta." }
+    ]
+  },
+  {
     url: "https://joysat.eu/wp-content/uploads/2020/09/Caracter%C2%B0stiques-Ta%CC%88cniques-HA15IP.pdf", brand: "Haulotte", model: "HA15IP", reviewedOn: "2026-11-24",
     reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 15,
-      lengthM: 6.6, widthM: 1.5, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Anchura de plataforma"] }, facts: [
+      lengthM: 6.6, widthM: 1.5, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Anchura de plataforma", "Rotación de torreta"] }, facts: [
       { field: "Altura de plataforma", value: "13 m", support: "Haulotte HA15IP, ficha 06/2012, página 2, datos técnicos: altura de plataforma 13 m, trabajo 15 m, largo 6,6 m, ancho 1,5 m y capacidad 230 kg" },
       { field: "Anchura de plataforma", value: "0,8 m", support: "Haulotte HA15IP, ficha 06/2012, página 2, cota G: 0,8 m tanto en cesta estándar 1,2 x 0,8 m como en opción 1,4 x 0,8 m; no atribuye la dimensión F variable" }
     ]
   },
   {
+    url: "https://joysat.eu/wp-content/uploads/2020/09/Caracter%C2%B0stiques-Ta%CC%88cniques-HA15IP.pdf", brand: "Haulotte", model: "HA15IP", reviewedOn: "2026-11-26", facts: [
+      { field: "Rotación de torreta", value: "350°", support: "Haulotte HA15IP, ficha 06/2012, p. 2, rotación de torreta 350°; corroborada en ficha 01/2017 (https://www.coalci.es/wp-content/uploads/2021/07/haulotte-ha15ip.pdf). Solo geometría compatible con la tabla; no equivale a rotación de cesta." }
+    ]
+  },
+  {
     url: "https://joysat.eu/wp-content/uploads/2020/09/Caracter%C2%B0stiques-Ta%CC%88cniques-HA15IP.pdf", brand: "HAULOTTE", model: "HA 15 IP", reviewedOn: "2026-11-24",
     reuse: { compatibility: { family: "plataforma-articulada", energy: "eléctrica", workingHeightM: 15,
-      lengthM: 6.6, widthM: 1.5, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Anchura de plataforma"] }, facts: [
+      lengthM: 6.6, widthM: 1.5, loadCapacityKg: 230 }, fields: ["Altura de plataforma", "Anchura de plataforma", "Rotación de torreta"] }, facts: [
       { field: "Altura de plataforma", value: "13 m", support: "Haulotte HA 15 IP, ficha 06/2012, página 2, datos técnicos: altura de plataforma 13 m, trabajo 15 m, largo 6,6 m, ancho 1,5 m y capacidad 230 kg" },
       { field: "Anchura de plataforma", value: "0,8 m", support: "Haulotte HA 15 IP, ficha 06/2012, página 2, cota G: 0,8 m tanto en cesta estándar 1,2 x 0,8 m como en opción 1,4 x 0,8 m; no atribuye la dimensión F variable" }
+    ]
+  },
+  {
+    url: "https://joysat.eu/wp-content/uploads/2020/09/Caracter%C2%B0stiques-Ta%CC%88cniques-HA15IP.pdf", brand: "HAULOTTE", model: "HA 15 IP", reviewedOn: "2026-11-26", facts: [
+      { field: "Rotación de torreta", value: "350°", support: "Haulotte HA 15 IP, ficha 06/2012, p. 2, rotación de torreta 350°; corroborada en ficha 01/2017 (https://www.coalci.es/wp-content/uploads/2021/07/haulotte-ha15ip.pdf). Solo geometría compatible con la tabla; no equivale a rotación de cesta." }
     ]
   },
   {

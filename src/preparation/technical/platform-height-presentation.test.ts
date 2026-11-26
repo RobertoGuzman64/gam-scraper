@@ -108,7 +108,7 @@ test("las cotas condicionadas conservan la condición, los ejes y la medida orig
   const original: SpecsMap = { "Altura barandilla bajada": "1,8 m", "Altura articulacion": "6 m",
     "Longitud transporte": "4,5 m", "Altura transporte": "2,8 m", "Altura replegada": "2 m", Longitud: "6 m" };
   const expected: SpecsMap = { "Altura con barandillas bajadas": "1,8 m", "Altura de articulación": "6 m",
-    "Longitud transporte": "4,5 m", "Altura de transporte": "2,8 m", "Altura replegada": "2 m", Longitud: "6 m" };
+    "Longitud de transporte": "4,5 m", "Altura de transporte": "2,8 m", "Altura replegada": "2 m", Longitud: "6 m" };
   const output = normalizeOriginalTechnicalPresentation(original, original);
   assert.deepEqual(output, expected);
   assert.deepEqual(normalizeSpecsObject(output).normalized, normalizeSpecsObject(original).normalized);
@@ -186,4 +186,181 @@ test("la presentación separa disponibilidad de elevación libre de una magnitud
     assert.equal(normalizeOriginalTechnicalPresentation(other, original), other);
     assert.equal(normalizeOriginalTechnicalPresentation(original, other), original);
   }
+});
+
+
+test("la altura de trabajo explícita utiliza la denominación compartida sin mezclar cotas", () => {
+  const source: SpecsMap = { "Altura trabajo": "12.40 m", "Altura de plataforma": "10,4 m", "Altura replegada": "2 m", Altura: "3 m" };
+  const observed: string[] = [];
+  const output = normalizeOriginalTechnicalPresentation(source, source, (_before, _after, _mechanism, field) => {
+    if (typeof field === "object") observed.push(field.spec);
+  });
+  assert.deepEqual(output, { "Altura de trabajo": "12,40 m", "Altura de plataforma": "10,4 m", "Altura replegada": "2 m", Altura: "3 m" });
+  assert.deepEqual(observed, ["Altura trabajo"]);
+  assert.deepEqual(normalizeSpecsObject(output).normalized, normalizeSpecsObject(source).normalized);
+  assert.equal(normalizeOriginalTechnicalPresentation(output, source), output);
+  assert.equal(source["Altura trabajo"], "12.40 m");
+  assert.deepEqual(normalizeOriginalTechnicalPresentation({ "Altura trabajo": "12/14 m" }, { "Altura trabajo": "12/14 m" }),
+    { "Altura trabajo": "12 / 14 m" });
+  for (const raw of ["0 m", "12400 mm", "12,4", "12,4 kg", "12,4 m opcional"]) {
+    const invalid: SpecsMap = { "Altura trabajo": raw };
+    assert.equal(normalizeOriginalTechnicalPresentation(invalid, invalid), invalid);
+  }
+  const original: SpecsMap = { "Altura trabajo": "12 m" };
+  const altered: SpecsMap = { "Altura trabajo": "14 m" };
+  assert.equal(normalizeOriginalTechnicalPresentation(altered, original), altered);
+  for (const key of ["Altura de trabajo", "Altura de trabajo (m)", "Altura de trabajo (mm)"]) {
+    const conflict: SpecsMap = { ...original, [key]: "14 m" };
+    assert.equal(normalizeOriginalTechnicalPresentation(conflict, conflict), conflict);
+    assert.equal(normalizeOriginalTechnicalPresentation(original, conflict), original);
+  }
+});
+
+
+test("las cotas de transporte y el alcance máximo mantienen su significado y su evidencia", () => {
+  const original: SpecsMap = { "Longitud transporte": "4,5 m", "Alcance horizontal max.": "8.2 m",
+    "Longitud total": "6 m", "Alcance horizontal": "7 m", "Alcance lateral": "6 m" };
+  const changes: string[] = [];
+  const result = normalizeOriginalTechnicalPresentation(original, original, (_before, _after, _mechanism, field) => {
+    if (typeof field === "object") changes.push(field.spec);
+  });
+  assert.deepEqual(result, { "Longitud de transporte": "4,5 m", "Alcance horizontal máximo": "8,2 m",
+    "Longitud total": "6 m", "Alcance horizontal": "7 m", "Alcance lateral": "6 m" });
+  assert.deepEqual(changes, ["Longitud transporte", "Alcance horizontal max."]);
+  assert.deepEqual(normalizeSpecsObject(result).normalized, normalizeSpecsObject(original).normalized);
+  assert.equal(normalizeOriginalTechnicalPresentation(result, original), result);
+  for (const [alias, canonical] of [["Longitud transporte", "Longitud de transporte"],
+    ["Alcance horizontal max.", "Alcance horizontal máximo"]] as const) {
+    for (const value of ["0 m", "4,5", "4500 mm", "4,5 kg", "4,5 m opcional"]) {
+      const invalid: SpecsMap = { [alias]: value };
+      assert.equal(normalizeOriginalTechnicalPresentation(invalid, invalid), invalid);
+    }
+    const source: SpecsMap = { [alias]: "4,5 m" };
+    const conflict: SpecsMap = { ...source, [canonical]: "5 m" };
+    const altered: SpecsMap = { [alias]: "5 m" };
+    assert.equal(normalizeOriginalTechnicalPresentation(conflict, conflict), conflict);
+    assert.equal(normalizeOriginalTechnicalPresentation(source, conflict), source);
+    assert.equal(normalizeOriginalTechnicalPresentation(altered, source), altered);
+  }
+});
+
+
+test("la anchura explícita en milímetros comparte denominación sin confundir cotas condicionadas", () => {
+  const original: SpecsMap = { Ancho: "1250 mm", "Anchura de plataforma": "0,8 m", "Anchura trabajo": "900 mm" };
+  const observed: string[] = [];
+  const result = normalizeOriginalTechnicalPresentation(original, original, (_before, _after, _mechanism, field) => {
+    if (typeof field === "object") observed.push(field.spec);
+  });
+  assert.deepEqual(result, { Anchura: "1250 mm", "Anchura de plataforma": "0,8 m", "Anchura trabajo": "900 mm" });
+  assert.deepEqual(observed, ["Ancho"]);
+  assert.deepEqual(normalizeSpecsObject(result).normalized, normalizeSpecsObject(original).normalized);
+  assert.equal(normalizeOriginalTechnicalPresentation(result, original), result);
+  assert.equal(original.Ancho, "1250 mm");
+});
+
+test("la anchura conserva las alternativas, las unidades ambiguas y las medidas en conflicto", () => {
+  for (const value of ["1250", "0 mm", "1250/1400 mm", "1250 mm opcional", "1,25 m", "1250 kg", "1250 mm mm"]) {
+    const original = { Ancho: value };
+    assert.equal(normalizeOriginalTechnicalPresentation(original, original), original);
+  }
+  const original = { Ancho: "1250 mm" };
+  const altered = { Ancho: "1400 mm" };
+  assert.equal(normalizeOriginalTechnicalPresentation(altered, original), altered);
+  for (const key of ["Anchura", "Anchura total", "Ancho total", "Anchura (mm)"]) {
+    const conflict = { ...original, [key]: "1400 mm" };
+    assert.equal(normalizeOriginalTechnicalPresentation(conflict, conflict), conflict);
+    assert.equal(normalizeOriginalTechnicalPresentation(original, conflict), original);
+    assert.equal(normalizeOriginalTechnicalPresentation(conflict, original), conflict);
+  }
+  assert.equal(normalizeOriginalTechnicalPresentation(original, {}), original);
+});
+
+
+test("las dimensiones explícitas de cesta comparten denominación sin modificar sus ejes", () => {
+  const original: SpecsMap = { "Dimensiones Cesta": "2,4X1,17 metros", "Anchura de plataforma": "1,17 m" };
+  const observed: string[] = [];
+  const result = normalizeOriginalTechnicalPresentation(original, original, (_before, _after, _mechanism, field) => {
+    if (typeof field === "object") observed.push(field.spec);
+  });
+  assert.deepEqual(result, { "Dimensiones de cesta": "2,4 x 1,17 m", "Anchura de plataforma": "1,17 m" });
+  assert.deepEqual(observed, ["Dimensiones Cesta"]);
+  assert.deepEqual(normalizeSpecsObject(result).normalized, normalizeSpecsObject(original).normalized);
+  assert.equal(normalizeOriginalTechnicalPresentation(result, original), result);
+  assert.equal(original["Dimensiones Cesta"], "2,4X1,17 metros");
+});
+
+test("las dimensiones de cesta ambiguas, compuestas o contradictorias conservan sus claves", () => {
+  for (const value of ["2 x 1", "2 x 1 x 1 m", "2 x 1 m metros", "2 x 0 m", "2 x 1 m opcional", "2 x 1 kg"]) {
+    const original = { "Dimensiones Cesta": value };
+    assert.equal(normalizeOriginalTechnicalPresentation(original, original)["Dimensiones de cesta"], undefined);
+  }
+  const original = { "Dimensiones Cesta": "2 x 1 m" };
+  const changed = { "Dimensiones Cesta": "3 x 1 m" };
+  assert.equal(normalizeOriginalTechnicalPresentation(changed, original), changed);
+  for (const key of ["Dimensiones de cesta", "Dimensiones de la cesta", "Dimensiones cesta (mm)"]) {
+    const conflict = { ...original, [key]: "3 x 1 m" };
+    assert.equal(normalizeOriginalTechnicalPresentation(conflict, conflict), conflict);
+    assert.equal(normalizeOriginalTechnicalPresentation(original, conflict), original);
+    assert.equal(normalizeOriginalTechnicalPresentation(conflict, original), conflict);
+  }
+  assert.equal(normalizeOriginalTechnicalPresentation(original, {}), original);
+});
+
+
+test("las dimensiones de horquillas explícitas en milímetros conservan todos los ejes y su procedencia", () => {
+  for (const [raw, formatted] of [["1200 mm", "1200 mm"], ["1200X150 mm", "1200 x 150 mm"],
+    ["1200X150X45 mm", "1200 x 150 x 45 mm"]] as const) {
+    const original: SpecsMap = { "Dimensiones Horquillas": raw, "Dimensiones de cesta": "2 x 1 m" };
+    const observed: string[] = [];
+    const result = normalizeOriginalTechnicalPresentation(original, original, (_before, _after, _mechanism, field) => {
+      if (typeof field === "object") observed.push(field.spec);
+    });
+    assert.deepEqual(result, { "Dimensiones horquillas (mm)": formatted, "Dimensiones de cesta": "2 x 1 m" });
+    assert.deepEqual(observed, ["Dimensiones Horquillas"]);
+    assert.deepEqual(normalizeSpecsObject(result).normalized, normalizeSpecsObject(original).normalized);
+    assert.equal(normalizeOriginalTechnicalPresentation(result, original), result);
+    assert.equal(original["Dimensiones Horquillas"], raw);
+  }
+});
+
+test("las dimensiones de horquillas conservan unidades ambiguas, alternativas y conflictos", () => {
+  for (const value of ["1200", "1200 x 0 mm", "1200 x 150 x 45 x 30 mm", "1,2 m", "1200/1300 mm", "1200 mm opcional", "1200 kg"]) {
+    const original = { "Dimensiones Horquillas": value };
+    assert.equal(normalizeOriginalTechnicalPresentation(original, original)["Dimensiones horquillas (mm)"], undefined);
+  }
+  const original = { "Dimensiones Horquillas": "1200 mm" };
+  const changed = { "Dimensiones Horquillas": "1300 mm" };
+  assert.equal(normalizeOriginalTechnicalPresentation(changed, original), changed);
+  for (const key of ["Dimensiones horquillas (mm)", "Medidas horquillas", "Horquillas"]) {
+    const conflict = { ...original, [key]: "1300 mm" };
+    assert.equal(normalizeOriginalTechnicalPresentation(conflict, conflict), conflict);
+    assert.equal(normalizeOriginalTechnicalPresentation(original, conflict), original);
+    assert.equal(normalizeOriginalTechnicalPresentation(conflict, original), conflict);
+  }
+  assert.equal(normalizeOriginalTechnicalPresentation(original, {}), original);
+});
+
+test("la pendiente superable explícita conserva su porcentaje y acredita la clave compartida", () => {
+  const original: SpecsMap = { "Pendiente superable": "25%", "Pendiente superable con carga (%)": "12 %" };
+  const changes: string[] = [];
+  const result = normalizeOriginalTechnicalPresentation(original, original, (_before, _after, _mechanism, field) => {
+    if (typeof field === "object") changes.push(field.spec);
+  });
+  assert.deepEqual(result, { "Pendiente superable (%)": "25 %", "Pendiente superable con carga (%)": "12 %" });
+  assert.deepEqual(changes, ["Pendiente superable"]);
+  assert.equal(normalizeOriginalTechnicalPresentation(result, original), result);
+  assert.equal(original["Pendiente superable"], "25%");
+});
+
+test("la pendiente superable no convierte grados, condiciones, rangos ni conflictos de autoridad", () => {
+  for (const raw of ["25", "25 grados", "25-30%", "25% con carga", "25% / 40%", 25]) {
+    const original: SpecsMap = { "Pendiente superable": raw };
+    assert.deepEqual(normalizeOriginalTechnicalPresentation(original, original), original);
+  }
+  const original: SpecsMap = { "Pendiente superable": "25 %" };
+  const conflict: SpecsMap = { ...original, "Pendiente superable (%)": "40 %" };
+  assert.deepEqual(normalizeOriginalTechnicalPresentation(conflict, original), conflict);
+  assert.deepEqual(normalizeOriginalTechnicalPresentation(original, conflict), original);
+  const changed: SpecsMap = { "Pendiente superable": "40 %" };
+  assert.deepEqual(normalizeOriginalTechnicalPresentation(changed, original), changed);
 });

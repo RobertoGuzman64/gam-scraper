@@ -26,8 +26,8 @@ test("las medidas de cazos se atribuyen a la tabla de la misma unidad sin inferi
   const source = original("movimiento-tierra-miniexcavadora", { Peso: "2000 kg", Motor: "Diésel", "Cazo 1 limpieza": "1200 mm", "Cazo 2": "500 mm", "Cazo 3": "300 mm" });
   const details = (record: ProductRecord, prepared: ProductRecord = record): readonly string[] =>
     resolveEquipmentConfigurationDetails(record, prepared, "miniexcavadora");
-  assert.deepEqual(details(source), ["medidas de cazos declaradas de 300, 500 y 1.200 mm"]);
-  assert.match(resolveReusableEditorial(source).general ?? "", /medidas de cazos declaradas de 300, 500 y 1\.200 mm/u);
+  assert.deepEqual(details(source), ["cazo de limpieza declarado de 1.200 mm y otras medidas de cazos declaradas de 300 y 500 mm"]);
+  assert.match(resolveReusableEditorial(source).general ?? "", /cazo de limpieza declarado de 1\.200 mm y otras medidas de cazos declaradas de 300 y 500 mm/u);
   assert.deepEqual(details(source, { ...source, reference: "OTRA" }), []);
   assert.deepEqual(details(source, { ...source, specs: { ...source.specs, "Cazo 3": "400 mm" } }), []);
   for (const value of ["300", "300 kg", "0 mm", "300/400 mm"]) {
@@ -36,6 +36,32 @@ test("las medidas de cazos se atribuyen a la tabla de la misma unidad sin inferi
   }
   assert.deepEqual(details({ ...source, longDescription: "Cazos opcionales." }), []);
   assert.deepEqual(resolveEquipmentConfigurationDetails(source, source, "dumper"), []);
+});
+
+test("la medida del cazo de limpieza solo se diferencia cuando su identificación es explícita y coherente", () => {
+  const specs = { Peso: "2000 kg", Motor: "Diésel", "Cazo 1 limpieza": "1200 mm", "Cazo 2": "500 mm", "Cazo 3": "300 mm" };
+  const sources = [original("movimiento-tierra-miniexcavadora", specs),
+    { ...controlledGomarizPlatform(), title: "Miniexcavadora diésel MARCA MODELO10", specs }];
+  for (const source of sources) {
+    const details = (record: ProductRecord, prepared: ProductRecord = record) =>
+      resolveEquipmentConfigurationDetails(record, prepared, "miniexcavadora");
+    const output = resolveReusableEditorial(source);
+    assert.match(output.general ?? "", /cazo de limpieza declarado de 1\.200 mm y otras medidas de cazos declaradas de 300 y 500 mm/u);
+    assert.doesNotMatch(output.general ?? "", /(?:montado|instalado|incluido)/u);
+    assert.doesNotMatch(output.short ?? "", /cazo/u);
+    const withoutCleaning: Record<string, SpecsMap[string]> = { ...source.specs };
+    delete withoutCleaning["Cazo 1 limpieza"];
+    assert.deepEqual(details({ ...source, specs: withoutCleaning }), ["medidas de cazos declaradas de 300 y 500 mm"]);
+    assert.deepEqual(details({ ...source, specs: { ...source.specs, "Cazo 1 limpieza": "250 mm" } }),
+      ["medidas de cazos declaradas de 250, 300 y 500 mm"]);
+    assert.deepEqual(details({ ...source, specs: { ...source.specs, "Cazo 1 limpieza": "500 mm" } }),
+      ["medidas de cazos declaradas de 300 y 500 mm"]);
+    assert.deepEqual(details(source, { ...source, specs: { ...source.specs, "Cazo 1 limpieza": "1500 mm" } }), []);
+    const cleaningOnly: Record<string, SpecsMap[string]> = { ...source.specs };
+    delete cleaningOnly["Cazo 2"];
+    delete cleaningOnly["Cazo 3"];
+    assert.deepEqual(details({ ...source, specs: cleaningOnly }), ["cazo de limpieza declarado de 1.200 mm"]);
+  }
 });
 
 test("los grupos electrógenos incorporan tensiones y polos declarados sin inferir la configuración de salida", () => {

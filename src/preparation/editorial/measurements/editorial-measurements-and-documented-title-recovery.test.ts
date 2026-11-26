@@ -96,14 +96,14 @@ test("dimensiones totales acreditadas enriquecen la descripción sin confundirse
   assert.equal(resolveEditorialFacts(record)?.lengthM, 4.88);
   assert.equal(resolveEditorialFacts(record)?.widthM, 2.31);
   const general = resolveReusableEditorial(record).general ?? "";
-  assert.match(general, /longitud de 4,88 m/u);
-  assert.match(general, /anchura de 2,31 m/u);
-  assert.doesNotMatch(general, /longitud de 1,81 m|anchura de 3,96 m/u);
+  assert.match(general, /longitud total: 4,88 m/u);
+  assert.match(general, /anchura total: 2,31 m/u);
+  assert.doesNotMatch(general, /longitud (?:de |total: )1,81 m|anchura (?:de |total: )3,96 m/u);
 
   const anotherUnit = { ...record, reference: "OTRA-UNIDAD", url: record.url?.replace("CONTROL-02", "OTRA-UNIDAD") ?? null,
     specs: { ...record.specs, "Longitud total": "5,25 m", "Ancho total": "2,40 m" } };
-  assert.match(resolveReusableEditorial(anotherUnit).general ?? "", /longitud de 5,25 m/u);
-  assert.doesNotMatch(resolveReusableEditorial(anotherUnit).general ?? "", /longitud de 4,88 m/u);
+  assert.match(resolveReusableEditorial(anotherUnit).general ?? "", /longitud total: 5,25 m/u);
+  assert.doesNotMatch(resolveReusableEditorial(anotherUnit).general ?? "", /longitud (?:de |total: )4,88 m/u);
 
   const alternateLabels = { ...record, specs: {
     ...source.specs, Largo: "4880 mm", Ancho: "2310 mm"
@@ -115,12 +115,12 @@ test("dimensiones totales acreditadas enriquecen la descripción sin confundirse
   const doubtfulWidth = { ...record, specs: { ...source.specs, Largo: "4880 mm", Ancho: "180 mm" } };
   assert.equal(resolveEditorialFacts(doubtfulWidth)?.lengthM, 4.88);
   assert.equal(resolveEditorialFacts(doubtfulWidth)?.widthM, null);
-  assert.doesNotMatch(resolveReusableEditorial(doubtfulWidth).general ?? "", /anchura de /u);
+  assert.doesNotMatch(resolveReusableEditorial(doubtfulWidth).general ?? "", /anchura (?:de |total: )/u);
 
   const inconsistent = { ...record, specs: { ...record.specs, Longitud: "5 m", Anchura: "2 m" } };
   assert.equal(resolveEditorialFacts(inconsistent)?.lengthM, null);
   assert.equal(resolveEditorialFacts(inconsistent)?.widthM, null);
-  assert.doesNotMatch(resolveReusableEditorial(inconsistent).general ?? "", /longitud de |anchura de /u);
+  assert.doesNotMatch(resolveReusableEditorial(inconsistent).general ?? "", /(?:longitud|anchura) (?:de |total: )/u);
 
   for (const invalid of ["4,88 kg", "4,88 m o 5 m", "sin dato"]) {
     assert.equal(resolveEditorialFacts({ ...record, specs: { ...record.specs, "Longitud total": invalid } })?.lengthM, null);

@@ -107,11 +107,29 @@ export const normalizeOriginalPercentagePresentation = (specs: SpecsMap, origina
     return parseExplicitPercentagePresentation(value, canonical === "Estado baterías" ? 100 : undefined) ?? value;
   });
 
+const reconcileOriginalGradeability = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  const target = "Pendiente superable (%)";
+  const matches = (key: string): boolean => normalizeSpecKey(key) === target;
+  const fields = Object.keys(specs).filter(matches);
+  const originals = Object.keys(originalSpecs).filter(matches);
+  const key = fields[0];
+  if (fields.length !== 1 || originals.length !== 1 || key === undefined || originals[0] !== key ||
+    fold(key) !== "pendiente superable") return specs;
+  const raw = parseExplicitPercentagePresentation(originalSpecs[key]);
+  const value = specs[key];
+  if (raw === null || typeof value !== "string" || parseExplicitPercentagePresentation(value) !== raw) return specs;
+  const { [key]: removed, ...remaining } = specs;
+  const result = { ...remaining, [target]: value };
+  observe?.(specs, result, "src/preparation/technical/technical-presentation.ts", { spec: key });
+  return result;
+};
+
 const directLengthFields = new Set([
-  "altura", "altura de trabajo", "altura de trabajo (m)", "altura almacenaje", "altura plataforma",
+  "altura", "altura trabajo", "altura de trabajo", "altura de trabajo (m)", "altura almacenaje", "altura plataforma",
   "altura de plataforma", "altura replegada", "altura total", "longitud", "longitud total", "longitud transporte",
   "anchura", "anchura total", "ancho total", "anchura limpieza", "alcance lateral", "alcance horizontal",
-  "alcance horizontal (m)", "radio de giro", "radio de giro (exterior)",
+  "alcance horizontal (m)", "alcance horizontal max.", "alcance horizontal maximo", "radio de giro", "radio de giro (exterior)",
   "altura de elevacion (m)", "anchura trabajo"
 ]);
 
@@ -182,9 +200,30 @@ const reconcileOriginalBatteryConfiguration = (specs: SpecsMap, originalSpecs: S
   return result.specs;
 };
 
+const reconcileOriginalBatteryChemistry = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  const target = "Tipo de batería";
+  const matches = (key: string): boolean => normalizeSpecKey(key) === target;
+  const current = Object.keys(specs).filter(matches);
+  const original = Object.keys(originalSpecs).filter(matches);
+  const key = current[0];
+  if (current.length !== 1 || original.length !== 1 || key === undefined || key === target || original[0] !== key) return specs;
+  const raw = originalSpecs[key];
+  const value = specs[key];
+  if (typeof raw !== "string" || typeof value !== "string") return specs;
+  const chemistry = normalizeBatteryChemistryLabel(raw);
+  if (!["Litio", "Plomo", "Plomo-ácido", "Ion-litio", "AGM", "Gel"].includes(chemistry) ||
+    normalizeBatteryChemistryLabel(value) !== chemistry) return specs;
+  const { [key]: removed, ...remaining } = specs;
+  const result = { ...remaining, [target]: chemistry };
+  observe?.(specs, result, "src/preparation/technical/technical-presentation.ts", { spec: key });
+  return result;
+};
+
 export const normalizeOriginalEnergyPresentation = (specs: SpecsMap, originalSpecs: SpecsMap,
   observe?: TechnicalRecoveryObservation): SpecsMap => {
-  const reconciled = reconcileOriginalBatteryConfiguration(specs, originalSpecs, observe);
+  const configuration = reconcileOriginalBatteryConfiguration(specs, originalSpecs, observe);
+  const reconciled = reconcileOriginalBatteryChemistry(configuration, originalSpecs, observe);
   return normalizeDirectOriginalPresentation(reconciled, originalSpecs, (key, value) => {
     if (/^(?:motor|tipo de motor|tipo motor|motorizacion|combustible)$/u.test(key)) return normalizeEnergyLabel(value);
     if (/^(?:voltios|voltaje|voltaje de la bateria|voltaje del cargador|tension nominal de bateria)$/u.test(key)) {
@@ -213,18 +252,18 @@ const platformHeightKeys = new Set(["Altura plataforma (mm)", "Altura plataforma
 
 const reconcileOriginalPlatformMeasure = (specs: SpecsMap, originalSpecs: SpecsMap,
   field: string, matches: (key: string) => boolean, accepts: (key: string) => boolean,
-  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  observe?: TechnicalRecoveryObservation, unit: "m" | "mm" = "m"): SpecsMap => {
   const fields = Object.keys(specs).filter(matches);
   const originalFields = Object.keys(originalSpecs).filter(matches);
   const key = fields[0];
   if (fields.length !== 1 || originalFields.length !== 1 || key === undefined || originalFields[0] !== key || !accepts(key)) return specs;
   const raw = originalSpecs[key];
   const value = specs[key];
-  const explicitMetres = /^\d+(?:[.,]\d+)?\s*(?:m|metros?)$/iu;
-  if (typeof raw !== "string" || typeof value !== "string" || !explicitMetres.test(raw.trim()) ||
-    !explicitMetres.test(value.trim())) return specs;
-  const measure = parseMeasuredLength(raw, key, "m");
-  if (measure === null || measure <= 0 || parseMeasuredLength(value, key, "m") !== measure) return specs;
+  const explicitMeasure = unit === "mm" ? /^[1-9]\d*\s*mm$/iu : /^\d+(?:[.,]\d+)?\s*(?:m|metros?)$/iu;
+  if (typeof raw !== "string" || typeof value !== "string" || !explicitMeasure.test(raw.trim()) ||
+    !explicitMeasure.test(value.trim())) return specs;
+  const measure = parseMeasuredLength(raw, key, unit);
+  if (measure === null || measure <= 0 || parseMeasuredLength(value, key, unit) !== measure) return specs;
   const { [key]: removed, ...remaining } = specs;
   const result = { ...remaining, [field]: value };
   observe?.(specs, result, "src/preparation/technical/technical-presentation.ts", { spec: key });
@@ -236,6 +275,13 @@ export const normalizeOriginalPlatformHeightPresentation = (specs: SpecsMap, ori
   reconcileOriginalPlatformMeasure(specs, originalSpecs, "Altura de plataforma",
     (key) => platformHeightKeys.has(normalizeSpecKey(key)), (key) => fold(key) === "altura plataforma", observe);
 
+const workHeightKeys = new Set(["Altura de trabajo (mm)", "Altura de trabajo (m)"]);
+
+const normalizeOriginalWorkingHeightPresentation = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap =>
+  reconcileOriginalPlatformMeasure(specs, originalSpecs, "Altura de trabajo",
+    (key) => workHeightKeys.has(normalizeSpecKey(key)), (key) => fold(key) === "altura trabajo", observe);
+
 const platformAxisFields = ["Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] as const;
 
 export const normalizeOriginalPlatformAxisPresentation = (specs: SpecsMap, originalSpecs: SpecsMap,
@@ -243,15 +289,73 @@ export const normalizeOriginalPlatformAxisPresentation = (specs: SpecsMap, origi
   platformAxisFields.reduce<SpecsMap>((result, field) => reconcileOriginalPlatformMeasure(result, originalSpecs, field,
     (key) => normalizeSpecKey(key) === field, (key) => key !== field && !/\((?:mm|cm)\)\s*$/iu.test(key), observe), specs);
 
+export const normalizeOriginalScissorExtensionPresentation = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap =>
+  reconcileOriginalPlatformMeasure(specs, originalSpecs, "Extensión de plataforma",
+    (key) => ["Longitud extensión", "Extensión de plataforma"].includes(normalizeSpecKey(key)) ||
+      /^(?:extension(?: de (?:la )?(?:plataforma|cesta))?|longitud (?:de )?extension|plataforma (?:extensible|desplegable|desplazable)|lateral extensible)(?: \(m[m]?\))?$/u.test(fold(key)),
+    (key) => fold(key) === "longitud extension", observe);
+
 const normalizeOriginalTotalWidthPresentation = (specs: SpecsMap, originalSpecs: SpecsMap,
   observe?: TechnicalRecoveryObservation): SpecsMap =>
   reconcileOriginalPlatformMeasure(specs, originalSpecs, "Anchura total",
     (key) => normalizeSpecKey(key) === "Anchura (mm)", (key) => fold(key) === "ancho total", observe);
 
+const normalizeOriginalWidthPresentation = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap =>
+  reconcileOriginalPlatformMeasure(specs, originalSpecs, "Anchura",
+    (key) => normalizeSpecKey(key) === "Anchura (mm)", (key) => fold(key) === "ancho", observe, "mm");
+
+const normalizeOriginalBasketGeometry = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  const target = "Dimensiones de cesta";
+  const matches = (key: string): boolean => normalizeSpecKey(key) === "Dimensiones cesta (mm)";
+  const fields = Object.keys(specs).filter(matches);
+  const originalFields = Object.keys(originalSpecs).filter(matches);
+  const key = fields[0];
+  if (fields.length !== 1 || originalFields.length !== 1 || key === undefined || originalFields[0] !== key ||
+    fold(key) !== "dimensiones cesta") return specs;
+  const raw = originalSpecs[key];
+  const value = specs[key];
+  const explicit = /^\d+(?:[.,]\d{1,2})?\s*[x×]\s*\d+(?:[.,]\d{1,2})?\s*(?:mm|cm|m|metros?)$/iu;
+  if (typeof raw !== "string" || typeof value !== "string" || !explicit.test(raw.trim()) || !explicit.test(value.trim())) return specs;
+  const dimensions = basketDimensions(raw);
+  if (dimensions === null || basketDimensions(value) !== dimensions) return specs;
+  const { [key]: removed, ...remaining } = specs;
+  const result = { ...remaining, [target]: value };
+  observe?.(specs, result, "src/preparation/technical/technical-presentation.ts", { spec: key });
+  return result;
+};
+
+const normalizeOriginalForkGeometry = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  const target = "Dimensiones horquillas (mm)";
+  const matches = (key: string): boolean => normalizeSpecKey(key) === target || fold(key) === "horquillas";
+  const fields = Object.keys(specs).filter(matches);
+  const originalFields = Object.keys(originalSpecs).filter(matches);
+  const key = fields[0];
+  if (fields.length !== 1 || originalFields.length !== 1 || key === undefined || originalFields[0] !== key ||
+    fold(key) !== "dimensiones horquillas") return specs;
+  const raw = originalSpecs[key];
+  const value = specs[key];
+  const explicit = /^\d{1,5}(?:\s*[x×]\s*\d{1,5}){0,2}\s*mm$/iu;
+  if (typeof raw !== "string" || typeof value !== "string" || !explicit.test(raw.trim()) || !explicit.test(value.trim())) return specs;
+  const original = parseDimension(raw);
+  const current = parseDimension(value);
+  if (!original || !current || original.largo !== current.largo || original.ancho !== current.ancho ||
+    original.grosor !== current.grosor) return specs;
+  const { [key]: removed, ...remaining } = specs;
+  const result = { ...remaining, [target]: value };
+  observe?.(specs, result, "src/preparation/technical/technical-presentation.ts", { spec: key });
+  return result;
+};
+
 const conditionedGeometryFields = [
   ["Altura barandilla bajada", "Altura con barandillas bajadas"],
   ["Altura articulacion", "Altura de articulación"],
-  ["Altura transporte", "Altura de transporte"]
+  ["Altura transporte", "Altura de transporte"],
+  ["Longitud transporte", "Longitud de transporte"],
+  ["Alcance horizontal max.", "Alcance horizontal máximo"]
 ] as const;
 
 const normalizeOriginalConditionedGeometry = (specs: SpecsMap, originalSpecs: SpecsMap,
@@ -260,6 +364,25 @@ const normalizeOriginalConditionedGeometry = (specs: SpecsMap, originalSpecs: Sp
     reconcileOriginalPlatformMeasure(result, originalSpecs, field, (key) => normalizeSpecKey(key) === canonical,
       (key) => fold(key) === fold(canonical), observe), specs);
 
+const normalizeOriginalMastPresentation = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  const target = "Tipo Mástil";
+  const matches = (key: string): boolean => normalizeSpecKey(key) === target;
+  const current = Object.keys(specs).filter(matches);
+  const original = Object.keys(originalSpecs).filter(matches);
+  const key = current[0];
+  if (current.length !== 1 || original.length !== 1 || key === undefined || key === target || original[0] !== key) return specs;
+  const raw = originalSpecs[key];
+  const value = specs[key];
+  if (typeof raw !== "string" || typeof value !== "string") return specs;
+  const mast = normalizeMastLabel(raw);
+  if (!["Simple", "Dúplex", "Tríplex", "Cuádruplex"].includes(mast) || normalizeMastLabel(value) !== mast) return specs;
+  const { [key]: removed, ...remaining } = specs;
+  const result = { ...remaining, [target]: mast };
+  observe?.(specs, result, "src/preparation/technical/technical-presentation.ts", { spec: key });
+  return result;
+};
+
 export const normalizeOriginalTechnicalPresentation = (specs: SpecsMap, originalSpecs: SpecsMap, observe?: TechnicalRecoveryObservation): SpecsMap => {
   const availability = reconcileSourceFreeLiftAvailability(specs, originalSpecs);
   const source = availability.rename?.from;
@@ -267,13 +390,18 @@ export const normalizeOriginalTechnicalPresentation = (specs: SpecsMap, original
   if (source && reconciled !== specs) observe?.(specs, reconciled, "src/preparation/technical/technical-presentation.ts", { spec: source });
   const mass = normalizeOriginalMassPresentation(reconciled, originalSpecs);
   const length = normalizeOriginalLengthPresentation(mass, originalSpecs);
-  const elevation = normalizeOriginalPlatformHeightPresentation(length, originalSpecs, observe);
+  const workHeight = normalizeOriginalWorkingHeightPresentation(length, originalSpecs, observe);
+  const elevation = normalizeOriginalPlatformHeightPresentation(workHeight, originalSpecs, observe);
   const axes = normalizeOriginalPlatformAxisPresentation(elevation, originalSpecs, observe);
   const width = normalizeOriginalTotalWidthPresentation(axes, originalSpecs, observe);
-  const geometry = normalizeOriginalConditionedGeometry(width, originalSpecs, observe);
-  const energy = normalizeOriginalEnergyPresentation(geometry, originalSpecs, observe);
+  const geometry = normalizeOriginalConditionedGeometry(normalizeOriginalWidthPresentation(width, originalSpecs, observe), originalSpecs, observe);
+  const basket = normalizeOriginalBasketGeometry(geometry, originalSpecs, observe);
+  const forks = normalizeOriginalForkGeometry(basket, originalSpecs, observe);
+  const mast = normalizeOriginalMastPresentation(forks, originalSpecs, observe);
+  const energy = normalizeOriginalEnergyPresentation(mast, originalSpecs, observe);
   const travel = normalizeOriginalTravelPresentation(energy, originalSpecs);
-  return normalizeOriginalRotationPresentation(normalizeOriginalPercentagePresentation(travel, originalSpecs), originalSpecs);
+  const percentage = normalizeOriginalPercentagePresentation(travel, originalSpecs);
+  return normalizeOriginalRotationPresentation(reconcileOriginalGradeability(percentage, originalSpecs, observe), originalSpecs);
 };
 
 export const rejectImplausibleTechnicalWeight = (record: ProductRecord, specs: SpecsMap): SpecsMap => {

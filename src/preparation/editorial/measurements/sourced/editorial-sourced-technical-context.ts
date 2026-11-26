@@ -193,6 +193,10 @@ export const resolveDocumentedModelGeneral = (
         "alcance horizontal", "m", 0.5, 60, /\balcance\s+(?:lateral|horizontal)\b[^.!?;\n]{0,35}\d/iu);
       add(["Longitud de plumín", "Longitud del plumín"], "longitud de plumín", "m", 0.2, 10,
         /\b(?:plum[ií]n|jib)\b/iu);
+      add(["Rotación de torreta"], "rotación de torreta", "°", 1, 360,
+        /\b(?:torreta|torre|rotaci[oó]n|giro|giratori[oa])\b/iu);
+      add(["Rotación de cesta"], "rotación de cesta", "°", 1, 360,
+        /\b(?:rotaci[oó]n|giro|gira|giratori[oa]|orientaci[oó]n|orientable)\b[^.!?;\n]{0,45}\b(?:cesta|plataforma)\b|\b(?:cesta|plataforma)\b[^.!?;\n]{0,45}\b(?:rotaci[oó]n|giro|gira|giratori[oa]|orientaci[oó]n|orientable)\b/iu);
     }
     if (family === "plataforma-telescopica") {
       add(["Anchura con ejes recogidos"], "anchura con ejes recogidos", "m", 0.5, 8,

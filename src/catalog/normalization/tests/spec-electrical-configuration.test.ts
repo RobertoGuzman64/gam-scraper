@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import type { SpecsMap } from "../../../contracts/catalog.js";
 import { normalizeSpecsObject, reconcileSourceBatteryConfiguration } from "../normalize-specs.js";
 import { normalizeBatteryChemistryLabel, parseExplicitPowerPresentation } from "../spec-parsers.js";
 import { normalizeOriginalEnergyPresentation } from "../../../preparation/technical/technical-presentation.js";
@@ -117,4 +118,35 @@ test("la reconciliación de configuración de batería exige la misma evidencia 
   }
   const explicitCapacity = { "Capacidad de la batería (Ah)": "24 V / 315 Ah" };
   assert.deepEqual(reconcileSourceBatteryConfiguration(explicitCapacity, explicitCapacity), { specs: explicitCapacity, rename: null });
+});
+
+
+test("la química de batería acreditada adopta la clave común sin confundir tecnologías", () => {
+  for (const [key, raw, expected] of [["Tipo de Batería", "Li-ion", "Ion-litio"],
+    ["Tipo bateria", "Plomo-ácido", "Plomo-ácido"], ["TIPO DE BATERIA", "Gel", "Gel"],
+    ["Tipo de Batería", "Batería de litio", "Litio"]] as const) {
+    const original: SpecsMap = { [key]: raw, "Voltaje del cargador": "24 V" };
+    const changes: string[] = [];
+    const result = normalizeOriginalEnergyPresentation(original, original, (_before, _after, _mechanism, field) => {
+      if (typeof field === "object") changes.push(field.spec);
+    });
+    assert.deepEqual(result, { "Voltaje del cargador": "24 V", "Tipo de batería": expected });
+    assert.deepEqual(changes, [key]);
+    assert.equal(normalizeOriginalEnergyPresentation(result, original), result);
+    assert.equal(original[key], raw);
+  }
+});
+
+test("la química de batería no renombra opciones, conflictos ni valores sin respaldo de origen", () => {
+  for (const raw of ["Plomo / litio", "Litio opcional", "Sin baterías", "Li-ion 48 V 15 Ah"]) {
+    const input = { "Tipo de Batería": raw };
+    assert.equal(normalizeOriginalEnergyPresentation(input, input), input);
+  }
+  const original = { "Tipo de Batería": "Li-ion" };
+  const conflict = { ...original, "Tipo de batería": "Gel" };
+  assert.deepEqual(normalizeOriginalEnergyPresentation(conflict, original), { ...conflict, "Tipo de Batería": "Ion-litio" });
+  assert.deepEqual(normalizeOriginalEnergyPresentation(original, conflict), { "Tipo de Batería": "Ion-litio" });
+  const recovered = { "Tipo de Batería": "Gel" };
+  assert.equal(normalizeOriginalEnergyPresentation(recovered, original), recovered);
+  assert.equal(normalizeOriginalEnergyPresentation(original, {}), original);
 });

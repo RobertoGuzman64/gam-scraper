@@ -91,10 +91,20 @@ export const resolveEquipmentConfigurationDetails = (
     });
     if (present.length > 0 && values.every((value): value is number => value !== null)) {
       const sizes = [...new Set(values)].sort((left, right) => left - right);
-      const formatted = sizes.map(formatEditorialQuantity);
-      const listed = formatted.length === 1 ? formatted[0] :
-        `${formatted.slice(0, -1).join(", ")} y ${formatted[formatted.length - 1]}`;
-      details.push(`medidas de cazos declaradas de ${listed} mm`);
+      const cleaning = present[0] === "Cazo 1 limpieza" ? values[0] : undefined;
+      const others = values.slice(1);
+      if (cleaning !== undefined && others.every((value) => value < cleaning)) {
+        const otherSizes = [...new Set(others)].sort((left, right) => left - right).map(formatEditorialQuantity);
+        const otherMeasures = otherSizes.length === 1 ? otherSizes[0] :
+          `${otherSizes.slice(0, -1).join(", ")} y ${otherSizes[otherSizes.length - 1]}`;
+        details.push(`cazo de limpieza declarado de ${formatEditorialQuantity(cleaning)} mm${otherSizes.length ?
+          ` y otras medidas de cazos declaradas de ${otherMeasures} mm` : ""}`);
+      } else {
+        const formatted = sizes.map(formatEditorialQuantity);
+        const listed = formatted.length === 1 ? formatted[0] :
+          `${formatted.slice(0, -1).join(", ")} y ${formatted[formatted.length - 1]}`;
+        details.push(`medidas de cazos declaradas de ${listed} mm`);
+      }
     }
   }
   return details;

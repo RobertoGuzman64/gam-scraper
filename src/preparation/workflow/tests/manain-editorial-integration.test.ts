@@ -9,7 +9,7 @@ import { readVerifiedManainRecordSource } from "../../../infrastructure/filesyst
 import { prepareImportBatch } from "../../product/batch-identity.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { normalizePreparedTechnicalSpecs } from "../../technical/preparation-technical-stages.js";
-import { reconcileManainMassCapacityPresentation } from "../../manain/normalization.js";
+import { reconcileManainMassCapacityPresentation, reconcileManainScissorExtensionPresentation } from "../../manain/normalization.js";
 import { normalizeOriginalTechnicalPresentation } from "../../technical/technical-presentation.js";
 import { captureSourceEditorialEvidence } from "../../editorial/claims/source-editorial-evidence.js";
 import { resolveEditorialSource } from "../../editorial/core/editorial-source.js";
@@ -53,7 +53,8 @@ test("Manain: el original verificado atraviesa íntegramente el motor editorial 
     const originalSpecs = source.specs ?? {};
     const normalizedSpecs = normalizePreparedTechnicalSpecs(source, originalSpecs);
     const presentedSpecs = normalizeOriginalTechnicalPresentation(normalizedSpecs, originalSpecs);
-    const expectedSpecs = reconcileManainMassCapacityPresentation(source, presentedSpecs);
+    const expectedSpecs = reconcileManainScissorExtensionPresentation(source,
+      reconcileManainMassCapacityPresentation(source, presentedSpecs));
     for (const [key, value] of Object.entries(presentedSpecs)) {
       if (key in expectedSpecs) continue;
       assert.ok(!(key in prepared.product.spec), key);

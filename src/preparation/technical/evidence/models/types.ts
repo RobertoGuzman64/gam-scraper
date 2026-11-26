@@ -5,6 +5,7 @@ type ReviewedModelCompatibility = (Pick<EditorialFacts, "energy" | "workingHeigh
   readonly firstYear?: number;
   readonly lastYear?: number;
   readonly advertisedHeightClassM?: number;
+  readonly weightKg?: number;
 }) | (Pick<EditorialFacts, "energy" | "workingHeightM"> & {
   readonly family: "plataforma-articulada" | "plataforma-tijera";
   readonly invariantGeometry: true;

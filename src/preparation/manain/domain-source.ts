@@ -110,7 +110,7 @@ export const manainHorizontalReach = (record: ProductRecord): number | null => {
     family === "elevacion-camion-cesta";
   if (!boom && !telehandler) return null;
   const reach = editorialQuantityOf(record.specs, telehandler ? ["Alcance maximo"] :
-    ["Alcance horizontal max.", "Alcance horizontal"], "m");
+    ["Alcance horizontal max.", "Alcance horizontal máximo", "Alcance horizontal"], "m");
   return reach !== null && reach >= 0.5 && reach <= 60 ? reach : null;
 };
 

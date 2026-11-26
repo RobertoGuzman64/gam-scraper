@@ -46,7 +46,7 @@ export const resolvePlatformOperationalDetails = (
   const work = matchingMetric(source, prepared, ["Altura trabajo", "Altura de trabajo", "Altura de trabajo (m)"]);
   if (family === "plataforma-mastil" && work !== null && work >= 3 && work <= 60) {
     const platformLength = matchingMetric(source, prepared, ["Longitud plataforma", "Longitud de plataforma"]);
-    const keys = ["Alcance horizontal", "Alcance horizontal max.", "Alcance lateral", "Alcance Lateral"];
+    const keys = ["Alcance horizontal", "Alcance horizontal max.", "Alcance horizontal máximo", "Alcance lateral", "Alcance Lateral"];
     const reach = matchingMetric(source, prepared, keys);
     if (platformLength !== null && platformLength >= 0.4 && platformLength <= 5 &&
       reach !== null && reach > platformLength && reach <= work &&

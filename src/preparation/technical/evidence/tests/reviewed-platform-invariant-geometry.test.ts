@@ -218,7 +218,7 @@ test("recupera la anchura común sin atribuir dimensiones variables cuando falta
 test("mantiene la precedencia geométrica y rechaza contradicciones en la recuperación alternativa", () => {
   const record = sparseArticulatedPlatform("Haulotte", "HA12IP", "2015", "12");
   const complete: ProductRecord = { ...record, specs: { ...record.specs, Longitud: "5,45 m", Anchura: "1,35 m", Capacidad: "230 kg" } };
-  assert.deepEqual(recoverDocumented(complete), { ...complete.specs, "Altura de plataforma": "10 m", "Anchura de plataforma": "0,8 m" });
+  assert.deepEqual(recoverDocumented(complete), { ...complete.specs, "Altura de plataforma": "10 m", "Anchura de plataforma": "0,8 m", "Rotación de torreta": "355°" });
   for (const invalid of [
     { ...record, year: null }, { ...record, year: "2021" }, { ...record, condition: "Nuevo" as const },
     { ...record, url: record.url.replace("HA12IP", "HA15IP") },
