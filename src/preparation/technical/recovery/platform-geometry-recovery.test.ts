@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
+import { originalRecordFingerprint } from "../../../catalog/identity-fingerprint.js";
 import { controlledGomarizPlatform } from "../../editorial/core/editorial-contract-records.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
+import { findTechnicalSpecEvidence } from "../../provenance/technical-provenance.js";
+import { classifyPublishedTechnicalSpec } from "../../provenance/technical-spec-classification.js";
 import { recoverSourcePlatformGeometry } from "./platform-geometry-recovery.js";
 
 const pair = "La plataforma principal presenta unas dimensiones de 1.670 mm de longitud y 740 mm de anchura.";
@@ -91,9 +94,14 @@ test("recupera cotas de cesta con millares explícitos y construcciones de capac
     assert.equal(recover(record)["Dimensiones de cesta"], "1,4 x 0,7 x 1,1 m");
     const prepared = prepareSourceProduct(record);
     assert.equal(prepared.product.spec["Dimensiones de cesta"], "1,4 x 0,7 x 1,1 m");
-    const entry = prepared.technicalProvenance?.entries.find((item) => item.field === "Dimensiones de cesta");
+    const provenance = prepared.technicalProvenance;
+    assert.ok(provenance);
+    assert.equal(provenance.originalRecordSha256, originalRecordFingerprint(record));
+    const entry = findTechnicalSpecEvidence(provenance.entries, "Dimensiones de cesta", "1,4 x 0,7 x 1,1 m");
     assert.equal(entry?.scope, "unit");
+    assert.equal(entry?.sourceField, "longDescription");
     assert.equal(entry?.sourceValue, record.longDescription);
+    assert.equal(classifyPublishedTechnicalSpec(record, provenance, "Dimensiones de cesta", "1,4 x 0,7 x 1,1 m"), "own");
     assert.equal(recover(truckFromOtherProvider(record))["Dimensiones de cesta"], "1,4 x 0,7 x 1,1 m");
   }
 });
