@@ -243,7 +243,7 @@ const createSourceTracing = (source) => {
     const current = unwrap(node);
     if (!ts.isCallExpression(current)) return false;
     const callee = current.expression.getText(source);
-    if (/\breadVerifiedManainRecordSource$/u.test(callee)) {
+    if (/(?:readVerifiedManainRecordSource|resolveAccreditedPublication)$/u.test(callee)) {
       return current.arguments.some((argument) => cwdRoot(argument));
     }
     if (!/(?:readCanonicalCatalog|readFile(?:Sync)?|loadCatalog|createReadStream|openSync)$/u.test(callee)) return false;
@@ -388,7 +388,24 @@ const checkVolatileExpectations = (source, visit) => {
   });
 };
 
-const checkMandatoryReferences = (source, visit) => {
+const liveTestScope = (source, transitiveLive) => {
+  const { liveRead } = createSourceTracing(source);
+  const testOwner = (node) => {
+    for (let owner = node.parent; owner; owner = owner.parent) {
+      if (ts.isFunctionLike(owner) && ts.isCallExpression(owner.parent) &&
+        /^(?:test|it|test\.(?:only|skip|todo)|it\.(?:only|skip|todo))$/u.test(owner.parent.expression.getText(source))) return owner;
+    }
+    return null;
+  };
+  const owners = new Set();
+  visitNodes(source, (node) => {
+    if (ts.isCallExpression(node) && liveRead(node)) owners.add(testOwner(node));
+  });
+  return (node) => transitiveLive || owners.size === 0 || owners.has(null) || owners.has(testOwner(node));
+};
+
+const checkMandatoryReferences = (source, visit, transitiveLive) => {
+  const inLiveTest = liveTestScope(source, transitiveLive);
   const foundReference = new Map();
   const localArrays = new Set();
   visitNodes(source, (node) => {
@@ -426,9 +443,91 @@ const checkMandatoryReferences = (source, visit) => {
         scope = nearestScope(scope);
       }
     }
-    if (requiredReference || requiredSet || requiredLookup || requiredVariable) {
+    if (requiredReference || (requiredSet && inLiveTest(node)) || requiredLookup || requiredVariable) {
       visit("T-FIXED-REFERENCE", node, "El test exige referencias concretas de un catálogo operativo");
     }
+  });
+};
+
+const checkFixedSelections = (source, visit, transitiveLive) => {
+  const inLiveTest = liveTestScope(source, transitiveLive);
+  const declaration = declaredValues(source);
+  const unwrap = (node) => ts.isAsExpression(node) || ts.isParenthesizedExpression(node)
+    ? unwrap(node.expression) : node;
+  const fixed = (node, seen = new Set()) => {
+    const current = unwrap(node);
+    if (seen.has(current)) return false;
+    seen.add(current);
+    if (ts.isStringLiteralLike(current) || ts.isNumericLiteral(current)) return true;
+    if (ts.isArrayLiteralExpression(current)) return current.elements.length > 0 &&
+      current.elements.every((element) => fixed(element, new Set(seen)));
+    if (ts.isObjectLiteralExpression(current)) return current.properties.every((property) => ts.isPropertyAssignment(property) && fixed(property.initializer, new Set(seen)));
+    if (!ts.isIdentifier(current)) return false;
+    const initializer = declaration(current);
+    if (initializer) return fixed(initializer, seen);
+    for (let owner = current.parent; owner; owner = owner.parent) {
+      if (ts.isForOfStatement(owner) && ts.isVariableDeclarationList(owner.initializer) &&
+        owner.initializer.declarations.some(({ name }) => bindingContains(name, current.text))) {
+        return fixed(owner.expression, seen);
+      }
+      if (!ts.isFunctionLike(owner)) continue;
+      const index = owner.parameters.findIndex(({ name }) => bindingContains(name, current.text));
+      if (index < 0) continue;
+      const binding = owner.parent;
+      if (!ts.isVariableDeclaration(binding) || !ts.isIdentifier(binding.name)) return false;
+      let found = false;
+      visitNodes(source, (call) => {
+        if (ts.isCallExpression(call) && ts.isIdentifier(call.expression) &&
+          declaration(call.expression) === owner && call.arguments[index] &&
+          fixed(call.arguments[index], new Set(seen))) found = true;
+      });
+      return found;
+    }
+    return false;
+  };
+  const bindingContains = (name, text) => ts.isIdentifier(name) ? name.text === text :
+    name.elements.some((element) => ts.isBindingElement(element) && bindingContains(element.name, text));
+  const syntheticCollection = (node, seen = new Set()) => {
+    const current = unwrap(node);
+    if (seen.has(current)) return false;
+    seen.add(current);
+    if (ts.isArrayLiteralExpression(current)) return current.elements.every((element) =>
+      !ts.isSpreadElement(element) || syntheticCollection(element.expression, new Set(seen)));
+    if (ts.isIdentifier(current)) {
+      const value = declaration(current);
+      return Boolean(value && syntheticCollection(value, seen));
+    }
+    if (ts.isNewExpression(current) && current.arguments?.[0]) return syntheticCollection(current.arguments[0], seen);
+    if (ts.isCallExpression(current) && ts.isPropertyAccessExpression(current.expression)) {
+      return syntheticCollection(current.expression.expression, seen);
+    }
+    return false;
+  };
+  const referenceField = (node) => ts.isPropertyAccessExpression(node) && node.name.text === "reference" ||
+    ts.isElementAccessExpression(node) && ts.isStringLiteralLike(node.argumentExpression) && node.argumentExpression.text === "reference" ||
+    ts.isTemplateExpression(node) && node.templateSpans.some((span) => referenceField(span.expression));
+  const referenceMap = (node) => {
+    const value = declaration(node);
+    if (!value || !ts.isNewExpression(value) || value.expression.getText(source) !== "Map") return false;
+    let keyed = false;
+    visitNodes(value, (part) => {
+      if (ts.isArrayLiteralExpression(part) && part.elements[0] && referenceField(part.elements[0])) keyed = true;
+    });
+    return keyed;
+  };
+  visitNodes(source, (node) => {
+    if (!ts.isCallExpression(node) || !ts.isPropertyAccessExpression(node.expression) || !node.arguments[0]) return;
+    const { expression: receiver, name } = node.expression;
+    if (syntheticCollection(receiver)) return;
+    let pinned = name.text === "get" && referenceMap(receiver) && fixed(node.arguments[0]);
+    if (["find", "some", "filter"].includes(name.text)) {
+      visitNodes(node.arguments[0], (part) => {
+        if (!ts.isBinaryExpression(part) || ![ts.SyntaxKind.EqualsEqualsToken, ts.SyntaxKind.EqualsEqualsEqualsToken]
+          .includes(part.operatorToken.kind)) return;
+        if (referenceField(part.left) && fixed(part.right) || referenceField(part.right) && fixed(part.left)) pinned = true;
+      });
+    }
+    if (pinned && inLiveTest(node)) visit("T-FIXED-REFERENCE", node, "El test selecciona referencias fijas de un catálogo operativo, incluso mediante listas o helpers");
   });
 };
 
@@ -494,6 +593,7 @@ export const inspectTestArchitecture = (root) => {
     const seen = new Set([path]);
     let catalogDependent = direct.length > 0;
     let liveDependent = liveSourceEvidence(source);
+    let transitiveLive = false;
     const pending = [...project.dependencies.get(path) ?? []];
     while (pending.length > 0) {
       const current = pending.pop();
@@ -501,7 +601,10 @@ export const inspectTestArchitecture = (root) => {
       seen.add(current);
       if ((helperEvidence.get(current) ?? []).length > 0) {
         catalogDependent = true;
-        if (liveSourceEvidence(project.files.get(current))) liveDependent = true;
+        if (liveSourceEvidence(project.files.get(current))) {
+          liveDependent = true;
+          transitiveLive = true;
+        }
         if (isAccreditedTransitive(path, current, project, helperEvidence)) {
           exceptions.push({ rule: "T-TRANSITIVE-CATALOG", path, source: current });
         } else if ((domainTest(path) &&
@@ -516,7 +619,8 @@ export const inspectTestArchitecture = (root) => {
     if (catalogDependent && liveDependent) {
       checkFrozen(source, (rule, node, detail) => push(rule, path, node, detail));
       checkVolatileExpectations(source, (rule, node, detail) => push(rule, path, node, detail));
-      checkMandatoryReferences(source, (rule, node, detail) => push(rule, path, node, detail));
+      checkMandatoryReferences(source, (rule, node, detail) => push(rule, path, node, detail), transitiveLive);
+      checkFixedSelections(source, (rule, node, detail) => push(rule, path, node, detail), transitiveLive);
       checkFrozenText(source, (rule, node, detail) => push(rule, path, node, detail));
     }
   }

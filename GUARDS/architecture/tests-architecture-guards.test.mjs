@@ -1045,6 +1045,69 @@ test("acepta la raíz temporal de un builder de publicaciones sin acreditación 
   assert.deepEqual(inspectTestArchitecture(root).findings, []);
 });
 
+test("detecta referencias fijas pasadas a un helper local sobre la publicación vigente", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/testing/integration/catalog/live-projection.test.ts";
+  write(path, `import assert from 'node:assert/strict'; import test from 'node:test';
+    import { resolveAccreditedPublication, readAccreditedPublication } from '../../../infrastructure/filesystem/catalog/publications/accredited-publication.js';
+    const root = process.cwd();
+    const load = async () => (await readAccreditedPublication(await resolveAccreditedPublication(root, 'gam'))).products;
+    test('proyección', async () => {
+      const records = await load(); const index = new Map(records.map(item => [item.reference, item]));
+      const select = (id: string) => index.get(id); assert.ok(select('REF-A'));
+      for (const [id, expected] of [['REF-B', 'valor']] as const) assert.equal(select(id)?.spec.Peso, expected);
+    });`);
+  const result = inspectTestArchitecture(root);
+  assert.ok(result.findings.some((item) => item.path === path && item.rule === "T-FIXED-REFERENCE"));
+});
+
+test("detecta cohortes fijas en búsquedas por referencia y por identidad compuesta", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/testing/integration/catalog/live-cohort.test.ts";
+  write(path, [
+    "import assert from 'node:assert/strict'; import { readCanonicalCatalog } from '../../../infrastructure/filesystem/catalog/originals/canonical-catalog.js';",
+    "const source = await readCanonicalCatalog('catalogs/providers/gam/original/scrape-gam-catalog.json');",
+    "const rows = [...source.products]; const cohort = ['REF-A', 'REF-B'] as const;",
+    "for (const id of cohort) { const product = rows.find(item => item.reference === id); assert.ok(product); }",
+    "for (const id of ['gam:REF-A']) { const product = rows.find(item => `${item.providerId}:${item.reference}` === id); assert.ok(product); }",
+    "for (const { id } of [{id: 'REF-B', expected: {}}]) assert.ok(rows.find(item => item.reference === id));"
+  ].join("\n"));
+  const findings = inspectTestArchitecture(root).findings.filter((item) => item.path === path && item.rule === "T-FIXED-REFERENCE");
+  assert.equal(findings.length, 3);
+});
+
+test("reconoce la publicación viva por su resolvedor sin confundir un workspace aislado", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/testing/integration/catalog/publication-selection.test.ts";
+  const code = (rootExpression) => `import assert from 'node:assert/strict';
+    import { resolveAccreditedPublication, readAccreditedPublication } from '../../../infrastructure/filesystem/catalog/publications/accredited-publication.js';
+    const inspect = async (workspace: string) => { const file = await resolveAccreditedPublication(${rootExpression}, 'gam');
+      const rows = (await readAccreditedPublication(file)).products;
+      const index = new Map(rows.map(item => [item.reference, item])); assert.ok(index.get('REF-A')); };`;
+  write(path, code("process.cwd()"));
+  assert.ok(rules(inspectTestArchitecture(root).findings).has("T-FIXED-REFERENCE"));
+  write(path, code("workspace"));
+  assert.deepEqual(inspectTestArchitecture(root).findings, []);
+});
+
+test("conserva búsquedas dinámicas censales y expectativas sintéticas en una suite mixta", (t) => {
+  const { root, write } = fixture(t);
+  const path = "src/testing/integration/catalog/independent-publication.test.ts";
+  write(path, `import assert from 'node:assert/strict'; import test from 'node:test';
+    import { resolveAccreditedPublication, readAccreditedPublication } from '../../../infrastructure/filesystem/catalog/publications/accredited-publication.js';
+    test('censo', async () => { const file = await resolveAccreditedPublication(process.cwd(), 'gam');
+      const rows = (await readAccreditedPublication(file)).products;
+      const index = new Map(rows.map(item => [item.reference, item]));
+      for (const row of rows) assert.equal(index.get(row.reference), row);
+    });
+    test('sintético', () => { const rows = [{reference:'REF-A'}, {reference:'REF-B'}];
+      const index = new Map(rows.map(item => [item.reference, item]));
+      const select = (id: string) => index.get(id); assert.ok(select('REF-A'));
+      assert.deepEqual(rows.map(item => item.reference), ['REF-A','REF-B']);
+    });`);
+  assert.deepEqual(inspectTestArchitecture(root).findings, []);
+});
+
 const structureFixture = (t) => {
   const root = mkdtempSync(join(tmpdir(), "eqz-source-structure-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));

@@ -1,9 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { CommercialBaselineInput } from "../../diagnostics/commercial-baseline.js";
+import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
+import { inspectTechnicalCoherence, inspectTechnicalSpecifications } from "../../../catalog/validation/technical-specifications.js";
+import { normalizeOriginalTechnicalPresentation, normalizeTechnicalPresentation } from "../../../preparation/technical/technical-presentation.js";
+import { recoverGamCrossedTechnicalSpecs } from "../../../preparation/gam/technical/crossed-specifications.js";
+import { projectCommercialPresentation } from "../presentation-projection.js";
+import { projectPresentableSpecifications } from "../spec-projection.js";
 import { planCommercialExport } from "../export-projection.js";
 import { accreditCommercialPlan } from "../../diagnostics/commercial-accreditation.js";
-import { catalog, logos, entry, plan } from "./export-projection-fixture.js";
+import { catalog, logos, entry, plan, source, published } from "./export-projection-fixture.js";
 
 test("deriva contenido, metadata, categoría y atributos sin alterar la publicación técnica", () => {
   const input = entry("100");
@@ -132,4 +138,125 @@ test("filtra magnitudes incompatibles, declara las revisiones y acredita la cons
   const rejected = accreditCommercialPlan([contaminated], { ...result, products: [illegal] }, catalog, logos, null);
   assert.ok(rejected.blocking.some(({ reason }) => reason === "especificaciones-incompatibles-expuestas"));
   assert.equal(JSON.stringify(contaminated), before);
+});
+
+
+const yaleSource = (family: string, title: string, model: string, specs: SpecsMap): ProductRecord => ({
+  ...source("10001"), url: `https://online.gamrentals.com/es/${family}/10001-equipo-prueba`,
+  title, longDescription: `Ficha de prueba ${model}`, condition: "Nuevo", brand: "YALE", model,
+  specs: { Marca: "YALE", Modelo: model, ...specs }
+});
+
+const projectedSpecs = (record: ProductRecord, spec: SpecsMap): SpecsMap => {
+  const publication = { ...published(record), spec };
+  const before = JSON.stringify([record, publication]);
+  const output = projectCommercialPresentation(record, publication, null).spec;
+  assert.deepEqual(inspectTechnicalSpecifications(output), []);
+  assert.deepEqual(inspectTechnicalCoherence(output), []);
+  assert.equal(JSON.stringify([record, publication]), before);
+  return output;
+};
+
+const preparedSpecs = (record: ProductRecord): SpecsMap => normalizeOriginalTechnicalPresentation(
+  normalizeTechnicalPresentation(recoverGamCrossedTechnicalSpecs(record)), record.specs ?? {});
+
+test("la proyección conserva magnitudes físicas y retira valores incompatibles sin inventar unidades", () => {
+  const spec = {
+    "Altura Plataforma": "9,5 metros", "Radio de giro": "1,98 m", "Radio de giro (exterior)": "1601 mm",
+    "Capacidad de la batería": "24 V / 400 Ah", "Altura de elevación (mm)": "16900 mm", "Número de serie": "12345"
+  };
+  assert.deepEqual(inspectTechnicalSpecifications(spec), []);
+  assert.deepEqual(projectPresentableSpecifications(spec), spec);
+  assert.deepEqual(projectPresentableSpecifications({
+    ...spec, "Altura Plataforma": "9225 metros", "Radio de giro": "24V / 400Ah(V/Ah)",
+    "Capacidad de la batería": "1000mm", "Altura de elevación (mm)": "#VALUE! mm"
+  }), { "Radio de giro (exterior)": "1601 mm", "Número de serie": "12345" });
+  assert.deepEqual(projectPresentableSpecifications({
+    "Distancia del centro de gravedad": "−1 mm", "Horas laborales": "−1 h", "Centro de carga": "600 mm"
+  }), { "Centro de carga": "600 mm" });
+});
+
+test("la proyección conserva alternativas completas y rechaza campos multivalor contaminados", () => {
+  assert.deepEqual(projectPresentableSpecifications({
+    "Altura Plataforma": ["8 m", "24 V / 400 Ah"],
+    "Capacidad de la batería": ["24 V / 400 Ah", "48 V / 500 Ah"],
+    "Radio de giro": "6085mm metros", Anchura: "24V / 840-1000Ah(V/Ah)", Modelo: "MPC14"
+  }), { "Capacidad de la batería": ["24 V / 400 Ah", "48 V / 500 Ah"], Modelo: "MPC14" });
+});
+
+test("la proyección de apiladores Yale recupera campos cruzados únicamente con evidencia concordante", () => {
+  for (const [model, capacity, weight] of [["MC12", 1200, 2280], ["MC15", 1500, 2360]] as const) {
+    const record = yaleSource("apiladores-yale", `Apilador eléctrico a pie Yale ${model}`, `${model} (pedestrian)`, {
+      "Centro de carga": "5076 mm", Longitud: "2892 mm", "Capacidad de carga (kg)": `${capacity} KG`,
+      "Capacidad de la batería": String(weight), "Radio de giro": "24V / 400Ah(V/Ah)"
+    });
+    const original = record.specs ?? {};
+    const result = projectedSpecs(record, original);
+    assert.equal(result["Centro de carga"], undefined);
+    assert.equal(result["Radio de giro"], undefined);
+    assert.equal(result["Capacidad de la batería"], undefined);
+    assert.equal(result["Altura de elevación (mm)"], "5076 mm");
+    assert.equal(result.Peso, `${weight} kg`);
+    assert.equal(result["Batería (V / Ah)"], "24 V / 400 Ah");
+    for (const rejected of [
+      projectPresentableSpecifications({ ...original, "Centro de carga": "500 mm" }, record),
+      projectPresentableSpecifications(original, { ...record, model: "OTRO" })
+    ]) {
+      assert.equal(rejected["Altura de elevación (mm)"], undefined);
+      assert.equal(rejected.Peso, undefined);
+      assert.equal(rejected["Batería (V / Ah)"], undefined);
+    }
+    const prepared = preparedSpecs(record);
+    assert.deepEqual(projectedSpecs(record, prepared), prepared);
+  }
+});
+
+test("la proyección conserva la batería acreditada con independencia de la evolución de su etiqueta", () => {
+  const record = yaleSource("transpaletas-yale", "Transpaleta eléctrica a pie Yale MP20X", "MP20X", {
+    "Capacidad de carga (kg)": "2000 KG", "Altura Plataforma": "24V / 210 - 500Ah(V/Ah) metros",
+    "Capacidad de la batería": "24 V / 250 Ah", Peso: "678 kg"
+  });
+  const legacy = { Marca: "YALE", Modelo: "MP20X", "Capacidad de la batería": "24 V / 250 Ah", Peso: "678 kg" };
+  const prepared = preparedSpecs(record);
+  assert.equal(prepared["Batería (V / Ah)"], "24 V / 250 Ah");
+  assert.equal(prepared["Capacidad de la batería"], undefined);
+  assert.equal(prepared["Altura Plataforma"], undefined);
+  assert.deepEqual(projectedSpecs(record, legacy), legacy);
+  assert.deepEqual(projectedSpecs(record, prepared), prepared);
+});
+
+test("la proyección exige coincidencia de identidad y evidencia para recuperar baterías cruzadas", () => {
+  for (const [model, capacity] of [["MP25X", "2500 KG"], ["MP30X", "3000 KG"]] as const) {
+    const record = yaleSource("transpaletas-yale", `Transpaleta eléctrica a pie Yale ${model}`, model, {
+      "Capacidad de carga (kg)": capacity, "Altura Plataforma": "24V / 315-500Ah(V/Ah) metros",
+      "Capacidad de la batería": "678", Peso: "678 kg"
+    });
+    const original = record.specs ?? {};
+    const recovered = projectedSpecs(record, original);
+    assert.equal(recovered["Batería (V / Ah)"], "24V / 315-500Ah(V/Ah)");
+    assert.equal(recovered["Capacidad de la batería"], undefined);
+    assert.equal(recovered["Altura Plataforma"], undefined);
+    assert.equal(recovered.Peso, "678 kg");
+    assert.equal(projectPresentableSpecifications(original, { ...record, model: "OTRO" })["Batería (V / Ah)"], undefined);
+    assert.equal(projectPresentableSpecifications({ ...original, "Capacidad de carga (kg)": "999 KG" }, record)["Batería (V / Ah)"], undefined);
+    const prepared = preparedSpecs(record);
+    assert.deepEqual(projectedSpecs(record, prepared), prepared);
+  }
+});
+
+test("la proyección recupera altura de elevación acreditada sin confundirla con altura de plataforma", () => {
+  const record = yaleSource("recogepedidos-yale", "Preparapedidos eléctrico Yale MO10S", "MO10S", {
+    "Capacidad de carga (kg)": "1000 KG", Altura: "3720 mm", "Centro de carga": "8895 mm",
+    Longitud: "3242 mm", "Altura Plataforma": "14 metros"
+  });
+  const original = record.specs ?? {};
+  const recovered = projectedSpecs(record, original);
+  assert.equal(recovered["Centro de carga"], undefined);
+  assert.equal(recovered["Altura de elevación (mm)"], "8895 mm");
+  assert.equal(recovered["Altura Plataforma"], "14 metros");
+  assert.equal(projectPresentableSpecifications(original, { ...record, model: "OTRO" })["Altura de elevación (mm)"], undefined);
+  assert.equal(projectPresentableSpecifications({ ...original, "Capacidad de carga (kg)": "999 KG" }, record)["Altura de elevación (mm)"], undefined);
+  const prepared = preparedSpecs(record);
+  assert.equal(prepared["Altura de plataforma"], "14 m");
+  assert.deepEqual(projectedSpecs(record, prepared), prepared);
 });
