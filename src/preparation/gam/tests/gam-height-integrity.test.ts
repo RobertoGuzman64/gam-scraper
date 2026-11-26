@@ -3,6 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { loadImportCatalog } from "../../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 import { resolveAttributeValue } from "../../classification/attribute-mapping.js";
+import { reconcileGamWorkingHeightPresentation } from "../measurements/evidence/work-height-evidence.js";
 import { prepareProduct } from "../../../commercial/legacy-export/prepare-product.js";
 
 const catalog = await loadImportCatalog();
@@ -88,4 +89,24 @@ test("GAM: recupera altura de plataforma inversa sin convertirla en altura de tr
   assert.equal(value(record, "Altura de trabajo"), null);
   assert.equal(value(scissor({ longDescription: "XCMG XG1212AC tiene altura de la plataforma de 10,5 m." }), "Altura de plataforma"), 10.5);
   assert.equal(value(scissor({ longDescription: "XCMG XG1212AC tiene 6 m de altura de plataforma o 8 m." }), "Altura de plataforma"), null);
+});
+
+test("reclasifica solo la altura de trabajo de plataforma corroborada sin cambiar su valor", () => {
+  const record = scissor({ reference: "CONTROL-01", brand: "MARCA", model: "MODELO10",
+    url: "https://online.gamrentals.com/es/plataformas-de-tijera-electricas/CONTROL-01-marca-modelo10",
+    title: "Plataforma de tijera eléctrica MARCA MODELO10",
+    shortDescription: "MARCA MODELO10 de 12 metros de altura de trabajo.",
+    longDescription: "La plataforma de tijera MARCA MODELO10 tiene una altura de trabajo de 12 metros.",
+    specs: { Marca: "MARCA", Modelo: "MODELO10", "Altura de elevación (m)": "12 metros" } });
+  const specs = { ...record.specs, "Altura de elevación (m)": "12 m" };
+  const result = reconcileGamWorkingHeightPresentation(record, specs);
+  assert.equal(result["Altura de trabajo (m)"], "12 m");
+  assert.equal(result["Altura de elevación (m)"], undefined);
+  for (const longDescription of ["Altura de elevación de 12 metros.", "Altura de trabajo de 10 metros.",
+    "Altura de trabajo de 12 metros o 14 metros.", "Altura de trabajo de 12 metros opcional."]) {
+    assert.equal(reconcileGamWorkingHeightPresentation({ ...record, longDescription }, specs), specs);
+  }
+  const competing = { ...specs, "Altura de trabajo": "10 m" };
+  assert.equal(reconcileGamWorkingHeightPresentation(record, competing), competing);
+  assert.equal(reconcileGamWorkingHeightPresentation({ ...record, categoryKey: "carretillas" }, specs), specs);
 });

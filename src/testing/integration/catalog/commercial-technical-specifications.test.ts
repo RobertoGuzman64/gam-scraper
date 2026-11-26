@@ -137,7 +137,7 @@ test("corrige las especificaciones comerciales con evidencia real sin reescribir
   }
   assert.equal(presentation("2241")["Centro de carga"], undefined);
   assert.equal(presentation("2241")["Altura de elevación (mm)"], "8895 mm");
-  assert.equal(presentation("2241")["Altura Plataforma"], "14 metros");
+  assert.equal(presentation("2241")["Altura Plataforma"], "14 m");
   for (const [reference, expected] of [
     ["1714", "600 mm"], ["2220", "500 mm"], ["2285", "500 mm"],
     ["2287", "500 mm"], ["2238", "1200 mm"]
@@ -247,7 +247,8 @@ test("la cohorte GAM saneada conserva las especificaciones válidas sin requerir
       assert.equal(sourceSpecs["Capacidad de carga (kg)"], "8000 KG", reference);
       assert.equal(product.spec["Capacidad de arrastre"], reconciledArrastre, reference);
     }
-    const normalizedSource = normalizeOriginalTechnicalPresentation(normalizeTechnicalPresentation(sourceSpecs), sourceSpecs);
+    const preservedSource = Object.fromEntries(Object.entries(sourceSpecs).filter(([key]) => !removed.includes(key)));
+    const normalizedSource = normalizeOriginalTechnicalPresentation(normalizeTechnicalPresentation(preservedSource), sourceSpecs);
     const comparablePublication = normalizeOriginalTechnicalPresentation(product.spec, sourceSpecs);
     for (const [key, value] of Object.entries(normalizedSource)) {
       if (removed.includes(key)) continue;

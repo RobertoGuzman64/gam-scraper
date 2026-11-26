@@ -1,4 +1,5 @@
 import type { ProductRecord, SpecsMap, SpecValue } from "../../contracts/catalog.js";
+import { parseBatteryConfiguration, parseMeasuredLength } from "../../catalog/normalization/spec-parsers.js";
 import { normalizeSpecKey } from "../../catalog/normalization/normalize-specs.js";
 import { isGamUnitUrl } from "../../catalog/normalization/gam/unit-url.js";
 import { originalRecordFingerprint } from "../../catalog/identity-fingerprint.js";
@@ -136,12 +137,44 @@ const recoveredLitreMechanisms = new Set([
   "src/preparation/gam/technical/operations/verified-unit-performance-specs.ts"
 ]);
 
+const pairedBatteryMechanisms = new Set([
+  "src/preparation/gam/technical/energy/battery-measures-evidence.ts",
+  "src/preparation/gam/technical/energy/battery-electrical-evidence.ts"
+]);
+
 export const recoveredUnitAttributeSpecs = (original: ProductRecord, provenance: ProductTechnicalProvenance): SpecsMap => {
   if (provenance.originalRecordSha256 !== originalRecordFingerprint(original)) return {};
-  return Object.fromEntries(provenance.entries.flatMap((entry) =>
+  const entries = provenance.entries.filter((entry) =>
     entry.scope === "unit" && entry.sourceField === "longDescription" && entry.sourceValue === original.longDescription &&
     (entry.field !== "Rendimiento de limpieza (m²/h)" || original.providerId === "gam" &&
       entry.mechanism === "src/preparation/gam/technical/operations/cleaning-productivity-evidence.ts") &&
     (!recoveredVolumeFields.has(entry.field) || original.providerId === "gam" && recoveredLitreMechanisms.has(entry.mechanism))
-      ? [[entry.field, entry.value]] : []));
+  );
+  const specs: Record<string, SpecValue> = Object.fromEntries(entries.map((entry) => [entry.field, entry.value]));
+  const geometryMechanism = "src/preparation/technical/platform-geometry-recovery.ts";
+  const basket = entries.filter((entry) => ["Dimensiones de cesta", "Dimensiones de la cesta"].includes(entry.field));
+  if (basket.length === 1 && basket[0]?.field === "Dimensiones de cesta" && basket[0].mechanism === geometryMechanism) {
+    specs["Dimensiones de la cesta"] = basket[0].value;
+  } else if (basket.length === 0) {
+    const lengths = entries.filter((entry) => entry.field === "Longitud de plataforma");
+    const widths = entries.filter((entry) => entry.field === "Anchura de plataforma");
+    const length = lengths[0];
+    const width = widths[0];
+    if (lengths.length === 1 && widths.length === 1 && length?.mechanism === geometryMechanism && width?.mechanism === geometryMechanism) {
+      const l = parseMeasuredLength(length.value, "", "m");
+      const w = parseMeasuredLength(width.value, "", "m");
+      if (l !== null && w !== null && l >= 0.5 && l <= 12 && w >= 0.4 && w <= 6) {
+        specs["Dimensiones de la cesta"] = `${String(l).replace(".", ",")} x ${String(w).replace(".", ",")} m`;
+      }
+    }
+  }
+  if (original.providerId !== "gam") return specs;
+  const voltages = entries.filter((entry) => entry.field === "Voltaje batería (V)");
+  const capacities = entries.filter((entry) => entry.field === "Capacidad de la batería (Ah)");
+  const voltage = voltages[0];
+  const capacity = capacities[0];
+  if (voltages.length !== 1 || capacities.length !== 1 || !voltage || !capacity ||
+    voltage.mechanism !== capacity.mechanism || !pairedBatteryMechanisms.has(voltage.mechanism)) return specs;
+  const configuration = parseBatteryConfiguration(`${voltage.value} / ${capacity.value}`);
+  return configuration === null ? specs : { ...specs, "Batería (V / Ah)": configuration };
 };

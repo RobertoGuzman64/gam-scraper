@@ -59,8 +59,8 @@ export type CommercialHeightAssessment = {
 
 const heightPattern = /\b\d{1,3}(?:[.,]\d{1,2})?\s*(?:m|metros?)(?![\p{L}\p{N}])/giu;
 const technicalPattern = /^\s*(\d+(?:[.,]\d+)?)\s*(mm|m|metros?)\s*$/iu;
-const geometryPattern = /^altura (?:de trabajo|de elevaci[oó]n)(?:\s*\((?:m|mm)\))?$/iu;
-const workingPattern = /^altura de trabajo(?:\s*\(m\))?$/iu;
+const geometryPattern = /^altura (?:de trabajo|trabajo|de elevaci[oó]n)(?:\s*\((?:m|mm)\))?$/iu;
+const workingPattern = /^altura (?:de )?trabajo(?:\s*\((?:m|mm)\))?$/iu;
 
 const measure = (text: string | null): MeasuredHeight | null => {
   if (!text) return null;

@@ -1,6 +1,25 @@
 import type { ProductRecord, SpecsMap, SpecValue } from "../../contracts/catalog.js";
 import { editorialQuantity, formatEditorialQuantity } from "../editorial/measurements/editorial-measurements.js";
 
+import { resolveManainEditorialDomainSource } from "./domain-source.js";
+import { manainSourceFamily, manainSourceDescriptionContradictsFamily } from "./source.js";
+import { reconcileOriginalMassCapacityPresentation } from "../technical/technical-presentation.js";
+import type { TechnicalRecoveryObservation } from "../provenance/technical-recovery-observation.js";
+
+export const reconcileManainMassCapacityPresentation = (original: ProductRecord, specs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  const family = manainSourceFamily(original);
+  if (!family || manainSourceDescriptionContradictsFamily(original, family) ||
+    !resolveManainEditorialDomainSource(original)) return specs;
+  const field = family.startsWith("elevacion-") ? "Capacidad de la cesta" :
+    original.specs?.["Altura trabajo"] !== undefined ? null :
+      family === "manipulacion-manipulador" ? "Capacidad máxima de elevación" :
+        ["manipulacion-carretilla", "manipulacion-carretilla-4x4", "manipulacion-transpaletas", "manipulacion-retractil", "manipulacion-apilador"].includes(family) ? "Capacidad de carga" : null;
+  if (field === null) return specs;
+  return reconcileOriginalMassCapacityPresentation(original, specs, "Capacidad carga", field,
+    "src/preparation/manain/normalization.ts", observe);
+};
+
 const weightAliases = ["Peso maquina", "Peso operativo", "Peso sin carga", "Peso carretilla en vacio"] as const;
 
 const normalizeMetricPresentation = (key: string, value: SpecValue): SpecValue => {

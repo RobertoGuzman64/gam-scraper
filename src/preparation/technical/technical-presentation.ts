@@ -1,8 +1,9 @@
 import type { ProductRecord, SpecsMap, SpecValue } from "../../contracts/catalog.js";
 import { SPEC_ANGULAR_FIELDS } from "../../catalog/normalization/spec-rules.js";
-import { normalizeSpecKey } from "../../catalog/normalization/normalize-specs.js";
-import { parseBatteryConfiguration, parseExplicitAngularPresentation, parseDimension, normalizeBatteryChemistryLabel, parseExplicitVoltagePresentation, parseMeasuredLength, parseNumber, parseNumberArray } from "../../catalog/normalization/spec-parsers.js";
-import { basketDimensions } from "../classification/attribute-utils.js";
+import { normalizeSpecKey, reconcileSourceBatteryConfiguration } from "../../catalog/normalization/normalize-specs.js";
+import { parseBatteryConfiguration, parseExplicitAngularPresentation, parseExplicitPowerPresentation, parseDimension, normalizeBatteryChemistryLabel, normalizeEnergyLabel, parseExplicitPercentagePresentation, normalizeMastLabel, normalizeWheelTractionLabel, parseExplicitVoltagePresentation, parseMeasuredLength, parseNumber, parseNumberArray, parseExplicitLengthAlternatives } from "../../catalog/normalization/spec-parsers.js";
+import type { TechnicalRecoveryObservation } from "../provenance/technical-recovery-observation.js";
+import { basketDimensions, numberToken, fold as foldAttribute } from "../classification/attribute-utils.js";
 import { editorialHasImplausibleWeight } from "../editorial/core/editorial-facts.js";
 
 const identityFields = new Set(["marca", "modelo", "referencia", "numero de serie", "nº de serie", "nro de serie", "motor", "tipo motor"]);
@@ -41,11 +42,7 @@ const normalizeValue = (key: string, value: SpecValue): SpecValue => {
   if (text === "si") return "Sí";
   if (text === "no") return "No";
   if (!/^tipo(?: de)? mastil$/u.test(name)) return value;
-  if (text === "simple" || text === "simplex") return "Simple";
-  if (text === "duplex") return "Dúplex";
-  if (text === "triplex" || text === "triple") return "Tríplex";
-  if (text === "cuadruplex") return "Cuádruplex";
-  return value;
+  return normalizeMastLabel(value);
 };
 
 export const isEmptyTechnicalMeasure = (key: string, value: SpecValue | undefined): boolean => {
@@ -91,18 +88,6 @@ const normalizeDirectOriginalPresentation = (
   return normalized ?? specs;
 };
 
-const formatExplicitLengthAlternatives = (value: string): string => {
-  const match = /^(\d+(?:,\d+|\.\d{1,2})?(?:\s*\/\s*\d+(?:,\d+|\.\d{1,2})?)+)\s*(mm|cm|m)$/iu.exec(value.trim());
-  if (!match?.[1] || !match[2]) return value;
-  const unit = fold(match[2]);
-  const parts = match[1].split("/").map((part) => part.trim());
-  const valid = parts.every((part) => {
-    const numeric = parseMeasuredLength(`${part} ${unit}`, "", "mm");
-    return numeric !== null && numeric > 0;
-  });
-  return valid ? `${parts.map((part) => part.replace(".", ",")).join(" / ")} ${unit}` : value;
-};
-
 export const normalizeOriginalMassPresentation = (specs: SpecsMap, originalSpecs: SpecsMap): SpecsMap =>
   normalizeDirectOriginalPresentation(specs, originalSpecs, (key, value) => {
     const canonical = normalizeSpecKey(key);
@@ -119,10 +104,7 @@ export const normalizeOriginalPercentagePresentation = (specs: SpecsMap, origina
     if (!["Pendiente superable (%)", "Pendiente superable con carga (%)", "Pendiente superable sin carga (%)",
       "Estado baterías", "Pendiente con carga, nominal 3 min (%)", "Pendiente sin carga, nominal 3 min (%)"].some(
       (field) => fold(field) === fold(canonical))) return value;
-    const percent = /^(\d+(?:,\d+|\.\d{1,2})?)\s*%$/u.exec(value.trim());
-    const numeric = percent ? parseNumber(value, "%") : null;
-    if (!percent?.[1] || numeric === null || (canonical === "Estado baterías" && numeric > 100)) return value;
-    return `${percent[1].replace(".", ",")} %`;
+    return parseExplicitPercentagePresentation(value, canonical === "Estado baterías" ? 100 : undefined) ?? value;
   });
 
 const directLengthFields = new Set([
@@ -157,7 +139,7 @@ export const normalizeOriginalLengthPresentation = (specs: SpecsMap, originalSpe
       const explicitUnit = value.trim().match(/(mm|cm|m)$/iu)?.[1];
       const declaredUnit = key.endsWith("(mm)") ? "mm" : key.endsWith("(m)") ? "m" : key === "ancho promedio" ? "mm" : null;
       if (!declaredUnit || explicitUnit && fold(explicitUnit) === declaredUnit) {
-        const alternatives = formatExplicitLengthAlternatives(value);
+        const alternatives = parseExplicitLengthAlternatives(value) ?? value;
         if (alternatives !== value) return alternatives;
       }
     }
@@ -179,6 +161,7 @@ export const normalizeOriginalLengthPresentation = (specs: SpecsMap, originalSpe
 export const normalizeOriginalTravelPresentation = (specs: SpecsMap, originalSpecs: SpecsMap): SpecsMap =>
   normalizeDirectOriginalPresentation(specs, originalSpecs, (key, value) => {
     const canonical = normalizeSpecKey(key);
+    if (canonical === "Tracción") return normalizeWheelTractionLabel(value);
     if (canonical === "Kilómetros (km)") {
       const literal = /^(?:\d+|\d{1,3}(?:[ \u00a0\u202f]\d{3})+)\s*(?:km|kms|kil[oó]metros?)$/iu;
       const distance = literal.test(value.trim()) ? parseNumber(value, "km") : null;
@@ -190,29 +173,31 @@ export const normalizeOriginalTravelPresentation = (specs: SpecsMap, originalSpe
     return `${pair[1].replace(".", ",")} / ${pair[2].replace(".", ",")} km/h`;
   });
 
-const directPowerFields = new Set(["potencia", "potencia absorbida", "potencia motor (kw)", "potencia motor (cv)"]);
-const powerUnits: Readonly<Record<string, string>> = { w: "W", kw: "kW", kva: "kVA", cv: "CV" };
+const directPowerFields = new Set(["potencia", "potencia absorbida", "potencia motor (kw)", "potencia motor (cv)",
+  "potencia (kw)", "potencia (cv)", "potencia de traccion (kw)", "potencia de elevacion (kw)"]);
+const reconcileOriginalBatteryConfiguration = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  const result = reconcileSourceBatteryConfiguration(specs, originalSpecs);
+  if (result.rename) observe?.(specs, result.specs, "src/preparation/technical/technical-presentation.ts", { spec: result.rename.from });
+  return result.specs;
+};
 
-export const normalizeOriginalEnergyPresentation = (specs: SpecsMap, originalSpecs: SpecsMap): SpecsMap =>
-  normalizeDirectOriginalPresentation(specs, originalSpecs, (key, value) => {
-    if (/^(?:motor|tipo de motor|tipo motor|motorizacion)$/u.test(key) && fold(value) === "diesel") return "Diésel";
+export const normalizeOriginalEnergyPresentation = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  const reconciled = reconcileOriginalBatteryConfiguration(specs, originalSpecs, observe);
+  return normalizeDirectOriginalPresentation(reconciled, originalSpecs, (key, value) => {
+    if (/^(?:motor|tipo de motor|tipo motor|motorizacion|combustible)$/u.test(key)) return normalizeEnergyLabel(value);
     if (/^(?:voltios|voltaje|voltaje de la bateria|voltaje del cargador|tension nominal de bateria)$/u.test(key)) {
       return parseExplicitVoltagePresentation(value) ?? value;
     }
     if (/^(?:bateria|baterias|bateria \(v \/ ah\))$/u.test(key)) return parseBatteryConfiguration(value) ?? value;
     if (key === "tipo de bateria" || key === "tipo bateria") return normalizeBatteryChemistryLabel(value);
     if (!directPowerFields.has(key)) return value;
-    const declaredUnit = key.endsWith("(kw)") ? "kW" : key.endsWith("(cv)") ? "CV" : null;
-    const scalar = /^(\d+(?:,\d+|\.\d{1,2})?)$/u.exec(value.trim());
-    if (declaredUnit && scalar?.[1] && parseNumber(scalar[1], declaredUnit) !== null)
-      return `${scalar[1].replace(".", ",")} ${declaredUnit}`;
-    const measure = /^(\d+(?:[.,]\d{1,2})?)\s*(w|kw|kva|cv)$/iu.exec(value.trim());
-    if (!measure?.[1] || !measure[2]) return value;
-    const unit = fold(measure[2]);
-    if (key.endsWith("(kw)") && unit !== "kw" || key.endsWith("(cv)") && unit !== "cv") return value;
-    const canonicalUnit = powerUnits[unit];
-    return canonicalUnit ? `${measure[1].replace(".", ",")} ${canonicalUnit}` : value;
+    const declaredUnit = key.endsWith("(kw)") ? "kW" : key.endsWith("(cv)") ? "CV" : undefined;
+    const formatted = parseExplicitPowerPresentation(value, declaredUnit);
+    return formatted && (key !== "potencia absorbida" || !formatted.includes(" x ")) ? formatted : value;
   });
+};
 
 export const normalizeOriginalRotationPresentation = (specs: SpecsMap, originalSpecs: SpecsMap): SpecsMap =>
   normalizeDirectOriginalPresentation(specs, originalSpecs, (key, value) => {
@@ -224,10 +209,65 @@ export const normalizeOriginalRotationPresentation = (specs: SpecsMap, originalS
     return `${scalar[1].replace(".", ",")} rpm`;
   });
 
-export const normalizeOriginalTechnicalPresentation = (specs: SpecsMap, originalSpecs: SpecsMap): SpecsMap => {
+const platformHeightKeys = new Set(["Altura plataforma (mm)", "Altura plataforma (m)", "Altura de plataforma"]);
+
+const reconcileOriginalPlatformMeasure = (specs: SpecsMap, originalSpecs: SpecsMap,
+  field: string, matches: (key: string) => boolean, accepts: (key: string) => boolean,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  const fields = Object.keys(specs).filter(matches);
+  const originalFields = Object.keys(originalSpecs).filter(matches);
+  const key = fields[0];
+  if (fields.length !== 1 || originalFields.length !== 1 || key === undefined || originalFields[0] !== key || !accepts(key)) return specs;
+  const raw = originalSpecs[key];
+  const value = specs[key];
+  const explicitMetres = /^\d+(?:[.,]\d+)?\s*(?:m|metros?)$/iu;
+  if (typeof raw !== "string" || typeof value !== "string" || !explicitMetres.test(raw.trim()) ||
+    !explicitMetres.test(value.trim())) return specs;
+  const measure = parseMeasuredLength(raw, key, "m");
+  if (measure === null || measure <= 0 || parseMeasuredLength(value, key, "m") !== measure) return specs;
+  const { [key]: removed, ...remaining } = specs;
+  const result = { ...remaining, [field]: value };
+  observe?.(specs, result, "src/preparation/technical/technical-presentation.ts", { spec: key });
+  return result;
+};
+
+export const normalizeOriginalPlatformHeightPresentation = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap =>
+  reconcileOriginalPlatformMeasure(specs, originalSpecs, "Altura de plataforma",
+    (key) => platformHeightKeys.has(normalizeSpecKey(key)), (key) => fold(key) === "altura plataforma", observe);
+
+const platformAxisFields = ["Longitud de plataforma", "Anchura de plataforma", "Extensión de plataforma"] as const;
+
+export const normalizeOriginalPlatformAxisPresentation = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap =>
+  platformAxisFields.reduce<SpecsMap>((result, field) => reconcileOriginalPlatformMeasure(result, originalSpecs, field,
+    (key) => normalizeSpecKey(key) === field, (key) => key !== field && !/\((?:mm|cm)\)\s*$/iu.test(key), observe), specs);
+
+const normalizeOriginalTotalWidthPresentation = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap =>
+  reconcileOriginalPlatformMeasure(specs, originalSpecs, "Anchura total",
+    (key) => normalizeSpecKey(key) === "Anchura (mm)", (key) => fold(key) === "ancho total", observe);
+
+const conditionedGeometryFields = [
+  ["Altura barandilla bajada", "Altura con barandillas bajadas"],
+  ["Altura articulacion", "Altura de articulación"],
+  ["Altura transporte", "Altura de transporte"]
+] as const;
+
+const normalizeOriginalConditionedGeometry = (specs: SpecsMap, originalSpecs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap =>
+  conditionedGeometryFields.reduce<SpecsMap>((result, [canonical, field]) =>
+    reconcileOriginalPlatformMeasure(result, originalSpecs, field, (key) => normalizeSpecKey(key) === canonical,
+      (key) => fold(key) === fold(canonical), observe), specs);
+
+export const normalizeOriginalTechnicalPresentation = (specs: SpecsMap, originalSpecs: SpecsMap, observe?: TechnicalRecoveryObservation): SpecsMap => {
   const mass = normalizeOriginalMassPresentation(specs, originalSpecs);
   const length = normalizeOriginalLengthPresentation(mass, originalSpecs);
-  const energy = normalizeOriginalEnergyPresentation(length, originalSpecs);
+  const elevation = normalizeOriginalPlatformHeightPresentation(length, originalSpecs, observe);
+  const axes = normalizeOriginalPlatformAxisPresentation(elevation, originalSpecs, observe);
+  const width = normalizeOriginalTotalWidthPresentation(axes, originalSpecs, observe);
+  const geometry = normalizeOriginalConditionedGeometry(width, originalSpecs, observe);
+  const energy = normalizeOriginalEnergyPresentation(geometry, originalSpecs, observe);
   const travel = normalizeOriginalTravelPresentation(energy, originalSpecs);
   return normalizeOriginalRotationPresentation(normalizeOriginalPercentagePresentation(travel, originalSpecs), originalSpecs);
 };
@@ -237,4 +277,25 @@ export const rejectImplausibleTechnicalWeight = (record: ProductRecord, specs: S
   const safe = { ...specs };
   delete safe.Peso;
   return safe;
+};
+
+export const reconcileOriginalMassCapacityPresentation = (original: ProductRecord, specs: SpecsMap,
+  sourceKey: string, field: "Capacidad de carga" | "Capacidad de la cesta" | "Capacidad máxima de elevación", mechanism: string,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  const raw = original.specs?.[sourceKey];
+  const value = specs[sourceKey];
+  if (typeof raw !== "string" || typeof value !== "string" ||
+    !/^\d[\d.,]*\s*kg$/iu.test(raw.trim()) || !/^\d[\d.,]*\s*kg$/iu.test(value.trim())) return specs;
+  const literal = /^(\d[\d.,]*)\s*kg$/iu.exec(raw.trim())?.[1];
+  const mass = parseNumber(raw, "kg");
+  if (!literal || mass === null || mass <= 0 || mass !== numberToken(literal) || mass !== parseNumber(value, "kg")) return specs;
+  const otherCapacity = (key: string): boolean => key !== sourceKey &&
+    /^(?:capacidad|carga maxima)(?:\s|$)/u.test(foldAttribute(key)) &&
+    !/\b(?:bateria|deposito|tolva)\b/u.test(foldAttribute(key));
+  if ([...Object.keys(original.specs ?? {}), ...Object.keys(specs)].some(otherCapacity) ||
+    Object.keys(specs).some((key) => key !== sourceKey && normalizeSpecKey(key) === normalizeSpecKey(field))) return specs;
+  const { [sourceKey]: removed, ...remaining } = specs;
+  const result = { ...remaining, [field]: value };
+  observe?.(specs, result, mechanism, { spec: sourceKey });
+  return result;
 };

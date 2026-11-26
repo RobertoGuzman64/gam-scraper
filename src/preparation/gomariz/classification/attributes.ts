@@ -1,10 +1,11 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../classification/attribute-types.js";
-import { fold, scalar, numberToken } from "../../classification/attribute-utils.js";
+import { fold, numberToken } from "../../classification/attribute-utils.js";
 import { invalidGomarizPlatformHeight, verifiedGomarizPlatformHeight } from "../../../catalog/normalization/gomariz/technical.js";
 import { editorialFamilyFromSourceGeneral } from "../../editorial/core/editorial-families.js";
 import { verifiedEditorialUrl } from "../../editorial/source/editorial-source-url.js";
 import { gomarizTechnicalSourceFamily } from "./source-category.js";
+import { gomarizMassCapacityField } from "../technical/gomariz.js";
 import { gomarizElevationCandidate } from "../technical/elevation.js";
 import { gomarizIndustrialCandidate, gomarizTowerPower } from "../technical/industrial.js";
 
@@ -14,16 +15,8 @@ export const applyGomarizAliases = (record: ProductRecord, attribute: Attribute,
   const industrial = gomarizIndustrialCandidate(record, attribute);
   if (industrial) candidates.push(industrial);
   const family = gomarizTechnicalSourceFamily(record);
-  if (family && attribute.type === "NUMBER" && attribute.unit_option === "kg") {
-    const raw = record.specs?.Capacidad;
-    const capacity = raw === undefined ? null : scalar(raw);
-    const mass = typeof capacity === "string" ? /^([\d., ]+)\s*kg$/iu.exec(capacity.trim()) : null;
-    if (mass?.[1] && (numberToken(mass[1]) ?? 0) > 0) {
-      if (attribute.name === "Capacidad de carga" && ["carretilla-industrial", "carretilla-retractil", "carretilla-todoterreno"].includes(family)) keys.add(fold("Capacidad"));
-      if (attribute.name === "Capacidad máxima" && family === "manipulador-telescopico") keys.add(fold("Capacidad"));
-      if (attribute.name === "Capacidad de la cesta" && ["elevador-tijera", "brazo-articulado", "brazo-articulado-boom-lift", "brazo-telescopico", "oruga", "camion-plataforma"].includes(family)) keys.add(fold("Capacidad"));
-    }
-  }
+  if (attribute.type === "NUMBER" && attribute.unit_option === "kg" &&
+    attribute.name === gomarizMassCapacityField(record)) keys.add(fold("Capacidad"));
   if (["Alcance horizontal", "Alcance máximo horizontal"].includes(attribute.name)) {
     const reach = record.specs?.["Alcance lateral"];
     if (typeof reach === "string" && /^\d+(?:[.,]\d{1,2})?\s*m$/i.test(reach.trim()) &&

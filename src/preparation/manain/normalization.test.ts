@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
 import { prepareSourceProduct } from "../prepare-product.js";
-import { normalizeManainTechnicalSpecs } from "./normalization.js";
+import { normalizeManainTechnicalSpecs, reconcileManainMassCapacityPresentation } from "./normalization.js";
 
 const record: ProductRecord = {
   providerId: "manain",
@@ -130,7 +130,8 @@ test("Manain: la preparación presenta metros con coma y preserva las magnitudes
   const prepared = prepareSourceProduct(source);
   assert.equal(prepared.status, "ready");
   assert.equal(prepared.product.spec["Altura trabajo"], "9,5 m");
-  assert.equal(prepared.product.spec["Longitud plataforma"], "1,42 m");
+  assert.equal(prepared.product.spec["Longitud de plataforma"], "1,42 m");
+  assert.equal(prepared.product.spec["Longitud plataforma"], undefined);
   assert.equal(JSON.stringify(source), original);
 });
 
@@ -152,4 +153,53 @@ test("Manain: corrige un modelo repetido solo con identidad de origen coincident
     "TX2 PRO, TX2 PRO");
   const alternatives: SpecsMap = { Modelo: "TX2 PRO, TX3 PRO" };
   assert.equal(normalizeManainTechnicalSpecs({ ...source, model: "TX2 PRO, TX3 PRO" }, alternatives), alternatives);
+});
+
+
+test("Manain: la capacidad explícita de plataformas conserva la masa y la procedencia de unidad", () => {
+  const result = prepareSourceProduct(record);
+  assert.equal(result.product.spec["Capacidad carga"], undefined);
+  assert.equal(result.product.spec["Capacidad de la cesta"], "230 kg");
+  assert.deepEqual(result.technicalProvenance?.entries.find((entry) => entry.field === "Capacidad de la cesta"), {
+    field: "Capacidad de la cesta", value: "230 kg", scope: "unit", sourceField: "Capacidad carga",
+    sourceValue: "230 kg", mechanism: "src/preparation/manain/normalization.ts"
+  });
+  assert.equal(reconcileManainMassCapacityPresentation(record, result.product.spec), result.product.spec);
+});
+
+test("Manain: la capacidad contextual excluye otras familias, conflictos, condiciones y unidades incompatibles", () => {
+  const valid: SpecsMap = { ...record.specs, "Capacidad carga": "230 kg" };
+  assert.equal(reconcileManainMassCapacityPresentation(record, valid)["Capacidad de la cesta"], "230 kg");
+  const excluded: readonly ProductRecord[] = [
+    { ...record, providerId: "gam" },
+    { ...record, url: "https://manain.com/producto/venta-manipulacion-carretilla-equiptest-tx2/" },
+    { ...record, shortDescription: "Miniexcavadora compacta" },
+    { ...record, model: "OTRO" },
+    { ...record, condition: "Nuevo" },
+    { ...record, url: "https://example.com/producto/venta-elevacion-tijera-equiptest-tx2/" }
+  ];
+  for (const source of excluded) assert.equal(reconcileManainMassCapacityPresentation({ ...source, specs: valid }, valid), valid);
+  for (const specs of [
+    { "Capacidad carga": "230 kg", "Capacidad máxima de plataforma": "300 kg" },
+    { "Capacidad carga": "230 kg", "Capacidad de la cesta": "230 kg" },
+    { "Capacidad carga": "230/300 kg" }, { "Capacidad carga": "230 lb" },
+    { "Capacidad carga": "230 kg con limitación" }, { "Capacidad carga": 230 },
+    { "Capacidad carga": "2,300 kg" }, { "Capacidad carga": "0 kg" }
+  ]) {
+    const original = { ...record.specs, ...specs };
+    assert.equal(reconcileManainMassCapacityPresentation({ ...record, specs: original }, original), original);
+  }
+  const changed = { ...valid, "Capacidad carga": "300 kg" };
+  assert.equal(reconcileManainMassCapacityPresentation({ ...record, specs: valid }, changed), changed);
+});
+
+
+test("Manain: diferencia carga de manipulación y máxima de elevación sin incorporar capacidades ambiguas", () => {
+  const specs: SpecsMap = { Marca: "EQUIPTEST", Modelo: "TX2", Motor: "Eléctrico", "Nueva o usada": "usada", "Capacidad carga": "2500 kg" };
+  const source: ProductRecord = { ...record, specs, url: "https://manain.com/producto/venta-manipulacion-carretilla-equiptest-tx2/" };
+  assert.equal(reconcileManainMassCapacityPresentation(source, specs)["Capacidad de carga"], "2500 kg");
+  const manipulator = { ...source, url: source.url.replace("carretilla", "manipulador") };
+  assert.equal(reconcileManainMassCapacityPresentation(manipulator, specs)["Capacidad máxima de elevación"], "2500 kg");
+  const conflict = { ...specs, "Capacidad máxima de elevación": "3000 kg" };
+  assert.equal(reconcileManainMassCapacityPresentation({ ...manipulator, specs: conflict }, conflict), conflict);
 });

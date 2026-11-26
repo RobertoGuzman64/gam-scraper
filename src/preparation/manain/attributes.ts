@@ -4,6 +4,7 @@ import { basketDimensions, fold, numberToken } from "../classification/attribute
 import { manainSourceFamily, manainSourceDescriptionContradictsFamily, type ManainFamily } from "./source.js";
 import { manainHorizontalReach } from "./domain-source.js";
 import { editorialQuantityOf, formatEditorialQuantity } from "../editorial/measurements/editorial-measurements.js";
+import { parseBatteryConfiguration } from "../../catalog/normalization/spec-parsers.js";
 import { SPEC_KEY_NORMALIZATION } from "../../catalog/normalization/spec-rules.js";
 
 const manainGeometryCandidate = (record: ProductRecord, family: ManainFamily, attribute: Attribute,
@@ -108,10 +109,15 @@ export const applyManainAliases = (record: ProductRecord, attribute: Attribute, 
     family.startsWith("manipulacion-") && !manainSourceDescriptionContradictsFamily(record, family) &&
     record.specs?.Motor === "Eléctrico" && !Object.keys(record.specs ?? {}).some((key) =>
       keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key)) ||
-      /voltaje|voltios|capacidad de la bateria/u.test(fold(key)))) {
+      (key !== "Voltios" && /voltaje|voltios|capacidad (?:de la |de )?bateria|tension nominal de bateria/u.test(fold(key))))) {
     const raw = record.specs?.Bateria;
     const pair = typeof raw === "string" ? /^(?:litio\s+)?([1-9]\d*)\s*v\s*\/?\s*([1-9]\d*)\s*ah$/iu.exec(raw.trim()) : null;
-    if (pair?.[1] && pair[2]) candidates.push({ key: attribute.name, value: `${pair[1]} V / ${pair[2]} Ah` });
+    const voltage = record.specs?.Voltios;
+    const explicitPair = voltage === undefined && pair?.[1] && pair[2] ? `${pair[1]} V / ${pair[2]} Ah` :
+      typeof voltage === "string" && /^\d+\s*v$/iu.test(voltage.trim()) && typeof raw === "string" && /^\d+\s*ah$/iu.test(raw.trim())
+        ? `${voltage.trim()} / ${raw.trim()}` : null;
+    const configuration = parseBatteryConfiguration(explicitPair);
+    if (configuration !== null) candidates.push({ key: attribute.name, value: configuration });
   }
   const rawMotor = record.specs?.Motor;
   if (typeof rawMotor !== "string") return;

@@ -13,7 +13,7 @@ import { resolveEditorialFacts } from "../editorial/core/editorial-facts.js";
 import { reconcileManainEditorialSourceSpecs } from "./domain-source.js";
 import { resolveAttribute } from "../classification/attribute-mapping.js";
 
-test("Manain: capacidad de carga por unidad en familias compatibles, sin alterar specs ni propagar variantes", () => {
+test("Manain: capacidad de carga por unidad en familias compatibles, conservando masa y origen sin propagar variantes", () => {
   const source: ProductRecord = {
     providerId: "manain",
     categoryKey: "venta",
@@ -46,7 +46,9 @@ test("Manain: capacidad de carga por unidad en familias compatibles, sin alterar
   const prepared = prepareSourceProduct(source);
   assert.equal(prepared.status, "ready");
   assert.match(prepared.product.description_general ?? "", /capacidad de 230 kg/u);
-  assert.deepEqual(prepared.product.spec, normalizePreparedTechnicalSpecs(source, source.specs ?? {}));
+  const { ["Capacidad carga"]: capacity, ...remaining } = normalizePreparedTechnicalSpecs(source, source.specs ?? {});
+  assert.equal(capacity, "230 kg");
+  assert.deepEqual(prepared.product.spec, { ...remaining, "Capacidad de la cesta": capacity });
   assert.equal(JSON.stringify(source), original);
 
   const next: ProductRecord = {

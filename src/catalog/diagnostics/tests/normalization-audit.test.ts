@@ -177,7 +177,7 @@ test("separa categorías reconocidas, variantes ortográficas y valores categór
   const inputs = [patternProduct("A", { "Tipo motor": "Diesel", "Tipo Mástil": "simplex", "Tracción 4x4": "yes" }),
     patternProduct("B", { "Tipo motor": "Diésel", "Tipo Mástil": "Simple", "Tracción 4x4": true }),
     patternProduct("C", { "Tipo motor": "Eléctrico", "Tipo Mástil": "Tríplex", "Tracción 4x4": false })];
-  for (const [key, assessment] of [["Tipo motor", "hipotesis"], ["Tipo Mástil", "observacion_acreditada"],
+  for (const [key, assessment] of [["Tipo motor", "observacion_acreditada"], ["Tipo Mástil", "observacion_acreditada"],
     ["Tracción 4x4", "observacion_acreditada"]]) {
     assert.ok(key);
     const patterns = patternsOf(inputs, "valor_categorico", key);
@@ -185,6 +185,9 @@ test("separa categorías reconocidas, variantes ortográficas y valores categór
     assert.equal(patterns[0]?.assessment, assessment);
     assert.equal(patterns[0]?.variants.flatMap((variant) => variant.occurrences).length, 2);
   }
+  const unknown = patternsOf([patternProduct("D", { "Tipo motor": "Motor de combustión" }),
+    patternProduct("E", { "Tipo motor": "Motor de combustion" })], "valor_categorico", "Tipo motor");
+  assert.equal(unknown[0]?.assessment, "hipotesis");
 });
 
 test("descubre claves inéditas y coincidencias ortográficas sin crear nuevas equivalencias", () => {

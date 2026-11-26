@@ -114,6 +114,9 @@ export const manainHorizontalReach = (record: ProductRecord): number | null => {
   return reach !== null && reach >= 0.5 && reach <= 60 ? reach : null;
 };
 
+export const manainPublishedLoadAliases = (record: ProductRecord): readonly string[] =>
+  record.providerId === "manain" ? ["Capacidad carga"] : [];
+
 export const reconcileManainEditorialSourceSpecs = (record: ProductRecord): ProductRecord => {
   if (!resolveManainEditorialDomainSource(record)) return record;
   const family = manainSourceFamily(record);

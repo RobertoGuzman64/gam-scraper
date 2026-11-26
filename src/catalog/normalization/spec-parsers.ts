@@ -6,19 +6,28 @@ const lengthUnit = (raw: string): "mm" | "cm" | "m" | null => {
   return null;
 };
 
+const lengthScale = { mm: 0, cm: 1, m: 3 } as const;
+
+const convertLength = (value: number, source: keyof typeof lengthScale, target: "mm" | "m"): number | null => {
+  if (source === target) return value;
+  const [mantissa, exponent = "0"] = String(value).split("e");
+  const result = Number(`${mantissa}e${Number(exponent) + lengthScale[source] - lengthScale[target]}`);
+  return Number.isFinite(result) ? result : null;
+};
+
 export const parseMeasuredLength = (value: unknown, sourceKey: string, target: "mm" | "m"): number | null => {
   const keyUnit = sourceKey.match(/\((mm|cm|m)\)\s*$/i)?.[1];
   const fromKey = keyUnit ? lengthUnit(keyUnit) : null;
   if (typeof value === "number") {
     if (!Number.isFinite(value) || value < 0) return null;
     if (!fromKey || fromKey === target) return value;
-    const inMillimeters = fromKey === "cm" ? value * 10 : fromKey === "m" ? value * 1000 : value;
-    return target === "mm" ? inMillimeters : inMillimeters / 1000;
+    return convertLength(value, fromKey, target);
   }
   if (typeof value !== "string") return null;
-  const match = value.trim().match(/^(\d+(?:[.,]\d+)?)\s*(mm|cm|m|metros?)?$/i);
+  const match = value.trim().match(/^(\d+(?:[.,]\d+)?)\s*(mm|cm|m|metros?)?(?:\s+(mm|cm|m|metros?))?$/i);
   if (!match?.[1]) return null;
   const unit = match[2] ? lengthUnit(match[2]) : null;
+  if (match[3] && (!unit || lengthUnit(match[3]) !== unit)) return null;
   if (unit && fromKey && unit !== fromKey) return null;
   const from = unit ?? fromKey ?? target;
   const literal = match[1];
@@ -29,8 +38,7 @@ export const parseMeasuredLength = (value: unknown, sourceKey: string, target: "
   else numeric = Number(literal.replace(",", "."));
   if (!Number.isFinite(numeric) || numeric < 0 || (from === "m" && numeric >= 1000)) return null;
   if (from === target) return numeric;
-  const inMillimeters = from === "cm" ? numeric * 10 : from === "m" ? numeric * 1000 : numeric;
-  return target === "mm" ? inMillimeters : inMillimeters / 1000;
+  return convertLength(numeric, from, target);
 };
 const unitAlternatives: Readonly<Record<string, readonly string[]>> = {
   kg: ["kg", "kilogramo", "kilogramos"],
@@ -53,6 +61,11 @@ const unitAlternatives: Readonly<Record<string, readonly string[]>> = {
   mm: ["mm"],
   m: ["m", "metro", "metros"],
   l: ["l", "litro", "litros"]
+};
+
+export const canonicalNumericUnit = (raw: string): string | null => {
+  const unit = raw.trim().toLowerCase();
+  return Object.keys(unitAlternatives).find((key) => unitAlternatives[key]?.includes(unit)) ?? null;
 };
 
 const parseNumericLiteral = (literal: string): number | null => {
@@ -144,6 +157,28 @@ export const parseMillimeterAlternatives = (value: unknown): readonly number[] |
   return values.every((number): number is number => number !== null && number > 0 && Number.isSafeInteger(number)) ? values : null;
 };
 
+export const parseExplicitLengthAlternatives = (value: unknown, sourceKey = "", target?: "mm" | "m"): string | null => {
+  if (typeof value !== "string") return null;
+  const match = /^(\d+(?:,\d+|\.\d{1,2})?(?:\s*\/\s*\d+(?:,\d+|\.\d{1,2})?)+)\s*(mm|cm|m)$/iu.exec(value.trim());
+  if (!match?.[1] || !match[2]) return null;
+  const unit = lengthUnit(match[2]);
+  if (unit === null) return null;
+  const parts = match[1].split("/").map((part) => part.trim());
+  const values = parts.map((part) => parseMeasuredLength(`${part} ${unit}`, sourceKey, target ?? (unit === "m" ? "m" : "mm")));
+  if (values.some((number) => number === null || !Number.isFinite(number) || number <= 0)) return null;
+  const powers = { mm: 0, cm: 1, m: 3 } as const;
+  const literals = parts.map((part) => {
+    if (!target) return part.replace(".", ",");
+    const [whole = "", fraction = ""] = part.split(/[.,]/u);
+    const digits = whole + fraction;
+    const point = whole.length + powers[unit] - powers[target];
+    const integer = (point <= 0 ? "0" : digits.slice(0, point).padEnd(point, "0")).replace(/^0+(?=\d)/u, "");
+    const decimal = (point < 0 ? "0".repeat(-point) + digits : digits.slice(point)).replace(/0+$/u, "");
+    return decimal ? `${integer},${decimal}` : integer;
+  });
+  return `${literals.join(" / ")} ${target ?? unit}`;
+};
+
 export type Dimension = {
   readonly largo: number | null;
   readonly ancho: number | null;
@@ -152,7 +187,7 @@ export type Dimension = {
 
 const dimensionPart = /^(\d+(?:[.,]\d+)?)\s*(mm|cm|m|metros?)?$/iu;
 
-const parseDimensionAxes = (value: string, minAxes: number, maxAxes: number): readonly number[] | null => {
+const parseDimensionAxes = (value: string, minAxes: number, maxAxes: number, preservePrecision = false): readonly number[] | null => {
   const tokens = value.trim().split(/\s*[x×]\s*/iu);
   if (tokens.length < minAxes || tokens.length > maxAxes) return null;
   const parts = tokens.map((token) => token.match(dimensionPart));
@@ -168,12 +203,27 @@ const parseDimensionAxes = (value: string, minAxes: number, maxAxes: number): re
     const unit = part[2] ?? (onlyFinalUnit ? lastUnit : null);
     const numeric = parseMeasuredLength(`${part[1]}${unit ? ` ${unit}` : ""}`, "", "mm");
     if (numeric === null || numeric <= 0 || numeric > 20000) return null;
-    values.push(Math.round(numeric * 1000) / 1000);
+    const rounded = Math.round(numeric * 1000) / 1000;
+    if (rounded <= 0 || (preservePrecision && Math.abs(rounded - numeric) > Number.EPSILON * numeric * 2)) return null;
+    values.push(rounded);
   }
   return values;
 };
 
+const isNormalizedDimensionAxis = (v: unknown): v is number =>
+  typeof v === "number" && Number.isFinite(v) && v > 0 && v <= 20000 && Math.round(v * 1000) / 1000 === v;
+
+const hasExactDimensionKeys = (v: unknown, keys: readonly string[]): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v) &&
+  Object.keys(v).length === keys.length && keys.every((key) => Object.hasOwn(v, key));
+
 export const parseDimension = (v: unknown): Dimension | null => {
+  if (hasExactDimensionKeys(v, ["largo", "ancho", "grosor"])) {
+    const { largo, ancho, grosor } = v;
+    if (!isNormalizedDimensionAxis(largo) || (ancho !== null && !isNormalizedDimensionAxis(ancho)) ||
+      (grosor !== null && (!isNormalizedDimensionAxis(grosor) || ancho === null))) return null;
+    return { largo, ancho, grosor };
+  }
   if (typeof v !== "string" && typeof v !== "number") return null;
   const axes = parseDimensionAxes(String(v), 1, 3);
   if (!axes) return null;
@@ -186,6 +236,10 @@ export type DimensionRect = {
 };
 
 export const parseDimensionRect = (v: unknown): DimensionRect | null => {
+  if (hasExactDimensionKeys(v, ["ancho", "largo"])) {
+    const { ancho, largo } = v;
+    return isNormalizedDimensionAxis(ancho) && isNormalizedDimensionAxis(largo) ? { ancho, largo } : null;
+  }
   if (typeof v !== "string") return null;
   const text = v.trim().replace(/(mm|cm|m)\s+metros?$/iu, "$1");
   const axes = parseDimensionAxes(text, 2, 2);
@@ -193,19 +247,31 @@ export const parseDimensionRect = (v: unknown): DimensionRect | null => {
   return { ancho: axes[0] ?? null, largo: axes[1] ?? null };
 };
 
+export const parseThreeAxisBasketPresentation = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const text = value.trim().replace(/(mm|cm|m)\s+metros?$/iu, "$1");
+  if (!/(?:mm|cm|m)$/iu.test(text)) return null;
+  const axes = parseDimensionAxes(text, 3, 3, true);
+  return axes ? `${axes.map((axis) => String(axis).replace(".", ",")).join(" x ")} mm` : null;
+};
+
 export const parseBatteryConfiguration = (value: unknown): string | null => {
   if (typeof value !== "string") return null;
   const options = value.trim().replace(/(?:\s*\(V\s*\/\s*Ah\))+$/iu, "").split(/\s*\|\s*/u);
   const formatted: string[] = [];
   for (const option of options) {
-    const match = /^(Li-ion\s+)?(\d+(?:,\d+|\.\d{1,2})?)\s*V\s*\/\s*(\d+(?:,\d+|\.\d{1,2})?)(?:\s*([-–])\s*(\d+(?:,\d+|\.\d{1,2})?))?\s*Ah$/iu.exec(option);
-    if (!match?.[2] || !match[3]) return null;
-    const voltage = parseNumber(match[2], "V");
-    const minimum = parseNumber(match[3], "Ah");
-    const maximum = match[5] ? parseNumber(match[5], "Ah") : minimum;
+    const compact = /^(?:([1-9]\d*)\s*[x×]\s*)?(\d+(?:,\d+|\.\d{1,2})?)\s*\/\s*(\d+(?:,\d+|\.\d{1,2})?)\s*V\s*\/\s*Ah$/iu.exec(option);
+    const expanded = compact?.[2] && compact[3]
+      ? `${compact[1] ? `${compact[1]} x ` : ""}${compact[2]} V / ${compact[3]} Ah` : option;
+    const match = /^(?:(Li-ion)\s+|([1-9]\d*)\s*[x×]\s*)?(\d+(?:,\d+|\.\d{1,2})?)\s*V\s*\/\s*(\d+(?:,\d+|\.\d{1,2})?)(?:\s*([-–])\s*(\d+(?:,\d+|\.\d{1,2})?))?\s*Ah$/iu.exec(expanded);
+    if (!match?.[3] || !match[4] || (match[2] && !Number.isSafeInteger(Number(match[2])))) return null;
+    const voltage = parseNumber(match[3], "V");
+    const minimum = parseNumber(match[4], "Ah");
+    const maximum = match[6] ? parseNumber(match[6], "Ah") : minimum;
     if (voltage === null || voltage <= 0 || minimum === null || minimum <= 0 || maximum === null || maximum < minimum) return null;
     const decimal = (literal: string): string => literal.replace(".", ",");
-    formatted.push(`${match[1] ? "Li-ion " : ""}${decimal(match[2])} V / ${decimal(match[3])}${match[5] ? `${match[4]}${decimal(match[5])}` : ""} Ah`);
+    const prefix = match[1] ? "Li-ion " : match[2] ? `${match[2]} x ` : "";
+    formatted.push(`${prefix}${decimal(match[3])} V / ${decimal(match[4])}${match[6] ? `${match[5]}${decimal(match[6])}` : ""} Ah`);
   }
   return formatted.join(" | ");
 };
@@ -219,14 +285,15 @@ export const parseExplicitVoltagePresentation = (value: unknown): string | null 
   return `${parts.map((part) => part.replace(".", ",")).join(" / ")} V`;
 };
 
-export const parseExplicitPowerPresentation = (value: unknown): string | null => {
+export const parseExplicitPowerPresentation = (value: unknown, declaredUnit?: "kW" | "CV"): string | null => {
   if (typeof value !== "string") return null;
-  const match = /^(?:([1-9]\d*)\s*[x×]\s*)?(\d+(?:,\d+|\.\d{1,2})?)\s*(w|kw|kva|cv)$/iu.exec(value.trim());
-  if (!match?.[2] || !match[3]) return null;
+  const match = /^(?:([1-9]\d*)\s*[x×]\s*)?(\d+(?:,\d+|\.\d{1,2})?)(?:\s*\/\s*(\d+(?:,\d+|\.\d{1,2})?))?\s*(w|kw|kva|cv)?$/iu.exec(value.trim());
+  if (!match?.[2] || (match[3] && (!declaredUnit || match[1]))) return null;
   const units: Readonly<Record<string, string>> = { w: "W", kw: "kW", kva: "kVA", cv: "CV" };
-  const unit = units[match[3].toLowerCase()];
-  if (!unit || (parseNumber(match[2]) ?? -1) < 0 || (match[1] && !Number.isSafeInteger(Number(match[1])))) return null;
-  return `${match[1] ? `${match[1]} x ` : ""}${match[2].replace(".", ",")} ${unit}`;
+  const unit = match[4] ? units[match[4].toLowerCase()] : declaredUnit;
+  if (!unit || (declaredUnit && unit !== declaredUnit) || (parseNumber(match[2]) ?? -1) < 0 ||
+    (match[3] && (parseNumber(match[3]) ?? -1) < 0) || (match[1] && !Number.isSafeInteger(Number(match[1])))) return null;
+  return `${match[1] ? `${match[1]} x ` : ""}${match[2].replace(".", ",")}${match[3] ? ` / ${match[3].replace(".", ",")}` : ""} ${unit}`;
 };
 
 export const parseExplicitAngularPresentation = (value: unknown): string | null => {
@@ -300,7 +367,56 @@ export const parseBoolean = (v: unknown): boolean | null => {
   return null;
 };
 
+export const normalizeMastLabel = (value: string): string => {
+  const text = value.trim().normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toLocaleLowerCase("es");
+  if (text === "simple" || text === "simplex") return "Simple";
+  if (text === "duplex") return "Dúplex";
+  if (text === "triplex" || text === "triple") return "Tríplex";
+  if (text === "cuadruplex") return "Cuádruplex";
+  return value;
+};
+
+export const normalizeWheelTractionLabel = (value: string): string => {
+  const match = /^([2468])\s*[x×]\s*([2468])$/iu.exec(value.trim());
+  if (!match?.[1] || !match[2] || Number(match[2]) > Number(match[1])) return value;
+  return `${match[1]}x${match[2]}`;
+};
+
 export const cleanEnum = (v: unknown): string | null => {
   if (v === null || v === undefined || v === "") return null;
   return String(v).trim();
+};
+
+export const normalizeEnergyLabel = (value: string): string => {
+  const text = value.trim().normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toLocaleLowerCase("es");
+  if (text === "diesel" || text === "gasoil") return "Diésel";
+  if (text === "electrico") return "Eléctrico";
+  if (text === "electrica") return "Eléctrica";
+  if (text === "glp" || text === "lpg") return "GLP";
+  if (text === "gasolina") return "Gasolina";
+  return value;
+};
+
+export const parseExplicitPercentagePresentation = (value: unknown, maximum?: number): string | null => {
+  if (typeof value !== "string") return null;
+  const match = /^(\d+(?:,\d+|\.\d{1,2})?)\s*%$/u.exec(value.trim());
+  const number = match ? parseNumber(value, "%") : null;
+  if (!match?.[1] || number === null || (maximum !== undefined && number > maximum)) return null;
+  return `${match[1].replace(".", ",")} %`;
+};
+
+export const parseExplicitBatteryCapacityRange = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+  const match = /^(\d+(?:,\d+|\.\d{1,2})?)\s*[-–]\s*(\d+(?:,\d+|\.\d{1,2})?)\s*Ah$/iu.exec(value.trim());
+  if (!match?.[1] || !match[2]) return null;
+  const minimum = parseNumber(match[1], "Ah");
+  const maximum = parseNumber(match[2], "Ah");
+  if (minimum === null || maximum === null || minimum <= 0 || maximum < minimum) return null;
+  return `${match[1].replace(".", ",")}-${match[2].replace(".", ",")} Ah`;
+};
+
+export const normalizeBatteryReplacementLabel = (value: string): string => {
+  const text = value.trim().normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toLocaleLowerCase("es");
+  if (text === "si" || text === "no") return text === "si" ? "Sí" : "No";
+  return text === "sin baterias" ? "Sin baterías" : value;
 };

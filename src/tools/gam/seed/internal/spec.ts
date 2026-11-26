@@ -1,4 +1,4 @@
-import { normalizeSpecKey, normalizeSpecsObject } from "../../../../catalog/normalization/normalize-specs.js";
+import { normalizeSpecKey, normalizeSpecsObject, reconcileSourceSpecsForNormalization } from "../../../../catalog/normalization/normalize-specs.js";
 import { SPEC_RULES } from "../../../../catalog/normalization/spec-rules.js";
 import { normalizeSpace } from "./string.js";
 import type { SpecValue } from "./types.js";
@@ -30,7 +30,7 @@ export const parseSpecByRule = (rawKey: string, value: unknown): SpecValue | nul
             ? [parsed.ancho, parsed.largo]
             : [parsed.largo, parsed.ancho, "grosor" in parsed ? parsed.grosor : null];
         const numbers = parts.filter((part): part is number => typeof part === "number");
-        return numbers.length >= 2 ? numbers : null;
+        return numbers.length >= (SPEC_RULES[key] === "dimension_rect" ? 2 : 1) ? numbers : null;
     }
     return null;
 };
@@ -43,9 +43,10 @@ export const assertUnambiguousSpecs = (spec: Readonly<Record<string, unknown>>, 
 };
 
 export const normalizeSeedSpecs = (spec: Readonly<Record<string, unknown>>, reference: string): Record<string, SpecValue> => {
-    assertUnambiguousSpecs(spec, reference);
+    const reconciled = reconcileSourceSpecsForNormalization(spec).specs;
+    assertUnambiguousSpecs(reconciled, reference);
     const normalized: Record<string, SpecValue> = {};
-    for (const [rawKey, value] of Object.entries(spec)) {
+    for (const [rawKey, value] of Object.entries(reconciled)) {
         const key = normalizeSpecKey(normalizeSpace(rawKey));
         if (!key) continue;
         const parsed = parseSpecByRule(rawKey, value);

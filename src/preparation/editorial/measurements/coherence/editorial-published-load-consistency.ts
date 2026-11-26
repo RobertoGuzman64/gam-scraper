@@ -16,16 +16,20 @@ const hasContradictoryNominalLoad = (text: string | null, expected: number): boo
   return false;
 };
 
-export const hasPublishedEditorialLoadConflict = (source: ProductRecord, published: ImportCandidate): boolean => {
+export const hasPublishedEditorialLoadConflict = (
+  source: ProductRecord, published: ImportCandidate, sourceLoadAliases: readonly string[] = []
+): boolean => {
   if (!source.reference?.trim() || source.reference !== published.reference || source.url !== published.sourceUrl ||
     !source.brand || !source.model ||
     source.specs?.Marca !== undefined && source.specs.Marca !== source.brand ||
     source.specs?.Modelo !== undefined && source.specs.Modelo !== source.model ||
     published.spec.Marca !== undefined && published.spec.Marca !== source.brand ||
     published.spec.Modelo !== undefined && published.spec.Modelo !== source.model) return false;
-  const keys = ["Capacidad de carga (kg)", "Capacidad de carga", "Capacidad", "Capacidad máxima de elevación"];
+  const keys = ["Capacidad de carga (kg)", "Capacidad de carga", "Capacidad", "Capacidad máxima de elevación", ...sourceLoadAliases];
   const sourceLoad = editorialQuantityOf(source.specs, keys, "kg");
-  const publishedLoad = editorialQuantityOf(published.spec, keys, "kg");
+  const publishedLoad = keys.some((key) => source.specs?.[key] !== undefined) && keys.every((key) => published.spec[key] === undefined)
+    ? editorialQuantity(published.spec["Capacidad de la cesta"], "kg")
+    : editorialQuantityOf(published.spec, keys, "kg");
   if (sourceLoad === null || sourceLoad < 50 || sourceLoad > 50000 || sourceLoad !== publishedLoad) return false;
   return hasContradictoryNominalLoad(published.title, sourceLoad) ||
     hasContradictoryNominalLoad(published.description, sourceLoad) ||

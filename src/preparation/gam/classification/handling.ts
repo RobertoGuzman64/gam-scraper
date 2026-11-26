@@ -1,7 +1,8 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../classification/attribute-types.js";
-import { parseDimension } from "../../../catalog/normalization/spec-parsers.js";
+import { parseDimension, parseMeasuredLength } from "../../../catalog/normalization/spec-parsers.js";
 import { SPEC_KEY_NORMALIZATION } from "../../../catalog/normalization/spec-rules.js";
+import { isGamUnitUrl } from "../../../catalog/normalization/gam/unit-url.js";
 import { fold, numberToken } from "../../classification/attribute-utils.js";
 
 export const relevantGamHandlingRecord = (record: ProductRecord): boolean => {
@@ -72,11 +73,9 @@ const liftHeight = (record: ProductRecord): number | null => {
       const numeric = match[2];
       const unit = match[3];
       if (!numeric || !unit) return null;
-      const parsed = numberToken(numeric);
-      if (parsed === null) return null;
-      const height = parsed * (unit === "mm" ? 1 : unit === "cm" ? 10 : 1000);
-      if (!Number.isFinite(height) || height < 100 || height > 16000) return null;
-      values.add(Math.round(height * 1000) / 1000);
+      const height = parseMeasuredLength(`${numeric} ${unit}`, "", "mm");
+      if (height === null || height < 100 || height > 16000) return null;
+      values.add(height);
     }
   }
   return values.size === 1 ? [...values][0] ?? null : null;
@@ -171,9 +170,21 @@ const declaredForkLength = (record: ProductRecord): number | null => {
   return dimensions.largo;
 };
 
+const declaredSideShift = (record: ProductRecord, attribute: Attribute): string | null => {
+  if (record.condition !== "Segunda mano" || record.categoryKey !== "manutencion" || !isGamUnitUrl(record) ||
+    !/\bcarretilla\b/u.test(fold(record.title ?? "")) || !attribute.unit_option.split(/\s+\/\s+/u).includes("Desplazador lateral")) return null;
+  const specs = record.specs ?? {};
+  const declared = Object.entries(specs).filter(([key]) => fold(key) === "desplazador lateral");
+  if (declared.length !== 1 || typeof declared[0]?.[1] !== "string" || fold(declared[0][1]) !== "si" ||
+    Object.keys(specs).some((key) => /\b(?:pinza|posicionador|desplazamiento lateral)\b/u.test(fold(key))) ||
+    /\b(?:pinza|posicionador|sin desplazador|sin desplazamiento lateral|no dispone de desplazador)\b/u.test(fold(`${record.title ?? ""} ${record.shortDescription ?? ""} ${record.longDescription ?? ""}`))) return null;
+  return "Desplazador lateral";
+};
+
 export const gamHandlingCandidate = (record: ProductRecord, attribute: Attribute): Candidate | null => {
   if (!relevantGamHandlingRecord(record)) return null;
   let value: string | number | null = null;
+  if (attribute.name === "Implementos incluidos" && attribute.type === "SELECT") value = declaredSideShift(record, attribute);
   if (attribute.name === "Longitud de horquillas" && attribute.type === "NUMBER" && attribute.unit_option === "mm") value = declaredForkLength(record);
   if (attribute.name === "Tipo de mástil" && attribute.type === "SELECT") value = mastFromDescription(record);
   if (attribute.name === "Altura de elevación" && attribute.type === "NUMBER" && attribute.unit_option === "mm") value = liftHeight(record);

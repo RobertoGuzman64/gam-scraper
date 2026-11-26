@@ -98,3 +98,15 @@ test("no acredita pares de altura sin identidad, valores o significado inequívo
     assert.equal(assessment.description, candidate.description);
   }
 });
+
+test("reconoce la altura de trabajo abreviada y en milímetros sin convertirla en altura de elevación", () => {
+  for (const spec of [{ "Altura trabajo": "25 m" }, { "Altura de trabajo (mm)": "25000 mm" }]) {
+    const input = product("Plataforma 20 m", "Plataforma de 25 metros de altura", spec);
+    const result = assessCommercialHeight(input);
+    assert.equal(result.status, "title-normalized");
+    assert.equal(result.technicalMetres, 25);
+    assert.equal(result.title, "Plataforma 25 m");
+  }
+  assert.equal(assessCommercialHeight(product("Plataforma 20 m", "Plataforma de 25 metros de altura",
+    { "Altura trabajo": "25 m", "Altura de trabajo": "26 m" })).status, "unresolved");
+});

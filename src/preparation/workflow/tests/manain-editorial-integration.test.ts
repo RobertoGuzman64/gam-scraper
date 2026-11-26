@@ -9,6 +9,7 @@ import { readVerifiedManainRecordSource } from "../../../infrastructure/filesyst
 import { prepareImportBatch } from "../../product/batch-identity.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { normalizePreparedTechnicalSpecs } from "../../technical/preparation-technical-stages.js";
+import { reconcileManainMassCapacityPresentation } from "../../manain/normalization.js";
 import { normalizeOriginalTechnicalPresentation } from "../../technical/technical-presentation.js";
 import { captureSourceEditorialEvidence } from "../../editorial/claims/source-editorial-evidence.js";
 import { resolveEditorialSource } from "../../editorial/core/editorial-source.js";
@@ -51,7 +52,22 @@ test("Manain: el original verificado atraviesa íntegramente el motor editorial 
     assert.deepEqual(prepared.product.images, source.images);
     const originalSpecs = source.specs ?? {};
     const normalizedSpecs = normalizePreparedTechnicalSpecs(source, originalSpecs);
-    const expectedSpecs = normalizeOriginalTechnicalPresentation(normalizedSpecs, originalSpecs);
+    const presentedSpecs = normalizeOriginalTechnicalPresentation(normalizedSpecs, originalSpecs);
+    const expectedSpecs = reconcileManainMassCapacityPresentation(source, presentedSpecs);
+    for (const [key, value] of Object.entries(presentedSpecs)) {
+      if (key in expectedSpecs) continue;
+      assert.ok(!(key in prepared.product.spec), key);
+      const renamed = Object.entries(expectedSpecs).filter(([field, expected]) => !(field in presentedSpecs) && expected === value);
+      assert.equal(renamed.length, 1, key);
+      const target = renamed[0]?.[0];
+      assert.ok(target, key);
+      assert.deepEqual(prepared.product.spec[target], value, target);
+      if (normalizeSpecKey(key) === normalizeSpecKey(target)) continue;
+      const entry = prepared.technicalProvenance?.entries.find((candidate) =>
+        candidate.scope === "unit" && candidate.sourceField === key && candidate.sourceValue === originalSpecs[key] &&
+        candidate.value === value && candidate.field === normalizeSpecKey(target));
+      assert.ok(entry, key);
+    }
     for (const [key, value] of Object.entries(expectedSpecs)) {
       assert.deepEqual(prepared.product.spec[key], value, key);
     }

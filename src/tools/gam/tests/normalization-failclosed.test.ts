@@ -20,13 +20,14 @@ const absent = async (path: string): Promise<void> => { await assert.rejects(acc
 test("N10 conserva la procedencia y clasifica nulidad, unidad, condiciones, rechazo y colisiones", async () => {
   const specs = {
     "Peso (kg)": "1.5 t",
-    "Potencia (kW)": "2 x 15 kW",
+    "Potencia (kW)": "15-20 kW",
     "Año": "28",
     "Altura de trabajo (mm)": null,
     "peso": "1200",
     "Dato propio": "literal"
   };
   const normalized = normalizeSpecsObject(specs);
+  assert.deepEqual(normalizeSpecsObject({ "Potencia (kW)": "2 x 15 kW" }).normalized, { "Potencia (kW)": "2 x 15 kW" });
   assert.ok(normalized.discardedSpecs.some((item) => item.key === "Peso (kg)" && item.reason === "unit_mismatch"));
   assert.ok(normalized.discardedSpecs.some((item) => item.key === "Potencia (kW)" && item.reason === "conditional_value"));
   assert.ok(normalized.discardedSpecs.some((item) => item.key === "Año" && item.reason === "invalid_value"));

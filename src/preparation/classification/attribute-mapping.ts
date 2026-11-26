@@ -1,7 +1,8 @@
+import { canonicalNumericUnit, parseBatteryConfiguration, parseMeasuredLength } from "../../catalog/normalization/spec-parsers.js";
 import { SPEC_KEY_NORMALIZATION } from "../../catalog/normalization/spec-rules.js";
 import type { ProductRecord, SpecScalar, SpecsMap } from "../../contracts/catalog.js";
 import type { Attribute, AttributeResolution, Candidate } from "./attribute-types.js";
-import { fold, scalar, numberToken } from "./attribute-utils.js";
+import { basketDimensions, fold, scalar, numberToken } from "./attribute-utils.js";
 import { classificationProvider } from "./classification-provider.js";
 import { editorialHasImplausibleWeight } from "../editorial/core/editorial-facts.js";
 
@@ -19,44 +20,50 @@ const aliases: Readonly<Record<string, readonly string[]>> = {
   "Ancho de trabajo": ["Anchura trabajo (mm)"],
   "Potencia": ["Potencia (kW)"],
   "Horas de uso": ["Horas (h)", "Horas laborales"],
+  "Kilometraje": ["Kilómetros (km)"],
   "Año de fabricación": ["Año"],
   "Tipo de motor": ["Tipo motor"]
 };
 
-const unitOf = (source: string): "mm" | "cm" | "m" | "km" | "kg" | "kw" | "h" | "%" | null => {
+const unitOf = (source: string): string | null => {
   const value = fold(source);
-  if (value === "metro" || value === "metros" || value === "m") return "m";
-  if (value === "kilogramo" || value === "kilogramos" || value === "kg") return "kg";
-  if (value === "hora" || value === "horas" || value === "h") return "h";
-  if (value === "mm" || value === "cm" || value === "km" || value === "kw" || value === "%") return value;
-  return null;
+  if (["cm", "bar", "m³", "m³/h", "m²", "kn"].includes(value)) return value;
+  return canonicalNumericUnit(value);
 };
 
 const numberValue = (value: SpecScalar, sourceKey: string, attribute: Attribute): number | null => {
   if (typeof value === "boolean") return null;
   let parsed: number;
+  let literal: string | null = null;
   let explicit: ReturnType<typeof unitOf> = null;
   if (typeof value === "number") {
     if (!Number.isFinite(value) || value < 0) return null;
     parsed = value;
   } else {
-    const matched = value.trim().match(/^([\d.,\s\u00a0\u202f]+)\s*([a-záéíóú%]+)?$/i);
+    const matched = value.trim().match(/^([\d.,\s\u00a0\u202f]+)\s*([a-záéíóú%][a-záéíóú%²³0-9/]*)?$/i);
     if (!matched?.[1]) return null;
-    const numeric = numberToken(matched[1]);
+    literal = matched[1].trim();
+    const numeric = numberToken(literal);
     if (numeric === null) return null;
     parsed = numeric;
     explicit = matched[2] ? unitOf(matched[2]) : null;
     if (matched[2] && !explicit) return null;
   }
-  const keyUnitMatch = sourceKey.match(/\((mm|cm|km|m|kg|kw|h|%)\)/i)?.[1];
+  const keyUnitMatch = sourceKey.match(/\(([^()]+)\)\s*$/u)?.[1] ?? sourceKey.match(/\((mm|cm|km|m|kg|kw|h|%)\)/i)?.[1];
   const keyUnit = keyUnitMatch ? unitOf(keyUnitMatch) : null;
   if (explicit && keyUnit && explicit !== keyUnit) return null;
   const sourceUnit = explicit ?? keyUnit;
   const targetUnit = attribute.name === "Potencia" && attribute.unit_option === "kVA (grupos) / kW" && sourceUnit === "kw"
     ? "kw" : unitOf(attribute.unit_option);
+  if (sourceUnit === "m" && (keyUnit === "m" || targetUnit === "mm") && (targetUnit === "m" || targetUnit === "mm")) {
+    return parseMeasuredLength(literal === null ? value : `${literal} m`, "(m)", targetUnit);
+  }
   if (sourceUnit && targetUnit && sourceUnit !== targetUnit) {
     const ratios: Readonly<Record<string, number>> = { mm: 0.001, cm: 0.01, m: 1 };
     if (!(sourceUnit in ratios) || !(targetUnit in ratios)) return null;
+    if ((sourceUnit === "mm" || sourceUnit === "cm") && (targetUnit === "m" || targetUnit === "mm")) {
+      return parseMeasuredLength(parsed, `(${sourceUnit})`, targetUnit);
+    }
     return parsed * (ratios[sourceUnit] ?? 0) / (ratios[targetUnit] ?? 1);
   }
   if (sourceUnit && !targetUnit && !(attribute.name === "Horas de uso" && sourceUnit === "h")) return null;
@@ -79,6 +86,25 @@ const convert = (value: SpecScalar, key: string, attribute: Attribute): string |
 };
 
 const reviewedGeometryAttributes = new Set(["Altura de plataforma", "Alcance horizontal", "Extensión de plataforma"]);
+
+const reviewedGeometryValue = (record: ProductRecord, attribute: Attribute, specs: SpecsMap): string | number | null => {
+  const direct = Object.keys(record.specs ?? {}).map(fold);
+  if (attribute.name === "Dimensiones de la cesta" && attribute.type === "TEXT" && attribute.unit_option === "m") {
+    if (direct.some((key) => /^(?:dimensiones|medidas|longitud|anchura|ancho|largo) (?:de (?:la )?)?(?:cesta|plataforma)\b/u.test(key))) return null;
+    const raw = specs[attribute.name];
+    const value = raw === undefined ? null : scalar(raw);
+    return value === null ? null : basketDimensions(value);
+  }
+  if (attribute.type !== "NUMBER" || attribute.unit_option !== "m" || !reviewedGeometryAttributes.has(attribute.name)) return null;
+  const keys = attribute.name === "Alcance horizontal" ? [attribute.name, "Alcance horizontal (m)"] : [attribute.name];
+  if (attribute.name === "Alcance horizontal" && direct.some((key) => /\balcance\b/u.test(key))) return null;
+  const values = keys.filter((key) => specs[key] !== undefined).map((key) => {
+    const value = specs[key];
+    return typeof value === "string" && /^\d+(?:[.,]\d+)?\s*m$/iu.test(value.trim()) ? numberValue(value, key, attribute) : null;
+  });
+  const first = values[0];
+  return first !== undefined && first !== null && first > 0 && values.every((value) => value === first) ? first : null;
+};
 
 const recoveredMotorKeys = ["Motorización", "Tipo motor", "Tipo de motor", "Motor", "Propulsión", "Combustible",
   "Motorización / Energía", "Tipo de combustible", "Tipo de propulsión", "Accionamiento"];
@@ -170,12 +196,18 @@ const recoveredOperationalValue = (record: ProductRecord, attribute: Attribute, 
 };
 
 const recoveredUnitValue = (record: ProductRecord, attribute: Attribute, specs: SpecsMap): string | number | null => {
+  if (record.providerId === "gam" && attribute.name === "Batería (V / Ah)" && attribute.type === "TEXT" &&
+    attribute.unit_option === "V / Ah" && !Object.keys(record.specs ?? {}).some((key) =>
+      /^(?:baterias?|capacidad (?:de la |de )?bateria|voltios|voltaje|tension|acumulador)(?:\s|$)/u.test(fold(key)))) {
+    return parseBatteryConfiguration(specs[attribute.name]);
+  }
   const operational = recoveredOperationalValue(record, attribute, specs);
   if (operational !== null) return operational;
   const measured = recoveredMeasuredValue(record, attribute, specs);
   if (measured !== null) return measured;
   const motor = recoveredElectricEnergy(record, attribute, specs);
   if (motor !== null) return motor;
+  if (["Alcance horizontal", "Dimensiones de la cesta"].includes(attribute.name)) return reviewedGeometryValue(record, attribute, specs);
   const value = specs[attribute.name];
   if (typeof value !== "string") return null;
   if (attribute.name === "Neumáticos" && attribute.type === "SELECT") {
@@ -242,13 +274,9 @@ export const resolveAttribute = (record: ProductRecord, attribute: Attribute, re
       const recovered = recoveredUnitValue(record, attribute, recoveredUnitSpecs);
       if (recovered !== null) return { status: "resolved", value: recovered };
     }
-    const reviewed = reviewedModelSpecs[attribute.name];
-    if (!ambiguousSource && attribute.type === "NUMBER" && attribute.unit_option === "m" &&
-      reviewedGeometryAttributes.has(attribute.name) && typeof reviewed === "string" &&
-      /^\d+(?:[.,]\d+)?\s*m$/iu.test(reviewed.trim()) &&
-      !hasDirectSpec) {
-      const value = numberValue(reviewed, attribute.name, attribute);
-      if (value !== null && value > 0) return { status: "resolved", value };
+    if (!ambiguousSource && !hasDirectSpec) {
+      const reviewed = reviewedGeometryValue(record, attribute, reviewedModelSpecs);
+      if (reviewed !== null) return { status: "resolved", value: reviewed };
     }
     return { status: ambiguousSource ? "rejected" : "not_observed", value: null };
   }

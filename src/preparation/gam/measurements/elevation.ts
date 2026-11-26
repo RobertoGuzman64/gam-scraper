@@ -1,3 +1,4 @@
+import { parseMeasuredLength } from "../../../catalog/normalization/spec-parsers.js";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import type { Attribute, Candidate } from "../../classification/attribute-types.js";
 import { fold, numberToken, scalar } from "../../classification/attribute-utils.js";
@@ -23,10 +24,8 @@ const descriptions = (record: ProductRecord): readonly string[] =>
   [record.shortDescription, record.longDescription].filter((value): value is string => Boolean(value?.trim()));
 
 const valueInMeters = (raw: string, unit: string): number | null => {
-  const parsed = numberToken(raw);
-  if (parsed === null) return null;
-  const result = parsed * (unit === "mm" ? 0.001 : unit === "cm" ? 0.01 : 1);
-  return Number.isFinite(result) && result > 0 && result <= 65 ? Math.round(result * 1000) / 1000 : null;
+  const result = parseMeasuredLength(`${raw} ${unit}`, "", "m");
+  return result !== null && result > 0 && result <= 65 ? result : null;
 };
 
 const singleMeasurement = (record: ProductRecord, patterns: readonly RegExp[]): number | null => {
@@ -48,8 +47,8 @@ const singleMeasurement = (record: ProductRecord, patterns: readonly RegExp[]): 
 
 export const gamExplicitHorizontalReach = (record: ProductRecord): number | null =>
   elevationRecord(record) ? singleMeasurement(record, [
-    /\balcance\s+horizontal\s+(?:maximo\s*)?(?:de\s+)?(?:hasta\s+)?[:=]?\s*(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\b/g,
-    /\b(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\s+de\s+alcance\s+horizontal\b/g
+    /\balcance\s+horizontal\s+(?:maximo\s*)?(?:de\s+)?(?:hasta\s+)?[:=]?\s*(\d+(?:[.,]\d{1,3})?)\s*(mm|cm|m|metros?)\b/g,
+    /\b(\d+(?:[.,]\d{1,3})?)\s*(mm|cm|m|metros?)\s+de\s+alcance\s+horizontal\b/g
   ]) : null;
 
 const basketCapacity = (record: ProductRecord): number | null => {
@@ -93,8 +92,8 @@ export const gamElevationCandidate = (record: ProductRecord, attribute: Attribut
   let value: string | number | null = null;
   if (attribute.type === "NUMBER" && attribute.unit_option === "m") {
     if (attribute.name === "Altura de plataforma") value = singleMeasurement(record, [
-      /\baltura\s+de\s+(?:la\s+)?plataforma\s+(?:de\s+)?(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\b/g,
-      /\b(\d+(?:[.,]\d{1,2})?)\s*(mm|cm|m|metros?)\s+de\s+altura\s+de\s+(?:la\s+)?plataforma\b/g
+      /\baltura\s+de\s+(?:la\s+)?plataforma\s+(?:de\s+)?(\d+(?:[.,]\d{1,3})?)\s*(mm|cm|m|metros?)\b/g,
+      /\b(\d+(?:[.,]\d{1,3})?)\s*(mm|cm|m|metros?)\s+de\s+altura\s+de\s+(?:la\s+)?plataforma\b/g
     ]);
     if (attribute.name === "Alcance horizontal") value = gamExplicitHorizontalReach(record);
   }

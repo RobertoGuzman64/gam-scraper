@@ -17,13 +17,17 @@ import { captureSourceEditorialEvidence } from "./editorial/claims/source-editor
 import { reconcileSourceCategoryTitle, reconcileVerifiedSourceReviewClaims, reconcileVerifiedSourceFamily, reconcileVerifiedSourceFuel, reconcileVerifiedSourceIdentity, reconcileVerifiedManufacturerSourceLoad, reconcileInitialTechnicalEvidence, resolveSourceTechnicalSemanticRecord, reconcileTechnicalSourceForRecovery, reconcileTechnicalBeforeEditorial, reconcileTechnicalAfterEditorial, normalizePreparedTechnicalSpecs } from "./technical/preparation-technical-stages.js";
 import { publicationConflictForMercaeleva } from "./mercaeleva/technical/mercaeleva.js";
 import { hasDocumentedGomarizPriceOnRequest } from "./gomariz/price-on-request.js";
+import { reconcileGamWorkingHeightPresentation } from "./gam/measurements/evidence/work-height-evidence.js";
+import { reconcileGamBasketCapacityPresentation } from "./gam/reconciliation/gam-capacity.js";
+import { reconcileManainMassCapacityPresentation } from "./manain/normalization.js";
+import { reconcileGomarizMassCapacityPresentation } from "./gomariz/technical/gomariz.js";
 import { normalizeOriginalTechnicalPresentation } from "./technical/technical-presentation.js";
 import { recoverSourceCleaningConfiguration } from "./technical/recovery/cleaning-family-specifications.js";
 import { reconcileHandlingFamilySpecs, recoverSourceHandlingConfiguration } from "./technical/recovery/handling-family-specifications.js";
 import { presentGamVerifiedRestrictedCapacity } from "./gam/reconciliation/gam-verified-capacity-coherence.js";
 import { recoverSourcePlatformGeometry } from "./technical/recovery/platform-geometry-recovery.js";
 import { recoverBaseTechnicalSpecs } from "./technical/recovery/base-technical-recovery.js";
-import { recoverReviewedModelTechnicalSpecs, reviewedModelEditorialSpecs } from "./technical/evidence/documented-technical-evidence.js";
+import { recoverReviewedModelTechnicalSpecs, reviewedModelAttributeSpecs, reviewedModelEditorialSpecs } from "./technical/evidence/documented-technical-evidence.js";
 import { recoverDocumentedTechnicalSpecs } from "./technical/recovery/documented-technical-recovery.js";
 import { resolvePreparedEditorial } from "./editorial/core/prepared-editorial.js";
 import { normalizePreparedEditorialPresentation } from "./editorial/writing/prepared-editorial-presentation.js";
@@ -82,10 +86,15 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   technicalProvenance.observe(limitedSpecs, handledSpecs,
     "src/preparation/shared/technical/reconciliation/handling-family-specifications.ts",
     { spec: "Capacidad de carga (kg)" });
-  const presentedSpecs = normalizeOriginalTechnicalPresentation(handledSpecs, originalRecord.specs ?? {});
+  const originalPresentation = reconcileGamWorkingHeightPresentation(originalRecord,
+    normalizeOriginalTechnicalPresentation(handledSpecs, originalRecord.specs ?? {}, technicalProvenance.observe), technicalProvenance.observe);
+  const presentedSpecs = reconcileManainMassCapacityPresentation(originalRecord,
+    reconcileGomarizMassCapacityPresentation(originalRecord,
+      reconcileGamBasketCapacityPresentation(originalRecord, originalPresentation, technicalProvenance.observe), technicalProvenance.observe), technicalProvenance.observe);
   const editorialProvenance = technicalProvenance.finalize(presentedSpecs, recoverySource);
   const reviewedSpecs = reviewedModelEditorialSpecs(originalRecord, editorialProvenance);
-  const attributeResult = catalog ? productAttributes(qualityRecord, category, catalog, reviewedSpecs,
+  const reviewedAttributes = catalog ? reviewedModelAttributeSpecs(originalRecord, editorialProvenance, reviewedSpecs) : reviewedSpecs;
+  const attributeResult = catalog ? productAttributes(qualityRecord, category, catalog, reviewedAttributes,
     recoveredUnitAttributeSpecs(originalRecord, editorialProvenance)) : null;
   const editorial = resolvePreparedEditorial(editorialRecord, restoredFamily ? originalRecord : sourceUnitRecord, sourceEditorial, originalRecord, reviewedSpecs);
   const descriptions = { short: editorial.preparedShort, general: editorial.preparedLong };
@@ -123,7 +132,7 @@ const prepare = (record: ProductRecord, catalog: ImportCatalog | null): Prepared
   if (price === null && /\d/.test(record.price ?? "") &&
     !hasDocumentedGomarizPriceOnRequest(originalRecord)) issues.push("Precio publicado inválido");
   issues.push(...(catalog === null ? sourceTechnicalQualityIssues(blockingQualityRecord) :
-    category ? (weightOmitted ? productAttributes(blockingQualityRecord, category, catalog, reviewedSpecs).qualityIssues : attributeResult!.qualityIssues) :
+    category ? (weightOmitted ? productAttributes(blockingQualityRecord, category, catalog, reviewedAttributes).qualityIssues : attributeResult!.qualityIssues) :
       sourceAttributeQualityIssues(blockingQualityRecord, catalog)));
 
   issues.push(...preparedTechnicalConsistencyIssues(qualityRecord, reconciledSpecs));

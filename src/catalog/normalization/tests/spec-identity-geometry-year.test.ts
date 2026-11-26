@@ -382,3 +382,108 @@ test("interpreta configuraciones operativas independientes sin fusionar accionam
   assert.equal(conflict.normalized["Tipo de motor"], undefined);
   assert.equal(conflict.conflictingKeys.length, 1);
 });
+
+
+test("las capacidades explícitas de plataforma y carga nominal conservan su alcance", () => {
+  const fields = { "Capacidad de la cesta": 230, "Capacidad de plataforma": 300,
+    "Capacidad nominal de carga": 4500, "Capacidad de plataforma sin restricciones": 200,
+    "Capacidad máxima de plataforma": 500 };
+  const input = Object.fromEntries(Object.entries(fields).map(([field, value]) => [`${field} (kg)`, `${value} kg`]));
+  assert.deepEqual(normalizeSpecsObject(input).normalized, fields);
+  for (const field of Object.keys(fields)) {
+    for (const raw of ["300 l", "200 / 300 kg", "300 kg opcional", "-10 kg"]) {
+      assert.equal(normalizeSpecsObject({ [field]: raw }).normalized[field], undefined);
+    }
+  }
+  for (const field of ["Capacidad de la cesta", "Capacidad de plataforma", "Capacidad nominal de carga", "Capacidad de plataforma sin restricciones"]) {
+    assert.equal(normalizeSpecsObject({ [field]: "230" }).normalized[field], undefined);
+    assert.equal(normalizeSpecsObject({ [field]: "230kg" }).normalized[field], 230);
+    assert.equal(normalizeSpecsObject({ [`${field} (kg)`]: 230 }).normalized[field], 230);
+  }
+  assert.deepEqual(normalizeSpecsObject({ Capacidad: "230 kg" }).unknownKeys, ["Capacidad"]);
+  assert.deepEqual(normalizeSpecsObject({ "Capacidad de la cesta": "230 kg", "Capacidad de la cesta (kg)": "300 kg" }).conflictingKeys,
+    [{ key: "Capacidad de la cesta", sources: ["Capacidad de la cesta", "Capacidad de la cesta (kg)"] }]);
+});
+
+test("conserva tres ejes de cesta sin degradarlos a un rectángulo ni confundirlos con horquillas", () => {
+  const key = "Dimensiones cesta (mm)";
+  for (const alias of ["Dimensiones Cesta", "Dimensiones cesta (mm)", "Dim cesta"]) {
+    assert.equal(normalizeSpecsObject({ [alias]: "1,4 x 0,7 x 1,1 m" }).normalized[key], "1400 x 700 x 1100 mm");
+    assert.equal(parseSpecByRule(alias, "1400 mm x 70 cm x 1,1 m"), "1400 x 700 x 1100 mm");
+    assert.deepEqual(normalizeSpecsObject({ [alias]: "1,4 x 0,7 m" }).normalized[key], { ancho: 1400, largo: 700 });
+  }
+  for (const raw of ["1400 x 700 x 1100", "1400 x 700 x 1100 kg", "1,4 m x 700 x 1100 mm", "1,4 x 0,7 x 0 m", "1,4 x 0,7 x 1,1 m opcional", "1400 x 700 x 0,0001 mm"]) {
+    assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
+  }
+  const conflict = normalizeSpecsObject({ "Dimensiones Cesta": "1,4 x 0,7 m", "Dim cesta": "1,4 x 0,7 x 1,1 m" });
+  assert.equal(conflict.normalized[key], undefined);
+  assert.equal(conflict.conflictingKeys.length, 1);
+  const normalized = normalizeSpecsObject({ [key]: "1,4 x 0,7 x 1,1 m" }).normalized;
+  assert.deepEqual(normalizeSpecsObject(normalized).normalized, normalized);
+});
+
+test("interpreta alternativas dimensionales explícitas sin seleccionar una cifra ni perder unidades", () => {
+  for (const [key, canonical] of [["Anchura", "Anchura (mm)"], ["Longitud", "Longitud (mm)"], ["Radio de giro", "Radio de giro (mm)"]] as const) {
+    assert.equal(normalizeSpecsObject({ [key]: "1,2 / 1,4 m" }).normalized[canonical], "1200 / 1400 mm");
+    assert.equal(parseSpecByRule(key, "1200 / 1400 / 1600 mm"), "1200 / 1400 / 1600 mm");
+    assert.equal(parseSpecByRule(key, "1,00123 / 1,000001 m"), "1001,23 / 1000,001 mm");
+    assert.equal(normalizeSpecsObject({ [key]: "120 / 140 cm", [canonical]: "1200,0/1400,0 mm" }).normalized[canonical], "1200 / 1400 mm");
+    for (const raw of ["1200/1400", "1200-1400 mm", "1200/1400 kg", "1200 / 0 mm", "1.200/1.400 mm", "1200/1400 mm opcional"]) {
+      assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[canonical], undefined);
+    }
+    assert.equal(normalizeSpecsObject({ [canonical]: "1,2 / 1,4 m" }).normalized[canonical], undefined);
+    assert.equal(normalizeSpecsObject({ [key]: "1200 / 1400 mm", [canonical]: "1200 mm" }).conflictingKeys.length, 1);
+  }
+  assert.equal(normalizeSpecsObject({ "Alcance máximo": "7,5 m" }).unknownKeys.length, 1);
+});
+
+
+test("interpreta indicadores explícitos sin confundir equipamiento, certificación ni estado", () => {
+  const fields = ["Matriculada", "Restaurada",
+    "Cesta fibra", "Accesorio de mástil de elevación", "Posicionador horquillas", "Bomba manual de emergencia"];
+  for (const field of fields) {
+    const alias = field.normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toUpperCase();
+    assert.deepEqual(normalizeSpecsObject({ [alias]: "yes" }).normalized, { [field]: true });
+    assert.equal(parseSpecByRule(field, "no"), false);
+    assert.equal(normalizeSpecsObject({ [alias]: "Sí", [field]: false }).conflictingKeys.length, 1);
+    for (const value of ["opcional", "sí/no", "no confirmado", "2", "350 kg"]) {
+      assert.equal(normalizeSpecsObject({ [field]: value }).normalized[field], undefined);
+    }
+  }
+  assert.deepEqual(normalizeSpecsObject({ "Marcado CE": true, "Certificación CE": false, Estabilizadores: true,
+    "Estabilizadores hidráulicos": false, "Trabajo en negativo": "Sí" }).normalized,
+    { "Marcado CE": true, Estabilizadores: true, "Trabajo negativo": true });
+});
+
+test("las equivalencias categóricas de mástil y tracción conservan alternativas y configuraciones", () => {
+  assert.deepEqual(normalizeSpecsObject({ "Tipo mastil": "TRIPLE", "Tipo de mástil": "Tríplex", "Tracción": "4×4" }).normalized,
+    { "Tipo Mástil": "Tríplex", "Tracción": "4x4" });
+  assert.equal(normalizeSpecsObject({ "Tipo mastil": "Dúplex", "Tipo Mástil": "Tríplex" }).conflictingKeys.length, 1);
+  for (const value of ["Dúplex/estándar", "Dúplex o tríplex", "Tríplex opcional"]) {
+    assert.equal(normalizeSpecsObject({ "Tipo Mástil": value }).normalized["Tipo Mástil"], value);
+  }
+  for (const value of ["4×4 hidrostático", "4x2 / 4x4", "4x4 conectable", "4×6", "Eléctrica", "Orugas"]) {
+    assert.equal(normalizeSpecsObject({ "Tracción": value }).normalized["Tracción"], value);
+  }
+  assert.equal(parseSpecByRule("Tracción", "6 × 4"), "6x4");
+});
+
+
+test("reconoce variantes de escritura de claves canónicas sin mezclar prestaciones", () => {
+  const input = { "FRENOS HIDRAULICOS": true, "DISTANCIA ENTRE EJES (MM)": "2100 mm", "POTENCIA DE TRACCION (KW)": "5 kW",
+    "PESO DEL RODILLO": "1200 kg", "DEPOSITO DE SOLUCION": "50 l", "DEPOSITO DE RECUPERACION": "60 l",
+    "DEPOSITO DE COMBUSTIBLE": "40 l", "Alcance horizontal max.": "8 m", "Alcance lateral máximo": "7 m", "Alcance lateral": "6 m" };
+  const expected = { "Frenos hidráulicos": true, "Distancia entre ejes (mm)": 2100, "Potencia de tracción (kW)": [5],
+    "Peso del rodillo (kg)": 1200, "Depósito de solución": 50, "Depósito de recuperación": 60, "Depósito de combustible": 40,
+    "Alcance horizontal max.": 8, "Alcance lateral máximo": 7, "Alcance lateral": 6 };
+  assert.deepEqual(normalizeSpecsObject(input).normalized, expected);
+  assert.deepEqual(normalizeSpecsObject(expected).normalized, expected);
+  assert.deepEqual(normalizeSpecsObject({ "Depósito de solución": "50 kg", "Peso del rodillo": "1200 l", "Alcance lateral máximo": "7 kg" }).normalized, {});
+  assert.deepEqual(normalizeSpecsObject({ "Frenos hidráulicos": true, "FRENOS HIDRAULICOS": false }).conflictingKeys.map(({ key }) => key), ["Frenos hidráulicos"]);
+  assert.deepEqual(normalizeSpecsObject({ "Capacidad": "50 l", "Alcance maximo": "7 m", "Capacidad del depósito de residuos": "40 l" }).normalized, {});
+});
+
+test("reconoce la altura industrial sin reducir alternativas", () => {
+  assert.equal(normalizeSpecsObject({ "Altura Elevación (Industr.)": "4500 mm" }).normalized["Altura de elevación (mm)"], 4500);
+  assert.equal(normalizeSpecsObject({ "Altura Elevación (Industr.)": "2860/5500 mm" }).normalized["Altura de elevación (mm)"], undefined);
+});

@@ -13,6 +13,7 @@ import { productAttributes } from "../../../preparation/product/product-attribut
 import { prepareProduct } from "../../../commercial/legacy-export/prepare-product.js";
 
 import { originalRecordFingerprint } from "../../../catalog/identity-fingerprint.js";
+import { reviewedModelAttributeSpecs } from "../../../preparation/technical/evidence/documented-technical-evidence.js";
 import { recoveredUnitAttributeSpecs } from "../../../preparation/provenance/technical-provenance.js";
 import type { ProductTechnicalProvenance } from "../../../contracts/technical-provenance.js";
 
@@ -331,4 +332,33 @@ test("la rodadura acreditada se proyecta sin seleccionar neumáticos opcionales"
     assert.equal(resolveAttribute(source, tyres, {}, { Neumáticos: value }).value, null);
   }
   assert.equal(resolveAttribute({ ...source, specs: { Ruedas: "n/a" } }, tyres, {}, { Neumáticos: "Sólidos" }).value, null);
+});
+
+
+test("la geometría acreditada reconoce el alcance con unidad y conserva precedencias y alternativas", () => {
+  const record = { ...gamRecord(), reference: "SYNTHETIC", brand: "EQUIPTEST", model: "X1", title: "Equipo X1", shortDescription: null, longDescription: null };
+  const reach = attribute("Alcance horizontal");
+  const evidence = { "Alcance horizontal (m)": "7,25 m" };
+  assert.deepEqual(resolveAttribute(record, reach, evidence), { status: "resolved", value: 7.25 });
+  assert.deepEqual(resolveAttribute(record, reach, {}, evidence), { status: "resolved", value: 7.25 });
+  assert.equal(resolveAttribute(record, reach, { ...evidence, "Alcance horizontal": "8 m" }).status, "not_observed");
+  for (const value of ["0 m", "7/8 m", "7 kg", "7 m opcional", "7.250 m"]) {
+    assert.equal(resolveAttribute(record, reach, { "Alcance horizontal (m)": value }).status, "not_observed");
+  }
+  assert.deepEqual(resolveAttribute({ ...record, specs: { "Alcance horizontal": "6 m" } }, reach, evidence), { status: "resolved", value: 6 });
+  assert.equal(resolveAttribute({ ...record, specs: { "Alcance horizontal": "n/a" } }, reach, evidence).status, "not_observed");
+  assert.equal(resolveAttribute({ ...record, specs: { "Alcance horizontal máximo": "6 m" } }, reach, evidence).value === 7.25, false);
+});
+
+test("las dimensiones de modelo no se combinan sin acreditación conjunta y no sustituyen geometría de unidad", () => {
+  const record = { ...mercaelevaRecord({}, "Equipo X1"), reference: "SYNTHETIC", brand: "EQUIPTEST", model: "X1", title: "Plataforma de tijera", shortDescription: null };
+  const dimensions = attribute("Dimensiones de la cesta");
+  const reviewed = { "Longitud de plataforma": "2,4 m", "Anchura de plataforma": "1,2 m" };
+  const provenance: ProductTechnicalProvenance = { originalRecordSha256: originalRecordFingerprint(record), entries: [] };
+  assert.deepEqual(reviewedModelAttributeSpecs(record, provenance, reviewed), reviewed);
+  assert.equal(resolveAttribute(record, dimensions, reviewed).status, "not_observed");
+  const projected = { ...reviewed, "Dimensiones de la cesta": "2,4 x 1,2 m" };
+  assert.deepEqual(resolveAttribute(record, dimensions, projected), { status: "resolved", value: "2,4 x 1,2 m" });
+  assert.equal(resolveAttribute({ ...record, specs: { "Anchura de plataforma": "1,5 m" } }, dimensions, projected).status, "not_observed");
+  assert.equal(resolveAttribute(record, dimensions, { "Dimensiones de la cesta": "2,4 x 1,2 kg" }).status, "not_observed");
 });

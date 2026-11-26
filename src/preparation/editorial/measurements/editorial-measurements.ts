@@ -1,3 +1,4 @@
+import { parseMeasuredLength } from "../../../catalog/normalization/spec-parsers.js";
 import type { SpecValue, SpecsMap } from "../../../contracts/catalog.js";
 
 export type EditorialQuantity = "m" | "mm" | "kg" | "t" | "V" | "kW" | "kVA" | "%" | "h" | "N";
@@ -19,6 +20,10 @@ export const editorialQuantity = (raw: SpecValue | undefined, unit: EditorialQua
   const targetUnit = unit.toLowerCase();
   if (sourceUnit !== targetUnit && !(targetUnit === "h" && sourceUnit.startsWith("hora")) &&
     !(targetUnit === "m" && sourceUnit.startsWith("metro"))) return null;
+  if (unit === "m") {
+    const measured = parseMeasuredLength(raw, "", "m");
+    return measured !== null && measured > 0 ? measured : null;
+  }
   return parseNumber(match[1].trim());
 };
 

@@ -1,6 +1,6 @@
-import { normalizeSpecKey, normalizeSpecsObject, type DiscardReason } from "../../../catalog/normalization/normalize-specs.js";
+import { normalizeSpecKey, normalizeSpecsObject, reconcileSourceSpecsForNormalization, type DiscardReason } from "../../../catalog/normalization/normalize-specs.js";
 import { SPEC_RULES } from "../../../catalog/normalization/spec-rules.js";
-import { isSpecColumn, normalizeSpace, normalizedValueToScalar, toScalarString } from "./spec-scalar.js";
+import { isSpecColumn, normalizeSpace, normalizedValueToScalar, toScalarString, toSpecColumnString } from "./spec-scalar.js";
 
 export type SpecSummary = {
   readonly total: number;
@@ -186,10 +186,12 @@ export const normalizeGamRows = async (
       continue;
     }
 
-    const norm = normalizeSpecsObject(parsedSpec.value);
+    const reconciled = reconcileSourceSpecsForNormalization(parsedSpec.value);
+    const norm = normalizeSpecsObject(reconciled.specs);
+    const renamedKeys = [...reconciled.renames, ...norm.renamedKeys];
 
     for (const k of norm.unknownKeys) unknownCounts.set(k, (unknownCounts.get(k) ?? 0) + 1);
-    for (const [sourceKey, originalValue] of Object.entries(parsedSpec.value)) {
+    for (const [sourceKey, originalValue] of Object.entries(reconciled.specs)) {
       const key = normalizeSpecKey(sourceKey);
       if (!Object.hasOwn(SPEC_RULES, key)) recordIssue(key, sourceKey, "unknown_key", originalValue);
     }
@@ -207,7 +209,7 @@ export const normalizeGamRows = async (
       conflictCounts.set(conflict.key, (conflictCounts.get(conflict.key) ?? 0) + 1);
     }
 
-    for (const r of norm.renamedKeys) {
+    for (const r of renamedKeys) {
       const key = `${r.from}→${r.to}`;
       const existing = renamedCounts.get(key) ?? { from: r.from, to: r.to, count: 0 };
       renamedCounts.set(key, { from: existing.from, to: existing.to, count: existing.count + 1 });
@@ -249,12 +251,12 @@ export const normalizeGamRows = async (
       allNormalizedSpecKeys.add(k);
     }
 
-    const changes = countTechnicalChanges(parsedSpec.value, norm.renamedKeys, scalarSpec);
+    const changes = countTechnicalChanges(parsedSpec.value, renamedKeys, scalarSpec);
     renamedKeysTotal += changes.renamed;
     technicalValuesTransformed += changes.values;
     const conflictKeys = new Set(norm.conflictingKeys.map(({ key }) => key));
     const preserved = isObject(parsedSpec.value)
-      ? Object.fromEntries(Object.entries(parsedSpec.value).filter(([rawKey]) => {
+      ? Object.fromEntries(Object.entries(reconciled.specs).filter(([rawKey]) => {
         const key = normalizeSpecKey(rawKey);
         return !Object.hasOwn(SPEC_RULES, key) || conflictKeys.has(key);
       }))
@@ -263,7 +265,7 @@ export const normalizeGamRows = async (
 
     if (options.expandSpecColumns) {
       for (const [k, v] of Object.entries(scalarSpec)) {
-        row[`spec__${k}`] = typeof v === "string" ? v : toScalarString(v);
+        row[`spec__${k}`] = toSpecColumnString(k, v);
       }
 
       for (const h of headers) {

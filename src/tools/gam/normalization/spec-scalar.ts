@@ -1,4 +1,4 @@
-import type { NormalizedSpecValue } from "../../../catalog/normalization/normalize-specs.js";
+import { explicitNumericSpecUnit, type NormalizedSpecValue } from "../../../catalog/normalization/normalize-specs.js";
 
 export const normalizeSpace = (s: string): string => s.replace(/\s+/g, " ").trim();
 
@@ -21,9 +21,22 @@ const readNumKey = (obj: Record<string, unknown>, key: string): number | null =>
   return null;
 };
 
+const formatNumericPart = (value: number): string => {
+  const literal = String(value);
+  if (literal.includes("e")) return value.toLocaleString("es-ES", { useGrouping: false, maximumSignificantDigits: 21 });
+  return /^-?\d{1,3}\.\d{3}$/u.test(literal) ? literal.replace(".", ",") : literal;
+};
+
+export const toSpecColumnString = (key: string, value: string | number | boolean): string => {
+  if (typeof value !== "number") return toScalarString(value);
+  const unit = explicitNumericSpecUnit(key);
+  const numeric = formatNumericPart(value);
+  return unit ? `${numeric} ${unit}` : numeric;
+};
+
 const formatDimParts = (parts: readonly (number | null)[]): string | null => {
   const cleaned = parts.filter((n): n is number => typeof n === "number" && Number.isFinite(n));
-  return cleaned.length > 0 ? `${cleaned.join(" x ")} mm` : null;
+  return cleaned.length > 0 ? `${cleaned.map(formatNumericPart).join(" x ")} mm` : null;
 };
 
 export const normalizedValueToScalar = (v: NormalizedSpecValue): string | number | boolean | null => {
@@ -41,7 +54,7 @@ export const normalizedValueToScalar = (v: NormalizedSpecValue): string | number
 
   if (Array.isArray(v)) {
     const parts = v
-      .map((n) => (typeof n === "number" && Number.isFinite(n) ? String(n) : ""))
+      .map((n) => (typeof n === "number" && Number.isFinite(n) ? formatNumericPart(n) : ""))
       .filter((x) => x.length > 0);
     if (parts.length === 0) return null;
     return parts.join(" | ");

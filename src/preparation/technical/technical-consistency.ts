@@ -82,16 +82,17 @@ const gamCapacityIssue = (record: ProductRecord, specs: SpecsMap): string | null
 
 export const preparedTechnicalConsistencyIssues = (record: ProductRecord, specs: SpecsMap): readonly string[] => {
   if (record.providerId === "gomariz") {
-    const platform = specs["Altura plataforma"];
+    const platforms = [specs["Altura plataforma"], specs["Altura de plataforma"]];
     const work = specs["Altura de trabajo"];
     const measurement = (value: string): number | null => {
       const match = /^(\d+(?:[.,]\d+)?)\s*m$/iu.exec(value.trim());
       return match?.[1] ? Number(match[1].replace(",", ".")) : null;
     };
-    const platformHeight = typeof platform === "string" ? measurement(platform) : null;
     const workingHeight = typeof work === "string" ? measurement(work) : null;
-    return platformHeight !== null && workingHeight !== null &&
-      platformHeight >= workingHeight
+    return workingHeight !== null && platforms.some((platform) => {
+      const height = typeof platform === "string" ? measurement(platform) : null;
+      return height !== null && height >= workingHeight;
+    })
       ? ["Alturas contradictorias: la plataforma no puede superar la altura de trabajo"] : [];
   }
   if (record.providerId !== "gam") return [];

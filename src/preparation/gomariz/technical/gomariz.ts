@@ -1,5 +1,10 @@
-import type { ProductRecord } from "../../../contracts/catalog.js";
+import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
+import { resolveGomarizEditorialDomainSource } from "../domain-source.js";
 import { verifiedEditorialUrl } from "../../editorial/source/editorial-source-url.js";
+import { gomarizTechnicalSourceFamily } from "../classification/source-category.js";
+import { scalar, numberToken } from "../../classification/attribute-utils.js";
+import { reconcileOriginalMassCapacityPresentation } from "../../technical/technical-presentation.js";
+import type { TechnicalRecoveryObservation } from "../../provenance/technical-recovery-observation.js";
 import { verifiedGomarizPlatformHeight } from "../../../catalog/normalization/gomariz/technical.js";
 
 export const reconcileGomarizVerifiedPlatformHeight = (record: ProductRecord): ProductRecord => {
@@ -61,4 +66,24 @@ export const reconcileGomarizVerifiedCompositeBrand = (record: ProductRecord): P
   const expectedSlug = `${second}-${first}-${record.model.replace(/\s+/gu, "-")}`.toLocaleLowerCase("es");
   if (path.length !== 2 || path[0] !== "producto" || path[1]?.toLocaleLowerCase("es") !== expectedSlug) return record;
   return { ...record, brand: swapped };
+};
+
+export const gomarizMassCapacityField = (record: ProductRecord): "Capacidad de carga" | "Capacidad de la cesta" | "Capacidad máxima" | null => {
+  const family = gomarizTechnicalSourceFamily(record);
+  const raw = record.specs?.Capacidad;
+  const capacity = raw === undefined ? null : scalar(raw);
+  const mass = typeof capacity === "string" ? /^([\d., ]+)\s*kg$/iu.exec(capacity.trim()) : null;
+  if (!family || !mass?.[1] || (numberToken(mass[1]) ?? 0) <= 0) return null;
+  if (["carretilla-industrial", "carretilla-retractil", "carretilla-todoterreno"].includes(family)) return "Capacidad de carga";
+  if (family === "manipulador-telescopico") return "Capacidad máxima";
+  if (["elevador-tijera", "brazo-articulado", "brazo-articulado-boom-lift", "brazo-telescopico", "oruga", "camion-plataforma"].includes(family)) return "Capacidad de la cesta";
+  return null;
+};
+
+export const reconcileGomarizMassCapacityPresentation = (original: ProductRecord, specs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  const field = gomarizMassCapacityField(original);
+  if (field === null || field === "Capacidad máxima" && !resolveGomarizEditorialDomainSource(original)) return specs;
+  return reconcileOriginalMassCapacityPresentation(original, specs, "Capacidad", field === "Capacidad máxima" ? "Capacidad máxima de elevación" : field,
+    "src/preparation/gomariz/technical/gomariz.ts", observe);
 };

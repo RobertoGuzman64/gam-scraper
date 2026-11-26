@@ -91,3 +91,22 @@ test("GAM: los valores incompatibles o las rutas ajenas no se omiten por aparien
     assert.deepEqual(resolveAttribute(product, attribute("Altura de plataforma")), { status: "invalid", value: null });
   }
 });
+
+test("GAM: el atributo textual conserva rangos y configuraciones explícitas de batería", () => {
+  const cases = [
+    ["80V / 840-930Ah(V/Ah)", "80 V / 840-930 Ah"],
+    ["24V / 315-375Ah | Li-ion 24V / 300Ah(V/Ah)", "24 V / 315-375 Ah | Li-ion 24 V / 300 Ah"],
+    ["2 x 12/85V/Ah", "2 x 12 V / 85 Ah"],
+    ["24V / 465Ah(V/Ah)(V/Ah)", "24 V / 465 Ah"]
+  ] as const;
+  const field = attribute("Batería (V / Ah)");
+  const source = record("https://online.gamrentals.com/es/carretillas/100-equipo-prueba", "Equipo de prueba", "TX1", {});
+  for (const [raw, expected] of cases) {
+    assert.equal(resolveAttribute({ ...source, specs: { "Capacidad de la batería": raw } }, field).value, expected);
+  }
+  for (const raw of ["24V / 240h(V/Ah)", "545", "24V / 500-300Ah(V/Ah)", "24V / 0Ah", "24V / 400Ah | opción"]) {
+    assert.equal(resolveAttribute({ ...source, specs: { "Capacidad de la batería": raw } }, field).value, null);
+  }
+  assert.equal(resolveAttribute({ ...source, specs: { "Capacidad de la batería": cases[0][0], "Voltaje batería (V)": "48 V" } }, field).value, null);
+  assert.equal(resolveAttribute({ ...source, specs: { "Capacidad de la batería": cases[0][0], "Batería (V / Ah)": "48 V / 400 Ah" } }, field).value, "48 V / 400 Ah");
+});

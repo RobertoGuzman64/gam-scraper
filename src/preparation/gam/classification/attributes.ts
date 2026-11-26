@@ -1,4 +1,5 @@
 import type { ProductRecord } from "../../../contracts/catalog.js";
+import { parseBatteryConfiguration } from "../../../catalog/normalization/spec-parsers.js";
 import { SPEC_KEY_NORMALIZATION } from "../../../catalog/normalization/spec-rules.js";
 import type { AliasOutcome, Attribute, Candidate } from "../../classification/attribute-types.js";
 import { fold, scalar } from "../../classification/attribute-utils.js";
@@ -10,7 +11,7 @@ import { gamHandlingAmbiguousCapacity, gamHandlingAttributeConflicts } from "../
 import { gamElevationCandidate, gamElevationHeightConflicts } from "../measurements/elevation.js";
 import { gamSpecializedCandidate } from "./specialized.js";
 import { gamGeneratorCandidate, isGamGenerator } from "../energy/generator.js";
-import { applyGamCrossedSpecifications } from "../technical/crossed-specifications.js";
+import { applyGamCrossedSpecifications, gamCrossedBatteryValue } from "../technical/crossed-specifications.js";
 
 export const gamUnspecifiedTurningRadius = (record: ProductRecord): boolean => {
   if (record.categoryKey !== "carretillas-nuevas" || record.condition !== "Nuevo" ||
@@ -46,10 +47,11 @@ export const applyGamAliasesDetailed = (record: ProductRecord, attribute: Attrib
       keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key)))) {
     const published = record.specs?.["Capacidad de la batería"];
     const raw = published === undefined ? null : scalar(published);
-    if (typeof raw === "string") {
-      const match = raw.trim().match(/^([1-9]\d*)\s*V\s*\/\s*([1-9]\d*)\s*Ah\s*\(\s*V\s*\/\s*Ah\s*\)$/i);
-      if (match?.[1] && match[2]) candidates.push({ key: attribute.name, value: `${match[1]} V / ${match[2]} Ah` });
-    }
+    const competingBattery = Object.keys(record.specs ?? {}).some((key) => key !== "Capacidad de la batería" &&
+      /^(?:baterias?|capacidad (?:de la |de )?bateria|voltios|voltaje|tension nominal de bateria)(?:\s|$)/u.test(fold(key)));
+    const configuration = competingBattery || typeof raw !== "string" ? null :
+      record.condition === "Nuevo" ? parseBatteryConfiguration(raw) : gamCrossedBatteryValue(raw);
+    if (configuration !== null) candidates.push({ key: attribute.name, value: configuration });
   }
   if (record.providerId === "gam" && attribute.name === "Motorización / Energía" &&
     attribute.type === "SELECT" && fold(attribute.unit_option) === "electrico") {
@@ -137,7 +139,7 @@ export const applyGamAliasesDetailed = (record: ProductRecord, attribute: Attrib
     if (!generatorPower) return "rejected";
     candidates.push(generatorPower);
   }
-  if (["Tipo de mástil", "Altura de elevación", "Capacidad de carga", "Marca", "Modelo", "Motorización / Energía", "Longitud de horquillas"].includes(attribute.name)) {
+  if (["Tipo de mástil", "Altura de elevación", "Capacidad de carga", "Marca", "Modelo", "Motorización / Energía", "Longitud de horquillas", "Implementos incluidos"].includes(attribute.name)) {
     const hasDirectValue = Object.entries(record.specs ?? {}).some(([key]) =>
       keys.has(fold(key)) || keys.has(fold(SPEC_KEY_NORMALIZATION[fold(key)] ?? key))
     );

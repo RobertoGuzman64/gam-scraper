@@ -151,3 +151,18 @@ test("GAM manutención: longitud de horquillas sin elegir entre medidas alternat
   assert.equal(resolved({ ...source, specs: { "Dimensiones Horquillas": "1200 mm", "Longitud de horquillas": "1400 mm" } }, "Longitud de horquillas"), 1400);
   assert.equal(resolved({ ...source, categoryKey: "elevacion", title: "Plataforma elevadora" }, "Longitud de horquillas"), null);
 });
+
+
+test("GAM manutención: solo proyecta desplazador explícito de unidad sin implementos incompatibles", () => {
+  const target = { name: "Implementos incluidos", type: "SELECT", unit_option: "Desplazador lateral / Posicionador / Pinza / Ninguno" } as const;
+  const machine: ProductRecord = { ...example("Carretilla elevadora EQUIPTEST TX2", "Ficha de la unidad", { "Desplazador lateral": "SI" }),
+    categoryKey: "manutencion", condition: "Segunda mano", brand: "EQUIPTEST", model: "TX2" };
+  assert.equal(resolveAttributeValue(machine, target), "Desplazador lateral");
+  for (const specs of [{ "Desplazador lateral": "NO" }, { "Desplazamiento lateral": "Sí" },
+    { "Desplazador lateral": "SI", Pinza: "SI" }, { "Desplazador lateral": "SI", "Desplazador Lateral": "NO" }]) {
+    assert.equal(resolveAttributeValue({ ...machine, specs }, target), null);
+  }
+  assert.equal(resolveAttributeValue({ ...machine, condition: "Nuevo" }, target), null);
+  assert.equal(resolveAttributeValue({ ...machine, longDescription: "Equipado con pinza" }, target), null);
+  assert.equal(resolveAttributeValue({ ...machine, specs: { ...machine.specs, [target.name]: "Posicionador" } }, target), "Posicionador");
+});

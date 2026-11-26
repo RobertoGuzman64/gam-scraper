@@ -29,7 +29,7 @@ const sources: Readonly<Record<PanelRuleId, RuleSource>> = {
     title: "Comprobación de valores numéricos",
     summary: "Se interpreta el valor según su tipo y unidad. Un número no interpretable o negativo no se incorpora por esta regla.",
     path: "src/catalog/normalization/normalize-specs.ts",
-    first: 'case "number": {',
+    first: "const unit = measure;",
     last: "    }"
   },
   exclusion: {

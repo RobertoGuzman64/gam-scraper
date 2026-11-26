@@ -13,6 +13,7 @@ import { resolveEditorialFacts } from "../../editorial/core/editorial-facts.js";
 import type { EditorialEnergy } from "../../editorial/core/editorial-facts.js";
 import { editorialMetricOf, editorialQuantityOf, editorialQuantity } from "../../editorial/measurements/editorial-measurements.js";
 import { fold } from "../../classification/category-utils.js";
+import { basketDimensions } from "../../classification/attribute-utils.js";
 import { containsEditorialBrandModel, containsEditorialIdentity } from "../../editorial/identity/editorial-identity-match.js";
 import { verifiedEditorialUrl } from "../../editorial/source/editorial-source-url.js";
 
@@ -470,4 +471,25 @@ export const reviewedModelEditorialSpecs = (
     entry.scope === "model-document" && entry.document.brand === original.brand && entry.document.model === original.model &&
     matchesTechnicalDocumentVerification(entry.document, entry.field, entry.value, entry.verification) ?
       [[entry.field, entry.value]] : []));
+};
+
+export const reviewedModelAttributeSpecs = (
+  original: ProductRecord, provenance: ProductTechnicalProvenance, reviewed: SpecsMap
+): SpecsMap => {
+  if (!original.brand || !original.model || provenance.originalRecordSha256 !== originalRecordFingerprint(original)) return reviewed;
+  const fields = ["Longitud de plataforma", "Anchura de plataforma"];
+  const entries = provenance.entries.filter((entry) => fields.includes(entry.field));
+  if (entries.length !== fields.length || !fields.every((field) => entries.filter((entry) => entry.field === field).length === 1)) return reviewed;
+  const claim = reusableReviewedModelClaims(original.brand, original.model).find((claim) =>
+    claim.compatibility.family === "plataforma-tijera" && entries.every((entry) =>
+      entry.scope === "model-document" && entry.mechanism === "src/preparation/technical/documented-technical-evidence.ts" &&
+      entry.document.url === claim.url && entry.document.brand === original.brand && entry.document.model === original.model &&
+      entry.value === reviewed[entry.field] && matchesTechnicalDocumentVerification(entry.document, entry.field, entry.value, entry.verification) &&
+      claim.facts.some((fact) => fact.field === entry.field && fact.value === entry.value)));
+  if (!claim) return reviewed;
+  const length = editorialMetricOf(reviewed, ["Longitud de plataforma"]);
+  const width = editorialMetricOf(reviewed, ["Anchura de plataforma"]);
+  const value = length !== null && width !== null && length >= 0.4 && length <= 12 && width >= 0.4 && width <= 6
+    ? basketDimensions(`${length} x ${width} m`) : null;
+  return value === null ? reviewed : { ...reviewed, "Dimensiones de la cesta": value };
 };

@@ -351,3 +351,17 @@ test("Manain: recupera un par de batería explícito sin elegir alternativas", (
   assert.equal(resolveAttribute({ ...source, specs: { ...source.specs, Voltios: "48 v" } }, target).value, null);
   assert.equal(resolveAttribute({ ...source, specs: { ...source.specs, Motor: "Diésel" } }, target).value, null);
 });
+
+test("Manain: combina tensión y capacidad independientes solo cuando ambas son explícitas", () => {
+  const target = { name: "Batería (V / Ah)", type: "TEXT", unit_option: "V / Ah" } as const;
+  const source = machine("https://manain.com/producto/venta-manipulacion-carretilla-equiptest-x1/", { Motor: "Eléctrico", Voltios: "80 v", Bateria: "205 ah" }, "Carretilla eléctrica");
+  assert.equal(resolveAttribute(source, target).value, "80 V / 205 Ah");
+  for (const specs of [
+    { Motor: "Diésel", Voltios: "80 v", Bateria: "205 ah" },
+    { Motor: "Eléctrico", Voltios: "80 v", Bateria: "ah" },
+    { Motor: "Eléctrico", Voltios: "80/48 v", Bateria: "205 ah" },
+    { Motor: "Eléctrico", Voltios: "80 v", Bateria: "205-300 ah" },
+    { Motor: "Eléctrico", "Voltaje del cargador": "80 v", Bateria: "205 ah" },
+    { Motor: "Eléctrico", Voltios: "80 v", Bateria: "205 ah", "Voltaje batería": "48 V" }
+  ] as const) assert.equal(resolveAttribute({ ...source, specs }, target).value, null);
+});

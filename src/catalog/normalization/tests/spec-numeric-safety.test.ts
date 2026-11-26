@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { normalizeGamRows } from "../../../tools/gam/normalization/normalize-rows.js";
+import { parseSpecByRule } from "../../../tools/gam/seed/internal/spec.js";
 import { normalizeSpecsObject } from "../normalize-specs.js";
 import { SPEC_RULES } from "../spec-rules.js";
 import { parseBattery, parseMeasuredLength, parseNumber, parseNumberArray } from "../spec-parsers.js";
@@ -129,12 +130,14 @@ test("interpreta configuraciones V/Ah completas sin reducir opciones a capacidad
   const key = "Batería (V / Ah)";
   for (const [raw, expected] of [
     ["48V / 300Ah(V/Ah)", "48 V / 300 Ah"],
+    ["48/300 V/Ah", "48 V / 300 Ah"],
+    ["2 x 12/85V/Ah", "2 x 12 V / 85 Ah"],
     ["24V / 200-300Ah | Li-ion 24V / 150Ah(V/Ah)", "24 V / 200-300 Ah | Li-ion 24 V / 150 Ah"],
     ["Li-ion 51.2 V / 250,5 AH", "Li-ion 51,2 V / 250,5 Ah"]
   ]) {
     assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], expected);
   }
-  for (const raw of ["48/300 V/Ah", "48V / 300A", "48V / 300h", "48V / 300-200Ah", "48V / 0Ah", "48V / 300Ah | 400Ah", "48V / 300Ah opcional", "48V / 3.000Ah", ["48 V / 300 Ah", "24 V / 100 Ah"]]) {
+  for (const raw of ["48/300/400 V/Ah", "48/300", "0 x 12/85V/Ah", "2 x 12/85V/A", "48V / 300A", "48V / 300h", "48V / 300-200Ah", "48V / 0Ah", "48V / 300Ah | 400Ah", "48V / 300Ah opcional", "48V / 3.000Ah", ["48 V / 300 Ah", "24 V / 100 Ah"]]) {
     assert.equal(normalizeSpecsObject({ [key]: raw }).normalized[key], undefined);
   }
   assert.equal(normalizeSpecsObject({ "Capacidad de la batería (Ah)": "48 V / 300 Ah" }).normalized["Capacidad de la batería (Ah)"], undefined);
@@ -272,4 +275,104 @@ test("separa capacidad de depósito, tensiones declaradas y potencia máxima del
   assert.deepEqual(normalized, { "Capacidad depósito": 75, "Depósito de combustible": 50, "Voltaje de la batería": 24,
     "Tensión nominal de batería": 48, "Voltaje del cargador": 36, "Potencia eléctrica máxima del equipo": 900 });
   assert.deepEqual(normalizeSpecsObject(normalized).normalized, normalized);
+});
+
+
+test("las capacidades canónicas conservan su magnitud al normalizar el CSV y consumirlo en el seed", async () => {
+  const keys = ["Capacidad de la cesta", "Capacidad de plataforma", "Capacidad nominal de carga", "Capacidad de plataforma sin restricciones"];
+  const raw = Object.fromEntries(keys.map((key) => [key, "230,5 kg"]));
+  const first = normalizeSpecsObject(raw).normalized;
+  assert.deepEqual(first, Object.fromEntries(keys.map((key) => [key, 230.5])));
+  assert.deepEqual(normalizeSpecsObject(first).normalized, first);
+  const rows = [{ reference: "CONTROL", specJson: JSON.stringify(raw) }];
+  const options = { expandSpecColumns: false, maxValuesPerKey: 50 };
+  await normalizeGamRows(rows, ["reference", "specJson"], options, async () => {});
+  assert.deepEqual(JSON.parse(rows[0]?.specJson ?? "{}"), first);
+  await normalizeGamRows(rows, ["reference", "specJson"], options, async () => {});
+  assert.deepEqual(JSON.parse(rows[0]?.specJson ?? "{}"), first);
+  for (const key of keys) {
+    assert.equal(parseSpecByRule(key, first[key]), 230.5);
+    for (const invalid of ["230", "230 L", "230/300 kg", -1, Infinity, NaN, true]) {
+      assert.equal(normalizeSpecsObject({ [key]: invalid }).normalized[key], undefined);
+    }
+    assert.equal(normalizeSpecsObject({ [key.toLowerCase()]: 230 }).normalized[key], undefined);
+  }
+});
+
+test("la geometría normalizada conserva sus ejes sin aceptar estructuras ambiguas", () => {
+  const basket = "Dimensiones cesta (mm)";
+  const forks = "Dimensiones horquillas (mm)";
+  for (const raw of [
+    { [basket]: "1830 x 760 mm", [forks]: "1185 mm" },
+    { [basket]: "1,83 x 0,76 m", [forks]: "1200 x 100 x 40 mm" },
+    { [forks]: "1200 x 100 mm" }
+  ]) {
+    const first = normalizeSpecsObject(raw).normalized;
+    assert.equal(Object.keys(first).length, Object.keys(raw).length);
+    assert.deepEqual(normalizeSpecsObject(first).normalized, first);
+  }
+  for (const invalid of [
+    { ancho: 760, largo: null }, { ancho: 760, largo: 1830, grosor: 30 },
+    { ancho: "760", largo: 1830 }, { ancho: 0, largo: 1830 }, { ancho: 760, largo: 20001 },
+    { ancho: 760.0001, largo: 1830 }, { ancho: 760, largo: Infinity }
+  ]) assert.equal(normalizeSpecsObject({ [basket]: invalid }).normalized[basket], undefined);
+  for (const invalid of [
+    { largo: 1185, ancho: null, grosor: 30 }, { largo: 1185, ancho: null },
+    { largo: 1185, ancho: 0, grosor: null }, { largo: 1185, ancho: 100, grosor: -1 },
+    { largo: 1185, ancho: 100, grosor: null, unidad: "cm" }
+  ]) assert.equal(normalizeSpecsObject({ [forks]: invalid }).normalized[forks], undefined);
+});
+
+
+test("las unidades de longitud repetidas solo se interpretan cuando son equivalentes", async () => {
+  for (const [key, raw, target, expected] of [
+    ["Centro de carga", "500mm mm", "Centro de carga (mm)", 500],
+    ["Alcance lateral", "8,5 m metros", "Alcance lateral", 8.5],
+    ["Longitud (m)", "4,5 metros m", "Longitud (mm)", 4500],
+    ["Anchura", "80 cm CM", "Anchura (mm)", 800]
+  ] as const) {
+    const first = normalizeSpecsObject({ [key]: raw });
+    assert.deepEqual(first.normalized, { [target]: expected });
+    assert.deepEqual(first.discardedSpecs, []);
+    assert.equal(parseSpecByRule(key, raw), expected);
+    assert.deepEqual(normalizeSpecsObject(first.normalized).normalized, first.normalized);
+    const row: Record<string, string> = { reference: "SINTETICA", specJson: JSON.stringify({ [key]: raw }) };
+    await normalizeGamRows([row], ["reference", "specJson"], { expandSpecColumns: true, maxValuesPerKey: 10 }, async () => {});
+    assert.deepEqual(JSON.parse(row.specJson ?? "{}"), first.normalized);
+  }
+  for (const [key, raw] of [
+    ["Centro de carga", "500 mm m"], ["Longitud (m)", "500 mm mm"],
+    ["Altura Plataforma", "6085mm metros"], ["Alcance lateral", "2.168 m metros"],
+    ["Anchura", "800 mm mm mm"], ["Anchura", "800 / 900 mm mm"], ["Anchura", "800 kg kg"]
+  ] as const) {
+    assert.deepEqual(normalizeSpecsObject({ [key]: raw }).normalized, {}, raw);
+    assert.equal(parseSpecByRule(key, raw), null, raw);
+  }
+  assert.deepEqual(normalizeSpecsObject({ "Centro de carga": "500mm mm", "Centro de carga (mm)": "600 mm" }).conflictingKeys,
+    [{ key: "Centro de carga (mm)", sources: ["Centro de carga", "Centro de carga (mm)"] }]);
+});
+
+
+test("las masas específicas conservan su significado, unidad y valor entre normalizador, CSV y seed", async () => {
+  const keys = ["Peso maquina", "Peso operativo", "Peso sin carga", "Peso de servicio", "Peso con batería",
+    "Peso en orden de marcha del modelo", "Peso neto del portapaneles"];
+  const input = Object.fromEntries(keys.map((key, index) => [key, `${1000 + index},5 kg`]));
+  const expected = Object.fromEntries(keys.map((key, index) => [key, 1000.5 + index]));
+  const raw = { ...input, Peso: "800 kg" };
+  const normalized = { ...expected, "Peso (kg)": 800 };
+  const result = normalizeSpecsObject(raw);
+  assert.deepEqual(result.normalized, normalized);
+  assert.deepEqual(result.conflictingKeys, []);
+  assert.deepEqual(result.discardedSpecs, []);
+  assert.deepEqual(normalizeSpecsObject(normalized).normalized, normalized);
+  const row: Record<string, string> = { reference: "CONTROL", specJson: JSON.stringify(raw) };
+  await normalizeGamRows([row], ["reference", "specJson"], { expandSpecColumns: true, maxValuesPerKey: 10 }, async () => {});
+  assert.deepEqual(JSON.parse(row.specJson ?? "{}"), normalized);
+  for (const key of keys) {
+    assert.equal(parseSpecByRule(key, row[`spec__${key}`]), expected[key]);
+    for (const value of ["1000", "1000 L", "1000 mm", "1000/1200 kg", "1000 kg opcional", "kg", -1, true]) {
+      assert.equal(normalizeSpecsObject({ [key]: value }).normalized[key], undefined);
+    }
+  }
+  assert.deepEqual(normalizeSpecsObject({ "Peso operativo": "1000 kg", "PESO OPERATIVO": "1200 kg" }).conflictingKeys.map(({ key }) => key), ["Peso operativo"]);
 });

@@ -125,7 +125,6 @@ test("un peso incompatible con la familia se retiene en el origen pero no en la 
   assert.equal(rejectImplausibleTechnicalWeight(foreign, input), input);
 });
 
-
 test("la presentación elimina una unidad duplicada solo en dimensiones triples de horquillas", () => {
   const sourceSpecs: SpecsMap = {
     Horquillas: "1200 mm x 125 mm x 45 mm mm",
@@ -144,7 +143,6 @@ test("la presentación elimina una unidad duplicada solo en dimensiones triples 
   assert.equal(normalizeTechnicalPresentation(presented), presented);
   assert.equal(JSON.stringify(sourceSpecs), before);
 });
-
 
 test("omite marcadores sin magnitud en campos técnicos inequívocos de cualquier proveedor", () => {
   const input: SpecsMap = {
@@ -170,7 +168,6 @@ test("omite marcadores sin magnitud en campos técnicos inequívocos de cualquie
     assert.deepEqual(prepared, { Stage: "v" });
   }
 });
-
 
 test("uniforma categorías técnicas inequívocas sin transformar alternativas ni identidades", () => {
   const input: SpecsMap = {
@@ -208,7 +205,6 @@ test("presenta recuentos y horas integrales sin eliminar decimales significativo
   }
   assert.deepEqual(input, { "Número de ruedas": "4.0", Horas: "3916.0000", Modelo: "4.0", "Horas laborales": "4.0" });
 });
-
 
 test("presenta las unidades de batería explícitas sin repetir sufijos ni perder alternativas", () => {
   const cases: ReadonlyArray<readonly [string, string]> = [
@@ -268,7 +264,6 @@ test("conserva las magnitudes reconciliadas y aplica la presentación final a lo
   }
 });
 
-
 test("uniforma el separador decimal de cotas explícitas conservando unidades y precisión", () => {
   const input: SpecsMap = { Altura: "2.50 m", Anchura: "1.18 M", Longitud: "3.7 metros",
     "Altura plataforma": "5.80 m", "Radio de giro": "6.02 m", Modelo: "2.50 m", "Altura de trabajo (m)": "2.5 mm" };
@@ -298,7 +293,6 @@ test("presenta cotas directas después de reconciliar sin cambiar los valores re
   }
 });
 
-
 test("uniforma motorización y unidades de potencia directas sin convertir magnitudes", () => {
   const input: SpecsMap = { "Tipo de motor": "Diesel", Potencia: "45 kva", "Potencia absorbida": "2200 w",
     "Potencia Motor (KW)": "30kw", "Potencia Motor (CV)": "3.6 cv", Modelo: "Diesel", Referencia: "45 kva" };
@@ -309,7 +303,7 @@ test("uniforma motorización y unidades de potencia directas sin convertir magni
   assert.deepEqual(output, expected);
   assert.equal(normalizeOriginalEnergyPresentation(output, input), output);
   assert.deepEqual(input, before);
-  for (const value of ["Diesel / GLP", "4x1000 W", "2.700 kw", "150kva kva", "35", "35 kw opcional", "30 kVA / 24 kW"]) {
+  for (const value of ["Diesel / GLP", "2.700 kw", "150kva kva", "35", "35 kw opcional", "30 kVA / 24 kW"]) {
     const uncertain: SpecsMap = { "Tipo de motor": value, Potencia: value };
     assert.equal(normalizeOriginalEnergyPresentation(uncertain, uncertain), uncertain);
   }
@@ -353,7 +347,6 @@ test("uniforma geometría directa conservando unidades, ejes, precisión y prece
   }
 });
 
-
 test("las lecturas de uso integrales comparten unidad sin confundir estados ni condiciones", () => {
   const input: SpecsMap = { Horas: "1200", "Horómetro": "1200 horas", "Horas laborales": "1 200 h",
     "Horas de uso": "1\u202f200h", "Horas (h)": "0", Modelo: "1200", "Autonomía máxima (h)": "8 horas" };
@@ -396,7 +389,6 @@ test("los porcentajes explícitos no convierten grados, rangos ni condiciones en
   assert.equal(normalizeOriginalPercentagePresentation(impossible, impossible), impossible);
 });
 
-
 test("presenta tensiones explícitas y configuraciones de batería directas sin alterar sus claves", () => {
   const original: SpecsMap = { Voltios: "400/230 v", "Voltaje del cargador": "24v", Baterías: "24V / 200-300Ah | Li-ion 24V / 150Ah(V/Ah)", Modelo: "24v" };
   const expected: SpecsMap = { ...original, Voltios: "400 / 230 V", "Voltaje del cargador": "24 V", Baterías: "24 V / 200-300 Ah | Li-ion 24 V / 150 Ah" };
@@ -435,7 +427,6 @@ test("la velocidad con y sin carga conserva orden, precisión y unidad", () => {
   }
 });
 
-
 test("el kilometraje explícito y las revoluciones del cepillo conservan magnitudes y precedencias", () => {
   const original: SpecsMap = { Kilómetros: "12 345 KM", "RPM cepillo": "250", "RPM del cepillo": "125.5 RPM", Modelo: "250" };
   const travel = normalizeOriginalTravelPresentation(original, original);
@@ -453,10 +444,12 @@ test("el kilometraje explícito y las revoluciones del cepillo conservan magnitu
   assert.equal(normalizeOriginalRotationPresentation({ "RPM cepillo": "300" }, original)["RPM cepillo"], "300");
 });
 
-test("la potencia escalar con unidad declarada en la clave no absorbe alternativas ni multiplicidades", () => {
+test("la potencia con unidad declarada en la clave preserva multiplicidades y pares sin inferir condiciones", () => {
+  const multiple: SpecsMap = { "Potencia Motor (KW)": "2x4,3", "Potencia Motor (CV)": "30 / 40" };
+  assert.deepEqual(normalizeOriginalEnergyPresentation(multiple, multiple), { "Potencia Motor (KW)": "2 x 4,3 kW", "Potencia Motor (CV)": "30 / 40 CV" });
   const original: SpecsMap = { "Potencia Motor (KW)": "2,5", "Potencia Motor (CV)": "3.2", Potencia: "30" };
   assert.deepEqual(normalizeOriginalEnergyPresentation(original, original), { ...original, "Potencia Motor (KW)": "2,5 kW", "Potencia Motor (CV)": "3,2 CV" });
-  for (const raw of ["2x4,3", "30 / 40", "2.500", "30 kVA", "30 opcional"]) {
+  for (const raw of ["2x12x5", "30 / 40 CV", "2.500", "30 kVA", "30 opcional"]) {
     const input: SpecsMap = { "Potencia Motor (KW)": raw };
     assert.equal(normalizeOriginalEnergyPresentation(input, input), input);
   }
@@ -478,4 +471,28 @@ test("las alternativas de longitud y capacidades escalares explícitas conservan
   const incompatible: SpecsMap = { "Altura de trabajo (m)": "1200/1500 mm", "AST (mm)": "1/2 m", "Ancho promedio": "1/2 m" };
   assert.equal(normalizeOriginalLengthPresentation(incompatible, incompatible), incompatible);
   assert.equal(normalizeOriginalLengthPresentation({ Anchura: "1000/1200 mm" }, original).Anchura, "1000/1200 mm");
+});
+
+test("la configuración eléctrica cambia de etiqueta únicamente con evidencia del original y sin colisiones", () => {
+  const key = "Capacidad de la batería";
+  const destination = "Batería (V / Ah)";
+  const raw = "24V / 210-250Ah | Li-ion 24V / 200Ah(V/Ah)";
+  const expected = "24 V / 210-250 Ah | Li-ion 24 V / 200 Ah";
+  const record: ProductRecord = { ...source, specs: { [key]: raw } };
+  const result = prepareSourceProduct(record);
+  assert.equal(result.product.spec[key], undefined);
+  assert.equal(result.product.spec[destination], expected);
+  assert.deepEqual(result.technicalProvenance?.entries.find((entry) => entry.field === destination), {
+    field: destination, value: expected, scope: "unit", sourceField: key, sourceValue: raw,
+    mechanism: "src/preparation/technical/technical-presentation.ts" });
+  assert.deepEqual(record.specs, { [key]: raw });
+  for (const input of [{ [key]: expected, [destination]: "48 V / 400 Ah" }, { [key]: "24 V / 100 Ah" }, { [key]: "250 Ah" }]) {
+    assert.deepEqual(normalizeOriginalEnergyPresentation(input, record.specs ?? {}), input);
+  }
+});
+test("la tracción directa unifica la notación sin alterar configuraciones ni reconciliaciones", () => {
+  const source = { "Tracción": "4×4" };
+  assert.deepEqual(normalizeOriginalTravelPresentation(source, source), { "Tracción": "4x4" });
+  assert.equal(normalizeOriginalTravelPresentation(source, { "Tracción": "4x2" }), source);
+  const compound = { "Tracción": "4×4 hidrostático" }; assert.equal(normalizeOriginalTravelPresentation(compound, compound), compound);
 });

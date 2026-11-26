@@ -2,6 +2,12 @@ import { SPEC_KEY_NORMALIZATION, SPEC_ANGULAR_FIELDS, SPEC_LENGTH_UNITS, SPEC_MA
 import {
   cleanEnum,
   normalizeBatteryChemistryLabel,
+  normalizeEnergyLabel,
+  normalizeBatteryReplacementLabel,
+  parseExplicitPercentagePresentation,
+  parseExplicitBatteryCapacityRange,
+  normalizeMastLabel,
+  normalizeWheelTractionLabel,
   parseBattery,
   parseBatteryConfiguration,
   parseExplicitPowerPresentation,
@@ -10,6 +16,8 @@ import {
   parseBoolean,
   parseDimension,
   parseDimensionRect,
+  parseThreeAxisBasketPresentation,
+  parseExplicitLengthAlternatives,
   parseMeasuredLength,
   parseMillimeterAlternatives,
   parseNumber,
@@ -52,9 +60,52 @@ const cleanKeyBase = (str: string): string =>
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
 
+const canonicalKeys = new Map(Object.keys(SPEC_RULES).map((key) => [cleanKeyBase(key), key]));
+
 export const normalizeSpecKey = (key: string): string => {
   const base = cleanKeyBase(key);
-  return Object.hasOwn(SPEC_KEY_NORMALIZATION, base) ? (SPEC_KEY_NORMALIZATION[base] ?? key.trim()) : key.trim();
+  return Object.hasOwn(SPEC_KEY_NORMALIZATION, base) ? (SPEC_KEY_NORMALIZATION[base] ?? key.trim()) : canonicalKeys.get(base) ?? key.trim();
+};
+
+export const reconcileSourceBatteryConfiguration = <T>(
+  specs: Readonly<Record<string, T>>, originalSpecs: Readonly<Record<string, unknown>>
+): { readonly specs: Readonly<Record<string, T | string>>; readonly rename: { readonly from: string; readonly to: string } | null } => {
+  const target = "Batería (V / Ah)";
+  const capacity = "Capacidad de la batería (Ah)";
+  const genericKeys = new Set(["capacidad de la bateria", "capacidad bateria", "capacidad de bateria"]);
+  const candidates = Object.keys(specs).filter((key) => genericKeys.has(cleanKeyBase(key)));
+  const source = candidates.length === 1 ? candidates[0] : undefined;
+  if (!source) return { specs, rename: null };
+  const competing = (input: Readonly<Record<string, unknown>>): boolean => Object.entries(input).some(([key, value]) => {
+    if (key === source) return false;
+    const canonical = normalizeSpecKey(key);
+    return genericKeys.has(cleanKeyBase(key)) || [target, capacity].includes(canonical) ||
+      (["Batería", "Baterías"].includes(canonical) && parseBatteryConfiguration(value) !== null);
+  });
+  if (competing(specs) || competing(originalSpecs)) return { specs, rename: null };
+  const value = parseBatteryConfiguration(specs[source]);
+  if (value === null || parseBatteryConfiguration(originalSpecs[source]) !== value) return { specs, rename: null };
+  const { [source]: removed, ...remaining } = specs;
+  return { specs: { ...remaining, [target]: value }, rename: { from: source, to: target } };
+};
+
+export const reconcileSourceSpecsForNormalization = (input: Readonly<Record<string, unknown>>): {
+  readonly specs: Readonly<Record<string, unknown>>;
+  readonly renames: readonly { readonly from: string; readonly to: string }[];
+} => {
+  const battery = reconcileSourceBatteryConfiguration(input, input);
+  const renames = battery.rename ? [battery.rename] : [];
+  const target = "Elevación libre disponible";
+  const candidates = Object.keys(battery.specs).filter((key) => cleanKeyBase(key) === "elevacion libre");
+  const source = candidates.length === 1 ? candidates[0] : undefined;
+  if (!source || Object.keys(battery.specs).some((key) => key !== source &&
+    [target, "Elevación libre (mm)"].includes(normalizeSpecKey(key)))) return { specs: battery.specs, renames };
+  const raw = battery.specs[source];
+  const availability = typeof raw === "boolean" ? raw : typeof raw === "string" && /^(?:s[ií]|no|yes|true|false)$/iu.test(raw.trim())
+    ? parseBoolean(raw) : null;
+  if (availability === null) return { specs: battery.specs, renames };
+  const { [source]: removed, ...remaining } = battery.specs;
+  return { specs: { ...remaining, [target]: availability }, renames: [...renames, { from: source, to: target }] };
 };
 
 const isNullLike = (v: unknown): boolean => {
@@ -83,6 +134,14 @@ const specUnit = (key: string): string | undefined =>
   (Object.hasOwn(SPEC_ROTATION_UNITS, key) ? SPEC_ROTATION_UNITS[key] : undefined) ??
   (Object.hasOwn(SPEC_ELECTRICAL_UNITS, key) ? SPEC_ELECTRICAL_UNITS[key] : undefined);
 
+export const explicitNumericSpecUnit = (key: string): "kg" | "m" | undefined => {
+  if (["Capacidad de la cesta", "Capacidad de plataforma", "Capacidad nominal de carga", "Capacidad de plataforma sin restricciones",
+    "Peso maquina", "Peso operativo", "Peso sin carga", "Peso de servicio", "Peso con batería",
+    "Peso en orden de marcha del modelo", "Peso neto del portapaneles"].includes(key)) return "kg";
+  if (["Altura máxima replegada", "Altura máxima de plataforma", "Altura de plataforma recogida", "Anchura con ejes recogidos"].includes(key)) return "m";
+  return undefined;
+};
+
 const rejectionReason = (value: unknown, key: string, rule: SpecRuleType): DiscardReason => {
   if (typeof value !== "string") return "invalid_value";
   const text = value.trim();
@@ -97,11 +156,14 @@ const rejectionReason = (value: unknown, key: string, rule: SpecRuleType): Disca
   return "invalid_value";
 };
 
+const isNumericDimensionAxes = (value: unknown): value is readonly number[] =>
+  Array.isArray(value) && Array.from(value).every((axis: unknown) => typeof axis === "number");
+
 const applyRule = (type: SpecRuleType, value: unknown, rawKey: string, normalizedKey: string): NormalizedSpecValue => {
   if (isNullLike(value)) return null;
   switch (type) {
     case "number": {
-      if (normalizedKey === "Año") return parseYear(value);
+      if (normalizedKey === "Año" || normalizedKey === "Año de fabricación de la batería") return parseYear(value);
       if (["Número de estabilizadores hidráulicos", "Polos", "Número de ruedas"].includes(normalizedKey)) {
         if (typeof value !== "number" && (typeof value !== "string" || !/^\d+(?:[.,]0{1,2})?$/u.test(value.trim()))) return null;
         const count = parseNumber(value);
@@ -113,7 +175,21 @@ const applyRule = (type: SpecRuleType, value: unknown, rawKey: string, normalize
         return Number.isFinite(factor) && factor >= 0 && factor <= 1 ? factor : null;
       }
       const measure = specUnit(normalizedKey);
-      if (measure === "mm" || measure === "m") return parseMeasuredLength(value, rawKey, measure);
+      const explicitUnit = explicitNumericSpecUnit(normalizedKey);
+      if (explicitUnit === "kg" &&
+        !(typeof value === "number" && rawKey === normalizedKey) &&
+        !/\(kg\)\s*$/iu.test(rawKey) && (typeof value !== "string" || !/(?:kg|kilogramos?)\s*$/iu.test(value))) return null;
+      if (explicitUnit === "m" &&
+        !(typeof value === "number" && rawKey === normalizedKey) &&
+        (typeof value !== "string" || !/(?:mm|cm|m|metros?)\s*$/iu.test(value))) return null;
+      if (measure === "mm" || measure === "m") {
+        const scalar = parseMeasuredLength(value, rawKey, measure);
+        if (scalar !== null) return scalar;
+        if (["Anchura (mm)", "Longitud (mm)", "Radio de giro (mm)"].includes(normalizedKey)) {
+          return parseExplicitLengthAlternatives(value, rawKey, measure);
+        }
+        return null;
+      }
       const unit = measure;
       const number = parseNumber(value, unit);
       return number !== null && number >= 0 ? number : null;
@@ -122,31 +198,59 @@ const applyRule = (type: SpecRuleType, value: unknown, rawKey: string, normalize
       const unit = normalizedKey.match(/\(([^)]+)\)$/)?.[1];
       if (normalizedKey === "Voltaje" || normalizedKey === "Voltios") {
         const presentation = parseExplicitVoltagePresentation(value);
-        if (typeof value === "string" && presentation === null && parseNumber(value, "V") === null) return null;
+        const serializedPair = rawKey === normalizedKey && typeof value === "string" &&
+          /^\d+(?:[.,]\d+)? \| \d+(?:[.,]\d+)?$/u.test(value) &&
+          !value.split(" | ").some((part) => /^\d{1,3}\.\d{3}$/u.test(part));
+        if (typeof value === "string" && presentation === null && !serializedPair && parseNumber(value, "V") === null) return null;
         const numbers = parseNumberArray(presentation ?? value, "V", presentation !== null);
         return numbers && numbers.length <= 2 && numbers.every((number) => number > 0) ? numbers : null;
       }
+      if (["Capacidad de la batería (Ah)", "Capacidad batería (Ah)"].includes(normalizedKey)) {
+        const range = parseExplicitBatteryCapacityRange(value);
+        if (range !== null) return range;
+      }
       const alternatives = normalizedKey === "Ancho promedio (mm)" || normalizedKey === "AST (mm)"
         ? parseMillimeterAlternatives(value) : null;
+      if (["Potencia (kW)", "Potencia de tracción (kW)", "Potencia de elevación (kW)", "Potencia (CV)"].includes(normalizedKey)) {
+        const presentation = parseExplicitPowerPresentation(value, normalizedKey === "Potencia (CV)" ? "CV" : "kW");
+        if (presentation && /[x/]/u.test(presentation)) return presentation;
+      }
       const numbers = alternatives ?? parseNumberArray(value, unit, normalizedKey === "Velocidad de desplazamiento con/sin carga (km/h)");
       return numbers?.every((number) => number >= 0) ? numbers : null;
     }
-    case "dimension":
+    case "dimension": {
+      if (typeof value === "object" && rawKey !== normalizedKey) return null;
+      if (isNumericDimensionAxes(value) && value.length >= 1 && value.length <= 3) {
+        return parseDimension({ largo: value[0], ancho: value[1] ?? null, grosor: value[2] ?? null });
+      }
       return parseDimension(value);
-    case "dimension_rect":
-      return parseDimensionRect(value);
+    }
+    case "dimension_rect": {
+      if (typeof value === "object" && rawKey !== normalizedKey) return null;
+      if (isNumericDimensionAxes(value) && value.length === 2) {
+        return parseDimensionRect({ ancho: value[0], largo: value[1] });
+      }
+      return parseDimensionRect(value) ?? parseThreeAxisBasketPresentation(value);
+    }
     case "battery":
       return parseBattery(value);
     case "bool":
       return parseBoolean(value);
     case "enum":
       if (normalizedKey === "Tipo de batería" && typeof value === "string") return normalizeBatteryChemistryLabel(value.trim());
+      if (normalizedKey === "Tipo Mástil" && typeof value === "string") return normalizeMastLabel(value.trim());
+      if (normalizedKey === "Tracción" && typeof value === "string") return normalizeWheelTractionLabel(value.trim());
+      if (["Tipo motor", "Combustible"].includes(normalizedKey) && typeof value === "string") return normalizeEnergyLabel(value.trim());
       return cleanEnum(value);
     case "location":
       return typeof value === "string" ? value.trim() : null;
     case "string":
       if (normalizedKey === "Batería (V / Ah)") return parseBatteryConfiguration(value);
-      if (normalizedKey === "Potencia") return parseExplicitPowerPresentation(value);
+      if (normalizedKey === "Batería" || normalizedKey === "Baterías") return parseBatteryConfiguration(value) ?? (typeof value === "string" ? value.trim() : null);
+      if (normalizedKey === "Potencia" || normalizedKey === "Potencia de emergencia ESP") return parseExplicitPowerPresentation(value);
+      if (["Tipo de motor", "Motorización"].includes(normalizedKey) && typeof value === "string") return normalizeEnergyLabel(value.trim());
+      if (normalizedKey === "Estado baterías" && typeof value === "string") return parseExplicitPercentagePresentation(value, 100) ?? value.trim();
+      if (normalizedKey === "Baterías nuevas" && typeof value === "string") return normalizeBatteryReplacementLabel(value.trim());
       if (SPEC_ANGULAR_FIELDS.has(normalizedKey)) {
         const angle = parseExplicitAngularPresentation(value);
         if (angle !== null) return angle;

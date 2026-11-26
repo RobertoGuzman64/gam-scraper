@@ -4,6 +4,8 @@ import test from "node:test";
 
 import { loadImportCatalog } from "../../infrastructure/filesystem/legacy-export/import-catalog-loader.js";
 
+import { parseMeasuredLength } from "../../catalog/normalization/spec-parsers.js";
+import { editorialQuantity } from "../editorial/measurements/editorial-measurements.js";
 import { normalizeSpecsObject } from "../../catalog/normalization/normalize-specs.js";
 
 import { normalizeGamRows } from "../../tools/gam/normalization/normalize-rows.js";
@@ -171,4 +173,45 @@ test("las dimensiones de cesta comparten la interpretación de millares y decima
   assert.equal(basketDimensions("1.200 x 0,7 m"), null);
   assert.equal(basketDimensions("1400 x 700 x 1100 metros"), null);
   assert.equal(basketDimensions("1400 x 700 kg"), null);
+});
+
+test("las magnitudes explícitas conservan precisión y compatibilidad dimensional", () => {
+  assert.equal(resolveAttributeValue(gamRecord({ "Altura de trabajo (m)": "4,176 metros" }), workingHeight), 4.176);
+  assert.equal(resolveAttributeValue(gamRecord({ "Altura de trabajo (m)": "2.168 metros" }), workingHeight), null);
+  assert.equal(resolveAttributeValue(gamRecord({ "Altura de trabajo (mm)": 7800, "Altura de trabajo (m)": 7.8 }), workingHeight), 7.8);
+  assert.equal(resolveAttributeValue(gamRecord({ "Altura de trabajo (m)": "4,176 kg" }), workingHeight), null);
+});
+
+test("los atributos numéricos reconocen unidades compatibles sin mezclar magnitudes", () => {
+  const volume = { ...workingHeight, name: "Depósito de solución", unit_option: "l" };
+  const productivity = { ...workingHeight, name: "Rendimiento teórico", unit_option: "m²/h" };
+  const speed = { ...workingHeight, name: "Velocidad máxima", unit_option: "km/h" };
+  assert.equal(resolveAttributeValue(gamRecord({ "Depósito de solución": "120 litros" }), volume), 120);
+  assert.equal(resolveAttributeValue(gamRecord({ "Depósito de solución": "120 kg" }), volume), null);
+  assert.equal(resolveAttributeValue(gamRecord({ "Rendimiento teórico": "3500 m2/h" }), productivity), 3500);
+  assert.equal(resolveAttributeValue(gamRecord({ "Rendimiento teórico": "3500 m³/h" }), productivity), null);
+  assert.equal(resolveAttributeValue(gamRecord({ "Velocidad máxima": "12,5 km/h" }), speed), 12.5);
+  assert.equal(resolveAttributeValue(gamRecord({ "Velocidad máxima": "12,5 km" }), speed), null);
+});
+
+test("la conversión dimensional evita discrepancias por precisión y separadores", () => {
+  assert.equal(parseMeasuredLength("16,1 m", "", "mm"), 16100);
+  assert.equal(parseMeasuredLength("7800 mm", "", "m"), 7.8);
+  assert.equal(editorialQuantity("0.368 m", "m"), 0.368);
+  assert.equal(editorialQuantity("2.168 m", "m"), null);
+  assert.equal(editorialQuantity("4,176 metros", "m"), 4.176);
+  assert.equal(editorialQuantity("4.500 mm", "mm"), 4500);
+});
+
+
+test("el kilometraje reconoce las claves de distancia sin confundir horas ni resolver discrepancias", () => {
+  const mileage = { name: "Kilometraje", type: "NUMBER", unit_option: "km" } as const;
+  for (const key of ["Kilometraje", "Kilómetros", "Kilómetros (km)"]) {
+    assert.equal(resolveAttributeValue(gamRecord({ [key]: "12 345 km" }), mileage), 12345);
+    assert.equal(resolveAttributeValue(gamRecord({ [key]: "12345 h" }), mileage), null);
+    assert.equal(resolveAttributeValue(gamRecord({ [key]: "12000 / 13000 km" }), mileage), null);
+  }
+  assert.equal(resolveAttributeValue(gamRecord({ "Kilómetros": "12345 km", Kilometraje: 12345 }), mileage), 12345);
+  assert.equal(resolveAttributeValue(gamRecord({ "Kilómetros": "12345 km", Kilometraje: 12346 }), mileage), null);
+  assert.equal(resolveAttributeValue(gamRecord({ "Horas (h)": "12345 h" }), mileage), null);
 });

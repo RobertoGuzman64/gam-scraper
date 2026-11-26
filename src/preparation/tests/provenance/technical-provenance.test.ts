@@ -2,12 +2,16 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
+import { reconcileGamBasketCapacityPresentation } from "../../gam/reconciliation/gam-capacity.js";
+import { reconcileGomarizMassCapacityPresentation } from "../../gomariz/technical/gomariz.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 import { controlledGomarizPlatform } from "../../editorial/core/editorial-contract-records.js";
 import { applyDocumentedTechnicalEvidence, recoverReviewedModelTechnicalSpecs, type DocumentedTechnicalUnit } from "../../technical/evidence/documented-technical-evidence.js";
-import { isProductTechnicalProvenance } from "../../provenance/technical-provenance.js";
+import { isProductTechnicalProvenance, recoveredUnitAttributeSpecs } from "../../provenance/technical-provenance.js";
 import { buildPublicationTechnicalProvenance, isPublicationTechnicalProvenance } from "../../provenance/publication-technical-provenance.js";
 import { originalRecordFingerprint } from "../../../catalog/identity-fingerprint.js";
+import type { ProductTechnicalProvenance } from "../../../contracts/technical-provenance.js";
+import { resolveAttribute } from "../../classification/attribute-mapping.js";
 import type { OfflinePreparation } from "../../documents/offline-document.js";
 
 const record = (reference = "77777", longDescription = "La altura de trabajo: 12 m."): ProductRecord => ({
@@ -286,4 +290,125 @@ test("recupera magnitudes nominales GPW45P en el periodo compatible sin inferir 
     { ...record, specs: { ...record.specs, Potencia: "50 kva" } },
     { ...record, longDescription: "Grupo electrógeno de frecuencia 60 Hz." }
   ]) assert.equal(recoverDocumented(invalid), invalid.specs);
+});
+
+
+test("la capacidad Gomariz cambia de etiqueta por familia acreditada, con procedencia de unidad", () => {
+  const original: ProductRecord = { ...record(), providerId: "gomariz", categoryKey: "venta", categoryName: "Maquinaria de ocasión",
+    condition: "Segunda mano", title: "EQUIPTEST TX2", brand: "EQUIPTEST", model: "TX2",
+    url: "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/equiptest-tx2/",
+    shortDescription: null, longDescription: null, specs: { Capacidad: "230kg", "Altura de trabajo": "8 m" } };
+  const result = prepareSourceProduct(original);
+  assert.equal(result.product.spec.Capacidad, undefined);
+  assert.equal(result.product.spec["Capacidad de la cesta"], "230 kg");
+  assert.deepEqual(result.technicalProvenance?.entries.find((entry) => entry.field === "Capacidad de la cesta"), {
+    field: "Capacidad de la cesta", value: "230 kg", scope: "unit", sourceField: "Capacidad", sourceValue: "230kg",
+    mechanism: "src/preparation/gomariz/technical/gomariz.ts" });
+  assert.deepEqual(original.specs, { Capacidad: "230kg", "Altura de trabajo": "8 m" });
+  assert.equal(reconcileGomarizMassCapacityPresentation(original, result.product.spec), result.product.spec);
+  const forklift = { ...original, url: "https://www.gomarizrent.com/venta/manipulacion-de-materiales/carretilla-industrial/equiptest-tx2/",
+    specs: { Capacidad: "1800 kg" } };
+  assert.deepEqual(reconcileGomarizMassCapacityPresentation(forklift, forklift.specs), { "Capacidad de carga": "1800 kg" });
+});
+
+test("las capacidades genéricas ambiguas, condicionadas o modificadas no se reclasifican", () => {
+  const original: ProductRecord = { ...record(), providerId: "gomariz", categoryKey: "venta", categoryName: "Maquinaria de ocasión",
+    url: "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/equiptest-tx2/", specs: { Capacidad: "230 kg" } };
+  for (const raw of ["230 l", "230 / 300 kg", "230", "0 kg", "230 kg con limitación", "1,234 kg"]) {
+    const specs = { Capacidad: raw };
+    assert.equal(reconcileGomarizMassCapacityPresentation({ ...original, specs }, specs), specs);
+  }
+  for (const url of [original.url.replace("gomarizrent.com", "example.test"), original.url.replace("elevador-tijera", "desconocida"),
+    original.url.replace("elevacion-y-trabajos-en-altura/elevador-tijera", "energia-electrica-e-iluminacion/generador"),
+    original.url.replace("elevacion-y-trabajos-en-altura/elevador-tijera", "manipulacion-de-materiales/manipulador-telescopico")]) {
+    assert.equal(reconcileGomarizMassCapacityPresentation({ ...original, url }, original.specs ?? {}), original.specs);
+  }
+  for (const specs of [{ Capacidad: "250 kg" }, { Capacidad: "230 kg", "Capacidad máxima de plataforma": "300 kg" },
+    { Capacidad: "230 kg", "Capacidad de la cesta": "230 kg" }, { Capacidad: "230 kg", capacidad: "300 kg" }]) {
+    assert.equal(reconcileGomarizMassCapacityPresentation(original, specs), specs);
+  }
+});
+
+
+test("la capacidad de cesta GAM requiere familia, identidad y masa corroborada", () => {
+  const original: ProductRecord = { ...record(), brand: "EQUIPTEST", model: "TX2",
+    title: "Plataforma de tijera eléctrica EQUIPTEST TX2", shortDescription: "EQUIPTEST TX2. Capacidad de la cesta 230 kg",
+    longDescription: "Plataforma de tijera. Capacidad de la cesta 230 kg.",
+    url: "https://online.gamrentals.com/es/plataformas-de-tijera-electricas/99991-equiptest-tx2",
+    reference: "99991", specs: { Marca: "EQUIPTEST", Modelo: "TX2", "Capacidad de carga (kg)": "230 KG" } };
+  const specs = original.specs ?? {};
+  const result = reconcileGamBasketCapacityPresentation(original, specs);
+  assert.equal(result["Capacidad de la cesta"], "230 KG");
+  assert.equal(result["Capacidad de carga (kg)"], undefined);
+  assert.equal(reconcileGamBasketCapacityPresentation(original, result), result);
+  const invalidRecords: ProductRecord[] = [{ ...original, model: "OTRO" }, { ...original, providerId: "gomariz" },
+    { ...original, longDescription: "Capacidad de la cesta 300 kg" },
+    { ...original, longDescription: "Capacidad de la cesta 230 kg con restricciones" }];
+  for (const invalid of invalidRecords) {
+    assert.equal(reconcileGamBasketCapacityPresentation(invalid, specs), specs);
+  }
+  const changed = { ...specs, "Capacidad de carga (kg)": "300 kg" };
+  assert.equal(reconcileGamBasketCapacityPresentation(original, changed), changed);
+  const prepared = prepareSourceProduct(original);
+  assert.equal(prepared.technicalProvenance?.entries.find((entry) => entry.field === "Capacidad de la cesta")?.sourceField, "Capacidad de carga (kg)");
+});
+
+test("la capacidad máxima Gomariz exige identidad y ruta de manipulador compatibles", () => {
+  const original: ProductRecord = { ...record(), providerId: "gomariz", categoryKey: "venta", condition: "Segunda mano",
+    title: "EQUIPTEST TX2", brand: "EQUIPTEST", model: "TX2", shortDescription: null, longDescription: null,
+    url: "https://www.gomarizrent.com/venta/manipulacion-de-materiales/manipulador-telescopico/equiptest-tx2/",
+    specs: { Capacidad: "2500 kg" } };
+  const specs = original.specs ?? {};
+  assert.deepEqual(reconcileGomarizMassCapacityPresentation(original, specs), { "Capacidad máxima de elevación": "2500 kg" });
+  assert.equal(reconcileGomarizMassCapacityPresentation({ ...original, model: "OTRO" }, specs), specs);
+});
+
+
+test("las configuraciones de batería de unidad requieren una pareja con procedencia común acreditada", () => {
+  const original = record("99999", "Batería de 48 V / 420 Ah.");
+  assert.ok(original.longDescription);
+  const mechanism = "src/preparation/gam/technical/energy/battery-measures-evidence.ts";
+  const provenance: ProductTechnicalProvenance = { originalRecordSha256: originalRecordFingerprint(original), entries: [
+    { field: "Voltaje batería (V)", value: "48 V", mechanism, scope: "unit", sourceField: "longDescription", sourceValue: original.longDescription },
+    { field: "Capacidad de la batería (Ah)", value: "420 Ah", mechanism, scope: "unit", sourceField: "longDescription", sourceValue: original.longDescription }
+  ] };
+  const target = { name: "Batería (V / Ah)", type: "TEXT", unit_option: "V / Ah" } as const;
+  const recovered = recoveredUnitAttributeSpecs(original, provenance);
+  assert.equal(recovered[target.name], "48 V / 420 Ah");
+  assert.deepEqual(resolveAttribute(original, target, {}, recovered), { status: "resolved", value: "48 V / 420 Ah" });
+  assert.equal(resolveAttribute(original, target, recovered).status, "not_observed");
+  for (const specs of [{ "Voltaje batería (V)": "72 V" }, { "Capacidad de la batería": "n/a" }, { "Tensión de salida": "220 V" }]) {
+    assert.equal(resolveAttribute({ ...original, specs }, target, {}, recovered).status, "not_observed");
+  }
+  assert.equal(resolveAttribute({ ...original, specs: { [target.name]: "72 V / 300 Ah" } }, target, {}, recovered).value, "72 V / 300 Ah");
+  assert.equal(resolveAttribute(original, { ...target, unit_option: "V" }, {}, recovered).status, "not_observed");
+  const [voltage, capacity] = provenance.entries;
+  assert.ok(voltage?.scope === "unit" && capacity?.scope === "unit");
+  for (const entries of [[voltage], [voltage, { ...capacity, mechanism: "src/preparation/gam/technical/energy/battery-electrical-evidence.ts" }],
+    [voltage, { ...capacity, sourceValue: "Otra ficha" }], [voltage, { ...capacity, value: "420 kWh" }], [voltage, capacity, capacity]]) {
+    assert.equal(recoveredUnitAttributeSpecs(original, { ...provenance, entries })[target.name], undefined);
+  }
+  assert.deepEqual(recoveredUnitAttributeSpecs({ ...original, longDescription: "Otra ficha" }, provenance), {});
+});
+
+
+test("la geometría de cesta de unidad conserva su evidencia común y no sustituye cotas de origen", () => {
+  const original = record("99999", "La plataforma presenta dimensiones de 2 m de longitud y 1 m de anchura.");
+  assert.ok(original.longDescription);
+  const mechanism = "src/preparation/technical/platform-geometry-recovery.ts";
+  const evidence = { mechanism, scope: "unit", sourceField: "longDescription", sourceValue: original.longDescription } as const;
+  const length = { ...evidence, field: "Longitud de plataforma", value: "2 m" };
+  const width = { ...evidence, field: "Anchura de plataforma", value: "1 m" };
+  const basket = { ...evidence, field: "Dimensiones de cesta", value: "2 x 1 m" };
+  const target = { name: "Dimensiones de la cesta", type: "TEXT", unit_option: "m" } as const;
+  const fingerprint = originalRecordFingerprint(original);
+  for (const entries of [[length, width], [basket]]) {
+    const recovered = recoveredUnitAttributeSpecs(original, { originalRecordSha256: fingerprint, entries });
+    assert.equal(resolveAttribute(original, target, {}, recovered).value, "2 x 1 m");
+    assert.equal(resolveAttribute({ ...original, specs: { "Longitud de plataforma": "3 m" } }, target, {}, recovered).value, null);
+  }
+  for (const entries of [[length], [length, { ...width, mechanism: "otro" }], [length, width, width], [length, { ...width, value: "100 m" }]]) {
+    const recovered = recoveredUnitAttributeSpecs(original, { originalRecordSha256: fingerprint, entries });
+    assert.equal(recovered[target.name], undefined);
+  }
 });
