@@ -1,8 +1,10 @@
+import { inspectGamSerialization } from "./normalization-serialization.js";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildNormalizationAudit } from "../../../../infrastructure/filesystem/preparation/normalization-audit.js";
+import { readPublicationTechnicalProvenance } from "../../../../panel/evidence/read-technical-provenance.js";
 import { markAuditProviderFailures } from "../../../../shared/audit-provider-results.js";
-import { printNormalizationAudit } from "../../../reporting/audits/normalization-audit.js";
+import { printNormalizationAudit, writeNormalizationAuditJson } from "../../../reporting/audits/normalization-audit.js";
 import { errorDetail, printCommandError } from "../../../reporting/errors.js";
 
 export const parseNormalizationAuditOptions = (args: readonly string[]) => {
@@ -31,10 +33,18 @@ export const parseNormalizationAuditOptions = (args: readonly string[]) => {
 
 export const runNormalizationAudit = async (args: readonly string[], workspace = fileURLToPath(new URL("../../../../../", import.meta.url))): Promise<void> => {
   const options = parseNormalizationAuditOptions(args);
-  const report = await buildNormalizationAudit(workspace);
-  if (options.json) console.log(JSON.stringify(report));
-  else printNormalizationAudit(report, options);
-  markAuditProviderFailures(report.auditCoverage.failures);
+  const report = await buildNormalizationAudit(workspace, undefined, readPublicationTechnicalProvenance, inspectGamSerialization);
+  if (options.json) {
+    try { await writeNormalizationAuditJson(report); }
+    catch (error) {
+      printCommandError("normalizar:auditar", error);
+      process.exitCode = 1;
+      return;
+    }
+  } else printNormalizationAudit(report, options);
+  markAuditProviderFailures([...report.auditCoverage.failures, ...report.diagnostics.failures.map(({ check, providerId, reason, count }) => ({
+    source: check, providerId, category: "ERROR" as const, detail: `${check}: ${reason} (${count} fichas)`
+  }))]);
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

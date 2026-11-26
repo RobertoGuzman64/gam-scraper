@@ -44,7 +44,7 @@ type Bucket = { descriptor: PatternDescriptor; variants: Map<string, Variant>; r
 
 const compare = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
 const encode = (value: unknown): string => JSON.stringify(value);
-const scopeOf = (product: NormalizationProductObservation): NormalizationPatternScope => product.family === null
+export const normalizationScopeOf = (product: NormalizationProductObservation): NormalizationPatternScope => product.family === null
   ? { family: null, providerId: product.providerId, sourceCategoryKey: product.sourceCategoryKey }
   : { family: product.family, providerId: null, sourceCategoryKey: null };
 
@@ -131,7 +131,7 @@ export const discoverNormalizationPatterns = (products: readonly NormalizationPr
     if (identities.has(product.identity)) throw new Error(`Identidad duplicada en patrones de normalización: ${product.identity}`);
     identities.add(product.identity);
     const { identity, providerId, reference, sourceUrl, originalRecordSha256 } = product;
-    const scope = scopeOf(product);
+    const scope = normalizationScopeOf(product);
     const stages = [product.original, product.prepared, ...(product.publication ? [product.publication.observation] : [])];
     for (const { stage, specifications } of stages) {
       for (const specification of specifications) {

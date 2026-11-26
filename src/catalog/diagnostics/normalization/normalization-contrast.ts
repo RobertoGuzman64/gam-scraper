@@ -65,7 +65,7 @@ const compareField = (source: NormalizationSpecObservation, sourceIndex: ReturnT
     : finding("valor_distinto", "hipotesis", targets);
 };
 
-const contrastStages = (product: NormalizationProductObservation, from: NormalizationStageObservation,
+export const contrastStages = (product: NormalizationProductObservation, from: NormalizationStageObservation,
   to: NormalizationStageObservation): readonly NormalizationContrast[] => {
   const sourceIndex = index(from);
   const targetIndex = index(to);

@@ -44,9 +44,74 @@ export const formatNormalizationAudit = (report: Report, options: Options): read
     }
   }
   if (options.detailed) lines.push("Detalle limitado a tres variantes y tres ejemplos por patrón; --json conserva todas las referencias y contrastes.");
+  const diagnostics = report.diagnostics;
+  lines.push(`COMPROBACIONES TRANSVERSALES | ${diagnostics.checks.length ? `${diagnostics.checks.length} activas` : "ninguna activa"} | cobertura por ficha`);
+  for (const check of diagnostics.checks) {
+    lines.push(`  ${check.check} | población ${check.population} | elegibles ${check.eligible} | evaluadas ${check.evaluated} | excluidas ${check.excluded} | no evaluables ${check.notEvaluable} | errores ${check.errors} | proveedores sin evaluar ${check.missingProviders.join(", ") || "ninguno"}`);
+    if (options.detailed) for (const item of check.byProvider) {
+      lines.push(`    ${item.providerId} | población ${item.population} | elegibles ${item.eligible} | evaluadas ${item.evaluated} | excluidas ${item.excluded} | no evaluables ${item.notEvaluable} | errores ${item.errors}`);
+      for (const reason of item.reasons) lines.push(`      ${reason.status} | ${reason.count} fichas | ${reason.reason}`);
+    }
+  }
+  if (diagnostics.checks.length > 0) {
+    lines.push(`IMPACTO TRANSVERSAL | ${diagnostics.potential.uniqueProducts} fichas | ${diagnostics.potential.uniqueSpecifications} prestaciones únicas acreditadas | ${diagnostics.potential.occurrences} ocurrencias de defecto o hipótesis`,
+      `  Defectos reproducibles ${diagnostics.byAssessment.defecto_reproducible.occurrences} | hipótesis ${diagnostics.byAssessment.hipotesis.occurrences} | diferencias legítimas ${diagnostics.byAssessment.diferencia_legitima.occurrences} | no evaluables ${diagnostics.byAssessment.no_evaluable.occurrences} | no aplicables ${diagnostics.byAssessment.no_aplicable.occurrences}`);
+    const priority = (assessment: string): number => assessment === "defecto_reproducible" ? 0 : assessment === "hipotesis" ? 1 : 2;
+    const groups = [...diagnostics.groups].sort((a, b) => priority(a.assessment) - priority(b.assessment) ||
+      b.impact.uniqueProducts - a.impact.uniqueProducts || b.impact.occurrences - a.impact.occurrences);
+    lines.push(`GRUPOS TRANSVERSALES | ${Math.min(groups.length, options.limit)}/${groups.length}; --json devuelve todos`);
+    for (const group of groups.slice(0, options.limit)) {
+      lines.push(`  ${group.check} | ${group.cause} | ${group.assessment} | ${group.specificationKey ?? "prestación no acreditada"} | ${group.scope.family ?? `${group.scope.providerId}/${group.scope.sourceCategoryKey}`} | ${group.stage}/${group.circuit} | ${group.impact.uniqueProducts} fichas | ${group.impact.occurrences} ocurrencias`);
+      if (options.detailed) for (const index of group.occurrenceIndices.slice(0, 3)) {
+        const occurrence = diagnostics.occurrences[index];
+        if (occurrence) lines.push(`    ${occurrence.identity} | ${occurrence.applicability} | ${occurrence.reason} | ${JSON.stringify(occurrence.evidence)}`);
+      }
+    }
+  }
   return lines;
 };
 
 export const printNormalizationAudit = (report: Report, options: Options): void => {
   for (const line of formatNormalizationAudit(report, options)) printReportLine(line);
+};
+
+const jsonFragments = function* (fields: Readonly<Record<string, unknown>>, nestedDiagnostics = false): Generator<string> {
+  yield "{";
+  let first = true;
+  for (const [key, value] of Object.entries(fields)) {
+    if (value === undefined) continue;
+    if (!first) yield ",";
+    first = false;
+    yield `${JSON.stringify(key)}:`;
+    if (Array.isArray(value)) {
+      yield "[";
+      for (const [index, item] of value.entries()) {
+        if (index > 0) yield ",";
+        yield JSON.stringify(item) ?? "null";
+      }
+      yield "]";
+    } else if (nestedDiagnostics && key === "diagnostics" && typeof value === "object" && value !== null) {
+      yield* jsonFragments(Object.fromEntries(Object.entries(value)));
+    } else yield JSON.stringify(value);
+  }
+  yield "}";
+};
+
+type JsonWriter = (chunk: string) => Promise<void>;
+const writeStdout: JsonWriter = (chunk) => new Promise((resolve, reject) => {
+  process.stdout.write(chunk, (error) => error ? reject(error) : resolve());
+});
+
+export const writeNormalizationAuditJson = async (report: Report, write: JsonWriter = writeStdout): Promise<void> => {
+  const limit = 256 * 1024;
+  let chunk = "";
+  for (const fragment of jsonFragments(report, true)) {
+    if (chunk && chunk.length + fragment.length > limit) {
+      await write(chunk);
+      chunk = "";
+    }
+    if (fragment.length >= limit) await write(fragment);
+    else chunk += fragment;
+  }
+  await write(`${chunk}\n`);
 };

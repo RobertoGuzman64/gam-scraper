@@ -7,6 +7,8 @@ import { normalizeSpecsObject } from "../../normalization/normalize-specs.js";
 import { attachNormalizationPublication, attachNormalizationPublications, inspectNormalizationProduct, inspectNormalizationStage } from "../normalization/normalization-audit.js";
 import { discoverNormalizationPatterns } from "../normalization/normalization-patterns.js";
 import { contrastNormalizationProduct } from "../normalization/normalization-contrast.js";
+import { evaluateNormalizationChecks, summarizeNormalizationChecks, type NormalizationCheck, type NormalizationCheckContext, type NormalizationCheckFinding } from "../normalization/normalization-checks.js";
+import { normalizationReentryChecks } from "../normalization/normalization-reentry.js";
 import { analyzeNormalizationImpact } from "../normalization/normalization-impact.js";
 
 const prepare = createPreparedSourceFixture();
@@ -372,4 +374,90 @@ test("un patrón exclusivo de publicación conserva los contrastes de llegada si
   assert.equal(alias.contrastSummary.length, 4);
   assert.ok(alias.contrastSummary.every((item) => item.to === "publicacion" && item.occurrences === 1));
   assert.equal(report.contrasts[0]?.originalRecordSha256, a.observed.originalRecordSha256);
+});
+
+const checkContext = (reference: string, published = false): NormalizationCheckContext => {
+  const source = { ...record({ "Anchura total": "1,2 m" }), reference };
+  const prepared = prepare(source);
+  const observation = inspectNormalizationProduct(source, prepared);
+  return { source, prepared, observation: published ? attachNormalizationPublication(observation, source, prepared.product, publicationSha) : observation,
+    published: published ? prepared.product : null };
+};
+
+const checkFinding: NormalizationCheckFinding = {
+  cause: "caso-sintetico", specificationKey: "Anchura (mm)", stage: "preparacion", circuit: "prueba",
+  assessment: "defecto_reproducible", applicability: "Prestación reconocida", reason: "Contraste sintético",
+  evidence: [{ stage: "original", circuit: "prueba", field: "Anchura total", present: true, value: "1,2 m" },
+    { stage: "preparacion", circuit: "prueba", field: "Anchura (mm)", present: false }]
+};
+
+test("las comprobaciones separan cobertura, ausencia de fuente, exclusión, límites y errores", () => {
+  const contexts = [checkContext("A", true), checkContext("B"), checkContext("C"), checkContext("D"), checkContext("E")];
+  const before = JSON.stringify(contexts);
+  const check: NormalizationCheck = { id: "sintetica", evaluate: ({ observation, published }) => {
+    if (observation.reference === "B") return { status: "no_aplicable", reason: "Sin consumidor" };
+    if (observation.reference === "C") return { status: "no_evaluable", reason: "Sin evidencia" };
+    if (observation.reference === "D") throw new Error("Error sintético");
+    return { status: "evaluada", findings: published ? [checkFinding] : [] };
+  } };
+  const results = evaluateNormalizationChecks([check], "gam", contexts);
+  const report = summarizeNormalizationChecks([check], ["gam", "manain"], results);
+  const coverage = report.checks[0];
+  assert.ok(coverage);
+  assert.deepEqual([coverage.population, coverage.eligible, coverage.evaluated, coverage.excluded, coverage.notEvaluable, coverage.errors], [5, 3, 2, 1, 1, 1]);
+  assert.deepEqual(coverage.missingProviders, ["manain"]);
+  assert.deepEqual(coverage.reasons.map(({ status, count }) => [status, count]), [["error", 1], ["no_aplicable", 1], ["no_evaluable", 1]]);
+  assert.deepEqual(report.failures, [{ check: "sintetica", providerId: "gam", reason: "Error sintético", count: 1 }]);
+  assert.equal(report.occurrences[0]?.publicationSha256, publicationSha);
+  assert.equal(report.occurrences[0]?.originalRecordSha256, contexts[0]?.observation.originalRecordSha256);
+  assert.equal(report.occurrences[0]?.identity, contexts[0]?.observation.identity);
+  assert.equal(JSON.stringify(contexts), before);
+  assert.throws(() => evaluateNormalizationChecks([check, check], "gam", contexts), /identidad única/u);
+  assert.throws(() => evaluateNormalizationChecks([check], "manain", contexts), /incoherente/u);
+  assert.throws(() => evaluateNormalizationChecks([check], "gam", [...contexts, ...contexts]), /incoherente/u);
+});
+
+test("deduplica evidencias exactas e impacto semántico entre comprobaciones y etapas", () => {
+  const a = checkContext("A");
+  const b = checkContext("B");
+  const checks: readonly NormalizationCheck[] = [
+    { id: "primera", evaluate: () => ({ status: "evaluada", findings: [checkFinding, checkFinding,
+      { ...checkFinding, stage: "original", assessment: "hipotesis" },
+      { ...checkFinding, specificationKey: null, assessment: "hipotesis" },
+      { ...checkFinding, assessment: "diferencia_legitima" },
+      { ...checkFinding, assessment: "no_evaluable" }, { ...checkFinding, assessment: "no_aplicable" }] }) },
+    { id: "segunda", evaluate: () => ({ status: "evaluada", findings: [checkFinding] }) }
+  ];
+  const report = summarizeNormalizationChecks(checks, ["gam"], evaluateNormalizationChecks(checks, "gam", [a, b]));
+  assert.equal(report.occurrences.length, 14);
+  assert.equal(report.impact.uniqueProducts, 2);
+  assert.equal(report.impact.uniqueSpecifications, 2);
+  assert.equal(report.potential.occurrences, 8);
+  assert.equal(report.potential.uniqueProducts, 2);
+  assert.equal(report.potential.uniqueSpecifications, 2);
+  assert.equal(report.potential.unresolvedSpecificationOccurrences, 2);
+  assert.equal(report.byAssessment.defecto_reproducible.occurrences, 4);
+  assert.equal(report.byAssessment.hipotesis.occurrences, 4);
+  assert.equal(report.byAssessment.diferencia_legitima.occurrences, 2);
+  assert.equal(report.byAssessment.no_evaluable.occurrences, 2);
+  assert.equal(report.byAssessment.no_aplicable.occurrences, 2);
+  assert.equal(report.groupMemberships, 14);
+  assert.equal(report.groups.length, 7);
+  for (const group of report.groups) {
+    assert.equal(group.impact.uniqueProducts, 2);
+    assert.equal(group.byProvider[0]?.providerId, "gam");
+    for (const index of group.occurrenceIndices) assert.equal(report.occurrences[index]?.check, group.check);
+  }
+  assert.deepEqual(report, summarizeNormalizationChecks(checks, ["gam"], evaluateNormalizationChecks(checks, "gam", [b, a])));
+});
+
+
+test("la reentrada separa las tres etapas y excluye únicamente las publicaciones no conciliadas", () => {
+  const contexts = [checkContext("A", true), checkContext("B")];
+  const report = summarizeNormalizationChecks(normalizationReentryChecks, ["gam", "manain"],
+    evaluateNormalizationChecks(normalizationReentryChecks, "gam", contexts));
+  assert.deepEqual(report.checks.map(({ population, evaluated, excluded, errors }) => [population, evaluated, excluded, errors]),
+    [[2, 2, 0, 0], [2, 2, 0, 0], [2, 1, 1, 0]]);
+  assert.ok(report.checks.every(({ missingProviders }) => missingProviders[0] === "manain"));
+  assert.equal(report.occurrences.length, 0);
 });
