@@ -17,10 +17,10 @@ Comparación entre el original canónico y la publicación individual acreditada
 | Proveedor | Incorporadas | Claves renombradas | Valores formateados | Valores cambiados |
 | --- | ---: | ---: | ---: | ---: |
 | GAM | 2839 | 344 | 2434 | 48 |
-| GOMARIZ | 1688 | 0 | 2530 | 6 |
+| GOMARIZ | 2203 | 0 | 2212 | 6 |
 | MERCAELEVA | 908 | 55 | 117 | 10 |
-| MANAIN | 439 | 933 | 1091 | 4 |
-| TOTAL | 5874 | 1332 | 6172 | 68 |
+| MANAIN | 572 | 1481 | 1058 | 4 |
+| TOTAL | 6522 | 1880 | 5821 | 68 |
 
 ## Contenido y datos comerciales
 
@@ -36,10 +36,10 @@ Comparación entre el original canónico y la publicación individual acreditada
 
 | Proveedor | Original | Aprobación | JSON comercial |
 | --- | --- | --- | --- |
-| GAM | `855865e4a99f` | `17c749864dbb` | `e6e360448669` |
-| GOMARIZ | `87e2fc58e39f` | `d2afd905aba1` | `9f306f9e22fc` |
-| MERCAELEVA | `83e0265743ba` | `9851f07d0ba3` | `1af2fc6acef3` |
-| MANAIN | `75ac3f526e79` | `573140ff3409` | `8b95dceea872` |
+| GAM | `855865e4a99f` | `b67d55955770` | `81bb7f995446` |
+| GOMARIZ | `87e2fc58e39f` | `4b99dd109f21` | `5ac716d932a3` |
+| MERCAELEVA | `83e0265743ba` | `2d66938040fa` | `9d8500101241` |
+| MANAIN | `75ac3f526e79` | `6b4d9f44ced0` | `74ce7c2edd1e` |
 Huellas SHA-256 abreviadas a 12 caracteres para lectura. Los valores completos constan en los originales y manifiestos acreditados.
 
 ## Cómo interpretar las cifras

@@ -3,7 +3,7 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { resolveVerifiedSourceEditorialExcerpt } from "../source/editorial-source-excerpt.js";
 import { resolveMissingTechnicalEditorialGeneral } from "../source/context/editorial-missing-technical-general.js";
-import { resolveDocumentedModelGeneral } from "../measurements/sourced/editorial-sourced-technical-context.js";
+import { resolveDocumentedModelGeneral, resolveDocumentedPlatformShort } from "../measurements/sourced/editorial-sourced-technical-context.js";
 import { controlledGomarizPlatform, controlledMercaelevaPlatform } from "../core/editorial-contract-records.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 
@@ -119,4 +119,161 @@ test("distingue diámetro compatible de herramienta instalada en implementos", (
   assert.equal(resolveDocumentedModelGeneral(original, prepared, general, {}), null);
   assert.equal(resolveDocumentedModelGeneral(original, prepared, general, { "Diámetro nominal de herramienta compatible": "55 mm" }), null);
   assert.equal(resolveDocumentedModelGeneral(original, { ...prepared, reference: "OTRO" }, general, reviewed), null);
+});
+
+
+test("prioriza maniobrabilidad y pendiente nominal condicionada en generales técnicas extensas", () => {
+  const field = "Pendiente superable del modelo con plataforma bajada";
+  const reviewed = { [field]: "25 %", "Radio de giro exterior del modelo": "2300 mm" };
+  const general = "La ficha técnica de plataforma de tijera eléctrica MARCA MODELO10 indica altura de trabajo de 10 m y capacidad de carga de 450 kg. La selección del equipo debe considerar las dimensiones exteriores, la configuración de transporte, el acceso al recinto y la zona prevista para realizar el trabajo. La altura del equipo replegado condiciona el paso por puertas y otros accesos. La utilización requiere una superficie de apoyo adecuada y comprobar las condiciones de carga y las restricciones de la plataforma. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta antes de elegir la máquina para la operación.";
+  for (const original of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const prepared = { ...original, specs: { ...original.specs, ...reviewed } };
+    const result = resolveDocumentedModelGeneral(original, prepared, general, reviewed);
+    assert.equal(result, `${general}\n\nEl modelo presenta radio de giro exterior de 2,3 m. El modelo presenta pendiente superable nominal con plataforma bajada de 25 %. Esta prestación no indica la inclinación admisible durante el trabajo en altura.`);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, result, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, general, {}), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, general, { [field]: "30 %" }), null);
+    assert.equal(resolveDocumentedModelGeneral(original, { ...prepared, model: "OTRO" }, general, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral({ ...original, longDescription: "Pendiente máxima del 15 %." }, prepared, general, reviewed), `${general}\n\nEl modelo presenta radio de giro exterior de 2,3 m.`);
+    assert.equal(resolveDocumentedModelGeneral({ ...original, specs: { ...original.specs, [field]: "30 %" } }, prepared, general, reviewed), `${general}\n\nEl modelo presenta radio de giro exterior de 2,3 m.`);
+    const wheelbase = { "Distancia entre ejes (mm)": "1800 mm" };
+    const withWheelbase = { ...prepared, specs: { ...prepared.specs, ...wheelbase, Longitud: "2,5 m" } };
+    const combined = resolveDocumentedModelGeneral(original, withWheelbase, general, { ...reviewed, ...wheelbase });
+    assert.equal(combined, `${general}\n\nEl modelo presenta radio de giro exterior de 2,3 m y distancia entre ejes de 1,8 m. El modelo presenta pendiente superable nominal con plataforma bajada de 25 %. Esta prestación no indica la inclinación admisible durante el trabajo en altura.`);
+    assert.equal(resolveDocumentedModelGeneral(original, withWheelbase, combined, { ...reviewed, ...wheelbase }), null);
+    assert.equal(resolveDocumentedModelGeneral(original, withWheelbase, general, wheelbase), `${general}\n\nEl modelo presenta distancia entre ejes de 1,8 m.`);
+    assert.equal(resolveDocumentedModelGeneral(original, withWheelbase, `${general} Batalla de 1,8 m.`, wheelbase), null);
+    assert.equal(resolveDocumentedModelGeneral(original, withWheelbase, general, { "Distancia entre ejes (mm)": "2000 mm" }), null);
+    assert.equal(resolveDocumentedModelGeneral({ ...original, specs: { ...original.specs, "Distancia entre ejes": "2 m" } }, withWheelbase, general, wheelbase), null);
+    assert.equal(resolveDocumentedModelGeneral(original, { ...withWheelbase, specs: { ...withWheelbase.specs, Longitud: "1,5 m" } }, general, wheelbase), null);
+    const extension = { "Extensión de plataforma": "900 mm" };
+    const withExtension = { ...prepared, specs: { ...prepared.specs, ...extension } };
+    const extended = `${general}\n\nEl modelo presenta extensión de plataforma de 0,9 m.`;
+    assert.equal(resolveDocumentedModelGeneral(original, withExtension, general, extension), extended);
+    assert.equal(resolveDocumentedModelGeneral(original, withExtension, extended, extension), null);
+    assert.equal(resolveDocumentedModelGeneral(original, withExtension, `${general} Extensión de plataforma de 0,9 m.`, extension), null);
+    assert.equal(resolveDocumentedModelGeneral(original, withExtension, general, { "Extensión de plataforma": "1 m" }), null);
+    assert.equal(resolveDocumentedModelGeneral({ ...original, specs: { ...original.specs, "Extensión de plataforma": "1 m" } }, withExtension, general, extension), null);
+    assert.equal(resolveDocumentedModelGeneral(original, withExtension, general, {}), null);
+    const all = { ...reviewed, ...wheelbase, ...extension };
+    assert.equal(resolveDocumentedModelGeneral(original, { ...withWheelbase, specs: { ...withWheelbase.specs, ...extension } }, general, all), `${general}\n\nEl modelo presenta radio de giro exterior de 2,3 m, distancia entre ejes de 1,8 m y extensión de plataforma de 0,9 m. El modelo presenta pendiente superable nominal con plataforma bajada de 25 %. Esta prestación no indica la inclinación admisible durante el trabajo en altura.`);
+    const articulated = { ...original, title: "Plataforma articulada eléctrica MARCA MODELO10" };
+    const articulatedGeneral = general.replace("de tijera", "articulada");
+    assert.equal(resolveDocumentedModelGeneral(articulated, { ...articulated, specs: prepared.specs }, articulatedGeneral, reviewed), `${articulatedGeneral}\n\nEl modelo presenta radio de giro exterior de 2,3 m.`);
+    assert.equal(resolveDocumentedModelGeneral(articulated, { ...articulated, specs: prepared.specs }, articulatedGeneral, { "Pendiente superable del modelo con plataforma bajada": "25 %" }), null);
+  }
+});
+
+
+test("Aprovecha dimensiones acreditadas de plataforma sin confundirlas con la geometría exterior", () => {
+  const reviewed = { "Longitud de plataforma": "2,26 m", "Anchura de plataforma": "1120 mm" };
+  const general = "La ficha técnica de plataforma de tijera eléctrica MARCA MODELO10 indica altura de trabajo de 10 m y capacidad de carga de 450 kg. La selección del equipo debe considerar las dimensiones exteriores, la configuración de transporte, el acceso al recinto y la zona prevista para realizar el trabajo. La altura del equipo replegado condiciona el paso por puertas y otros accesos. La utilización requiere una superficie de apoyo adecuada y comprobar las condiciones de carga y las restricciones de la plataforma. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta antes de elegir la máquina para la operación.";
+  for (const original of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const prepared = { ...original, specs: { ...original.specs, ...reviewed, Longitud: "2,5 m", Anchura: "1,18 m" } };
+    const expected = `${general}\n\nEl modelo presenta longitud de plataforma de 2,26 m y anchura de plataforma de 1,12 m.`;
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, general, reviewed), expected);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, expected, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, general, {}), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, `${general} Plataforma de 2,26 × 1,12 m.`, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, { ...prepared, specs: { ...prepared.specs, "Dimensiones de cesta": "2,26 x 1,12 m" } }, general, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, { ...prepared, specs: { ...prepared.specs, Longitud: "2 m", Anchura: "1 m" } }, general, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, general, { "Longitud de plataforma": "2 m", "Anchura de plataforma": "1 m" }), null);
+    assert.equal(resolveDocumentedModelGeneral({ ...original, specs: { ...original.specs, "Longitud de plataforma": "2 m", "Anchura de plataforma": "1 m" } }, prepared, general, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, { ...prepared, model: "OTRO" }, general, reviewed), null);
+  }
+});
+
+
+test("La corta de plataforma aprovecha capacidad máxima acreditada del modelo sin confundirla con la unidad", () => {
+  const reviewed = { "Capacidad máxima de plataforma": "450 kg" };
+  const short = "Plataforma de tijera eléctrica MARCA MODELO10, con altura de trabajo de 10 m; año de fabricación 2020.";
+  for (const original of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const prepared = { ...original, specs: { ...original.specs, ...reviewed } };
+    const expected = short.replace(";", " y capacidad máxima de plataforma del modelo de 450 kg;");
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, short, reviewed), expected);
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, expected, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, short, {}), null);
+    assert.equal(resolveDocumentedPlatformShort(original, { ...prepared, reference: "OTRA" }, short, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort(original, { ...prepared, specs: { ...prepared.specs, Capacidad: "300 kg" } }, short, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort(original, { ...prepared, specs: { ...prepared.specs, "Capacidad de plataforma sin restricciones": "250 kg" } }, short, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort({ ...original, longDescription: "Capacidad de 300 kg." }, prepared, short, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort({ ...original, shortDescription: "Resumen del fabricante" }, prepared, short, reviewed), null);
+  }
+});
+
+test("La corta de brazo elevador incorpora alcance horizontal documentado sin confundir alcance y altura", () => {
+  const reviewed = { "Alcance horizontal (m)": "7,5 m", "Capacidad máxima de plataforma": "450 kg" };
+  const short = "Plataforma articulada eléctrica MARCA MODELO10, con altura de trabajo de 10 m; año de fabricación 2020.";
+  for (const base of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const original = { ...base, title: "Plataforma articulada eléctrica MARCA MODELO10" };
+    const prepared = { ...original, specs: { ...original.specs, ...reviewed, "Alcance horizontal (m)": "7500 mm" } };
+    const expected = short.replace(";", ", capacidad máxima de plataforma del modelo de 450 kg y alcance horizontal del modelo de 7,5 m;");
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, short, reviewed), expected);
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, expected, reviewed), null);
+    const onlyReach = { "Alcance horizontal (m)": "7,5 m" };
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, short, onlyReach), short.replace(";", " y alcance horizontal del modelo de 7,5 m;"));
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, short, {}), null);
+    assert.equal(resolveDocumentedPlatformShort(original, { ...prepared, model: "OTRO" }, short, onlyReach), null);
+    assert.equal(resolveDocumentedPlatformShort(original, { ...prepared, specs: { ...prepared.specs, "Alcance lateral": "8 m" } }, short, onlyReach), null);
+    assert.equal(resolveDocumentedPlatformShort({ ...original, specs: { ...original.specs, "Alcance lateral": "8 m" } }, prepared, short, onlyReach), null);
+    assert.equal(resolveDocumentedPlatformShort({ ...original, longDescription: "Alcance condicionado por carga." }, prepared, short, onlyReach), null);
+    assert.equal(resolveDocumentedPlatformShort({ ...original, shortDescription: "Resumen existente" }, prepared, short, onlyReach), null);
+    assert.equal(resolveDocumentedPlatformShort(original, { ...prepared, specs: { ...prepared.specs, "Alcance horizontal máximo sin restricción de carga": "6 m" } }, short, onlyReach), null);
+    assert.equal(resolveDocumentedPlatformShort(base, { ...base, specs: prepared.specs }, short.replace("articulada", "de tijera"), onlyReach), null);
+  }
+});
+
+test("La corta de tijera incorpora extensión de plataforma acreditada sin confundirla con la unidad", () => {
+  const reviewed = { "Extensión de plataforma": "900 mm" };
+  const short = "Plataforma de tijera eléctrica MARCA MODELO10, con altura de trabajo de 10 m; año de fabricación 2020.";
+  for (const original of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const prepared = { ...original, specs: { ...original.specs, "Extensión de plataforma": "0,9 m" } };
+    const expected = short.replace(";", " y extensión de plataforma del modelo de 0,9 m;");
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, short, reviewed), expected);
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, expected, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, short, {}), null);
+    assert.equal(resolveDocumentedPlatformShort(original, { ...prepared, model: "OTRO" }, short, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort(original, { ...prepared, specs: { ...prepared.specs, "Longitud de extensión": "1 m" } }, short, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort({ ...original, specs: { ...original.specs, "Extensión de plataforma": "1 m" } }, prepared, short, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort({ ...original, longDescription: "Plataforma extensible opcional." }, prepared, short, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort({ ...original, shortDescription: "Resumen existente" }, prepared, short, reviewed), null);
+    const articulated = { ...original, title: "Plataforma articulada eléctrica MARCA MODELO10" };
+    assert.equal(resolveDocumentedPlatformShort(articulated, { ...articulated, specs: prepared.specs }, short.replace("de tijera", "articulada"), reviewed), null);
+  }
+});
+
+test("La corta distingue la altura de plataforma documentada de la altura de trabajo", () => {
+  const reviewed = { "Altura de plataforma": "8000 mm" };
+  const short = "Plataforma de tijera eléctrica MARCA MODELO10, con altura de trabajo de 10 m; año de fabricación 2020.";
+  for (const original of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const prepared = { ...original, specs: { ...original.specs, "Altura de trabajo": "10 m", "Altura de plataforma": "8 m" } };
+    const expected = short.replace(";", " y altura de plataforma del modelo de 8 m;");
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, short, reviewed), expected);
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, expected, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, short, {}), null);
+    assert.equal(resolveDocumentedPlatformShort(original, { ...prepared, model: "OTRO" }, short, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, short.replace("10 m", "12 m"), reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort(original, { ...prepared, specs: { ...prepared.specs, "Altura de plataforma": "11 m" } }, short, { "Altura de plataforma": "11 m" }), null);
+    assert.equal(resolveDocumentedPlatformShort({ ...original, specs: { ...original.specs, "Altura plataforma": "9 m" } }, prepared, short, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort({ ...original, longDescription: "Altura máxima de la cesta de 8 m." }, prepared, short, reviewed), null);
+    assert.equal(resolveDocumentedPlatformShort({ ...original, shortDescription: "Texto existente" }, prepared, short, reviewed), null);
+    const longShort = short.replace(";", `, ${"detalle ".repeat(22).trim()};`);
+    assert.equal(resolveDocumentedPlatformShort(original, prepared, longShort, reviewed), null);
+  }
+});
+
+test("Aprovecha geometría documentada de plataformas de brazo en generales extensas", () => {
+  const reviewed = { "Altura de plataforma": "8000 mm", "Longitud de plumín": "1,2 m", "Rotación de torreta": "350°" };
+  const general = "La ficha técnica de plataforma articulada eléctrica MARCA MODELO10 indica altura de trabajo de 10 m y capacidad de carga de 450 kg. La selección del equipo debe considerar las dimensiones exteriores, la configuración de transporte, el acceso al recinto y la zona prevista para realizar el trabajo. La altura del equipo replegado condiciona el paso por puertas y otros accesos. La utilización requiere una superficie de apoyo adecuada y comprobar las condiciones de carga y las restricciones de la plataforma. La altura de trabajo no equivale a la altura de plataforma; verificar la capacidad de cesta antes de elegir la máquina para la operación.";
+  for (const base of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const original = { ...base, title: "Plataforma articulada eléctrica MARCA MODELO10" };
+    const prepared = { ...original, specs: { ...original.specs, ...reviewed } };
+    const expected = `${general}\n\nEl modelo presenta altura de plataforma de 8 m, longitud de plumín de 1,2 m y rotación de torreta de 350°.`;
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, general, reviewed), expected);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, expected, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, general, {}), null);
+    assert.equal(resolveDocumentedModelGeneral(original, { ...prepared, model: "OTRO" }, general, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, { ...prepared, specs: { ...prepared.specs, "Altura de plataforma": "11 m", "Longitud de plumín": "2 m", "Rotación de torreta": "400°" } }, general, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral({ ...original, specs: { ...original.specs, "Longitud de plumín": "2 m" } }, prepared, general, { "Longitud de plumín": "1,2 m" }), null);
+  }
 });

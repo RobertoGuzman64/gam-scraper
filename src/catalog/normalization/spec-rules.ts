@@ -43,7 +43,7 @@ const scopedMeasurementUnits: Readonly<Record<string, ScopedMeasurementUnit>> = 
     "Tensión nominal": "V",
     "Par motor máximo": "Nm", "Par motor máximo del modelo": "Nm",
     "Esfuerzo nominal en barra de tracción": "N", "Pendiente superable del modelo": "%",
-    "Precisión del sistema de pesaje": "%", "Tiempo de carga anunciado": "h",
+    "Pendiente superable del modelo con plataforma bajada": "%", "Precisión del sistema de pesaje": "%", "Tiempo de carga anunciado": "h",
     "Altura aproximada de cesta": "m", "Mastil replegado": "m", "Capacidad nominal": "kg", "Velocidad máxima": "km/h",
 };
 export const scopedNumericSpecUnit = (key: string): ScopedMeasurementUnit | undefined =>

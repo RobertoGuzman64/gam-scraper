@@ -61,6 +61,7 @@ test("interpreta velocidades, autonomía y magnitudes energéticas sin confundir
     ["Par motor máximo del modelo", "109 Nm", 109, "Nm"],
     ["Esfuerzo nominal en barra de tracción", "1336 N", 1336, "N"],
     ["Pendiente superable del modelo", "38 %", 38, "%"],
+    ["Pendiente superable del modelo con plataforma bajada", "25 %", 25, "%"],
     ["Precisión del sistema de pesaje", "99,95 %", 99.95, "%"],
     ["Tiempo de carga anunciado", "2,5 h", 2.5, "h"]
   ] as const;

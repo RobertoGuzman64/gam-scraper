@@ -1,5 +1,5 @@
 import type { ProductRecord, SpecsMap } from "../../../contracts/catalog.js";
-import { resolveDocumentedModelGeneral } from "../measurements/sourced/editorial-sourced-technical-context.js";
+import { resolveDocumentedModelGeneral, resolveDocumentedPlatformShort } from "../measurements/sourced/editorial-sourced-technical-context.js";
 import type { SourceEditorialEvidence } from "../claims/source-editorial-evidence.js";
 import { verifiedMercaelevaMbCapacityProposal } from "../../../catalog/interventions/verified-mercaeleva-capacity.js";
 import { distinguishDescriptions } from "../../../catalog/normalization/descriptions.js";
@@ -147,9 +147,12 @@ export const resolvePreparedEditorialSource = (
   const combinedGeneral = preservedDocumentedGeneral ?
     resolveSourcedCombinedBatteryGeneral(originalSource, editorialRecord, preservedDocumentedGeneral) ?? preservedDocumentedGeneral :
     documentedGeneral ?? batteryGeneral ?? completeGeneral;
+  const documentedShort = verified && !signedGeneral && !knowledge?.short && !crossedIdentity && !variantConflict &&
+    !sourceModelConflict && !sourceMotorConflict && authenticatedOrigin && composed.short ?
+    resolveDocumentedPlatformShort(originalSource, editorialRecord, reconciledShort ?? enrichedShort ?? finalShort, reviewedModelSpecs) : null;
   return {
     verifiedTitle: knowledge?.title ?? null,
-    descriptions: distinguishDescriptions(reconciledShort ?? enrichedShort ?? finalShort, combinedGeneral),
+    descriptions: distinguishDescriptions(documentedShort ?? reconciledShort ?? enrichedShort ?? finalShort, combinedGeneral),
     sourceModelConflict,
     sourceMotorConflict,
     heightConflict

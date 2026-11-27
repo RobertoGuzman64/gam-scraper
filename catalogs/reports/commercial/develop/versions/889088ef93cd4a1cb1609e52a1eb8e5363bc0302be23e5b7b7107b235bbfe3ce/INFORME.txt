@@ -1,11 +1,11 @@
 # EQUIPZILLA — Informe comercial de integración
 
-- Fecha del paquete (UTC): 2026-11-26
+- Fecha del paquete (UTC): 2026-11-27
 - Etapa de preparación: NO EJECUTADA por este comando.
 - Origen: publicaciones técnicas acreditadas seleccionadas como vigentes ANTES de la exportación; no son nuevas publicaciones generadas ahora.
 - Fecha de cada publicación de origen: NO DECLARADA por el contrato de publicación; no se deduce de la fecha del paquete.
 - Etapa de exportación: 5 JSON generados desde esas publicaciones y sus referencias comerciales vigentes.
-- Huella comercial: 58e44873a65e1cfb7539cb8826dd00d4318e7cb95fe159ddd66d994de68b0301
+- Huella comercial: 9460507d46e1385d514f4e2adaa670b17e179a321be57f048dc9cb369a415ed7
 - Entorno: develop
 - Proveedores: GAM, GOMARIZ, MERCAELEVA, MANAIN
 - Integración en base de datos: NO VERIFICADO EN BD
@@ -15,7 +15,7 @@
 - Fichas técnicas incluidas en las publicaciones: 2126; elegibles: 2108; excluidas: 18.
 - Categorizadas: 2105; pendientes de categoría: 3.
 - Aptitud para importación: PENDIENTE · 3 productos elegibles sin categoría comercial; el paquete verificable NO está listo para importar íntegramente.
-- Atributos aceptados: 14166; con precio: 445; con logo: 2108; con companyID: 2108.
+- Atributos aceptados: 14234; con precio: 445; con logo: 2108; con companyID: 2108.
 - Excepciones registradas: 6; grupos de referencias visibles coincidentes entre productos exportados: 4.
 - El recuento de origen corresponde a las fichas de la publicación técnica incluida; no acredita el total del catálogo original del proveedor.
 
@@ -23,8 +23,8 @@
 
 ### GAM — gam-commercial.json
 
-- Publicación técnica SHA256: 2ce99896c8ef06e1f5b72c61c3080e54cc82b1bafbb8f939ed64b18d61a6ca23
-- JSON SHA256: bd89b240cfb7a64067a0d5837323e15bb78cf37940d82540368997d9cd065a9f; bytes UTF-8: 3404019.
+- Publicación técnica SHA256: 81bb7f9954469445bb946da2507873affed34188cbb8dea4b5ca018b5e7e34d7
+- JSON SHA256: ecce54d760f10f9817e1d48c0851b93d9a1b7caee7bcbdb41eb624577067f2a3; bytes UTF-8: 3417408.
 - Técnicas incluidas: 976; exportadas: 966; categorizadas: 966; pendientes: 0.
 - Exclusiones: 10 (lotes 7, herramientas 0, accesorios 3).
 - Atributos aceptados: 5737; con precio: 244; con logo: 966; con companyID: 966.
@@ -36,11 +36,11 @@ Señales y excepciones documentadas:
 
 ### GOMARIZ — gomariz-commercial.json
 
-- Publicación técnica SHA256: 32891c991444b1287bf2658f300e12e436da8fa6653609f1428c104297df9d26
-- JSON SHA256: 7e71630ec1c0068be0994cb4853516c14e7f5d2413115cd6a034039b103937bd; bytes UTF-8: 2496463.
+- Publicación técnica SHA256: 5ac716d932a360f3818b8e12fa98cea24d3153a58433545e559de42399317f3d
+- JSON SHA256: f5a2bf9c5e241d5009aad71ae7cbfdcc44d4e000883bde9f4d57554fbccbb0a3; bytes UTF-8: 2593900.
 - Técnicas incluidas: 546; exportadas: 546; categorizadas: 544; pendientes: 2.
 - Exclusiones: 0 (lotes 0, herramientas 0, accesorios 0).
-- Atributos aceptados: 3749; con precio: 0; con logo: 546; con companyID: 546.
+- Atributos aceptados: 3817; con precio: 0; con logo: 546; con companyID: 546.
 - Excepciones: 2; grupos de referencias visibles coincidentes: 0.
 - Campos comerciales presentes: reference, categorySellID, attributes, price, companyID, logoID, image, images, metadata.
 
@@ -53,8 +53,8 @@ Señales y excepciones documentadas:
 
 ### MERCAELEVA — mercaeleva-commercial.json
 
-- Publicación técnica SHA256: 557df56b07795a6890901f9b1c8bf46d52d5a8c4e52e0558f9dbbfe73a3c51f9
-- JSON SHA256: ce4c259841c02bc78a65f5218ad5b087782a237ab49fbacf402c7a4a0f44a564; bytes UTF-8: 1087017.
+- Publicación técnica SHA256: 9d8500101241bbd6fcce7cf30b222d44a81dffa01968cddb875170d52e9cbe7b
+- JSON SHA256: f465272b1807cf3b24e191f7d03c97667ffbecd19c63a287ab7ea0723b44e629; bytes UTF-8: 1099379.
 - Técnicas incluidas: 221; exportadas: 221; categorizadas: 221; pendientes: 0.
 - Exclusiones: 0 (lotes 0, herramientas 0, accesorios 0).
 - Atributos aceptados: 1546; con precio: 201; con logo: 221; con companyID: 221.
@@ -63,8 +63,8 @@ Señales y excepciones documentadas:
 
 ### MANAIN — manain-commercial.json
 
-- Publicación técnica SHA256: 8b95dceea872221d9347486c8a2609994361b9c44cd97b091f0235d1a7a03736
-- JSON SHA256: 3fcdbe6d5a97f62085ec099fb38f795350c60bc4c25c74e2389e9aca0fc3253a; bytes UTF-8: 1504206.
+- Publicación técnica SHA256: 74ce7c2edd1e428bf35dfca0e04e99fb1b5582d5cab16a7f2530008e5c274a23
+- JSON SHA256: 1a12ac9ed42460befe5a037131b0677d01b39df05df1ef20d8bcf9170d2754f6; bytes UTF-8: 1547782.
 - Técnicas incluidas: 383; exportadas: 375; categorizadas: 374; pendientes: 1.
 - Exclusiones: 8 (lotes 0, herramientas 8, accesorios 0).
 - Atributos aceptados: 3134; con precio: 0; con logo: 375; con companyID: 375.
@@ -94,7 +94,7 @@ Señales y excepciones documentadas:
 - NO VERIFICADO EN BD: validar correspondencia de categorySellID y attributeID con la taxonomía, relaciones, tipos y opciones reales del importador.
 - NO VERIFICADO EN BD: comprobar companyID del entorno, unicidad por proveedor y origen, deduplicación de referencias visibles y política de precios null.
 - NO VERIFICADO EN BD: confirmar accesibilidad y persistencia de las URLs de imágenes, logos y galerías.
-- NO VERIFICADO EN BD: revisar categorías sin relaciones directas de atributos mediante `npm run auditar:comercial -- --atributos-vacios`.
+- NO VERIFICADO EN BD: revisar categorías sin relaciones directas de atributos mediante `npm run comercial:auditar -- --atributos-vacios`.
 - La procedencia técnica de cada unidad se conserva en sources, por índice, fuera del objeto Product; incluye identidad, URL y referencia externa cuando exista.
 - Los grupos de referencias coincidentes solo incluyen productos exportados; la auditoría del catálogo puede detectar además coincidencias en los excluidos.
 - Las comprobaciones acreditan integridad y proyección comercial; no garantizan aceptación semántica ni importación efectiva por el backend.
@@ -104,6 +104,6 @@ Señales y excepciones documentadas:
 - Los 5 JSON exactos y sus huellas SHA256 están dentro del paquete comercial; `commercial-manifest.json` identifica las publicaciones técnicas de origen por SHA256, el entorno y cada archivo.
 - La verificación de fuentes activas debe ejecutarse contra el mismo corte: el SHA256 de publicación no permite por sí solo atribuir una fecha de activación.
 - Las discrepancias del manifiesto histórico de referencias son diagnóstico de procedencia independiente y no autorizan modificarlo ni alterar el contrato comercial v2.
-- Exportar el corte vigente: `npm run exportar:comercial -- --entorno develop` (o production según el destino).
-- Verificar el paquete: `npm run auditar:comercial -- --verificar=<ruta-zip-comercial> --informe=<ruta-zip-informe>`.
+- Exportar el corte vigente: `npm run comercial` (o `npm run comercial -- --entorno production` según el destino).
+- Verificar el paquete: `npm run comercial:auditar -- --verificar=<ruta-zip-comercial> --informe=<ruta-zip-informe>`.
 - La verificación compara la exportación con las publicaciones y referencias activas; un corte antiguo no podrá acreditarse como vigente tras su modificación.

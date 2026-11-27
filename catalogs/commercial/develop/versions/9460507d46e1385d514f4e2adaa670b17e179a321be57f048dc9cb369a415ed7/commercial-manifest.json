@@ -8,7 +8,7 @@
   "providers": [
     {
       "providerId": "gam",
-      "publicationSha256": "2ce99896c8ef06e1f5b72c61c3080e54cc82b1bafbb8f939ed64b18d61a6ca23",
+      "publicationSha256": "81bb7f9954469445bb946da2507873affed34188cbb8dea4b5ca018b5e7e34d7",
       "originalCount": 976,
       "exported": 966,
       "categorized": 966,
@@ -23,12 +23,12 @@
       "excluded": 10,
       "exceptions": 3,
       "file": "gam-commercial.json",
-      "sha256": "bd89b240cfb7a64067a0d5837323e15bb78cf37940d82540368997d9cd065a9f",
-      "bytes": 3404019
+      "sha256": "ecce54d760f10f9817e1d48c0851b93d9a1b7caee7bcbdb41eb624577067f2a3",
+      "bytes": 3417408
     },
     {
       "providerId": "gomariz",
-      "publicationSha256": "32891c991444b1287bf2658f300e12e436da8fa6653609f1428c104297df9d26",
+      "publicationSha256": "5ac716d932a360f3818b8e12fa98cea24d3153a58433545e559de42399317f3d",
       "originalCount": 546,
       "exported": 546,
       "categorized": 544,
@@ -36,19 +36,19 @@
       "excludedLots": 0,
       "excludedTools": 0,
       "excludedAccessories": 0,
-      "attributes": 3749,
+      "attributes": 3817,
       "withLogo": 546,
       "withPrice": 0,
       "withCompany": 546,
       "excluded": 0,
       "exceptions": 2,
       "file": "gomariz-commercial.json",
-      "sha256": "7e71630ec1c0068be0994cb4853516c14e7f5d2413115cd6a034039b103937bd",
-      "bytes": 2496463
+      "sha256": "f5a2bf9c5e241d5009aad71ae7cbfdcc44d4e000883bde9f4d57554fbccbb0a3",
+      "bytes": 2593900
     },
     {
       "providerId": "mercaeleva",
-      "publicationSha256": "557df56b07795a6890901f9b1c8bf46d52d5a8c4e52e0558f9dbbfe73a3c51f9",
+      "publicationSha256": "9d8500101241bbd6fcce7cf30b222d44a81dffa01968cddb875170d52e9cbe7b",
       "originalCount": 221,
       "exported": 221,
       "categorized": 221,
@@ -63,12 +63,12 @@
       "excluded": 0,
       "exceptions": 0,
       "file": "mercaeleva-commercial.json",
-      "sha256": "ce4c259841c02bc78a65f5218ad5b087782a237ab49fbacf402c7a4a0f44a564",
-      "bytes": 1087017
+      "sha256": "f465272b1807cf3b24e191f7d03c97667ffbecd19c63a287ab7ea0723b44e629",
+      "bytes": 1099379
     },
     {
       "providerId": "manain",
-      "publicationSha256": "8b95dceea872221d9347486c8a2609994361b9c44cd97b091f0235d1a7a03736",
+      "publicationSha256": "74ce7c2edd1e428bf35dfca0e04e99fb1b5582d5cab16a7f2530008e5c274a23",
       "originalCount": 383,
       "exported": 375,
       "categorized": 374,
@@ -83,8 +83,8 @@
       "excluded": 8,
       "exceptions": 1,
       "file": "manain-commercial.json",
-      "sha256": "3fcdbe6d5a97f62085ec099fb38f795350c60bc4c25c74e2389e9aca0fc3253a",
-      "bytes": 1504206
+      "sha256": "1a12ac9ed42460befe5a037131b0677d01b39df05df1ef20d8bcf9170d2754f6",
+      "bytes": 1547782
     }
   ]
 }

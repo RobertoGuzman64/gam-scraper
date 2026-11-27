@@ -1,7 +1,7 @@
 {
   "version": 1,
   "providerId": "manain",
-  "preparationSha256": "66acabfbef935931cdd58e1a26638063deccbb1ebc3ce75d735476aaf76ffadb",
+  "preparationSha256": "cfcb9acd69635ac0b5855bb2a2821da8055168f06a5e7db0e6c9b9789298cd42",
   "products": [
     {
       "reference": "MA3904",
@@ -36,6 +36,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "680 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "1,14 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "1,14 m"
           }
         ]
       }
@@ -70,6 +78,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "240 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,6 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,6 m"
           }
         ]
       }
@@ -107,6 +123,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "230 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,86 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,86 m"
           }
         ]
       }
@@ -144,6 +168,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "230 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,86 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,86 m"
           }
         ]
       }
@@ -161,6 +193,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "320 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,90 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,90 m"
           }
         ]
       }
@@ -386,6 +426,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "250 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,90 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,90 m"
           }
         ]
       }
@@ -403,6 +451,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "380 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,90 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,90 m"
           }
         ]
       }
@@ -420,6 +476,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "240 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,60 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,60 m"
           }
         ]
       }
@@ -1429,6 +1493,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "230 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,86 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,86 m"
           }
         ]
       }
@@ -1446,6 +1518,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "320 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,90 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,90 m"
           }
         ]
       }
@@ -1480,6 +1560,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "320 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,9 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,9 m"
           }
         ]
       }
@@ -1544,6 +1632,46 @@
       "technicalProvenance": {
         "originalRecordSha256": "7ed4090d93f42aea4ebca94e8b062c5aeb1f23e4e1356594c570892f4a77dfb5",
         "entries": [
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "5330 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Productivity: Turning Radius-Outside, 5330 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "e20048b5dec4e785555f4857dcbef8867a8d1d3f6b9e4f15cd9e6638a9b2eb75"
+            },
+            "editorialRuleId": "bb232230ccec4336f5148af6c18144e8f769ce39070681162b39db18a393ff0a"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2850 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Measurements, cota H (Wheelbase) 2.85 m; común a ambas longitudes de plataforma.",
+              "claimSha256": "a8a2c78d96a10d9947697e1d9985febcdb17a8576b9c2f97151e3a90a264de3d"
+            },
+            "editorialRuleId": "fac35d5ffa9f0c46bda238f3427c160beb45f6264fe9a2524b51ae56dd0564fb"
+          },
           {
             "field": "Altura de plataforma",
             "value": "15,9 m",
@@ -2068,6 +2196,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "363 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "1,52 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "1,52 m"
           }
         ]
       }
@@ -2307,6 +2443,66 @@
       "technicalProvenance": {
         "originalRecordSha256": "41b07b17a716db3206d7b23a328af4c14609bae59e5c89f1da7b1c443c4b9dcb",
         "entries": [
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
           {
             "field": "Altura de plataforma",
             "value": "5,8 m",
@@ -2783,6 +2979,26 @@
             "editorialRuleId": "5221fef4fad59fc45f3d1bc8efdf6bf119d0e20f3c19ccdcfcf4dc5f7f8b356a"
           },
           {
+            "field": "Rotación de torreta",
+            "value": "350°",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://joysat.eu/wp-content/uploads/2020/09/Caracter%C2%B0stiques-Ta%CC%88cniques-HA15IP.pdf",
+              "brand": "HAULOTTE",
+              "model": "HA 15 IP"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-26",
+              "support": "Haulotte HA 15 IP, ficha 06/2012, p. 2, rotación de torreta 350°; corroborada en ficha 01/2017 (https://www.coalci.es/wp-content/uploads/2021/07/haulotte-ha15ip.pdf). Solo geometría compatible con la tabla; no equivale a rotación de cesta.",
+              "claimSha256": "0c57c126f3e72d6f62bd4bd0a306fb382640bf8b1021b9cd9fbcee682ef3042e"
+            },
+            "editorialRuleId": "d5c6bedca9c22cd3669c1bb8fb5db70647b62a8240c371a0e43b407e12a493ef"
+          },
+          {
             "field": "Capacidad de la cesta",
             "value": "230 kg",
             "mechanism": "src/preparation/manain/normalization.ts",
@@ -2880,6 +3096,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "363 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,92 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,92 m"
           }
         ]
       }
@@ -3145,6 +3369,66 @@
       "technicalProvenance": {
         "originalRecordSha256": "d25b58e48d1d57b9b0e7eeb52e1714b8016ab8e3fa19347017fa9ceb51dc507a",
         "entries": [
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
           {
             "field": "Altura de plataforma",
             "value": "5,8 m",
@@ -4273,6 +4557,46 @@
         "originalRecordSha256": "5fd380c7026f280777ed378b57e106a0307ad1b9e8f6f0de5585bf5782b41592",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4750 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1028.htm",
+              "brand": "LGMG",
+              "model": "SR1218D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1218D, Specifications, Productivity: Turning Radius-Outside, 4750 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "fda0c01b3f615574ef2a974a386a856667d1ea45c711ca198cdbb7c91ba4f6a3"
+            },
+            "editorialRuleId": "cbca6b9d1b31f73f6cb8906b59eb8a1181ecfdc3afda4abe7e6e4e8e943cd105"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2290 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1028.htm",
+              "brand": "LGMG",
+              "model": "SR1218D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1218D, Specifications, Measurements, cota H (Wheelbase) 2.29 m.",
+              "claimSha256": "071e3d25ad06e4dbc6c08336ae35a26124435154d021eef58e8605375dcbc705"
+            },
+            "editorialRuleId": "427042a7d88fc300ad37337b400dcf065dfe1de504d02a7c3d1f8d2f3967769b"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "11,9 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -4615,6 +4939,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "320 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,90 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,90 m"
           }
         ]
       }
@@ -4632,6 +4964,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "320 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,90 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,90 m"
           }
         ]
       }
@@ -4649,6 +4989,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "320 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,90 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,90 m"
           }
         ]
       }
@@ -4666,6 +5014,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "320 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,90 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,90 m"
           }
         ]
       }
@@ -4683,6 +5039,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "230 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,90 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,90 m"
           }
         ]
       }
@@ -4846,6 +5210,46 @@
         "originalRecordSha256": "57de96506a4b360d10cd998df869356d587cdf4ad1f3ff1ef610295cd097ccf2",
         "entries": [
           {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-620.htm",
+              "brand": "LGMG",
+              "model": "SS0507E"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SS0507E, Specifications, Productivity: Gradeability-Lowered 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "b260c01f79c9b3f724f21487d04ef95e3229a7f5666a7e93072cb08ab1c2222e"
+            },
+            "editorialRuleId": "46f99ffbb199b2fe2f5ab6f9178bc0c4c647f2569920a4435c07c583316370d4"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1120 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-620.htm",
+              "brand": "LGMG",
+              "model": "SS0507E"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SS0507E, Specifications, Measurements, cota H (Wheelbase) 1.12 m.",
+              "claimSha256": "99ab941238141a7383d1b5ca15b5272f4b73e6478e9e87e9f80afb2a2b897e2f"
+            },
+            "editorialRuleId": "eb2373a04a0c2e39f86d89b5d613b767866f3e711131d906792046be8166f372"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "4,3 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -4902,6 +5306,46 @@
       "technicalProvenance": {
         "originalRecordSha256": "947763e5d82e98d03cec7eef43684380758b16b8eecbd2e79ebe9e1a9f863a4b",
         "entries": [
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-620.htm",
+              "brand": "LGMG",
+              "model": "SS0507E"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SS0507E, Specifications, Productivity: Gradeability-Lowered 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "b260c01f79c9b3f724f21487d04ef95e3229a7f5666a7e93072cb08ab1c2222e"
+            },
+            "editorialRuleId": "46f99ffbb199b2fe2f5ab6f9178bc0c4c647f2569920a4435c07c583316370d4"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1120 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-620.htm",
+              "brand": "LGMG",
+              "model": "SS0507E"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SS0507E, Specifications, Measurements, cota H (Wheelbase) 1.12 m.",
+              "claimSha256": "99ab941238141a7383d1b5ca15b5272f4b73e6478e9e87e9f80afb2a2b897e2f"
+            },
+            "editorialRuleId": "eb2373a04a0c2e39f86d89b5d613b767866f3e711131d906792046be8166f372"
+          },
           {
             "field": "Altura de plataforma",
             "value": "4,3 m",
@@ -4960,6 +5404,46 @@
         "originalRecordSha256": "8670fdb820ac11b9649d2d467a14870760e0e64f8a5083d04501c4a1b0951477",
         "entries": [
           {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-620.htm",
+              "brand": "LGMG",
+              "model": "SS0507E"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SS0507E, Specifications, Productivity: Gradeability-Lowered 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "b260c01f79c9b3f724f21487d04ef95e3229a7f5666a7e93072cb08ab1c2222e"
+            },
+            "editorialRuleId": "46f99ffbb199b2fe2f5ab6f9178bc0c4c647f2569920a4435c07c583316370d4"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1120 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-620.htm",
+              "brand": "LGMG",
+              "model": "SS0507E"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SS0507E, Specifications, Measurements, cota H (Wheelbase) 1.12 m.",
+              "claimSha256": "99ab941238141a7383d1b5ca15b5272f4b73e6478e9e87e9f80afb2a2b897e2f"
+            },
+            "editorialRuleId": "eb2373a04a0c2e39f86d89b5d613b767866f3e711131d906792046be8166f372"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "4,3 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -5016,6 +5500,46 @@
       "technicalProvenance": {
         "originalRecordSha256": "55974640c00a04df73e2109c0c8668fc44961af2b64a94f1b3753c69479846cf",
         "entries": [
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-620.htm",
+              "brand": "LGMG",
+              "model": "SS0507E"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SS0507E, Specifications, Productivity: Gradeability-Lowered 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "b260c01f79c9b3f724f21487d04ef95e3229a7f5666a7e93072cb08ab1c2222e"
+            },
+            "editorialRuleId": "46f99ffbb199b2fe2f5ab6f9178bc0c4c647f2569920a4435c07c583316370d4"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1120 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-620.htm",
+              "brand": "LGMG",
+              "model": "SS0507E"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SS0507E, Specifications, Measurements, cota H (Wheelbase) 1.12 m.",
+              "claimSha256": "99ab941238141a7383d1b5ca15b5272f4b73e6478e9e87e9f80afb2a2b897e2f"
+            },
+            "editorialRuleId": "eb2373a04a0c2e39f86d89b5d613b767866f3e711131d906792046be8166f372"
+          },
           {
             "field": "Altura de plataforma",
             "value": "4,3 m",
@@ -5074,6 +5598,46 @@
         "originalRecordSha256": "46352e714583122e10b9c03c0e1ba6fc32b99be018f05ae7a2c8ee74b4fb1cbe",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4410 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-617.htm",
+              "brand": "LGMG",
+              "model": "AR16J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AR16J, Specifications, Productivity: Turning Radius-Outside, 4410 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "17a0834634bae8bc40f5dd75dc2584767a925711b2a3305665fac6dab640a54f"
+            },
+            "editorialRuleId": "84dda2dd9906d9c9bd31058627a1480e69bee31c0a45aeae60e49d42bfe6c5f4"
+          },
+          {
+            "field": "Rotación de torreta",
+            "value": "355°",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-617.htm",
+              "brand": "LGMG",
+              "model": "AR16J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-26",
+              "support": "LGMG AR16J, tabla Specifications, Productivity: giro de torreta 355°. Corroborado en catálogo LGMG de junio de 2023, tabla Part 4, misma variante y cotas exteriores; no acredita rotación de cesta ni equipamiento opcional.",
+              "claimSha256": "4c162f6fd73f0a8b06b171a7c09c9089d784eedc30acbac323c11d6092166b28"
+            },
+            "editorialRuleId": "6e643fee19881b2169bb28fb7960863af0cad761345891051ff81b0ad9c95baf"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "15,7 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -5110,6 +5674,46 @@
       "technicalProvenance": {
         "originalRecordSha256": "652cd862c0ef16c64dc9483d49ebe94c9d47ab2a3920accf7d2881d45c732deb",
         "entries": [
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4410 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-617.htm",
+              "brand": "LGMG",
+              "model": "AR16J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AR16J, Specifications, Productivity: Turning Radius-Outside, 4410 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "17a0834634bae8bc40f5dd75dc2584767a925711b2a3305665fac6dab640a54f"
+            },
+            "editorialRuleId": "84dda2dd9906d9c9bd31058627a1480e69bee31c0a45aeae60e49d42bfe6c5f4"
+          },
+          {
+            "field": "Rotación de torreta",
+            "value": "355°",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-617.htm",
+              "brand": "LGMG",
+              "model": "AR16J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-26",
+              "support": "LGMG AR16J, tabla Specifications, Productivity: giro de torreta 355°. Corroborado en catálogo LGMG de junio de 2023, tabla Part 4, misma variante y cotas exteriores; no acredita rotación de cesta ni equipamiento opcional.",
+              "claimSha256": "4c162f6fd73f0a8b06b171a7c09c9089d784eedc30acbac323c11d6092166b28"
+            },
+            "editorialRuleId": "6e643fee19881b2169bb28fb7960863af0cad761345891051ff81b0ad9c95baf"
+          },
           {
             "field": "Altura de plataforma",
             "value": "15,7 m",
@@ -5148,6 +5752,46 @@
         "originalRecordSha256": "946a652a6ca74a019e159002ba353f88203a3855e02d8db4ec0eb974617cd4ba",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4410 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-617.htm",
+              "brand": "LGMG",
+              "model": "AR16J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AR16J, Specifications, Productivity: Turning Radius-Outside, 4410 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "17a0834634bae8bc40f5dd75dc2584767a925711b2a3305665fac6dab640a54f"
+            },
+            "editorialRuleId": "84dda2dd9906d9c9bd31058627a1480e69bee31c0a45aeae60e49d42bfe6c5f4"
+          },
+          {
+            "field": "Rotación de torreta",
+            "value": "355°",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-617.htm",
+              "brand": "LGMG",
+              "model": "AR16J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-26",
+              "support": "LGMG AR16J, tabla Specifications, Productivity: giro de torreta 355°. Corroborado en catálogo LGMG de junio de 2023, tabla Part 4, misma variante y cotas exteriores; no acredita rotación de cesta ni equipamiento opcional.",
+              "claimSha256": "4c162f6fd73f0a8b06b171a7c09c9089d784eedc30acbac323c11d6092166b28"
+            },
+            "editorialRuleId": "6e643fee19881b2169bb28fb7960863af0cad761345891051ff81b0ad9c95baf"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "15,7 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -5184,6 +5828,46 @@
       "technicalProvenance": {
         "originalRecordSha256": "41729dcc408ee1a730757322c48fd5b1be9f0bae94736486635df1f690106f3f",
         "entries": [
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4410 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-617.htm",
+              "brand": "LGMG",
+              "model": "AR16J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AR16J, Specifications, Productivity: Turning Radius-Outside, 4410 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "17a0834634bae8bc40f5dd75dc2584767a925711b2a3305665fac6dab640a54f"
+            },
+            "editorialRuleId": "84dda2dd9906d9c9bd31058627a1480e69bee31c0a45aeae60e49d42bfe6c5f4"
+          },
+          {
+            "field": "Rotación de torreta",
+            "value": "355°",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-617.htm",
+              "brand": "LGMG",
+              "model": "AR16J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-26",
+              "support": "LGMG AR16J, tabla Specifications, Productivity: giro de torreta 355°. Corroborado en catálogo LGMG de junio de 2023, tabla Part 4, misma variante y cotas exteriores; no acredita rotación de cesta ni equipamiento opcional.",
+              "claimSha256": "4c162f6fd73f0a8b06b171a7c09c9089d784eedc30acbac323c11d6092166b28"
+            },
+            "editorialRuleId": "6e643fee19881b2169bb28fb7960863af0cad761345891051ff81b0ad9c95baf"
+          },
           {
             "field": "Altura de plataforma",
             "value": "15,7 m",
@@ -5222,6 +5906,46 @@
         "originalRecordSha256": "9a6a72afd5a91645712605862b19a30fe13be1580f12e9a23d2d3ba5134187c1",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4410 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-617.htm",
+              "brand": "LGMG",
+              "model": "AR16J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AR16J, Specifications, Productivity: Turning Radius-Outside, 4410 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "17a0834634bae8bc40f5dd75dc2584767a925711b2a3305665fac6dab640a54f"
+            },
+            "editorialRuleId": "84dda2dd9906d9c9bd31058627a1480e69bee31c0a45aeae60e49d42bfe6c5f4"
+          },
+          {
+            "field": "Rotación de torreta",
+            "value": "355°",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-617.htm",
+              "brand": "LGMG",
+              "model": "AR16J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-26",
+              "support": "LGMG AR16J, tabla Specifications, Productivity: giro de torreta 355°. Corroborado en catálogo LGMG de junio de 2023, tabla Part 4, misma variante y cotas exteriores; no acredita rotación de cesta ni equipamiento opcional.",
+              "claimSha256": "4c162f6fd73f0a8b06b171a7c09c9089d784eedc30acbac323c11d6092166b28"
+            },
+            "editorialRuleId": "6e643fee19881b2169bb28fb7960863af0cad761345891051ff81b0ad9c95baf"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "15,7 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -5258,6 +5982,46 @@
       "technicalProvenance": {
         "originalRecordSha256": "04e015d5105bd68975980388f89f70df7a5a3f18e80e8eae7014fdb659c99d1a",
         "entries": [
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4410 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-617.htm",
+              "brand": "LGMG",
+              "model": "AR16J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AR16J, Specifications, Productivity: Turning Radius-Outside, 4410 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "17a0834634bae8bc40f5dd75dc2584767a925711b2a3305665fac6dab640a54f"
+            },
+            "editorialRuleId": "84dda2dd9906d9c9bd31058627a1480e69bee31c0a45aeae60e49d42bfe6c5f4"
+          },
+          {
+            "field": "Rotación de torreta",
+            "value": "355°",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-617.htm",
+              "brand": "LGMG",
+              "model": "AR16J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-26",
+              "support": "LGMG AR16J, tabla Specifications, Productivity: giro de torreta 355°. Corroborado en catálogo LGMG de junio de 2023, tabla Part 4, misma variante y cotas exteriores; no acredita rotación de cesta ni equipamiento opcional.",
+              "claimSha256": "4c162f6fd73f0a8b06b171a7c09c9089d784eedc30acbac323c11d6092166b28"
+            },
+            "editorialRuleId": "6e643fee19881b2169bb28fb7960863af0cad761345891051ff81b0ad9c95baf"
+          },
           {
             "field": "Altura de plataforma",
             "value": "15,7 m",
@@ -5296,6 +6060,46 @@
         "originalRecordSha256": "729616e582491ea77da1115e954ffd5524bf448320f91ce0472fc2fb7595c03e",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4410 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1026.htm",
+              "brand": "LGMG",
+              "model": "AR14J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AR14J, Specifications, Productivity: Turning Radius-Outside, 4410 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "56319874f6f0de4d7d5c60e1d43b0a258336699dc24ec4e5283fa634c3142826"
+            },
+            "editorialRuleId": "cba2341e7ae04e2cf07ee4465f63312295879c31491527c9f9d4cac5d7432fed"
+          },
+          {
+            "field": "Rotación de torreta",
+            "value": "355°",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1026.htm",
+              "brand": "LGMG",
+              "model": "AR14J"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-26",
+              "support": "LGMG AR14J, tabla Specifications, Productivity: giro de torreta 355°. Corroborado en catálogo LGMG de junio de 2023, tabla Part 4, misma variante y cotas exteriores; no acredita rotación de cesta ni equipamiento opcional.",
+              "claimSha256": "cd4d0e49f1d1512ac646dc9426eb81357a334db1937406fecd451098710c3c84"
+            },
+            "editorialRuleId": "f9eedd41a9b3d2fd93b8fe1788dae8db6f8b9ec33241c83054fa2e6d56c908c9"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "14,09 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -5332,6 +6136,46 @@
       "technicalProvenance": {
         "originalRecordSha256": "849543568de46f4398936495f8f864d49644008886ca7ebbf36654d79f819421",
         "entries": [
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4100 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-616.htm",
+              "brand": "LGMG",
+              "model": "A14JE"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG A14JE, Specifications, Productivity: Turning Radius-Outside, 4100 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "e4260eab42588fe43881f339ac1101130b16d7bf8d793f464df74caa2f212648"
+            },
+            "editorialRuleId": "ee7c7b3af9433b01837a2fe0125d7671f896c3b99d641be5d7ed038932697d8f"
+          },
+          {
+            "field": "Rotación de torreta",
+            "value": "355°",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-616.htm",
+              "brand": "LGMG",
+              "model": "A14JE"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-26",
+              "support": "LGMG A14JE, tabla Specifications, Productivity: giro de torreta 355°. Corroborado en catálogo LGMG de junio de 2023, tabla Part 3, misma variante y cotas exteriores; no acredita rotación de cesta ni equipamiento opcional.",
+              "claimSha256": "a1b125bd90546f0f12ede77e71bff06765230d0f157c83f202fe098d67465014"
+            },
+            "editorialRuleId": "258095203f718486e08bc5749f471abd3afe44236a3a2c17938acb57b1b71d36"
+          },
           {
             "field": "Altura de plataforma",
             "value": "13,8 m",
@@ -5370,6 +6214,46 @@
         "originalRecordSha256": "dbf76fe472ea69833e551c71943d728c2aaaeeaa1089d12c229559a6e638969a",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4100 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-616.htm",
+              "brand": "LGMG",
+              "model": "A14JE"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG A14JE, Specifications, Productivity: Turning Radius-Outside, 4100 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "e4260eab42588fe43881f339ac1101130b16d7bf8d793f464df74caa2f212648"
+            },
+            "editorialRuleId": "ee7c7b3af9433b01837a2fe0125d7671f896c3b99d641be5d7ed038932697d8f"
+          },
+          {
+            "field": "Rotación de torreta",
+            "value": "355°",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-616.htm",
+              "brand": "LGMG",
+              "model": "A14JE"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-26",
+              "support": "LGMG A14JE, tabla Specifications, Productivity: giro de torreta 355°. Corroborado en catálogo LGMG de junio de 2023, tabla Part 3, misma variante y cotas exteriores; no acredita rotación de cesta ni equipamiento opcional.",
+              "claimSha256": "a1b125bd90546f0f12ede77e71bff06765230d0f157c83f202fe098d67465014"
+            },
+            "editorialRuleId": "258095203f718486e08bc5749f471abd3afe44236a3a2c17938acb57b1b71d36"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "13,8 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -5406,6 +6290,46 @@
       "technicalProvenance": {
         "originalRecordSha256": "cb1a543056a74d13a449b93c40eaec4aa5942182dea0ed2402da853bd3effcaa",
         "entries": [
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4100 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-616.htm",
+              "brand": "LGMG",
+              "model": "A14JE"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG A14JE, Specifications, Productivity: Turning Radius-Outside, 4100 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "e4260eab42588fe43881f339ac1101130b16d7bf8d793f464df74caa2f212648"
+            },
+            "editorialRuleId": "ee7c7b3af9433b01837a2fe0125d7671f896c3b99d641be5d7ed038932697d8f"
+          },
+          {
+            "field": "Rotación de torreta",
+            "value": "355°",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-616.htm",
+              "brand": "LGMG",
+              "model": "A14JE"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-26",
+              "support": "LGMG A14JE, tabla Specifications, Productivity: giro de torreta 355°. Corroborado en catálogo LGMG de junio de 2023, tabla Part 3, misma variante y cotas exteriores; no acredita rotación de cesta ni equipamiento opcional.",
+              "claimSha256": "a1b125bd90546f0f12ede77e71bff06765230d0f157c83f202fe098d67465014"
+            },
+            "editorialRuleId": "258095203f718486e08bc5749f471abd3afe44236a3a2c17938acb57b1b71d36"
+          },
           {
             "field": "Altura de plataforma",
             "value": "13,8 m",
@@ -5503,6 +6427,46 @@
         "originalRecordSha256": "166b11df3908f80d943acbf0c4eb5bd6d26865cc624b4c495e640a2949df5a96",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4750 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1027.htm",
+              "brand": "LGMG",
+              "model": "SR1018D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR18D 2020 V1, p. 2, columna SR1018D: Turning Radius-Outside 4.75 m (https://www.lgmglifts.com/it/upload/file/2021/10/26/fb2440684c9e40fbb1a2a2814dd37fe7.pdf); la ficha actual corrobora 4.75 m como Min. Turning Radius.",
+              "claimSha256": "ce368f5c23668d7f109c76be92b05c99c89dc238517dd06508194f1e8fd56d1d"
+            },
+            "editorialRuleId": "a975621b6a934b6aeaad0f88b1fbe584a04eb947532ac77fdc2caee5a7d73542"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2290 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1027.htm",
+              "brand": "LGMG",
+              "model": "SR1018D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1018D, Specifications, Measurements, cota I (Wheelbase) 2.29 m.",
+              "claimSha256": "9a001e1338f9af7e08e39b3f110b05c4984f7769ee30bf1a5bb6fd293d7fecd2"
+            },
+            "editorialRuleId": "9c4256c160292db873fac1388fc4705cd72f3ae447ac4958facfffcbcad01ce2"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "9,7 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -5560,6 +6524,46 @@
         "originalRecordSha256": "df2eb9800766c7dda8ab2261dd037b49efc0b131c5802c6ee91a0a68277deb7d",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4750 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1027.htm",
+              "brand": "LGMG",
+              "model": "SR1018D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR18D 2020 V1, p. 2, columna SR1018D: Turning Radius-Outside 4.75 m (https://www.lgmglifts.com/it/upload/file/2021/10/26/fb2440684c9e40fbb1a2a2814dd37fe7.pdf); la ficha actual corrobora 4.75 m como Min. Turning Radius.",
+              "claimSha256": "ce368f5c23668d7f109c76be92b05c99c89dc238517dd06508194f1e8fd56d1d"
+            },
+            "editorialRuleId": "a975621b6a934b6aeaad0f88b1fbe584a04eb947532ac77fdc2caee5a7d73542"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2290 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1027.htm",
+              "brand": "LGMG",
+              "model": "SR1018D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1018D, Specifications, Measurements, cota I (Wheelbase) 2.29 m.",
+              "claimSha256": "9a001e1338f9af7e08e39b3f110b05c4984f7769ee30bf1a5bb6fd293d7fecd2"
+            },
+            "editorialRuleId": "9c4256c160292db873fac1388fc4705cd72f3ae447ac4958facfffcbcad01ce2"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "9,7 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -5586,6 +6590,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "454 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "1,52 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "1,52 m"
           }
         ]
       }
@@ -6204,6 +7216,46 @@
         "originalRecordSha256": "028fcef28bbc98de24cd6510e34337eb9b7dbb69cd481ca84612932b7bfc7a30",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "5330 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Productivity: Turning Radius-Outside, 5330 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "e20048b5dec4e785555f4857dcbef8867a8d1d3f6b9e4f15cd9e6638a9b2eb75"
+            },
+            "editorialRuleId": "bb232230ccec4336f5148af6c18144e8f769ce39070681162b39db18a393ff0a"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2850 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Measurements, cota H (Wheelbase) 2.85 m; común a ambas longitudes de plataforma.",
+              "claimSha256": "a8a2c78d96a10d9947697e1d9985febcdb17a8576b9c2f97151e3a90a264de3d"
+            },
+            "editorialRuleId": "fac35d5ffa9f0c46bda238f3427c160beb45f6264fe9a2524b51ae56dd0564fb"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "15,9 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -6230,6 +7282,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "680 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "1,45 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "1,45 m"
           }
         ]
       }
@@ -6240,6 +7300,46 @@
       "technicalProvenance": {
         "originalRecordSha256": "e537e8d7c221f643b3b47d7ac87f3d02d535cd6362e8aa9c5a405c04114279d9",
         "entries": [
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "5330 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Productivity: Turning Radius-Outside, 5330 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "e20048b5dec4e785555f4857dcbef8867a8d1d3f6b9e4f15cd9e6638a9b2eb75"
+            },
+            "editorialRuleId": "bb232230ccec4336f5148af6c18144e8f769ce39070681162b39db18a393ff0a"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2850 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Measurements, cota H (Wheelbase) 2.85 m; común a ambas longitudes de plataforma.",
+              "claimSha256": "a8a2c78d96a10d9947697e1d9985febcdb17a8576b9c2f97151e3a90a264de3d"
+            },
+            "editorialRuleId": "fac35d5ffa9f0c46bda238f3427c160beb45f6264fe9a2524b51ae56dd0564fb"
+          },
           {
             "field": "Altura de plataforma",
             "value": "15,9 m",
@@ -6278,6 +7378,46 @@
         "originalRecordSha256": "78151165287ff1f95c75c3de2de702cb6661fd6fd33aabf30e8515cd86a596fe",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "5330 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Productivity: Turning Radius-Outside, 5330 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "e20048b5dec4e785555f4857dcbef8867a8d1d3f6b9e4f15cd9e6638a9b2eb75"
+            },
+            "editorialRuleId": "bb232230ccec4336f5148af6c18144e8f769ce39070681162b39db18a393ff0a"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2850 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Measurements, cota H (Wheelbase) 2.85 m; común a ambas longitudes de plataforma.",
+              "claimSha256": "a8a2c78d96a10d9947697e1d9985febcdb17a8576b9c2f97151e3a90a264de3d"
+            },
+            "editorialRuleId": "fac35d5ffa9f0c46bda238f3427c160beb45f6264fe9a2524b51ae56dd0564fb"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "15,9 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -6315,6 +7455,46 @@
         "originalRecordSha256": "70c14efd9393077732e8ca63493a9570f7ec74a25b56fc936047a8e120cbf395",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "5330 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Productivity: Turning Radius-Outside, 5330 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "e20048b5dec4e785555f4857dcbef8867a8d1d3f6b9e4f15cd9e6638a9b2eb75"
+            },
+            "editorialRuleId": "bb232230ccec4336f5148af6c18144e8f769ce39070681162b39db18a393ff0a"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2850 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Measurements, cota H (Wheelbase) 2.85 m; común a ambas longitudes de plataforma.",
+              "claimSha256": "a8a2c78d96a10d9947697e1d9985febcdb17a8576b9c2f97151e3a90a264de3d"
+            },
+            "editorialRuleId": "fac35d5ffa9f0c46bda238f3427c160beb45f6264fe9a2524b51ae56dd0564fb"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "15,9 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -6341,6 +7521,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "680 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "1,45 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "1,45 m"
           }
         ]
       }
@@ -6351,6 +7539,46 @@
       "technicalProvenance": {
         "originalRecordSha256": "5116b0b505b3941ff615a8e1d40b7fb729a9573dcd23d062a96a03d43cd12ded",
         "entries": [
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "5330 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Productivity: Turning Radius-Outside, 5330 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "e20048b5dec4e785555f4857dcbef8867a8d1d3f6b9e4f15cd9e6638a9b2eb75"
+            },
+            "editorialRuleId": "bb232230ccec4336f5148af6c18144e8f769ce39070681162b39db18a393ff0a"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2850 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Measurements, cota H (Wheelbase) 2.85 m; común a ambas longitudes de plataforma.",
+              "claimSha256": "a8a2c78d96a10d9947697e1d9985febcdb17a8576b9c2f97151e3a90a264de3d"
+            },
+            "editorialRuleId": "fac35d5ffa9f0c46bda238f3427c160beb45f6264fe9a2524b51ae56dd0564fb"
+          },
           {
             "field": "Altura de plataforma",
             "value": "15,9 m",
@@ -6389,6 +7617,46 @@
         "originalRecordSha256": "1c69c41afc53074ae420fdbc08fdeaaa86575e5d5cec4915352b305b836ca173",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "5330 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Productivity: Turning Radius-Outside, 5330 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "e20048b5dec4e785555f4857dcbef8867a8d1d3f6b9e4f15cd9e6638a9b2eb75"
+            },
+            "editorialRuleId": "bb232230ccec4336f5148af6c18144e8f769ce39070681162b39db18a393ff0a"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2850 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-987.htm",
+              "brand": "LGMG",
+              "model": "SR1623D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1623D, Specifications, Measurements, cota H (Wheelbase) 2.85 m; común a ambas longitudes de plataforma.",
+              "claimSha256": "a8a2c78d96a10d9947697e1d9985febcdb17a8576b9c2f97151e3a90a264de3d"
+            },
+            "editorialRuleId": "fac35d5ffa9f0c46bda238f3427c160beb45f6264fe9a2524b51ae56dd0564fb"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "15,9 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -6425,6 +7693,46 @@
       "technicalProvenance": {
         "originalRecordSha256": "35196084eadadf4fb15fdf09390dcfcd22e5bf47acd6dd0f4465557d11b5919e",
         "entries": [
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4750 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1028.htm",
+              "brand": "LGMG",
+              "model": "SR1218D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1218D, Specifications, Productivity: Turning Radius-Outside, 4750 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "fda0c01b3f615574ef2a974a386a856667d1ea45c711ca198cdbb7c91ba4f6a3"
+            },
+            "editorialRuleId": "cbca6b9d1b31f73f6cb8906b59eb8a1181ecfdc3afda4abe7e6e4e8e943cd105"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2290 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1028.htm",
+              "brand": "LGMG",
+              "model": "SR1218D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1218D, Specifications, Measurements, cota H (Wheelbase) 2.29 m.",
+              "claimSha256": "071e3d25ad06e4dbc6c08336ae35a26124435154d021eef58e8605375dcbc705"
+            },
+            "editorialRuleId": "427042a7d88fc300ad37337b400dcf065dfe1de504d02a7c3d1f8d2f3967769b"
+          },
           {
             "field": "Altura de plataforma",
             "value": "11,9 m",
@@ -6483,6 +7791,46 @@
         "originalRecordSha256": "8c7026c4ebad9c4675b75efe5400083f0a501b3b942e1177ca74d13d56b9d28e",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4750 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1028.htm",
+              "brand": "LGMG",
+              "model": "SR1218D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1218D, Specifications, Productivity: Turning Radius-Outside, 4750 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "fda0c01b3f615574ef2a974a386a856667d1ea45c711ca198cdbb7c91ba4f6a3"
+            },
+            "editorialRuleId": "cbca6b9d1b31f73f6cb8906b59eb8a1181ecfdc3afda4abe7e6e4e8e943cd105"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2290 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1028.htm",
+              "brand": "LGMG",
+              "model": "SR1218D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1218D, Specifications, Measurements, cota H (Wheelbase) 2.29 m.",
+              "claimSha256": "071e3d25ad06e4dbc6c08336ae35a26124435154d021eef58e8605375dcbc705"
+            },
+            "editorialRuleId": "427042a7d88fc300ad37337b400dcf065dfe1de504d02a7c3d1f8d2f3967769b"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "11,9 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -6540,6 +7888,46 @@
         "originalRecordSha256": "b3348d38921a8051f59061686499291d348c947176d4ee4d968650ede617ae50",
         "entries": [
           {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4750 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1028.htm",
+              "brand": "LGMG",
+              "model": "SR1218D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1218D, Specifications, Productivity: Turning Radius-Outside, 4750 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "fda0c01b3f615574ef2a974a386a856667d1ea45c711ca198cdbb7c91ba4f6a3"
+            },
+            "editorialRuleId": "cbca6b9d1b31f73f6cb8906b59eb8a1181ecfdc3afda4abe7e6e4e8e943cd105"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2290 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1028.htm",
+              "brand": "LGMG",
+              "model": "SR1218D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1218D, Specifications, Measurements, cota H (Wheelbase) 2.29 m.",
+              "claimSha256": "071e3d25ad06e4dbc6c08336ae35a26124435154d021eef58e8605375dcbc705"
+            },
+            "editorialRuleId": "427042a7d88fc300ad37337b400dcf065dfe1de504d02a7c3d1f8d2f3967769b"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "11,9 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -6596,6 +7984,46 @@
       "technicalProvenance": {
         "originalRecordSha256": "7cfff1677123f887e60e1d7b1dca9b90a7199ea2c9ca1cefd84c62b4935bc910",
         "entries": [
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "4750 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1028.htm",
+              "brand": "LGMG",
+              "model": "SR1218D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1218D, Specifications, Productivity: Turning Radius-Outside, 4750 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "fda0c01b3f615574ef2a974a386a856667d1ea45c711ca198cdbb7c91ba4f6a3"
+            },
+            "editorialRuleId": "cbca6b9d1b31f73f6cb8906b59eb8a1181ecfdc3afda4abe7e6e4e8e943cd105"
+          },
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "2290 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://www.lgmglifts.com/product/pro-detail-1028.htm",
+              "brand": "LGMG",
+              "model": "SR1218D"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG SR1218D, Specifications, Measurements, cota H (Wheelbase) 2.29 m.",
+              "claimSha256": "071e3d25ad06e4dbc6c08336ae35a26124435154d021eef58e8605375dcbc705"
+            },
+            "editorialRuleId": "427042a7d88fc300ad37337b400dcf065dfe1de504d02a7c3d1f8d2f3967769b"
+          },
           {
             "field": "Altura de plataforma",
             "value": "11,9 m",
@@ -7201,6 +8629,26 @@
             "editorialRuleId": "5221fef4fad59fc45f3d1bc8efdf6bf119d0e20f3c19ccdcfcf4dc5f7f8b356a"
           },
           {
+            "field": "Rotación de torreta",
+            "value": "350°",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://joysat.eu/wp-content/uploads/2020/09/Caracter%C2%B0stiques-Ta%CC%88cniques-HA15IP.pdf",
+              "brand": "HAULOTTE",
+              "model": "HA 15 IP"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-26",
+              "support": "Haulotte HA 15 IP, ficha 06/2012, p. 2, rotación de torreta 350°; corroborada en ficha 01/2017 (https://www.coalci.es/wp-content/uploads/2021/07/haulotte-ha15ip.pdf). Solo geometría compatible con la tabla; no equivale a rotación de cesta.",
+              "claimSha256": "0c57c126f3e72d6f62bd4bd0a306fb382640bf8b1021b9cd9fbcee682ef3042e"
+            },
+            "editorialRuleId": "d5c6bedca9c22cd3669c1bb8fb5db70647b62a8240c371a0e43b407e12a493ef"
+          },
+          {
             "field": "Capacidad de la cesta",
             "value": "230 kg",
             "mechanism": "src/preparation/manain/normalization.ts",
@@ -7249,6 +8697,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "454 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "1,52 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "1,52 m"
           }
         ]
       }
@@ -7266,6 +8722,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "454 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "1,52 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "1,52 m"
           }
         ]
       }
@@ -7579,6 +9043,46 @@
         "originalRecordSha256": "a584708a71b5eb326554d2e69f65c207b8ec259dd05d89cfed7ebe6a4e242dc5",
         "entries": [
           {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/633.htm",
+              "brand": "LGMG",
+              "model": "AS1212"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS1212, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "9cb9ade8d234f02b95923ea4378cbdd4da554861fe081d1b2b4055a29ba8cf5c"
+            },
+            "editorialRuleId": "8cd94e5cf6d0a450fc613d377e209eb0d0d423f2c77a5e3309a000e866a11c29"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "2300 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/633.htm",
+              "brand": "LGMG",
+              "model": "AS1212"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS1212, Specifications, Productivity: Turning Radius-Outside, 2300 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "0ea690a60e424135c65b2fdc6f9757f89e815644c3fb7c64a0eaef591c152218"
+            },
+            "editorialRuleId": "ab38d46b324f2a49138cdfc72017776ba38147dd8600499c6b6168fcbcc36f1c"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "12 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -7605,6 +9109,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "320 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,90 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,90 m"
           }
         ]
       }
@@ -7616,6 +9128,46 @@
         "originalRecordSha256": "9b4f6ca19d907b9f28354d5cc91e50f79e56bb97004a6c975d2fbb3bfb7551a5",
         "entries": [
           {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/633.htm",
+              "brand": "LGMG",
+              "model": "AS1212"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS1212, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "9cb9ade8d234f02b95923ea4378cbdd4da554861fe081d1b2b4055a29ba8cf5c"
+            },
+            "editorialRuleId": "8cd94e5cf6d0a450fc613d377e209eb0d0d423f2c77a5e3309a000e866a11c29"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "2300 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/633.htm",
+              "brand": "LGMG",
+              "model": "AS1212"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS1212, Specifications, Productivity: Turning Radius-Outside, 2300 mm; distinto del radio interior y del diámetro de giro.",
+              "claimSha256": "0ea690a60e424135c65b2fdc6f9757f89e815644c3fb7c64a0eaef591c152218"
+            },
+            "editorialRuleId": "ab38d46b324f2a49138cdfc72017776ba38147dd8600499c6b6168fcbcc36f1c"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "12 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -7642,6 +9194,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "320 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,90 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,90 m"
           }
         ]
       }
@@ -7652,6 +9212,66 @@
       "technicalProvenance": {
         "originalRecordSha256": "0d37caa809004cdf9586c30101e9fe6c6ec0778257182acd31f2a4f057a379f6",
         "entries": [
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
           {
             "field": "Altura de plataforma",
             "value": "5,8 m",
@@ -7710,6 +9330,66 @@
         "originalRecordSha256": "45a632c3568d1f41b0246fc93a533dd9ba3c28f5faa23440ec70d17321832b79",
         "entries": [
           {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "5,8 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -7766,6 +9446,66 @@
       "technicalProvenance": {
         "originalRecordSha256": "a0cfca38306ef23798e94c8e69eca3c52025f4e05807884bc857260ab34d695f",
         "entries": [
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
           {
             "field": "Altura de plataforma",
             "value": "5,8 m",
@@ -7824,6 +9564,66 @@
         "originalRecordSha256": "56917645334ca8c84da3973e2c2e8ea04f3983eea464a5c3dde7cbbdd9d4da58",
         "entries": [
           {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "5,8 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -7880,6 +9680,66 @@
       "technicalProvenance": {
         "originalRecordSha256": "a055fcfa90d18b892f5e80b42a9df5bc82c907802859ccf9072a4540bd75a523",
         "entries": [
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
           {
             "field": "Altura de plataforma",
             "value": "5,8 m",
@@ -7938,6 +9798,66 @@
         "originalRecordSha256": "53f6605f3b5781d5c9240ed5866b6f67a74f60789f8c2b67fae002521e2bb6cb",
         "entries": [
           {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "5,8 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -7994,6 +9914,66 @@
       "technicalProvenance": {
         "originalRecordSha256": "6b246cf2bef297965ab225144b3ed63ece0eac9230ea05c7e62f543c3b88cb74",
         "entries": [
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
           {
             "field": "Altura de plataforma",
             "value": "5,8 m",
@@ -8052,6 +10032,66 @@
         "originalRecordSha256": "2340ae36c4285b561d9e69abd73a69ba5f9bc465d2b7dc0d7f9c8b1de239c7c5",
         "entries": [
           {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "5,8 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -8108,6 +10148,66 @@
       "technicalProvenance": {
         "originalRecordSha256": "f76b662c6854e74ef6bc94daadd00675a5dbe56fa71f8828f4ce6d3ba275c0b5",
         "entries": [
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
           {
             "field": "Altura de plataforma",
             "value": "5,8 m",
@@ -8166,6 +10266,66 @@
         "originalRecordSha256": "1ac1b41d8025ac18af5155de895fe381508618830a7eba93b4fd5a5a0ccd0191",
         "entries": [
           {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "5,8 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -8222,6 +10382,66 @@
       "technicalProvenance": {
         "originalRecordSha256": "4ddc6db01507f0c556564f9537deec0fac187994fdf9a23462cf3a67d162bc34",
         "entries": [
+          {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
           {
             "field": "Altura de plataforma",
             "value": "5,8 m",
@@ -8280,6 +10500,66 @@
         "originalRecordSha256": "9e706888c7246c9fd4a04ead725459b415742d63405b6ac4f0fe3c8ebb350e76",
         "entries": [
           {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "5,8 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -8337,6 +10617,66 @@
         "originalRecordSha256": "c2053c132b850c27647bc793be7ed76630f21d611a1ae5d710a079734fbb9400",
         "entries": [
           {
+            "field": "Distancia entre ejes (mm)",
+            "value": "1320 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Measurements: I-Wheelbase 1.32 m.",
+              "claimSha256": "fa891de9bebf27ede6bb168adb8e9752e4ac22619a1e8d6fdb37ec521a6442ac"
+            },
+            "editorialRuleId": "18693091b904e3a917d0a6ae6b0565a44ef2506a526f5a4821dfc0d5f8d67cfe"
+          },
+          {
+            "field": "Radio de giro exterior del modelo",
+            "value": "1650 mm",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, tabla Specifications, Productivity: radio de giro exterior 1650 mm (Turning Radius-Outside); no es el radio interior ni el diámetro de giro.",
+              "claimSha256": "d81f95293ed34c4652ad7ecef0f91359910ef28920b72b955196a7aca47d5bbd"
+            },
+            "editorialRuleId": "7e20aa94e6fac06fe13c828a709c9fafc6ff953350555ace9a9ce110629b8ac6"
+          },
+          {
+            "field": "Pendiente superable del modelo con plataforma bajada",
+            "value": "25 %",
+            "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
+            "scope": "model-document",
+            "sourceField": null,
+            "sourceValue": null,
+            "document": {
+              "url": "https://en.lgmg.com.cn/product/985.htm",
+              "brand": "LGMG",
+              "model": "AS0607W"
+            },
+            "verification": {
+              "kind": "reviewed-model-fact",
+              "reviewedOn": "2026-11-27",
+              "support": "LGMG AS0607W, Specifications, Productivity: Gradeability-Stowed 25%, Drive Mode 4×2; pendiente nominal con plataforma bajada, no inclinación admisible durante el trabajo en altura.",
+              "claimSha256": "eba5a7bb502e3a104f5dc85629cbf6211a0caab57b0a22f0fe7a74ee47d3a6db"
+            },
+            "editorialRuleId": "9d620f539f1759a5a70ee85c98194457871656f0f8fd1e8dc1b3fc2dc111caf1"
+          },
+          {
             "field": "Altura de plataforma",
             "value": "5,8 m",
             "mechanism": "src/preparation/technical/documented-technical-evidence.ts",
@@ -8363,6 +10703,14 @@
             "scope": "unit",
             "sourceField": "Capacidad carga",
             "sourceValue": "230 kg"
+          },
+          {
+            "field": "Extensión de plataforma",
+            "value": "0,90 m",
+            "mechanism": "src/preparation/technical/technical-presentation.ts",
+            "scope": "unit",
+            "sourceField": "Longitud extensión",
+            "sourceValue": "0,90 m"
           }
         ]
       }

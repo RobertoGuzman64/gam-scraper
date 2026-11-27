@@ -109,12 +109,95 @@ export const resolveSourcedTechnicalContext = (
   return `${general.trim()}${/[.!?]$/u.test(general.trim()) ? "" : "."} ${additions.join(" ")}`;
 };
 
+export const resolveDocumentedPlatformShort = (
+  original: ProductRecord, prepared: ProductRecord, short: string | null, reviewedModelSpecs: SpecsMap | undefined
+): string | null => {
+  if (!short || !original.brand || !original.model || original.shortDescription?.trim() ||
+    !containsEditorialBrandModel(short, original.brand, original.model) || !/\baltura de trabajo de \d/u.test(short)) return null;
+  const reconciled = hasEditorialAdapterHeightConflict(original) ? reconcileTechnicalSourceForRecovery(original) : original;
+  const identitySource = reconciled !== original && sameEditorialUnit(original, reconciled) &&
+    !hasEditorialSourceWorkHeightConflict(reconciled) ? reconciled : original;
+  const families = resolvedEditorialUnitFamilies(identitySource, prepared);
+  const family = families?.[0];
+  if (!family || family !== families?.[1] || !family.startsWith("plataforma-")) return null;
+  const sourceText = [short, original.title, original.longDescription].join(" ");
+  const sources = [original.specs, prepared.specs, reviewedModelSpecs];
+  const matching = (specs: SpecsMap | undefined, keys: readonly string[]) => Object.entries(specs ?? {})
+    .filter(([key]) => keys.includes(normalizeSpecKey(key)));
+  const details: string[] = [];
+  const field = "Capacidad máxima de plataforma";
+  const capacity = editorialQuantity(reviewedModelSpecs?.[field], "kg");
+  const capacityKeys = [field, "Capacidad de plataforma", "Capacidad de la cesta", "Capacidad de cesta", "Capacidad", "Capacidad carga", "Capacidad de carga", "Capacidad de carga (kg)", "Capacidad máxima de elevación"].map(normalizeSpecKey);
+  if (!/\b(?:capacidad|carga|kg)\b/iu.test(sourceText) && capacity !== null && capacity >= 100 && capacity <= 1500 &&
+    editorialQuantity(prepared.specs?.[field], "kg") === capacity &&
+    sources.every((specs) => matching(specs, capacityKeys).every(([, raw]) => editorialQuantity(raw, "kg") === capacity)) &&
+    sources.every((specs) => Object.keys(specs ?? {}).every((key) =>
+      !/capacidad.*(?:restricci[oó]n|restringida|extensi[oó]n|condicionada)/iu.test(key)))) {
+    details.push(`capacidad máxima de plataforma del modelo de ${formatEditorialQuantity(capacity)} kg`);
+  }
+  if (["plataforma-articulada", "plataforma-telescopica", "plataforma-oruga"].includes(family) &&
+    !/\b(?:alcance|radio)\b/iu.test(sourceText) && sources.every((specs) => Object.keys(specs ?? {}).every((key) =>
+      !/alcance.*(?:restricci[oó]n|restringid[oa]|carga|condicionad[oa])/iu.test(key)))) {
+    const reachKeys = ["Alcance lateral", "Alcance horizontal", "Alcance horizontal máximo", "Alcance horizontal max.", "Alcance horizontal (m)"].map(normalizeSpecKey);
+    const measure = (raw: SpecsMap[string] | undefined): number | null => {
+      const millimetres = editorialQuantity(raw, "mm");
+      return editorialQuantity(raw, "m") ?? (millimetres === null ? null : millimetres / 1000);
+    };
+    const reviewed = matching(reviewedModelSpecs, reachKeys);
+    const current = matching(prepared.specs, reachKeys);
+    const reach = measure(reviewed[0]?.[1]);
+    if (reach !== null && Number.isFinite(reach) && reach >= 0.5 && reach <= 60 && current.length &&
+      sources.every((specs) => matching(specs, reachKeys).every(([, raw]) => measure(raw) === reach))) {
+      details.push(`alcance horizontal del modelo de ${formatEditorialQuantity(reach)} m`);
+    }
+  }
+  if (family === "plataforma-tijera" && !/\b(?:extensi[oó]n|extensible|desplegable|desplazable)\b/iu.test(sourceText)) {
+    const extensionKeys = ["Extensión de plataforma", "Extensión plataforma", "Extensión máxima de plataforma", "Longitud extensión", "Longitud de extensión"].map(normalizeSpecKey);
+    const measure = (raw: SpecsMap[string] | undefined): number | null => {
+      const millimetres = editorialQuantity(raw, "mm");
+      return editorialQuantity(raw, "m") ?? (millimetres === null ? null : millimetres / 1000);
+    };
+    const extension = measure(matching(reviewedModelSpecs, extensionKeys)[0]?.[1]);
+    if (extension !== null && extension >= 0.2 && extension <= 4 && matching(prepared.specs, extensionKeys).length &&
+      sources.every((specs) => matching(specs, extensionKeys).every(([, raw]) => measure(raw) === extension))) {
+      details.push(`extensión de plataforma del modelo de ${formatEditorialQuantity(extension)} m`);
+    }
+  }
+  if (!/\baltura\s+(?:m[aá]xima\s+)?(?:de\s+(?:la\s+)?)?(?:plataforma|cesta)\b/iu.test(sourceText)) {
+    const heightKeys = ["Altura de plataforma", "Altura plataforma", "Altura de la plataforma", "Altura máxima de plataforma",
+      "Altura de plataforma (m)", "Altura de plataforma (mm)", "Altura de cesta"].map(normalizeSpecKey);
+    const measure = (raw: SpecsMap[string] | undefined): number | null => {
+      const millimetres = editorialQuantity(raw, "mm");
+      return editorialQuantity(raw, "m") ?? (millimetres === null ? null : millimetres / 1000);
+    };
+    const height = measure(matching(reviewedModelSpecs, heightKeys)[0]?.[1]);
+    const work = editorialMetricOf(prepared.specs, ["Altura de trabajo", "Altura trabajo", "Altura de trabajo (m)", "Altura de trabajo (mm)"]);
+    const shortWork = /\baltura de trabajo de (\d+(?:[.,]\d+)?) m\b/u.exec(short)?.[1];
+    if (height !== null && height >= 1 && work !== null && height < work &&
+      shortWork !== undefined && Number(shortWork.replace(",", ".")) === work &&
+      matching(prepared.specs, heightKeys).length &&
+      sources.every((specs) => matching(specs, heightKeys).every(([, raw]) => measure(raw) === height))) {
+      const extended = [...details, `altura de plataforma del modelo de ${formatEditorialQuantity(height)} m`];
+      const candidate = short.replace(/(;|\.$)/u, `${extended.length > 1 ? ", " : " y "}${extended.join(" y ")}$1`);
+      if (candidate !== short && candidate.split(/\s+/u).length <= 45) return candidate;
+    }
+  }
+  if (!details.length) return null;
+  const result = short.replace(/(;|\.$)/u, `${details.length > 1 ? ", " : " y "}${details.join(" y ")}$1`);
+  if (result !== short && result.split(/\s+/u).length <= 45) return result;
+  if (details.length > 1) {
+    const capacityOnly = short.replace(/(;|\.$)/u, ` y ${details[0]}$1`);
+    if (capacityOnly !== short && capacityOnly.split(/\s+/u).length <= 45) return capacityOnly;
+  }
+  return null;
+};
+
 export const resolveDocumentedModelGeneral = (
   original: ProductRecord, prepared: ProductRecord, general: string | null,
   reviewedModelSpecs: SpecsMap | undefined
 ): string | null => {
   if (!general?.trim() || !general.startsWith("La ficha técnica de ") ||
-    general.trim().split(/\s+/u).length >= 100 || !reviewedModelSpecs || !original.brand || !original.model ||
+    !reviewedModelSpecs || !original.brand || !original.model ||
     !containsEditorialBrandModel(general, original.brand, original.model)) return null;
   const reconciled = hasEditorialAdapterHeightConflict(original) ? reconcileTechnicalSourceForRecovery(original) : original;
   const identitySource = reconciled !== original && sameEditorialUnit(original, reconciled) &&
@@ -123,6 +206,9 @@ export const resolveDocumentedModelGeneral = (
   const family = families?.[0];
   if (!family || family !== families?.[1]) return null;
   const sourceText = [general, original.title, original.shortDescription, original.longDescription].join(" ");
+  const atCompositionLimit = general.trim().split(/\s+/u).length >= 100;
+  const boomPlatform = family === "plataforma-articulada" || family === "plataforma-telescopica" || family === "plataforma-oruga";
+  if (atCompositionLimit && family !== "plataforma-tijera" && !boomPlatform) return null;
   const details: string[] = [];
   const add = (keys: readonly string[], label: string, unit: "m" | "kg" | "mm" | "km/h" | "°" | "%", minimum: number, maximum: number, mention: RegExp): void => {
     if (mention.test(sourceText)) return;
@@ -142,6 +228,56 @@ export const resolveDocumentedModelGeneral = (
     if (reviewed.length === 0 || reviewed.some(([, raw]) => measure(raw) !== value)) return;
     details.push(`${label} de ${formatEditorialQuantity(value)}${unit === "°" ? "" : " "}${unit}`);
   };
+  const addStowedGradeability = (): void => add(["Pendiente superable del modelo con plataforma bajada"],
+    "pendiente superable nominal con plataforma bajada", "%", 1, 99,
+    /\b(?:pendientes?|trepabilidad|gradeability|inclinaci[oó]n)\b/iu);
+  const addExteriorTurningRadius = (): void => add(["Radio de giro exterior del modelo"], "radio de giro exterior", "m", 0.3, 15,
+    /\b(?:radio(?: m[ií]nimo| m[aá]ximo)? (?:de )?giro|radio de (?:viraje|rotaci[oó]n)|di[aá]metro (?:de )?giro|turning (?:radius|circle))\b/iu);
+  const addWheelbase = (): void => add(["Distancia entre ejes", "Distancia entre ejes (mm)", "Distancia entre ejes (m)"],
+    "distancia entre ejes", "m", 0.3, Math.min(editorialMetricOf(prepared.specs, ["Longitud", "Longitud total", "Largo"]) ?? 12, 12),
+    /\b(?:distancia entre ejes|batalla)\b/iu);
+  const addPlatformExtension = (): void => add(["Extensión de plataforma", "Extensión plataforma", "Extensión máxima de plataforma"],
+    "extensión de plataforma", "m", 0.2, 4,
+    /\bextensi[oó]n\s+(?:de\s+(?:la\s+)?)?plataforma\b/iu);
+  const addPlatformDimensions = (): void => {
+    const combinedDimensionKeys = ["Dimensiones Cesta", "Dimensiones de cesta", "Dimensiones plataforma", "Dimensiones de plataforma"].map(normalizeSpecKey);
+    const combinedDimensions = [original, prepared].some((record) =>
+      Object.keys(record.specs ?? {}).some((key) => combinedDimensionKeys.includes(normalizeSpecKey(key))));
+    if (!combinedDimensions && !/\b(?:dimensiones|medidas)\s+(?:de\s+)?(?:la\s+)?(?:cesta|plataforma)\b|\b(?:cesta|plataforma)\s+(?:de\s+)?\d[\d., ]*\s*(?:mm|m)?\s*[x×]/iu.test(sourceText)) {
+      const exteriorLength = editorialMetricOf(prepared.specs, ["Longitud", "Longitud total", "Largo"]);
+      const exteriorWidth = editorialMetricOf(prepared.specs, ["Anchura", "Ancho total", "Anchura total", "Ancho"]);
+      add(["Longitud de plataforma", "Longitud plataforma", "Largo de plataforma"], "longitud de plataforma", "m", 0.5,
+        Math.min(exteriorLength ?? 12, 12), /\b(?:longitud|largo)\s+(?:de\s+(?:la\s+)?)?(?:cesta|plataforma)\b/iu);
+      add(["Anchura de plataforma", "Ancho de plataforma", "Ancho plataforma", "Anchura plataforma"], "anchura de plataforma", "m", 0.4,
+        Math.min(exteriorWidth ?? 6, 6), /\b(?:anchura|ancho)\s+(?:de\s+(?:la\s+)?)?(?:cesta|plataforma)\b/iu);
+    }
+  };
+  const addPlatformHeight = (work: number): void => add(["Altura plataforma", "Altura Plataforma", "Altura de plataforma", "Altura máxima de plataforma"],
+    "altura de plataforma", "m", 0.5, work - 0.1, /\baltura\s+(?:m[aá]xima\s+)?(?:de\s+(?:la\s+)?)?plataforma\b[^.!?;\n]{0,30}\d/iu);
+  const addBoomGeometry = (): void => {
+    add(["Longitud de plumín", "Longitud del plumín"], "longitud de plumín", "m", 0.2, 10, /\b(?:plum[ií]n|jib)\b/iu);
+    add(["Rotación de torreta"], "rotación de torreta", "°", 1, 360, /\b(?:torreta|torre|rotaci[oó]n|giro|giratori[oa])\b/iu);
+  };
+  if (atCompositionLimit) {
+    const work = editorialMetricOf(prepared.specs, ["Altura de trabajo", "Altura trabajo", "Altura de trabajo (m)"]);
+    if (work === null || work < 3 || work > 60) return null;
+    if (family === "plataforma-tijera") addStowedGradeability();
+    const gradeability = details[0];
+    addExteriorTurningRadius();
+    addWheelbase();
+    if (family === "plataforma-tijera") addPlatformExtension();
+    if (boomPlatform) {
+      addPlatformHeight(work);
+      addBoomGeometry();
+    }
+    addPlatformDimensions();
+    const geometry = details.filter((detail) => detail !== gradeability);
+    if (!gradeability && geometry.length === 0) return null;
+    const geometryText = geometry.length <= 1 ? geometry[0] : `${geometry.slice(0, -1).join(", ")} y ${geometry[geometry.length - 1]}`;
+    const maneuverability = geometryText ? `El modelo presenta ${geometryText}.` : "";
+    const slope = gradeability ? `El modelo presenta ${gradeability}. Esta prestación no indica la inclinación admisible durante el trabajo en altura.` : "";
+    return `${general.trim()}\n\n${[maneuverability, slope].filter(Boolean).join(" ")}`;
+  }
   const addReviewedDetail = (key: string, expected: string, text: string, mention: RegExp): void => {
     if (mention.test(sourceText)) return;
     const foldedKey = (field: string) => normalizeSpecKey(field).normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toLowerCase();
@@ -189,15 +325,11 @@ export const resolveDocumentedModelGeneral = (
   if (family.startsWith("plataforma-")) {
     const work = editorialMetricOf(prepared.specs, ["Altura de trabajo", "Altura trabajo", "Altura de trabajo (m)"]);
     if (work === null || work < 3 || work > 60) return null;
-    add(["Altura plataforma", "Altura Plataforma", "Altura de plataforma", "Altura máxima de plataforma"],
-      "altura de plataforma", "m", 0.5, work - 0.1, /\baltura\s+(?:m[aá]xima\s+)?(?:de\s+(?:la\s+)?)?plataforma\b[^.!?;\n]{0,30}\d/iu);
+    addPlatformHeight(work);
     if (family === "plataforma-articulada" || family === "plataforma-telescopica" || family === "plataforma-oruga") {
       add(["Alcance lateral", "Alcance Lateral", "Alcance horizontal", "Alcance horizontal máximo", "Alcance horizontal max.", "Alcance horizontal (m)"],
         "alcance horizontal", "m", 0.5, 60, /\balcance\s+(?:lateral|horizontal)\b[^.!?;\n]{0,35}\d/iu);
-      add(["Longitud de plumín", "Longitud del plumín"], "longitud de plumín", "m", 0.2, 10,
-        /\b(?:plum[ií]n|jib)\b/iu);
-      add(["Rotación de torreta"], "rotación de torreta", "°", 1, 360,
-        /\b(?:torreta|torre|rotaci[oó]n|giro|giratori[oa])\b/iu);
+      addBoomGeometry();
       add(["Rotación de cesta"], "rotación de cesta", "°", 1, 360,
         /\b(?:rotaci[oó]n|giro|gira|giratori[oa]|orientaci[oó]n|orientable)\b[^.!?;\n]{0,45}\b(?:cesta|plataforma)\b|\b(?:cesta|plataforma)\b[^.!?;\n]{0,45}\b(?:rotaci[oó]n|giro|gira|giratori[oa]|orientaci[oó]n|orientable)\b/iu);
     }
@@ -207,32 +339,17 @@ export const resolveDocumentedModelGeneral = (
       add(["Capacidad de plataforma sin restricciones"], "capacidad de plataforma sin restricciones", "kg", 100, 1500,
         /\b(?:capacidad|carga)\b[^.!?;\n]{0,55}\d+\s*kg\b/iu);
     }
-    add(["Distancia entre ejes", "Distancia entre ejes (mm)", "Distancia entre ejes (m)"],
-      "distancia entre ejes", "m", 0.3, Math.min(editorialMetricOf(prepared.specs, ["Longitud", "Longitud total", "Largo"]) ?? 12, 12),
-      /\b(?:distancia entre ejes|batalla)\b/iu);
+    addWheelbase();
     add(["Capacidad máxima de plataforma", "Capacidad de plataforma", "Capacidad", "Capacidad de carga", "Capacidad de carga (kg)", "Capacidad carga"],
       "capacidad máxima de plataforma", "kg", 100, 1500, /\b(?:capacidad|carga)\b[^.!?;\n]{0,45}\d+\s*kg\b/iu);
     if (family === "plataforma-articulada" || family === "plataforma-tijera") {
-      add(["Radio de giro exterior del modelo"], "radio de giro exterior", "m", 0.3, 15,
-        /\b(?:radio(?: m[ií]nimo| m[aá]ximo)? (?:de )?giro|radio de (?:viraje|rotaci[oó]n)|di[aá]metro (?:de )?giro|turning (?:radius|circle))\b/iu);
+      addExteriorTurningRadius();
     }
     if (family === "plataforma-tijera") {
-      add(["Pendiente superable del modelo con plataforma bajada"], "pendiente superable nominal con plataforma bajada", "%", 1, 99,
-        /\b(?:pendientes?|trepabilidad|gradeability|inclinaci[oó]n)\b/iu);
-      add(["Extensión de plataforma", "Extensión plataforma", "Extensión máxima de plataforma"], "extensión de plataforma", "m", 0.2, 4,
-        /\bextensi[oó]n\s+(?:de\s+(?:la\s+)?)?plataforma\b/iu);
+      addStowedGradeability();
+      addPlatformExtension();
     }
-    const combinedDimensionKeys = ["Dimensiones Cesta", "Dimensiones de cesta", "Dimensiones plataforma", "Dimensiones de plataforma"].map(normalizeSpecKey);
-    const combinedDimensions = [original, prepared].some((record) =>
-      Object.keys(record.specs ?? {}).some((key) => combinedDimensionKeys.includes(normalizeSpecKey(key))));
-    if (!combinedDimensions && !/\b(?:dimensiones|medidas)\s+(?:de\s+)?(?:la\s+)?(?:cesta|plataforma)\b|\b(?:cesta|plataforma)\s+(?:de\s+)?\d[\d., ]*\s*(?:mm|m)?\s*[x×]/iu.test(sourceText)) {
-      const exteriorLength = editorialMetricOf(prepared.specs, ["Longitud", "Longitud total", "Largo"]);
-      const exteriorWidth = editorialMetricOf(prepared.specs, ["Anchura", "Ancho total", "Anchura total", "Ancho"]);
-      add(["Longitud de plataforma", "Longitud plataforma", "Largo de plataforma"], "longitud de plataforma", "m", 0.5,
-        Math.min(exteriorLength ?? 12, 12), /\b(?:longitud|largo)\s+(?:de\s+(?:la\s+)?)?(?:cesta|plataforma)\b/iu);
-      add(["Anchura de plataforma", "Ancho de plataforma", "Ancho plataforma", "Anchura plataforma"], "anchura de plataforma", "m", 0.4,
-        Math.min(exteriorWidth ?? 6, 6), /\b(?:anchura|ancho)\s+(?:de\s+(?:la\s+)?)?(?:cesta|plataforma)\b/iu);
-    }
+    addPlatformDimensions();
   } else if (family === "carretilla-elevadora" || family === "carretilla-retractil" || family === "apilador") {
     if (family === "carretilla-elevadora" && /\btrilateral\b/iu.test(sourceText)) {
       add(["Rotación del cabezal trilateral"], "rotación del cabezal trilateral", "°", 1, 360,
