@@ -61,7 +61,7 @@ for await (const event of run({ files: [${JSON.stringify(file)}] })) {
 });
 
 
-test("la caché admite las integraciones de preparación auditadas e invalida entradas y dependencias", () => {
+test("la caché admite integraciones de preparación sin lecturas externas no acreditadas e invalida dependencias", () => {
   const root = mkdtempSync(join(tmpdir(), "eqt-cache-"));
   try {
     const integration = "testing/integration/preparation/source-technical-unit-consistency.test";
@@ -79,7 +79,8 @@ test("la caché admite las integraciones de preparación auditadas e invalida en
       write(`src/${file}.ts`, content);
       write(`dist/${file}.js`, content);
     };
-    createSuite(integration, 'import { value } from "./fixture.js"; import { readFileSync } from "node:fs"; import test from "node:test"; test("censo", () => { readFileSync("data/catalog.json"); value(); });');
+    const controlledIntegration = 'import { value } from "./fixture.js"; import test from "node:test"; test("censo", () => { value(); });';
+    createSuite(integration, controlledIntegration);
     createSuite(editorial, 'import test from "node:test"; test("dominio", () => {});');
     createSuite(unsafe, 'import { writeFileSync } from "node:fs"; import test from "node:test"; test("escritura", () => { writeFileSync("data/catalog.json", "x"); });');
     createSuite(unaccredited, 'import test from "node:test"; test("no acreditada", () => {});');
@@ -106,7 +107,7 @@ test("la caché admite las integraciones de preparación auditadas e invalida en
     assert.deepEqual(probe(true), { eligible: expected, reused: [] });
     assert.deepEqual(probe(), { eligible: expected, reused: expected });
     write("data/catalog.json", '{"version":2}');
-    assert.deepEqual(probe().reused, [files[1]]);
+    assert.deepEqual(probe().reused, expected);
     write("data/catalog.json", '{"version":1}');
     assert.deepEqual(probe().reused, expected);
     write("src/testing/integration/preparation/fixture.ts", "export const value = () => 2;");
@@ -114,6 +115,13 @@ test("la caché admite las integraciones de preparación auditadas e invalida en
     write("src/testing/integration/preparation/fixture.ts", "export const value = () => 1;");
     write(`dist/${editorial}.js`, 'import test from "node:test"; test("dominio", () => { });');
     assert.deepEqual(probe().reused, [files[0]]);
+    write(`dist/${editorial}.js`, 'import test from "node:test"; test("dominio", () => {});');
+    createSuite(integration, 'import { value } from "./fixture.js"; import { readFileSync } from "node:fs"; import test from "node:test"; test("censo", () => { readFileSync("data/catalog.json"); value(); });');
+    assert.deepEqual(probe(true), { eligible: [files[1]], reused: [files[1]] });
+    write("data/catalog.json", '{"version":3}');
+    assert.deepEqual(probe(), { eligible: [files[1]], reused: [files[1]] });
+    createSuite(integration, controlledIntegration);
+    assert.deepEqual(probe(), { eligible: expected, reused: [files[1]] });
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
