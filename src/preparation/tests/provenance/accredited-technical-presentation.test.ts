@@ -205,3 +205,45 @@ test("acredita la extensión de plataforma de tijera sin modificar la medida his
   const conflict = { ...previous, spec: { ...previous.spec, "Extensión de plataforma": "1,2 m" } };
   assert.equal(accreditPublishedTechnicalPresentation(source, conflict, candidate).has("Longitud extensión"), false);
 });
+
+
+test("acredita únicamente la altura redundante cuando se conserva su destino inequívoco", () => {
+  const source: ProductRecord = { ...gomariz, specs: { ...gomariz.specs, Altura: "12 metros",
+    "Altura de trabajo": "12 m", "Altura plataforma": "10 m", "Altura almacenaje": "2.10 m" } };
+  const candidate = preparedCandidate(source);
+  assert.equal(candidate.spec.Altura, undefined);
+  assert.equal(candidate.spec["Altura de trabajo"], "12 m");
+  const previous = { ...candidate, spec: { ...candidate.spec, Altura: "12 m" } };
+  for (const proof of [accreditSourceTechnicalPresentation(source, candidate),
+    accreditPublishedTechnicalPresentation(source, previous, candidate)]) {
+    assert.equal(proof.get("Altura")?.destinationField, "Altura de trabajo");
+    assert.equal(proof.get("Altura")?.value, "12 m");
+  }
+  for (const spec of [{ ...previous.spec, Altura: "11 m" }, { ...previous.spec, "Altura de trabajo": "13 m" },
+    { ...previous.spec, "Altura de plataforma": "9 m" }, { ...previous.spec, "Altura almacenaje": "3 m" }]) {
+    assert.equal(accreditPublishedTechnicalPresentation(source, { ...previous, spec }, candidate).has("Altura"), false);
+  }
+  assert.equal(accreditSourceTechnicalPresentation({ ...source, specs: { ...source.specs, Altura: "11 metros" } }, candidate).has("Altura"), false);
+  assert.equal(accreditPublishedTechnicalPresentation(source, { ...previous, reference: "OTRA" }, candidate).size, 0);
+});
+
+
+test("acredita la altura redondeada separada de la cota exacta sin eliminar su magnitud", () => {
+  const source: ProductRecord = { ...gomariz, specs: { ...gomariz.specs, Altura: "12 metros",
+    "Altura de trabajo": "11.68 m", "Altura plataforma": "9.68 m", "Altura almacenaje": "2.10 m" } };
+  const candidate = preparedCandidate(source);
+  const destination = "Altura de trabajo redondeada";
+  assert.equal(candidate.spec.Altura, undefined);
+  assert.equal(candidate.spec[destination], "12 m");
+  assert.equal(candidate.spec["Altura de trabajo"], "11,68 m");
+  const previous = previousFrom(candidate, [["Altura", destination, "12 m"]]);
+  for (const proof of [accreditSourceTechnicalPresentation(source, candidate),
+    accreditPublishedTechnicalPresentation(source, previous, candidate)]) {
+    assert.equal(proof.get("Altura")?.destinationField, destination);
+    assert.equal(proof.get("Altura")?.value, "12 m");
+  }
+  for (const spec of [{ ...previous.spec, Altura: "13 m" }, { ...previous.spec, "Altura de trabajo": "12 m" },
+    { ...previous.spec, [destination]: "13 m" }, { ...previous.spec, "Altura de plataforma": "9 m" }]) {
+    assert.equal(accreditPublishedTechnicalPresentation(source, { ...previous, spec }, candidate).has("Altura"), false);
+  }
+});

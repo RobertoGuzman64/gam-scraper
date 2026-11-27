@@ -5,6 +5,7 @@ import { gomarizTechnicalSourceFamily } from "../classification/source-category.
 import { scalar, numberToken } from "../../classification/attribute-utils.js";
 import { reconcileOriginalMassCapacityPresentation } from "../../technical/technical-presentation.js";
 import type { TechnicalRecoveryObservation } from "../../provenance/technical-recovery-observation.js";
+import { parseMeasuredLength } from "../../../catalog/normalization/spec-parsers.js";
 import { verifiedGomarizPlatformHeight } from "../../../catalog/normalization/gomariz/technical.js";
 
 export const reconcileGomarizVerifiedPlatformHeight = (record: ProductRecord): ProductRecord => {
@@ -86,4 +87,53 @@ export const reconcileGomarizMassCapacityPresentation = (original: ProductRecord
   if (field === null || field === "Capacidad máxima" && !resolveGomarizEditorialDomainSource(original)) return specs;
   return reconcileOriginalMassCapacityPresentation(original, specs, "Capacidad", field === "Capacidad máxima" ? "Capacidad máxima de elevación" : field,
     "src/preparation/gomariz/technical/gomariz.ts", observe);
+};
+
+export const gomarizWorkingHeightPresentation = {
+  sourceField: "Altura", destinationField: "Altura de trabajo",
+  mechanism: "src/preparation/gomariz/technical/gomariz.ts"
+} as const;
+
+const corroboratedGomarizWorkingHeight = (original: ProductRecord, specs: SpecsMap):
+  { readonly nominal: number; readonly working: number } | null => {
+  const family = gomarizTechnicalSourceFamily(original);
+  if (!family || !["elevador-tijera", "brazo-articulado", "brazo-articulado-boom-lift", "brazo-telescopico",
+    "elevador-mastil-vertical", "camion-plataforma", "oruga"].includes(family) ||
+    !resolveGomarizEditorialDomainSource(original)) return null;
+  const source = original.specs ?? {};
+  const raw = source.Altura;
+  if (typeof raw !== "string" || !/^\d+\s+metros?$/iu.test(raw.trim())) return null;
+  const measure = (value: unknown): number | null => typeof value === "string" &&
+    /^\d+(?:[.,]\d{1,2})?\s*(?:m|metros?)$/iu.test(value.trim()) ? parseMeasuredLength(value, "", "m") : null;
+  const nominal = measure(raw);
+  const working = measure(source["Altura de trabajo"]);
+  const platform = measure(source["Altura plataforma"]);
+  const stored = measure(source["Altura almacenaje"]);
+  if (nominal === null || working === null || platform === null || stored === null ||
+    stored <= 0 || platform < stored || platform >= working || nominal <= platform ||
+    measure(specs.Altura) !== nominal || measure(specs["Altura de trabajo"]) !== working ||
+    measure(specs["Altura de plataforma"]) !== platform || measure(specs["Altura almacenaje"]) !== stored) return null;
+  return { nominal, working };
+};
+
+export const reconcileGomarizRedundantWorkingHeight = (original: ProductRecord, specs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  const heights = corroboratedGomarizWorkingHeight(original, specs);
+  if (!heights || heights.nominal !== heights.working) return specs;
+  const { [gomarizWorkingHeightPresentation.sourceField]: redundant, ...remaining } = specs;
+  observe?.(specs, remaining, gomarizWorkingHeightPresentation.mechanism, { spec: gomarizWorkingHeightPresentation.sourceField });
+  return remaining;
+};
+
+export const reconcileGomarizRoundedWorkingHeight = (original: ProductRecord, specs: SpecsMap,
+  observe?: TechnicalRecoveryObservation): SpecsMap => {
+  const destination = "Altura de trabajo redondeada";
+  const heights = corroboratedGomarizWorkingHeight(original, specs);
+  if (!heights || heights.nominal === heights.working || Math.abs(heights.nominal - heights.working) >= 0.5 ||
+    Object.hasOwn(original.specs ?? {}, destination) || Object.hasOwn(specs, destination)) return specs;
+  const { [gomarizWorkingHeightPresentation.sourceField]: value, ...remaining } = specs;
+  if (value === undefined) return specs;
+  const result = { ...remaining, [destination]: value };
+  observe?.(specs, result, gomarizWorkingHeightPresentation.mechanism, { spec: gomarizWorkingHeightPresentation.sourceField });
+  return result;
 };

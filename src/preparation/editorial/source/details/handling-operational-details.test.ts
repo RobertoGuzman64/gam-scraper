@@ -6,7 +6,7 @@ import { resolveHandlingOperationalDetails } from "./editorial-sourced-equipment
 import { controlledGamForklift, controlledGomarizForklift, controlledMercaelevaForklift } from "../../core/editorial-contract-records.js";
 import { original } from "./equipment-details-fixture.js";
 
-test("la manutención incorpora cotas y equipamiento declarados sin alterar la descripción corta", () => {
+test("la manutención incorpora cotas y equipamiento declarados y aprovecha el mástil replegado en la corta", () => {
   for (const source of [controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift()]) {
     const unit = { ...source, specs: { ...source.specs, "Altura mástil replegado": "2100 mm",
       "Dimensiones Horquillas": "1100 x 120 x 45 mm", "Desplazador lateral": "SI", "Elevación libre": true } };
@@ -14,7 +14,10 @@ test("la manutención incorpora cotas y equipamiento declarados sin alterar la d
     assert.match(output.general ?? "", /altura de mástil replegado declarada de 2.100 mm/u);
     assert.match(output.general ?? "", /dimensiones de horquillas declaradas de 1.100 × 120 × 45 mm/u);
     assert.match(output.general ?? "", /desplazador lateral declarado y elevación libre declarada/u);
-    assert.equal(output.short, resolveReusableEditorial(source).short);
+    if (source.specs?.["Altura de elevación (mm)"] || source.specs?.["Altura máxima de elevación"]) {
+      assert.match(output.short ?? "", /altura de mástil replegado declarada de 2\.100 mm/u);
+    } else assert.equal(output.short, resolveReusableEditorial(source).short);
+    assert.doesNotMatch(output.short ?? "", /horquillas|desplazador lateral|elevación libre/u);
   }
 });
 
@@ -84,7 +87,8 @@ test("la elevación libre numérica y el radio de giro aprovechan las cotas del 
     const result = resolveHandlingOperationalDetails(source, source, "carretilla-elevadora");
     assert.ok(result.includes("elevación libre declarada de 1.600 mm"));
     assert.ok(result.includes("radio de giro declarado de 1.800 mm"));
-    assert.equal(resolveReusableEditorial(source).short, resolveReusableEditorial({ ...base, specs: { ...base.specs, "Altura de elevación (mm)": "4500 mm" } }).short);
+    assert.match(resolveReusableEditorial(source).short ?? "", /altura de mástil replegado declarada de 2\.200 mm/u);
+    assert.doesNotMatch(resolveReusableEditorial(source).short ?? "", /elevación libre|radio de giro/u);
     for (const specs of [{ "Elevación libre": "2300" }, { "Elevación libre disponible": "No" }, { "Elevación libre (mm)": "1500 mm" }]) {
       const variant = { ...source, specs: { ...source.specs, ...specs } };
       assert.doesNotMatch(resolveHandlingOperationalDetails(variant, variant, "carretilla-elevadora").join(" "), /elevación libre/u);
@@ -140,5 +144,24 @@ test("el radio de giro textual concordante recupera la cota de la tabla sin prop
     }
     assert.doesNotMatch(details(source, { ...source, specs: { ...source.specs, "Radio de giro": "1900" } }).join(" "), /radio de giro/u);
     assert.doesNotMatch(details(source, { ...source, reference: "OTRA" }).join(" "), /radio de giro/u);
+  }
+});
+
+
+test("la corta solo aprovecha la cota explícita de mástil replegado corroborada", () => {
+  for (const base of [controlledGamForklift(), controlledGomarizForklift()]) {
+    const source: ProductRecord = { ...base, specs: { ...base.specs, "Altura mástil replegado": "2100 mm" } };
+    const result = resolveReusableEditorial(source);
+    assert.match(result.short ?? "", /altura de mástil replegado declarada de 2\.100 mm/u);
+    for (const other of [base, { ...source, reference: "OTRA" }, { ...source, model: "OTRO" },
+      { ...source, specs: { ...source.specs, "Altura mástil replegado": "2200 mm" } },
+      { ...source, specs: { ...source.specs, "Altura de mástil replegado": "2200 mm" } },
+      { ...source, longDescription: "Mástil replegado pendiente de confirmar." }]) {
+      assert.doesNotMatch(resolveReusableEditorial(source, null, other).short ?? "", /altura de mástil replegado/u);
+    }
+    for (const specs of [{ ...base.specs, "Altura max. replegada": "2100 mm" },
+      ...["2100/2200 mm", "2100 kg", "100 mm"].map((value) => ({ ...base.specs, "Altura mástil replegado": value }))]) {
+      assert.doesNotMatch(resolveReusableEditorial({ ...base, specs }).short ?? "", /altura de mástil replegado/u);
+    }
   }
 });

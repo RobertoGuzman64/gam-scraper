@@ -4,6 +4,7 @@ import type { ImportCandidate } from "../../commercial/legacy-export/contracts.j
 import { normalizeSpecKey } from "../../catalog/normalization/normalize-specs.js";
 import { prepareSourceProduct } from "../prepare-product.js";
 import type { TechnicalRecoveryObservation } from "./technical-recovery-observation.js";
+import { gomarizWorkingHeightPresentation } from "../gomariz/technical/gomariz.js";
 import { reconcileOriginalTechnicalPresentation } from "../technical/original-technical-presentation.js";
 
 type PresentationReplacement = {
@@ -18,6 +19,10 @@ export type AccreditedTechnicalPresentation = PresentationReplacement & {
   readonly previousValue: SpecValue;
 };
 
+const retainedDestination = (mechanism: string, sourceField: string): string | null =>
+  mechanism === gomarizWorkingHeightPresentation.mechanism && sourceField === gomarizWorkingHeightPresentation.sourceField
+    ? gomarizWorkingHeightPresentation.destinationField : null;
+
 const captureReplacements = (): {
   readonly replacements: readonly PresentationReplacement[];
   readonly observe: TechnicalRecoveryObservation;
@@ -27,8 +32,10 @@ const captureReplacements = (): {
     if (source || editorialRuleId || !sourceField || typeof sourceField !== "object") return;
     const removed = Object.keys(before).filter((field) => !Object.hasOwn(after, field));
     const added = Object.keys(after).filter((field) => !Object.hasOwn(before, field));
-    const destinationField = added[0];
-    if (removed.length !== 1 || removed[0] !== sourceField.spec || added.length !== 1 || destinationField === undefined ||
+    const retained = added.length === 0 ? retainedDestination(mechanism, sourceField.spec) : null;
+    const destinationField = added[0] ?? retained;
+    if (removed.length !== 1 || removed[0] !== sourceField.spec || (added.length !== 1 && retained === null) || destinationField === null ||
+      (retained !== null && !Object.hasOwn(before, retained)) ||
       Object.keys(before).some((field) => field !== sourceField.spec && !isDeepStrictEqual(before[field], after[field]))) return;
     const value = after[destinationField];
     if (value === undefined) return;
@@ -76,7 +83,8 @@ const accredit = (source: ProductRecord, candidate: ImportCandidate, previous?: 
     const { sourceField, destinationField } = replacement;
     const originalValue = source.specs[sourceField];
     const previousValue = historicalSpecs[sourceField];
-    if (originalValue === undefined || previousValue === undefined || Object.hasOwn(historicalSpecs, destinationField) ||
+    const retained = retainedDestination(replacement.mechanism, sourceField) === destinationField;
+    if (originalValue === undefined || previousValue === undefined || Object.hasOwn(historicalSpecs, destinationField) !== retained ||
       !historical.some((observed) => isDeepStrictEqual(observed, replacement))) continue;
     result.set(sourceField, { ...replacement, originalValue, previousValue });
   }

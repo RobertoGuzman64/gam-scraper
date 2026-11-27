@@ -6,6 +6,7 @@ import type { DocumentedTechnicalSource as ProvenanceSource, ProductTechnicalPro
 import type { TechnicalRecoveryObservation } from "../../provenance/technical-recovery-observation.js";
 import { reviewedCatalogModelIdentity, matchesDocumentedTechnicalIdentity } from "./reviewed-catalog-model-identity.js";
 import { reusableReviewedModelClaims, reviewedModelDocumentVerification } from "./reviewed-model-claims.js";
+import { angularGeometry, combinedGeometry, explicitGeometry, geometryAliases, geometryAngle, geometryConfigurationConflict, reviewedExteriorTurningRadius, reviewedStowedGradeability, reviewedWheelbase } from "./reviewed-platform-geometry.js";
 
 import { editorialFamilyFromSourceGeneral, editorialFamilyOf } from "../../editorial/core/editorial-families.js";
 import { resolveEditorialLiteralTitleSource, resolveEditorialSource } from "../../editorial/core/editorial-source.js";
@@ -173,28 +174,6 @@ export const applyDocumentedTechnicalEvidence = (
   }
   return result;
 };
-
-const geometryAliases: Readonly<Record<string, RegExp>> = {
-  "Altura de plataforma": /^altura (?:maxima )?(?:de (?:la )?)?plataforma(?: (?:maxima|max\.?))?(?: \(m[m]?\))?$/u,
-  "Longitud de plataforma": /^(?:longitud|largo) (?:de (?:la )?)?(?:plataforma|cesta)(?: principal)?(?: \(m[m]?\))?$/u,
-  "Anchura de plataforma": /^(?:anchura|ancho) (?:de (?:la )?)?(?:plataforma|cesta)(?: principal)?(?: \(m[m]?\))?$/u,
-  "Longitud de plumín": /^(?:longitud|largo) (?:de(?:l)? )?(?:plumin|jib|brazo auxiliar)(?: \(m[m]?\))?$/u,
-  "Rotación de torreta": /^(?:rotacion|giro|angulo de giro).*(?:torreta|torre)\b|^torreta giratoria$/u,
-  "Rotación de cesta": /^(?:rotacion|giro|angulo de giro).*(?:cesta|plataforma)\b/u,
-  "Extensión de plataforma": /^(?:extension(?: de (?:la )?(?:plataforma|cesta))?|longitud (?:de )?extension|plataforma (?:extensible|desplegable|desplazable)|lateral extensible)(?: \(m[m]?\))?$/u
-};
-
-const angularGeometry = (field: string): boolean => field === "Rotación de torreta" || field === "Rotación de cesta";
-const geometryAngle = (value: unknown): number | null => {
-  const match = typeof value === "string" ? /^(\d{1,3})\s*[°º]$/u.exec(value.trim()) : null;
-  const angle = Number(match?.[1]);
-  return Number.isInteger(angle) && angle > 0 && angle <= 360 ? angle : null;
-};
-
-const combinedGeometry = /^(?:dimensiones|medidas) (?:de (?:la )?)?(?:cesta|plataforma)\b/u;
-const explicitGeometry = /\b(?:altura|longitud|anchura|ancho|largo|dimensiones|medidas|extension) (?:de (?:la )?)?(?:plataforma|cesta)\b[^.!?;\n]{0,50}\d|\b(?:plataforma extensible|longitud (?:de )?extension)\b[^.!?;\n]{0,50}\d/u;
-
-const geometryConfigurationConflict = /\b(?:sin|carece de|no (?:dispone|cuenta) de) (?:una? |la )?(?:extension|plataforma|cesta)\b|\b(?:extension|plataforma|cesta)\b[^.!?;]{0,40}\b(?:opcional|no instalada|no incluida|modificada|sustituida)\b/u;
 
 const nominalLoadCenter = /\b(?:centro (?:nominal )?(?:de gravedad )?(?:de (?:la )?)?carga|baricentro (?:de (?:la )?)?carga|load cent(?:er|re))\b/u;
 const handlingCapacityKeys = /^(?:capacidad(?: nominal)?(?: de carga)?|capacidad maxima de elevacion)(?: \(kg\))?$/u;
@@ -443,6 +422,24 @@ const recoverReviewedModelClaim = (
   if (sources.some((source) => Object.entries(source).some(([key, value]) =>
     geometryConfigurationConflict.test(fold(`${key} ${String(value)}`))))) return specs;
   for (const fact of claim.facts) {
+    if (fact.field === "Pendiente superable del modelo con plataforma bajada") {
+      if ("invariantGeometry" in expected || expected.family !== "plataforma-tijera") continue;
+      const gradeability = reviewedStowedGradeability(fact.value, sources, sourceText);
+      if (gradeability !== null) additions[fact.field] = gradeability;
+      continue;
+    }
+    if (fact.field === "Distancia entre ejes (mm)") {
+      if ("invariantGeometry" in expected || expected.family !== "plataforma-tijera") continue;
+      const wheelbase = reviewedWheelbase(fact.value, sources, sourceText, facts.lengthM);
+      if (wheelbase !== null) additions[fact.field] = wheelbase;
+      continue;
+    }
+    if (fact.field === "Radio de giro exterior del modelo") {
+      if ("invariantGeometry" in expected || expected.family !== "plataforma-tijera" && expected.family !== "plataforma-articulada") continue;
+      const radius = reviewedExteriorTurningRadius(fact.value, sources, sourceText, facts.widthM);
+      if (radius !== null) additions[fact.field] = radius;
+      continue;
+    }
     const aliases = geometryAliases[fact.field];
     if (!aliases) return specs;
     const isDimension = fact.field === "Longitud de plataforma" || fact.field === "Anchura de plataforma";

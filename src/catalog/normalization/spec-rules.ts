@@ -2,7 +2,7 @@ export type SpecRuleType = "string" | "number" | "number_array" | "dimension" | 
 type ScopedMeasurementUnit = "m" | "mm" | "kg" | "l" | "V" | "Hz" | "km/h" | "Ah" | "Nm" | "N" | "%" | "h";
 const scopedMeasurementUnits: Readonly<Record<string, ScopedMeasurementUnit>> = {
     "Ancho con ejes": "m",
-    "Altura máxima de cesta": "m", "Anchura en transporte": "m",
+    "Altura máxima de cesta": "m", "Anchura en transporte": "m", "Altura de trabajo redondeada": "m",
     "Alcance lateral máximo del modelo": "m", "Alcance lateral del modelo": "m",
     "Altura sobre obstáculos": "m", "Alcance lateral máximo declarado": "m",
     "Altura máxima de preparación": "m", "Anchura de la máquina": "m",

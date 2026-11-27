@@ -214,3 +214,265 @@ test("la pendiente superable conserva su significado editorial con la clave téc
   assert.deepEqual(resolveReusableEditorial(canonical), resolveReusableEditorial(legacy));
   assert.equal(resolveEditorialFacts({ ...legacy, specs: { ...legacy.specs, "Pendiente superable (%)": "40 %" } })?.gradeabilityPercent, null);
 });
+
+
+test("la corta de tijera aprovecha la anchura del equipo corroborada, no la de plataforma", () => {
+  for (const base of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const source: ProductRecord = { ...base, specs: { ...base.specs, Capacidad: "450 kg", Anchura: "0,81 m",
+      "Longitud de plataforma": "2 m", "Anchura de plataforma": "0,74 m" } };
+    const prepared: ProductRecord = { ...source, specs: { ...source.specs, Anchura: "810 mm" } };
+    const result = resolveReusableEditorial(prepared, null, source);
+    assert.match(result.short ?? "", /capacidad de 450 kg y anchura del equipo de 0,81 m/u);
+    assert.doesNotMatch(result.short ?? "", / y capacidad de 450 kg y /u);
+    assert.doesNotMatch(result.short ?? "", /0,74 m/u);
+    assert.equal(result.general, resolveReusableEditorial(source).general);
+    const withoutWidth = { ...source, specs: { ...base.specs, Capacidad: "450 kg", "Anchura de plataforma": "0,74 m" } };
+    for (const other of [withoutWidth, { ...source, reference: "OTRA" }, { ...source, model: "OTRO" },
+      { ...source, specs: { ...source.specs, Anchura: "1,2 m" } },
+      { ...source, specs: { ...source.specs, "Anchura total": "1,2 m" } },
+      { ...source, longDescription: "Anchura de 1,2 m." },
+      { ...source, shortDescription: "Descripción original de la unidad." }]) {
+      assert.doesNotMatch(resolveReusableEditorial(prepared, null, other).short ?? "", /anchura del equipo/u);
+    }
+    for (const value of ["0,3 m", "4 m", "0,81 kg", "0,8–1,2 m"]) {
+      const invalid = { ...source, specs: { ...source.specs, Anchura: value } };
+      assert.doesNotMatch(resolveReusableEditorial(invalid).short ?? "", /anchura del equipo/u);
+    }
+  }
+});
+
+
+test("la corta de brazo distingue la altura replegada corroborada de la altura de trabajo", () => {
+  for (const family of ["articulada", "telescópica"]) {
+    const source: ProductRecord = {
+      ...controlledGomarizPlatform(), title: `Plataforma ${family} eléctrica MARCA MODELO10`,
+      specs: { "Altura de trabajo": "10 m", Capacidad: "230 kg", Motor: "Eléctrico",
+        "Alcance lateral": "6 m", "Altura replegada": "2100 mm" }
+    };
+    const prepared: ProductRecord = { ...source, specs: { ...source.specs, "Altura replegada": "2,1 m" } };
+    const result = resolveReusableEditorial(prepared, null, source);
+    assert.match(result.short ?? "", /altura de trabajo de 10 m, alcance lateral de 6 m, capacidad de 230 kg y altura replegada de 2,1 m/u);
+    assert.equal(result.general, resolveReusableEditorial(source).general);
+    const { ["Altura replegada"]: omitted, ...otherSpecs } = source.specs ?? {};
+    assert.ok(omitted);
+    for (const other of [
+      { ...source, specs: otherSpecs },
+      { ...source, reference: "OTRA" },
+      { ...source, model: "OTRO" },
+      { ...source, specs: { ...source.specs, "Altura replegada": "2,3 m" } },
+      { ...source, specs: { ...source.specs, "Altura almacenaje": "2,3 m" } },
+      { ...source, shortDescription: "Descripción firmada." },
+      { ...source, longDescription: "Altura replegada pendiente de confirmar." }
+    ]) assert.doesNotMatch(resolveReusableEditorial(prepared, null, other).short ?? "", /altura replegada/u);
+    for (const value of ["10 m", "12 m", "2 kg", "2/3 m"]) {
+      const invalid = { ...source, specs: { ...source.specs, "Altura replegada": value } };
+      assert.doesNotMatch(resolveReusableEditorial(invalid).short ?? "", /altura replegada/u);
+    }
+  }
+});
+
+
+test("la corta de carretilla aprovecha la anchura exterior corroborada, no la de horquillas", () => {
+  for (const base of [controlledGomarizForklift(), controlledMercaelevaForklift()]) {
+    const source: ProductRecord = { ...base, specs: { ...base.specs, Anchura: "1,2 m", "Ancho horquillas": "100 mm" } };
+    const prepared: ProductRecord = { ...source, specs: { ...source.specs, Anchura: "1200 mm" } };
+    const result = resolveReusableEditorial(prepared, null, source);
+    assert.match(result.short ?? "", /capacidad de carga de 2\.500 kg y anchura del equipo de 1,2 m/u);
+    assert.doesNotMatch(result.short ?? "", /100 mm/u);
+    assert.equal(result.general, resolveReusableEditorial(source).general);
+    const { Anchura: omitted, ...otherSpecs } = source.specs ?? {};
+    assert.ok(omitted);
+    for (const other of [
+      { ...source, specs: otherSpecs }, { ...source, reference: "OTRA" }, { ...source, model: "OTRO" },
+      { ...source, specs: { ...source.specs, Anchura: "1,3 m" } },
+      { ...source, specs: { ...source.specs, "Ancho total": "1,3 m" } },
+      { ...source, longDescription: "Anchura pendiente de confirmar." },
+      { ...source, shortDescription: "Descripción firmada." }
+    ]) assert.doesNotMatch(resolveReusableEditorial(prepared, null, other).short ?? "", /anchura del equipo/u);
+    for (const value of ["0,1 m", "5 m", "1,2 kg", "1,2/1,3 m"]) {
+      const invalid = { ...source, specs: { ...source.specs, Anchura: value } };
+      assert.doesNotMatch(resolveReusableEditorial(invalid).short ?? "", /anchura del equipo/u);
+    }
+  }
+});
+
+
+test("la corta de brazo conserva la cota de almacenaje sin atribuir una altura replegada", () => {
+  for (const base of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const source: ProductRecord = { ...base, title: "Plataforma articulada eléctrica MARCA MODELO10",
+      specs: { "Altura de trabajo": "10 m", "Alcance lateral": "6 m", Capacidad: "230 kg",
+        "Altura almacenaje": "2,1 m" } };
+    const prepared: ProductRecord = { ...source, specs: { ...source.specs, "Altura almacenaje": "2100 mm" } };
+    const result = resolveReusableEditorial(prepared, null, source);
+    assert.match(result.short ?? "", /capacidad de 230 kg y altura de almacenaje de 2,1 m/u);
+    assert.doesNotMatch(result.short ?? "", /altura replegada/u);
+    assert.equal(result.general, resolveReusableEditorial(source).general);
+    for (const other of [
+      { ...source, reference: "OTRA" }, { ...source, model: "OTRO" },
+      { ...source, specs: { ...source.specs, "Altura almacenaje": "2,3 m" } },
+      { ...source, specs: { ...source.specs, "Altura replegada": "2,1 m" } },
+      { ...source, longDescription: "Altura de transporte de 2,3 m." },
+      { ...source, shortDescription: "Descripción firmada." }
+    ]) assert.doesNotMatch(resolveReusableEditorial(prepared, null, other).short ?? "", /altura de almacenaje/u);
+    for (const value of ["10 m", "12 m", "2 kg", "2/3 m"]) {
+      const invalid = { ...source, specs: { ...source.specs, "Altura almacenaje": value } };
+      assert.doesNotMatch(resolveReusableEditorial(invalid).short ?? "", /altura de almacenaje/u);
+    }
+  }
+});
+
+test("la corta aprovecha el peso declarado corroborado sin atribuirle un alcance de transporte", () => {
+  for (const base of [controlledGomarizForklift(), controlledMercaelevaForklift()]) {
+    const source: ProductRecord = { ...base, specs: { ...base.specs, Peso: "3600 kg", Anchura: "1,2 m" } };
+    const prepared: ProductRecord = { ...source, specs: { ...source.specs, Peso: "3.600 kg" } };
+    const result = resolveReusableEditorial(prepared, null, source);
+    assert.match(result.short ?? "", /capacidad de carga de 2\.500 kg, anchura del equipo de 1,2 m y peso declarado de 3\.600 kg/u);
+    assert.doesNotMatch(result.short ?? "", /peso operativo|peso de transporte/u);
+    assert.equal(result.general, resolveReusableEditorial(source).general);
+    const { Peso: omitted, ...otherSpecs } = source.specs ?? {};
+    assert.ok(omitted);
+    for (const other of [
+      { ...source, specs: otherSpecs }, { ...source, reference: "OTRA" }, { ...source, model: "OTRO" },
+      { ...source, specs: { ...source.specs, Peso: "3700 kg" } },
+      { ...source, specs: { ...source.specs, "Peso operativo": "3600 kg" } },
+      { ...source, longDescription: "Peso pendiente de confirmar." },
+      { ...source, shortDescription: "Descripción firmada." }
+    ]) assert.doesNotMatch(resolveReusableEditorial(prepared, null, other).short ?? "", /peso declarado/u);
+    for (const value of ["3,6 m", "3600–3700 kg", "0 kg"]) {
+      const invalid = { ...source, specs: { ...source.specs, Peso: value } };
+      assert.doesNotMatch(resolveReusableEditorial(invalid).short ?? "", /peso declarado/u);
+    }
+  }
+  const generator: ProductRecord = { ...controlledGomarizPlatform(), title: "Grupo electrógeno diésel MARCA MODELO10",
+    specs: { Potencia: "45 kVA", Motor: "Diésel", Peso: "1017 kg" } };
+  assert.match(resolveReusableEditorial(generator).short ?? "", /potencia aparente de 45 kVA y peso declarado de 1\.017 kg/u);
+  const telehandler: ProductRecord = { ...controlledGomarizPlatform(), title: "Manipulador telescópico diésel MARCA MODELO10",
+    specs: { "Altura de trabajo": "10 m", Capacidad: "3000 kg", Motor: "Diésel", Peso: "6500 kg" } };
+  assert.match(resolveReusableEditorial(telehandler).short ?? "", /capacidad de carga de 3\.000 kg y peso declarado de 6\.500 kg/u);
+});
+
+
+test("la corta de tijera distingue anchura y cota de almacenaje o replegada corroboradas", () => {
+  for (const base of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    for (const [key, label] of [["Altura almacenaje", "altura de almacenaje"], ["Altura replegada", "altura replegada"]] as const) {
+      const source: ProductRecord = { ...base, specs: { ...base.specs, Capacidad: "450 kg", Anchura: "1 m", [key]: "2,1 m" } };
+      const prepared: ProductRecord = { ...source, specs: { ...source.specs, [key]: "2100 mm" } };
+      const result = resolveReusableEditorial(prepared, null, source);
+      assert.ok(result.short?.includes(`anchura del equipo de 1 m y ${label} de 2,1 m`));
+      assert.equal(result.general, resolveReusableEditorial(source).general);
+      const { [key]: omitted, ...otherSpecs } = source.specs ?? {};
+      assert.ok(omitted);
+      for (const other of [
+        { ...source, specs: otherSpecs }, { ...source, reference: "OTRA" }, { ...source, model: "OTRO" },
+        { ...source, specs: { ...source.specs, [key]: "2,3 m" } },
+        { ...source, longDescription: "Altura de transporte pendiente de confirmar." },
+        { ...source, shortDescription: "Descripción firmada." }
+      ]) assert.ok(!resolveReusableEditorial(prepared, null, other).short?.includes(label));
+      for (const value of ["10 m", "12 m", "2 kg", "2/3 m"]) {
+        const invalid = { ...source, specs: { ...source.specs, [key]: value } };
+        assert.ok(!resolveReusableEditorial(invalid).short?.includes(label));
+      }
+    }
+  }
+});
+
+
+test("la corta de brazo distingue anchura exterior y dimensiones de cesta corroboradas", () => {
+  for (const base of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    for (const family of ["articulada", "telescópica"]) {
+      const source: ProductRecord = { ...base, title: `Plataforma ${family} eléctrica MARCA MODELO10`,
+        specs: { "Altura de trabajo": "10 m", "Alcance lateral": "6 m", Capacidad: "230 kg",
+          "Altura almacenaje": "2,1 m", "Anchura total": "2 m", "Dimensiones Cesta": "1,2 x 0,8 m" } };
+      const prepared: ProductRecord = { ...source, specs: { ...source.specs, "Anchura total": "2000 mm" } };
+      const result = resolveReusableEditorial(prepared, null, source);
+      assert.match(result.short ?? "", /capacidad de 230 kg, anchura del equipo de 2 m y altura de almacenaje de 2,1 m/u);
+      assert.equal(result.general, resolveReusableEditorial(source).general);
+      const detailed: ProductRecord = { ...source, specs: { ...source.specs, "Altura plataforma": "8 m" } };
+      assert.doesNotMatch(resolveReusableEditorial(detailed).short ?? "", /anchura del equipo/u);
+      const { "Anchura total": omitted, ...otherSpecs } = source.specs ?? {};
+      assert.ok(omitted);
+      for (const other of [
+        { ...source, specs: otherSpecs }, { ...source, reference: "OTRA" }, { ...source, model: "OTRO" },
+        { ...source, specs: { ...source.specs, "Anchura total": "2,3 m" } },
+        { ...source, specs: { ...source.specs, Anchura: "2,3 m" } },
+        { ...source, longDescription: "Anchura pendiente de confirmar." },
+        { ...source, shortDescription: "Descripción firmada." }
+      ]) assert.doesNotMatch(resolveReusableEditorial(prepared, null, other).short ?? "", /anchura del equipo/u);
+      for (const value of ["0,1 m", "4 m", "2 kg", "2/3 m"]) {
+        const invalid = { ...source, specs: { ...source.specs, "Anchura total": value } };
+        assert.doesNotMatch(resolveReusableEditorial(invalid).short ?? "", /anchura del equipo/u);
+      }
+    }
+  }
+});
+
+test("la corta de carretilla incorpora el centro de carga corroborado sin inferir capacidades residuales", () => {
+  for (const base of [controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift()]) {
+    const source: ProductRecord = { ...base, specs: { ...base.specs, "Centro de carga": "500 mm" } };
+    const result = resolveReusableEditorial(source);
+    assert.match(result.short ?? "", /capacidad de carga de 2\.500 kg y centro de carga declarado de 500 mm/u);
+    assert.match(result.general ?? "", /centro de carga declarado de 500 mm/u);
+    for (const other of [
+      { ...base, reference: "OTRA" }, { ...source, model: "OTRO" },
+      { ...base }, { ...source, specs: { ...source.specs, "Centro de carga": "600 mm" } },
+      { ...source, longDescription: "Centro de carga de 600 mm." },
+      { ...source, shortDescription: "Centro de carga de 600 mm." }
+    ]) assert.doesNotMatch(resolveReusableEditorial(source, null, other).short ?? "", /centro de carga declarado/u);
+    for (const value of ["120 mm", "500/600 mm", "500 kg"]) {
+      const invalid = { ...source, specs: { ...source.specs, "Centro de carga": value } };
+      assert.doesNotMatch(resolveReusableEditorial(invalid).short ?? "", /centro de carga declarado/u);
+    }
+  }
+});
+
+
+test("la corta de manutención aprovecha el radio de giro declarado de la misma unidad sin atribuirle otro alcance", () => {
+  for (const base of [controlledGamForklift(), controlledGomarizForklift(), controlledMercaelevaForklift()]) {
+    const source: ProductRecord = { ...base, specs: { ...base.specs, "Radio de giro": "1980 mm", "Centro de carga": "500 mm" } };
+    const prepared: ProductRecord = { ...source, specs: { ...source.specs, "Radio de giro": "1,98 m" } };
+    const result = resolveReusableEditorial(prepared, null, source);
+    assert.match(result.short ?? "", /centro de carga declarado de 500 mm y radio de giro declarado de 1,98 m/u);
+    assert.doesNotMatch(result.short ?? "", /radio de giro exterior|radio de giro interior/u);
+    assert.equal(result.general, resolveReusableEditorial(source).general);
+    for (const other of [
+      { ...source, reference: "OTRA" }, { ...source, model: "OTRO" }, base,
+      { ...source, specs: { ...source.specs, "Radio de giro": "2100 mm" } },
+      { ...source, specs: { ...source.specs, "Radio de giro exterior": "2100 mm" } },
+      { ...source, longDescription: "Radio de giro de 2100 mm." },
+      { ...source, shortDescription: "Radio de giro de 2100 mm." }
+    ]) assert.doesNotMatch(resolveReusableEditorial(prepared, null, other).short ?? "", /radio de giro declarado/u);
+    for (const value of ["1980", "1980/2100 mm", "1980 kg"]) {
+      const invalid = { ...source, specs: { ...source.specs, "Radio de giro": value } };
+      assert.doesNotMatch(resolveReusableEditorial(invalid).short ?? "", /radio de giro declarado/u);
+    }
+  }
+});
+
+test("la corta de plataforma incorpora el peso declarado sin sustituir las cotas de acceso ni atribuirle un alcance distinto", () => {
+  for (const base of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    for (const family of ["tijera", "articulada", "telescópica"]) {
+      const source: ProductRecord = { ...base, title: `Plataforma ${family} eléctrica MARCA MODELO10`,
+        specs: { "Altura de trabajo": "10 m", Capacidad: "230 kg", Motor: "Eléctrico", Peso: "3600 kg" } };
+      const prepared: ProductRecord = { ...source, specs: { ...source.specs, Peso: "3.600 kg" } };
+      const result = resolveReusableEditorial(prepared, null, source);
+      assert.match(result.short ?? "", /capacidad de 230 kg y peso declarado de 3\.600 kg/u);
+      assert.doesNotMatch(result.short ?? "", /peso operativo|peso de transporte/u);
+      assert.equal(result.general, resolveReusableEditorial(source).general);
+      for (const other of [
+        { ...source, reference: "OTRA" }, { ...source, model: "OTRO" },
+        { ...source, specs: { ...source.specs, Peso: "3700 kg" } },
+        { ...source, specs: { ...source.specs, "Peso operativo": "3600 kg" } },
+        { ...source, shortDescription: "Peso pendiente de confirmar." },
+        { ...source, longDescription: "Masa de transporte de 3700 kg." }
+      ]) assert.doesNotMatch(resolveReusableEditorial(prepared, null, other).short ?? "", /peso declarado/u);
+      for (const value of ["3,6 m", "3600/3700 kg", "10 kg"]) {
+        const invalid = { ...source, specs: { ...source.specs, Peso: value } };
+        assert.doesNotMatch(resolveReusableEditorial(invalid).short ?? "", /peso declarado/u);
+      }
+      const withAccess: ProductRecord = { ...source, specs: { ...source.specs, "Alcance lateral": "6 m", Anchura: "1 m" } };
+      const access = resolveReusableEditorial(withAccess).short ?? "";
+      assert.match(access, /anchura del equipo de 1 m/u);
+      assert.doesNotMatch(access, /peso declarado/u);
+    }
+  }
+});

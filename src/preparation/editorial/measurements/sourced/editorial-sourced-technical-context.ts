@@ -124,7 +124,7 @@ export const resolveDocumentedModelGeneral = (
   if (!family || family !== families?.[1]) return null;
   const sourceText = [general, original.title, original.shortDescription, original.longDescription].join(" ");
   const details: string[] = [];
-  const add = (keys: readonly string[], label: string, unit: "m" | "kg" | "mm" | "km/h" | "°", minimum: number, maximum: number, mention: RegExp): void => {
+  const add = (keys: readonly string[], label: string, unit: "m" | "kg" | "mm" | "km/h" | "°" | "%", minimum: number, maximum: number, mention: RegExp): void => {
     if (mention.test(sourceText)) return;
     const normalizedKeys = keys.map(normalizeSpecKey);
     const matchingFields = (record: ProductRecord) => Object.entries(record.specs ?? {})
@@ -175,6 +175,9 @@ export const resolveDocumentedModelGeneral = (
       addReviewedDetail("Sistema de elevación", "Elevación rápida permanente", "sistema de elevación rápida permanente", /\belevaci[oó]n\s+r[aá]pida\b/iu);
       addReviewedDetail("Protección de las células de carga", "IP68", "protección IP68 de las células de carga", /\bIP\s*\d{2}\b/iu);
     }
+  } else if (family === "martillo-miniexcavadora") {
+    add(["Diámetro nominal de herramienta compatible"], "diámetro nominal de herramienta compatible", "mm", 20, 300,
+      /\b(?:di[aá]metro|medida|tama[ñn]o)\b[^.!?;\n]{0,45}\b(?:herramienta|puntero|cincel|pica)\b|\b(?:herramienta|puntero|cincel|pica)\b[^.!?;\n]{0,45}\d+\s*mm\b/iu);
   } else if (family === "manipulador-telescopico") {
     add(["Alcance horizontal", "Alcance horizontal (m)"], "alcance horizontal", "m", 0.5, 50,
       /\balcance\s+horizontal\b[^.!?;\n]{0,35}\d/iu);
@@ -209,7 +212,13 @@ export const resolveDocumentedModelGeneral = (
       /\b(?:distancia entre ejes|batalla)\b/iu);
     add(["Capacidad máxima de plataforma", "Capacidad de plataforma", "Capacidad", "Capacidad de carga", "Capacidad de carga (kg)", "Capacidad carga"],
       "capacidad máxima de plataforma", "kg", 100, 1500, /\b(?:capacidad|carga)\b[^.!?;\n]{0,45}\d+\s*kg\b/iu);
+    if (family === "plataforma-articulada" || family === "plataforma-tijera") {
+      add(["Radio de giro exterior del modelo"], "radio de giro exterior", "m", 0.3, 15,
+        /\b(?:radio(?: m[ií]nimo| m[aá]ximo)? (?:de )?giro|radio de (?:viraje|rotaci[oó]n)|di[aá]metro (?:de )?giro|turning (?:radius|circle))\b/iu);
+    }
     if (family === "plataforma-tijera") {
+      add(["Pendiente superable del modelo con plataforma bajada"], "pendiente superable nominal con plataforma bajada", "%", 1, 99,
+        /\b(?:pendientes?|trepabilidad|gradeability|inclinaci[oó]n)\b/iu);
       add(["Extensión de plataforma", "Extensión plataforma", "Extensión máxima de plataforma"], "extensión de plataforma", "m", 0.2, 4,
         /\bextensi[oó]n\s+(?:de\s+(?:la\s+)?)?plataforma\b/iu);
     }

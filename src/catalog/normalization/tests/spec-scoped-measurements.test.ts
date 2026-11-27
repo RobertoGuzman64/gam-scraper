@@ -9,6 +9,7 @@ test("interpreta magnitudes delimitadas sin fusionar condiciones, ámbitos ni un
     ["Ancho con ejes", "2500 mm", 2.5, "m"],
     ["Radio de giro (exterior)", "2,1 m", 2100, "mm"],
     ["Altura de elevación según texto comercial", "4.700 mm", 4700, "mm"],
+    ["Altura de trabajo redondeada", "12 m", 12, "m"],
     ["Distancia del centro de gravedad", "540 mm", 540, "mm"],
     ["Capacidad de carga a más de 470 mm", "1000 kg", 1000, "kg"],
     ["Capacidad a máxima altura de elevación", "2000 kg", 2000, "kg"],
@@ -252,4 +253,11 @@ test("conserva condiciones de pendiente y límites de bloqueo sin convertirlos e
     "Por debajo de 600 o por encima de 1200 mm", "Por debajo de 600 mm y por encima de 1200 mm", "600-1200 mm"]) {
     assert.equal(parseSpecByRule(lock, invalid), null);
   }
+});
+
+
+test("la altura redondeada no es un alias de la altura de trabajo ni de la altura exterior", () => {
+  const input = { "Altura de trabajo redondeada": "12 m", "Altura de trabajo (m)": "11,68 m", Altura: "2100 mm" };
+  assert.deepEqual(normalizeSpecsObject(input).normalized, { "Altura de trabajo redondeada": 12,
+    "Altura de trabajo (m)": 11.68, "Altura (mm)": 2100 });
 });

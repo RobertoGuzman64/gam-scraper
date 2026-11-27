@@ -140,6 +140,59 @@ const differentiatedSourceYear = (
   return otherYears ? null : `año de fabricación ${year}`;
 };
 
+const equipmentAccessWidth = (facts: EditorialFacts, source: ProductRecord, prepared: ProductRecord): string | null => {
+  const width = facts.widthM;
+  const scissor = facts.family === "plataforma-tijera";
+  const forklift = facts.family === "carretilla-elevadora" || facts.family === "carretilla-retractil";
+  const boom = facts.family === "plataforma-articulada" || facts.family === "plataforma-telescopica";
+  if ((!scissor && !forklift && !boom) || width === null || width < 0.5 || width > (forklift ? 4 : 3) ||
+    (boom && (facts.workingHeightM === null || facts.lateralReachM === null || facts.platformHeightM !== null)) ||
+    facts.loadCapacityKg === null || (scissor && facts.workingHeightM === null && facts.platformHeightM === null && facts.liftingHeightM === null) ||
+    source.shortDescription?.trim() || prepared.shortDescription?.trim() ||
+    !verifiedEditorialUnitPair(source, prepared) ||
+    /\b(?:anchura|ancho|anch[oa]s?)\b/iu.test([source.title, source.longDescription, prepared.title, prepared.longDescription].join(" "))) return null;
+  const original = resolveEditorialFacts(source);
+  if (original?.family !== facts.family || original.widthM !== width) return null;
+  return quantity(width, "m", "anchura del equipo");
+};
+
+const platformStorageHeight = (facts: EditorialFacts, source: ProductRecord, prepared: ProductRecord): string | null => {
+  const height = facts.storedHeightM;
+  const scissor = facts.family === "plataforma-tijera";
+  if ((!scissor && !["plataforma-articulada", "plataforma-telescopica"].includes(facts.family)) ||
+    height === null || facts.workingHeightM === null || height >= facts.workingHeightM ||
+    (!scissor && facts.lateralReachM === null) || facts.loadCapacityKg === null ||
+    source.shortDescription?.trim() || prepared.shortDescription?.trim() ||
+    !verifiedEditorialUnitPair(source, prepared)) return null;
+  const original = resolveEditorialFacts(source);
+  if (original?.family !== facts.family || original.storedHeightM !== height) return null;
+  if (!source.longDescription?.trim() && !prepared.longDescription?.trim() &&
+    [source, prepared].every(({ specs }) => editorialMetricOf(specs, ["Altura replegada"]) === height)) {
+    return quantity(height, "m", "altura replegada");
+  }
+  if (![source, prepared].every(({ specs }) => specs?.["Altura replegada"] === undefined &&
+    editorialMetricOf(specs, ["Altura almacenaje"]) === height) ||
+    /\b(?:almacen\w*|repleg\w*|plegad\w*|recogid\w*|transporte)\b/iu.test(
+      [source.title, source.longDescription, prepared.title, prepared.longDescription].join(" "))) return null;
+  return quantity(height, "m", "altura de almacenaje");
+};
+
+const declaredShortWeight = (facts: EditorialFacts, source: ProductRecord, prepared: ProductRecord): string | null => {
+  const weight = facts.weightKg;
+  const platform = ["plataforma-tijera", "plataforma-articulada", "plataforma-telescopica"].includes(facts.family);
+  if ((!platform && !["carretilla-elevadora", "carretilla-retractil", "manipulador-telescopico", "grupo-electrogeno"].includes(facts.family)) ||
+    weight === null || (facts.family === "grupo-electrogeno" ? facts.powerKva === null : facts.loadCapacityKg === null) ||
+    (platform && (facts.workingHeightM === null && facts.platformHeightM === null && facts.liftingHeightM === null || weight < 100)) ||
+    (!platform && (source.shortDescription?.trim() || prepared.shortDescription?.trim())) ||
+    !verifiedEditorialUnitPair(source, prepared) ||
+    /\b(?:peso|tara|masa)\b/iu.test([source.title, source.shortDescription, source.longDescription, prepared.title, prepared.shortDescription, prepared.longDescription].join(" ")) ||
+    ![source, prepared].every(({ specs }) => editorialQuantity(specs?.Peso, "kg") === weight &&
+      !Object.keys(specs ?? {}).some((key) => key !== "Peso" && /\b(?:peso|weight|tara)\b/iu.test(key)))) return null;
+  const original = resolveEditorialFacts(source);
+  if (original?.family !== facts.family || original.weightKg !== weight) return null;
+  return quantity(weight, "kg", "peso declarado");
+};
+
 export const resolveReusableEditorial = (
   record: ProductRecord, familyOverride: EditorialFamily | null = null,
   sourceUnitRecord: ProductRecord = record
@@ -193,7 +246,27 @@ export const resolveReusableEditorial = (
     source ?? resolveEditorialFacts(sourceUnitRecord, familyOverride) : null;
   const shortWidth = widthSource?.family === facts.family && widthSource.widthM === facts.widthM ?
     quantity(facts.widthM, "m", "anchura del equipo") : null;
-  const shortMain = shortWidth ? join([main, shortWidth]) : main;
+  const accessWidth = equipmentAccessWidth(facts, sourceUnitRecord, record);
+  const storageHeight = platformStorageHeight(facts, sourceUnitRecord, record);
+  const shortWeight = facts.family.startsWith("plataforma-") && (accessWidth || storageHeight) ? null :
+    declaredShortWeight(facts, sourceUnitRecord, record);
+  const shortLoadCenter = facts.loadCapacityKg !== null && facts.loadCenterMm !== null &&
+    verifiedEditorialUnitPair(sourceUnitRecord, record) &&
+    !/\bcentro\s+(?:de\s+)?(?:carga|gravedad)\b/iu.test([sourceUnitRecord.shortDescription, record.shortDescription].join(" ")) ?
+    quantity(facts.loadCenterMm, "mm", "centro de carga declarado") : null;
+  const shortTurningRadius = facts.loadCapacityKg !== null && facts.turningRadiusM !== null &&
+    verifiedEditorialUnitPair(sourceUnitRecord, record) &&
+    !/\bradio\s+(?:de\s+)?giro\b/iu.test([sourceUnitRecord.shortDescription, record.shortDescription].join(" ")) &&
+    [sourceUnitRecord, record].every(({ specs }) => !Object.keys(specs ?? {}).some((key) =>
+      key !== "Radio de giro" && /\bradio\b.*\bgiro\b/iu.test(key))) ?
+    quantity(facts.turningRadiusM, "m", "radio de giro declarado") : null;
+  const handlingDetails = resolveHandlingOperationalDetails(sourceUnitRecord, record, facts.family);
+  const shortMastHeight = facts.loadCapacityKg !== null && facts.liftingHeightM !== null ?
+    handlingDetails.find((detail) => detail.startsWith("altura de mástil replegado declarada de ")) ?? null : null;
+  const shortExtras = [accessWidth, storageHeight, shortWeight, shortLoadCenter, shortMastHeight].filter((value): value is string => value !== null);
+  const shortMeasures = [...measures, ...shortExtras, ...(shortExtras.length === 0 && shortWidth ? [shortWidth] : []),
+    ...(shortTurningRadius ? [shortTurningRadius] : [])];
+  const shortMain = shortExtras.length > 0 || shortTurningRadius ? join(shortMeasures) : shortWidth ? join([main, shortWidth]) : main;
   const unit = [facts.year !== null ? `año de fabricación ${facts.year}` : null,
     facts.hours !== null ? `${formatEditorialQuantity(facts.hours)} ${facts.hours === 1 ? "hora registrada" : "horas registradas"}` : null]
     .filter((value): value is string => value !== null);
@@ -203,7 +276,7 @@ export const resolveReusableEditorial = (
     extras : details(facts, battery, record, weightLabel, dimensionLabels);
   const generalMeasures = reachLabel === "alcance lateral" ? measures : [...asserted(facts, reachLabel), ...tower];
   const generalClauses = [...generalMeasures, ...generalExtras, ...resolvePlatformOperationalDetails(sourceUnitRecord, record, facts.family),
-    ...resolveHandlingOperationalDetails(sourceUnitRecord, record, facts.family),
+    ...handlingDetails,
     ...resolveTransportOperationalDetails(sourceUnitRecord, record, facts.family, facts.heightM !== null),
     ...resolveEquipmentConfigurationDetails(sourceUnitRecord, record, facts.family)];
   const generalDetails = generalClauses.length ? join(generalClauses) : main;

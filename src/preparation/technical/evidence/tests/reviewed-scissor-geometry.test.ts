@@ -23,6 +23,7 @@ test("reutiliza geometría LGMG corroborada sin inferir variantes de longitud ni
     assert.equal(output["Anchura de plataforma"], platformWidth);
     assert.equal(output["Extensión de plataforma"], extension);
     assert.equal(output["Rotación de torreta"], family === "articulada" ? "355°" : undefined);
+    assert.equal(output["Distancia entre ejes (mm)"], model === "SR1218D" ? "2290 mm" : model === "SR1623D" ? "2850 mm" : undefined);
     assert.equal(recoverReviewedModelTechnicalSpecs(record, output), output);
     const prepared = prepareSourceProduct(record);
     for (const [field, value] of Object.entries(output).filter(([field]) => !(field in (record.specs ?? {})))) {
@@ -51,13 +52,13 @@ test("reutiliza geometría LGMG corroborada sin inferir variantes de longitud ni
 });
 
 test("reutiliza las cotas acreditadas de la serie AS sin confundir accionamiento ni variantes", () => {
-  for (const [model, height, length, width, capacity, platformHeight, platformLength, platformWidth] of [
-    ["AS0808E", "10 m", "2,4 m", "0,83 m", "230 kg", "8 m", "2,26 m", undefined],
-    ["AS1012E", "12 m", "2,47 m", "1,18 m", "320 kg", "10 m", "2,26 m", "1,12 m"],
-    ["AS0812", "10 m", "2,42 m", "1,18 m", "450 kg", "8 m", "2,26 m", "1,15 m"],
-    ["AS0607W", "7,8 m", "1,83 m", "0,81 m", "230 kg", "5,8 m", "1,63 m", "0,74 m"],
-    ["AS1212E", "14 m", "2,47 m", "1,18 m", "320 kg", "12 m", "2,26 m", "1,12 m"],
-    ["AS1212", "14 m", "2,47 m", "1,18 m", "320 kg", "12 m", "2,26 m", "1,15 m"]
+  for (const [model, height, length, width, capacity, platformHeight, platformLength, platformWidth, exteriorRadius] of [
+    ["AS0808E", "10 m", "2,4 m", "0,83 m", "230 kg", "8 m", "2,26 m", undefined, "2150 mm"],
+    ["AS1012E", "12 m", "2,47 m", "1,18 m", "320 kg", "10 m", "2,26 m", "1,12 m", "2300 mm"],
+    ["AS0812", "10 m", "2,42 m", "1,18 m", "450 kg", "8 m", "2,26 m", "1,15 m", "2300 mm"],
+    ["AS0607W", "7,8 m", "1,83 m", "0,81 m", "230 kg", "5,8 m", "1,63 m", "0,74 m", "1650 mm"],
+    ["AS1212E", "14 m", "2,47 m", "1,18 m", "320 kg", "12 m", "2,26 m", "1,12 m", "2300 mm"],
+    ["AS1212", "14 m", "2,47 m", "1,18 m", "320 kg", "12 m", "2,26 m", "1,15 m", "2300 mm"]
   ] as const) {
     const record: ProductRecord = { ...documentedPlatform(), model,
       title: `Plataforma de tijera eléctrica LGMG ${model}`,
@@ -69,6 +70,8 @@ test("reutiliza las cotas acreditadas de la serie AS sin confundir accionamiento
     assert.equal(output["Longitud de plataforma"], platformLength);
     assert.equal(output["Anchura de plataforma"], platformWidth);
     assert.equal(output["Extensión de plataforma"], "0,9 m");
+    assert.equal(output["Radio de giro exterior del modelo"], exteriorRadius);
+    assert.equal(output["Pendiente superable del modelo con plataforma bajada"], "25 %");
     assert.equal(recoverReviewedModelTechnicalSpecs(record, output), output);
     assert.deepEqual(record, before);
     const prepared = prepareSourceProduct(record);
@@ -86,6 +89,8 @@ test("reutiliza las cotas acreditadas de la serie AS sin confundir accionamiento
         "Longitud plataforma": platformLength, "Nueva o usada": "usada" } };
     assert.equal(recoverDocumented(other)["Extensión de plataforma"], "0,9 m");
     assert.equal(recoverDocumented(other)["Longitud de plataforma"], undefined);
+    assert.equal(recoverDocumented(other)["Radio de giro exterior del modelo"], exteriorRadius);
+    assert.equal(recoverDocumented(other)["Pendiente superable del modelo con plataforma bajada"], output["Pendiente superable del modelo con plataforma bajada"]);
     for (const invalid of [
       { ...record, model: `${model}-2` },
       { ...record, title: `${record.title}-2` },
@@ -112,6 +117,7 @@ test("recupera cotas comunes de SS0507E y SR1023D con identidad corroborada", ()
     assert.equal(output["Longitud de plataforma"], platformLength);
     assert.equal(output["Anchura de plataforma"], platformWidth);
     assert.equal(output["Extensión de plataforma"], extension);
+    assert.equal(output["Distancia entre ejes (mm)"], model === "SS0507E" ? "1120 mm" : "2850 mm");
     assert.equal(recoverReviewedModelTechnicalSpecs(record, output), output);
     assert.deepEqual(record, before);
     const prepared = prepareSourceProduct(record);
@@ -267,14 +273,14 @@ test("recupera geometría de LGMG S1413EII sin generalizar límites interiores",
     url: `https://www.gomarizrent.com/producto/lgmg-${model.toLowerCase()}/`,
     specs: { "Altura de trabajo": "15,8 m", Capacidad: "320 kg", Motor: "Eléctrico", Longitud: "2,8 m", Anchura: "1,3 m" } };
   const before = structuredClone(record);
-  const additions = { "Longitud de plataforma": "2,64 m", "Anchura de plataforma": "1,12 m", "Extensión de plataforma": "0,9 m" };
+  const additions = { "Longitud de plataforma": "2,64 m", "Anchura de plataforma": "1,12 m", "Extensión de plataforma": "0,9 m", "Pendiente superable del modelo con plataforma bajada": "25 %" };
   const output = recoverDocumented(record);
   assert.deepEqual(output, { ...record.specs, ...additions });
   assert.equal(recoverReviewedModelTechnicalSpecs(record, output), output);
   assert.deepEqual(record, before);
   const other = { ...documentedManainJlgPlatform("LGMG", model, "15,8 m", "320 kg", "2,8 m", "1,3 m", "1,12 m", "2,64 m"),
     url: `https://manain.com/producto/venda-elevacio-tisores-lgmg-${model.toLowerCase()}/` };
-  assert.deepEqual(recoverDocumented(other), { ...other.specs, "Extensión de plataforma": "0,9 m" });
+  assert.deepEqual(recoverDocumented(other), { ...other.specs, "Extensión de plataforma": "0,9 m", "Pendiente superable del modelo con plataforma bajada": "25 %" });
   const prepared = prepareSourceProduct(record);
   for (const [field, value] of Object.entries(additions)) {
     assert.equal(prepared.product.spec[field], value);
@@ -372,7 +378,6 @@ test("recupera geometría Haulotte SX y SXL sin confundir la doble extensión co
   }
 });
 
-
 test("recupera alturas Optimum 8 AE y 530LRT sin atribuir dimensiones alternativas", () => {
   for (const [brand, model, height, capacity, length, width, platformHeight, energy, extension] of [
     ["HAULOTTE", "OPTIMUM 8 AE", "7,77 m", "230 kg", "1,9 m", "0,79 m", "5,77 m", "Eléctrico", "0,86 m"],
@@ -465,8 +470,8 @@ test("distingue la Compact 12 de 300 kg de otras generaciones y conserva su cest
 
 test("acredita geometría de tijera mediante identidad, año, peso y dimensiones de una oferta con texto de familia", () => {
   for (const [model, year, length, width, weight, additions] of [
-    ["S0607EII", "2023", "1,86 m", "0,76 m", "1610 kg", { "Longitud de plataforma": "1,64 m", "Anchura de plataforma": "0,73 m", "Extensión de plataforma": "0,9 m" }],
-    ["S0607E-2", "2025", "1,64 m", "0,73 m", "1550 kg", { "Altura de plataforma": "5,8 m", "Extensión de plataforma": "0,9 m" }]
+    ["S0607EII", "2023", "1,86 m", "0,76 m", "1610 kg", { "Longitud de plataforma": "1,64 m", "Anchura de plataforma": "0,73 m", "Extensión de plataforma": "0,9 m", "Distancia entre ejes (mm)": "1350 mm", "Pendiente superable del modelo con plataforma bajada": "25 %" }],
+    ["S0607E-2", "2025", "1,64 m", "0,73 m", "1550 kg", { "Altura de plataforma": "5,8 m", "Extensión de plataforma": "0,9 m", "Distancia entre ejes (mm)": "1350 mm", "Pendiente superable del modelo con plataforma bajada": "25 %" }]
   ] as const) {
     const record: ProductRecord = { ...controlledGomarizPlatform(), brand: "LGMG", model, year, title: `LGMG ${model}`,
       url: `https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/lgmg-${model.toLowerCase()}/`,

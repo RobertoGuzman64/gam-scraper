@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ProductRecord, SpecsMap } from "../../contracts/catalog.js";
 import { prepareSourceProduct } from "../prepare-product.js";
+import { reconcileGomarizRedundantWorkingHeight, reconcileGomarizRoundedWorkingHeight } from "../gomariz/technical/gomariz.js";
 import { preparedTechnicalConsistencyIssues } from "./technical-consistency.js";
 import { normalizeSpecsObject } from "../../catalog/normalization/normalize-specs.js";
 import { normalizeOriginalTechnicalPresentation, normalizeOriginalPlatformHeightPresentation, normalizeOriginalPlatformAxisPresentation } from "./technical-presentation.js";
@@ -363,4 +364,77 @@ test("la pendiente superable no convierte grados, condiciones, rangos ni conflic
   assert.deepEqual(normalizeOriginalTechnicalPresentation(original, conflict), original);
   const changed: SpecsMap = { "Pendiente superable": "40 %" };
   assert.deepEqual(normalizeOriginalTechnicalPresentation(changed, original), changed);
+});
+
+const gomarizHeightSource: ProductRecord = {
+  providerId: "gam",
+  categoryKey: "prueba",
+  categoryName: "Maquinaria",
+  url: "https://example.com/producto/demo",
+  title: "Equipo DEMO",
+  shortDescription: null,
+  longDescription: null,
+  price: null,
+  reference: "PRUEBA-1",
+  brand: "EQUIPTEST",
+  model: "DEMO",
+  year: null,
+  location: null,
+  country: null,
+  horometer: null,
+  serialNumber: null,
+  image: null
+};
+
+test("una altura nominal redundante no se presenta como dimensión exterior de una plataforma Gomariz", () => {
+  const original: ProductRecord = { ...gomarizHeightSource, providerId: "gomariz", categoryKey: "venta",
+    condition: "Segunda mano", url: "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/equiptest-demo/",
+    title: "EQUIPTEST DEMO", specs: { Altura: "12 metros", "Altura de trabajo": "12 m",
+      "Altura plataforma": "10 m", "Altura almacenaje": "2.10 m" } };
+  const prepared: SpecsMap = { Altura: "12 m", "Altura de trabajo": "12 m", "Altura de plataforma": "10 m", "Altura almacenaje": "2,10 m" };
+  const expected: SpecsMap = { "Altura de trabajo": "12 m", "Altura de plataforma": "10 m", "Altura almacenaje": "2,10 m" };
+  assert.deepEqual(reconcileGomarizRedundantWorkingHeight(original, prepared), expected);
+  assert.equal(reconcileGomarizRedundantWorkingHeight(original, expected), expected);
+  assert.equal(prepared.Altura, "12 m");
+  assert.equal(original.specs?.Altura, "12 metros");
+  for (const record of [ { ...original, providerId: "gam" }, { ...original, model: "OTRO" },
+    { ...original, url: original.url.replace("elevador-tijera", "carretilla-industrial") },
+    { ...original, specs: { ...original.specs, Altura: "11 metros" } },
+    { ...original, specs: { ...original.specs, "Altura almacenaje": "12 m" } },
+    { ...original, specs: { ...original.specs, Altura: ["12 metros", "11 metros"] } } ]) {
+    assert.equal(reconcileGomarizRedundantWorkingHeight(record, prepared), prepared);
+  }
+  const conflict: SpecsMap = { ...prepared, "Altura de plataforma": "9 m" };
+  assert.equal(reconcileGomarizRedundantWorkingHeight(original, conflict), conflict);
+});
+
+
+test("la clase redondeada conserva su valor sin presentarse como altura exterior ni sustituir la cota de trabajo", () => {
+  const original: ProductRecord = { ...gomarizHeightSource, providerId: "gomariz", categoryKey: "venta",
+    condition: "Segunda mano", url: "https://www.gomarizrent.com/venta/elevacion-y-trabajos-en-altura/elevador-tijera/equiptest-demo/",
+    title: "EQUIPTEST DEMO", specs: { Altura: "12 metros", "Altura de trabajo": "11.68 m",
+      "Altura plataforma": "9.68 m", "Altura almacenaje": "2.10 m" } };
+  const prepared: SpecsMap = { Altura: "12 m", "Altura de trabajo": "11,68 m", "Altura de plataforma": "9,68 m", "Altura almacenaje": "2,10 m" };
+  const expected: SpecsMap = { "Altura de trabajo redondeada": "12 m", "Altura de trabajo": "11,68 m", "Altura de plataforma": "9,68 m", "Altura almacenaje": "2,10 m" };
+  assert.deepEqual(reconcileGomarizRoundedWorkingHeight(original, prepared), expected);
+  assert.equal(reconcileGomarizRoundedWorkingHeight(original, expected), expected);
+  assert.equal(reconcileGomarizRedundantWorkingHeight(original, prepared), prepared);
+  assert.equal(prepared.Altura, "12 m");
+  assert.equal(original.specs?.Altura, "12 metros");
+  for (const record of [{ ...original, providerId: "gam" }, { ...original, model: "OTRO" },
+    { ...original, url: original.url.replace("elevador-tijera", "carretilla-industrial") },
+    { ...original, specs: { ...original.specs, Altura: "12 m" } },
+    { ...original, specs: { ...original.specs, "Altura de trabajo redondeada": "13 m" } }]) {
+    assert.equal(reconcileGomarizRoundedWorkingHeight(record, prepared), prepared);
+  }
+  for (const working of ["11,5 m", "11,2 m", "12 m", "11,68 mm"]) {
+    const record: ProductRecord = { ...original, specs: { ...original.specs, "Altura de trabajo": working } };
+    const values = { ...prepared, "Altura de trabajo": working };
+    assert.equal(reconcileGomarizRoundedWorkingHeight(record, values), values);
+  }
+  for (const values of [{ ...prepared, "Altura de trabajo redondeada": "13 m" },
+    { ...prepared, "Altura de plataforma": "9 m" }, { ...prepared, "Altura almacenaje": "3 m" },
+    { ...prepared, Altura: "13 m" }]) {
+    assert.equal(reconcileGomarizRoundedWorkingHeight(original, values), values);
+  }
 });

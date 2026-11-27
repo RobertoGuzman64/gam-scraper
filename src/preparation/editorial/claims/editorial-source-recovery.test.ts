@@ -3,6 +3,8 @@ import test from "node:test";
 import type { ProductRecord } from "../../../contracts/catalog.js";
 import { resolveVerifiedSourceEditorialExcerpt } from "../source/editorial-source-excerpt.js";
 import { resolveMissingTechnicalEditorialGeneral } from "../source/context/editorial-missing-technical-general.js";
+import { resolveDocumentedModelGeneral } from "../measurements/sourced/editorial-sourced-technical-context.js";
+import { controlledGomarizPlatform, controlledMercaelevaPlatform } from "../core/editorial-contract-records.js";
 import { prepareSourceProduct } from "../../prepare-product.js";
 
 const source = (
@@ -86,4 +88,35 @@ test("Rechaza la atribución de capacidades y mástiles contradictorios en el or
   assert.equal(resolveVerifiedSourceEditorialExcerpt(capacityConflict), null);
   const mastConflict = { ...record, longDescription: "Ref. M888-7070 APILADOR ELECTRICO 1600 KG MB ESL999 MASTIL DUPLEX HORAS 1" };
   assert.equal(resolveVerifiedSourceEditorialExcerpt(mastConflict), null);
+});
+
+
+test("aprovecha maniobrabilidad nominal acreditada sin atribuir condiciones de trabajo en altura", () => {
+  const reviewed = { "Radio de giro exterior del modelo": "2300 mm", "Pendiente superable del modelo con plataforma bajada": "25 %" };
+  const general = "La ficha técnica de plataforma de tijera eléctrica MARCA MODELO10 indica altura de trabajo de 10 m.";
+  for (const original of [controlledGomarizPlatform(), controlledMercaelevaPlatform()]) {
+    const prepared = { ...original, specs: { ...original.specs, ...reviewed } };
+    const result = resolveDocumentedModelGeneral(original, prepared, general, reviewed);
+    assert.equal(result, `${general}\n\nEl modelo presenta radio de giro exterior de 2,3 m y pendiente superable nominal con plataforma bajada de 25 %.`);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, result, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, general, {}), null);
+    assert.equal(resolveDocumentedModelGeneral(original, { ...prepared, model: "OTRO" }, general, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, `${general} Radio de giro de 2,3 m. Pendiente de 25 %.`, reviewed), null);
+    assert.equal(resolveDocumentedModelGeneral(original, prepared, general, { ...reviewed, "Radio de giro exterior del modelo": "2500 mm", "Pendiente superable del modelo con plataforma bajada": "40 %" }), null);
+    const articulated = { ...original, title: "Plataforma articulada eléctrica MARCA MODELO10" };
+    assert.equal(resolveDocumentedModelGeneral(articulated, { ...articulated, specs: prepared.specs }, general.replace("de tijera", "articulada"), reviewed), `${general.replace("de tijera", "articulada")}\n\nEl modelo presenta radio de giro exterior de 2,3 m.`);
+  }
+});
+
+
+test("distingue diámetro compatible de herramienta instalada en implementos", () => {
+  const original = { ...controlledGomarizPlatform(), title: "Martillo para miniexcavadora MARCA MODELO10", specs: { Peso: "100 kg" } };
+  const reviewed = { "Diámetro nominal de herramienta compatible": "45 mm" };
+  const prepared = { ...original, specs: { ...original.specs, ...reviewed } };
+  const general = "La ficha técnica de martillo para miniexcavadora MARCA MODELO10 indica peso declarado de 100 kg.";
+  assert.equal(resolveDocumentedModelGeneral(original, prepared, general, reviewed), `${general}\n\nEl modelo presenta diámetro nominal de herramienta compatible de 45 mm.`);
+  assert.equal(resolveDocumentedModelGeneral(original, prepared, `${general} Puntero de 45 mm.`, reviewed), null);
+  assert.equal(resolveDocumentedModelGeneral(original, prepared, general, {}), null);
+  assert.equal(resolveDocumentedModelGeneral(original, prepared, general, { "Diámetro nominal de herramienta compatible": "55 mm" }), null);
+  assert.equal(resolveDocumentedModelGeneral(original, { ...prepared, reference: "OTRO" }, general, reviewed), null);
 });
