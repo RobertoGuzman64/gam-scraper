@@ -6,17 +6,17 @@ import { fileURLToPath } from "node:url";
 import { inspectPublicationOriginals } from "./publication-original-provenance.mjs";
 
 export const AUDIT_MODES = Object.freeze([
-  { id: "finales", command: "huecos", args: ["--finales", "--json"], format: "json", stage: "publicacion_final" },
-  { id: "tecnicas", command: "huecos", args: ["--tecnicas", "--json"], format: "json", stage: "publicacion_tecnica" },
-  { id: "gomariz", command: "huecos", args: ["--catalogo", "catalogs/providers/gomariz/original/scrape-gomariz-catalog.json", "--json"], format: "json", stage: "originales_canonicos" },
-  { id: "tecnicas-detalle", command: "huecos", args: ["--tecnicas", "--detalle"], format: "texto", stage: "publicacion_tecnica" },
-  { id: "comparar", command: "huecos", args: ["--comparar", "--json"], format: "json", stage: "comparacion_publicacion_original" },
-  { id: "comparar-specs", command: "huecos", args: ["--comparar", "--specs", "--json"], format: "json", stage: "comparacion_publicacion_original" },
-  { id: "comparar-titulos", command: "huecos", args: ["--comparar", "--titulos", "--json"], format: "json", stage: "comparacion_publicacion_original" },
-  { id: "revision", command: "auditar:comercial", args: ["--revision"], format: "texto", stage: "publicacion_final" },
-  { id: "contenido-revision", command: "auditar:comercial", args: ["--contenido-revision"], format: "texto", stage: "publicacion_final" },
-  { id: "acreditacion-json", command: "auditar:comercial", args: ["--acreditacion-json"], format: "json", stage: "publicacion_final" },
-  { id: "coherencia", command: "auditar:comercial", args: ["--coherencia"], format: "texto", stage: "preparacion_recalculada" }
+  { id: "finales", command: "auditar:huecos", args: ["--finales", "--json"], format: "json", stage: "publicacion_final" },
+  { id: "tecnicas", command: "auditar:huecos", args: ["--tecnicas", "--json"], format: "json", stage: "publicacion_tecnica" },
+  { id: "gomariz", command: "auditar:huecos", args: ["--catalogo", "catalogs/providers/gomariz/original/scrape-gomariz-catalog.json", "--json"], format: "json", stage: "originales_canonicos" },
+  { id: "tecnicas-detalle", command: "auditar:huecos", args: ["--tecnicas", "--detalle"], format: "texto", stage: "publicacion_tecnica" },
+  { id: "comparar", command: "auditar:huecos", args: ["--comparar", "--json"], format: "json", stage: "comparacion_publicacion_original" },
+  { id: "comparar-specs", command: "auditar:huecos", args: ["--comparar", "--specs", "--json"], format: "json", stage: "comparacion_publicacion_original" },
+  { id: "comparar-titulos", command: "auditar:huecos", args: ["--comparar", "--titulos", "--json"], format: "json", stage: "comparacion_publicacion_original" },
+  { id: "revision", command: "comercial:auditar", args: ["--revision"], format: "texto", stage: "publicacion_final" },
+  { id: "contenido-revision", command: "comercial:auditar", args: ["--contenido-revision"], format: "texto", stage: "publicacion_final" },
+  { id: "acreditacion-json", command: "comercial:auditar", args: ["--acreditacion-json"], format: "json", stage: "publicacion_final" },
+  { id: "coherencia", command: "comercial:auditar", args: ["--coherencia"], format: "texto", stage: "preparacion_recalculada" }
 ]);
 
 const digest = (value) => createHash("sha256").update(value).digest("hex");

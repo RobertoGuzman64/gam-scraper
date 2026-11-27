@@ -99,7 +99,7 @@ export const renderCommercialIntegrationReport = (snapshot: CommercialPackageSna
     "- NO VERIFICADO EN BD: validar correspondencia de categorySellID y attributeID con la taxonomía, relaciones, tipos y opciones reales del importador.",
     "- NO VERIFICADO EN BD: comprobar companyID del entorno, unicidad por proveedor y origen, deduplicación de referencias visibles y política de precios null.",
     "- NO VERIFICADO EN BD: confirmar accesibilidad y persistencia de las URLs de imágenes, logos y galerías.",
-    "- NO VERIFICADO EN BD: revisar categorías sin relaciones directas de atributos mediante `npm run auditar:comercial -- --atributos-vacios`.",
+    "- NO VERIFICADO EN BD: revisar categorías sin relaciones directas de atributos mediante `npm run comercial:auditar -- --atributos-vacios`.",
     "- La procedencia técnica de cada unidad se conserva en sources, por índice, fuera del objeto Product; incluye identidad, URL y referencia externa cuando exista.",
     "- Los grupos de referencias coincidentes solo incluyen productos exportados; la auditoría del catálogo puede detectar además coincidencias en los excluidos.",
     "- Las comprobaciones acreditan integridad y proyección comercial; no garantizan aceptación semántica ni importación efectiva por el backend.",
@@ -109,8 +109,8 @@ export const renderCommercialIntegrationReport = (snapshot: CommercialPackageSna
     `- Los ${snapshot.providers.length + 1} JSON exactos y sus huellas SHA256 están dentro del paquete comercial; \`commercial-manifest.json\` identifica las publicaciones técnicas de origen por SHA256, el entorno y cada archivo.`,
     "- La verificación de fuentes activas debe ejecutarse contra el mismo corte: el SHA256 de publicación no permite por sí solo atribuir una fecha de activación.",
     "- Las discrepancias del manifiesto histórico de referencias son diagnóstico de procedencia independiente y no autorizan modificarlo ni alterar el contrato comercial v2.",
-    "- Exportar el corte vigente: `npm run exportar:comercial -- --entorno develop` (o production según el destino).",
-    "- Verificar el paquete: `npm run auditar:comercial -- --verificar=<ruta-zip-comercial> --informe=<ruta-zip-informe>`.",
+    "- Exportar el corte vigente: `npm run comercial` (o `npm run comercial -- --entorno production` según el destino).",
+    "- Verificar el paquete: `npm run comercial:auditar -- --verificar=<ruta-zip-comercial> --informe=<ruta-zip-informe>`.",
     "- La verificación compara la exportación con las publicaciones y referencias activas; un corte antiguo no podrá acreditarse como vigente tras su modificación.",
     ""
   );

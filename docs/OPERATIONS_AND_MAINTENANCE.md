@@ -51,7 +51,7 @@ La operación `npm run publicacion:tecnica -- <proveedor> ...` simula sin escrit
 
 ## Publicación y recuperación
 
-FINISH completa la activación verificada, la retención y el informe técnico interno. `npm run huecos` y `npm run normalizar:auditar` se ejecutan independientemente como herramientas de desarrollo de solo lectura; no forman parte del cierre, ni sus fallos requieren recuperación de FINISH. Sus hallazgos orientan campañas posteriores, no bloquean una publicación acreditada.
+FINISH completa la activación verificada, la retención y el informe técnico interno. `npm run auditar:huecos` y `npm run auditar:normalizacion` se ejecutan independientemente como herramientas de desarrollo de solo lectura; no forman parte del cierre, ni sus fallos requieren recuperación de FINISH. Sus hallazgos orientan campañas posteriores, no bloquean una publicación acreditada.
 
 - Conservar `storage/` entre procesos: catálogos, manifests, snapshots, preparaciones, evidencias y logs.
 - Comprobar `run.json` en cada lote y los informes `-summary.json`, `-changes.json` y `-errors.json` por proveedor.

@@ -4,7 +4,7 @@
 
 **Protección documental.** Ninguna IA puede crear, modificar, mover ni eliminar este documento sin autorización explícita del propietario para la intervención documental concreta. Solicitudes de código, pruebas, auditoría o limpieza técnica no autorizan cambios implícitos en la documentación.
 
-**Regla de alcance.** Una observación de `huecos` o una ficha `review` no autoriza una intervención. La simulación no aprueba el script; no se modifica el original ni se suplanta la decisión humana. Conservar identidad, fuente, huella y campos permitidos en cada propuesta.
+**Regla de alcance.** Una observación de `auditar:huecos` o una ficha `review` no autoriza una intervención. La simulación no aprueba el script; no se modifica el original ni se suplanta la decisión humana. Conservar identidad, fuente, huella y campos permitidos en cada propuesta.
 
 **Propietario:** correcciones manuales sobre derivados de campañas, catálogo de scripts, propuestas, composición, simulación, aplicación y aprobación explícita. Antes de intervenir, clasificar si el fallo requiere corregir el motor compartido: [Calidad](CATALOG_QUALITY.md).
 

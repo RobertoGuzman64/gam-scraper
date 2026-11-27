@@ -91,7 +91,7 @@ const seedHistorical = async (root: string): Promise<void> => {
 
 test("prepara desde original portátil sin storage, reutiliza bytes intactos y soporta cambio de carpeta", async () => {
   await withWorkspace(async (root) => {
-    await assert.rejects(requireIndividualPreparationContext(root, "gomariz"), /catalogo:preparar/);
+    await assert.rejects(requireIndividualPreparationContext(root, "gomariz"), /preparar/);
     await seedHistorical(root);
     const file = await firstPreparation(root, 1);
     const before = await readFile(file);

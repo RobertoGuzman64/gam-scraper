@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { constants } from "node:fs";
-import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after } from "node:test";
@@ -10,6 +11,11 @@ import type { CategoryConfig, CategoryScrapeResult } from "../../contracts/scrap
 import { consolidatePortableOriginal } from "../../infrastructure/filesystem/catalog/originals/portable-original.js";
 import { prepareIndividualCatalogs } from "../../preparation/workflow/individual-prepare.js";
 import { writeOutputs } from "../../scraping/output/publish.js";
+import { buildManainRecord } from "../../preparation/workflow/manain-record.js";
+import { discardedManainProductUrls } from "../../preparation/manain/discarded-urls.js";
+import { baseProductHeaders } from "../../scraping/output/csv-serializer.js";
+import { toCsv } from "../../shared/csv.js";
+import { publishTechnicalSnapshot } from "../../publication/technical/technical-publication.js";
 
 const providers = ["gam", "gomariz", "mercaeleva"] as const;
 const category: CategoryConfig = {
@@ -33,9 +39,48 @@ export const prepareIndividualTestWorkspace = async (
   assert.ok(results.every((item) => item.error === null), JSON.stringify(results.map((item) => item.error)));
 };
 
+const createManainOriginal = async (root: string): Promise<void> => {
+  const records = join(root, "catalogs", "providers", "manain", "records");
+  const evidence = join(root, "fuente-manain");
+  await mkdir(records, { recursive: true });
+  await mkdir(evidence);
+  const url = "https://manain.com/producto/plataforma-elevadora-de-ocasion/";
+  const csv = toCsv([{
+    providerId: "manain", categoryKey: "venta", categoryName: "Maquinaria en venta", url,
+    reference: "MA-PRUEBA", title: "Plataforma de tijera eléctrica XCMG", brand: "XCMG", model: "Tijera",
+    condition: "Segunda mano", shortDescription: "Plataforma eléctrica", longDescription: "Maquinaria",
+    price: "20000 €", image: "https://example.test/image.jpg",
+    specJson: JSON.stringify({ "Altura de trabajo": "8 m", Peso: "2100 kg" }),
+    imagesJson: JSON.stringify(["https://example.test/image.jpg"]), breadcrumbsJson: "[]"
+  }], baseProductHeaders);
+  const census = {
+    type: "manain-diagnostic-census", providerId: "manain", complete: true, published: false,
+    endReason: "control-exhausted", urlCount: 4, urls: [url, ...discardedManainProductUrls]
+  };
+  const summary = {
+    quality: { status: "partial", published: false },
+    totals: { scrapedProducts: 1, discoveredProductUrls: 4, failures: 3 },
+    artifacts: { csvSha256: createHash("sha256").update(csv).digest("hex") }
+  };
+  const errors = {
+    quality: "partial", failures: discardedManainProductUrls.map((entry) => ({
+      categoryKey: "venta", url: entry, error: "Ficha inaccesible"
+    }))
+  };
+  const filename = join(evidence, "manain-partial-all.csv");
+  const censusPath = join(evidence, "censo.json");
+  await writeFile(filename, csv);
+  await writeFile(filename.replace(/-partial-all\.csv$/, "-summary.json"), JSON.stringify(summary));
+  await writeFile(filename.replace(/-partial-all\.csv$/, "-errors.json"), JSON.stringify(errors));
+  await writeFile(censusPath, JSON.stringify(census));
+  await writeFile(join(records, "manain-record.json"), `${JSON.stringify(buildManainRecord(csv, summary, errors, census), null, 2)}\n`);
+  await publishTechnicalSnapshot(root, "manain", { csv: filename, census: censusPath }, true);
+};
+
 const createOriginals = async (
   root: string, serialNumber: string, selectedProviders: readonly IndividualCatalogProvider[]
 ): Promise<void> => {
+  if (selectedProviders.includes("manain")) await createManainOriginal(root);
   if (selectedProviders.includes("gam")) {
     const src = join(root, "fuente-gam");
     await mkdir(src);

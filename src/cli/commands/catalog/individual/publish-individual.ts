@@ -16,14 +16,15 @@ import { retainPublishedWorkReport } from "../../../reporting/individual/publish
 import { formatPublishedWorkTerminal } from "../../../reporting/individual/published-work.js";
 
 export const publishIndividualHelp = `Uso:
-  npm run catalogo:publicar
-  npm run catalogo:publicar -- --proveedor gam
-  npm run catalogo:publicar -- --simular
-  npm run catalogo:publicar -- --proveedor gomariz --simular
-  npm run catalogo:publicar -- --proveedor manain --simular
-  npm run catalogo:publicar -- --detalle
-  npm run catalogo:publicar -- --estado
+  npm run publicar
+  npm run publicar -- --proveedor gam
+  npm run publicar:simular
+  npm run publicar -- --proveedor gomariz --simular
+  npm run publicar -- --proveedor manain --simular
+  npm run publicar -- --detalle
+  npm run publicar -- --estado
 
+Proveedores por defecto: gam, gomariz, mercaeleva y manain.
 Paso 2/2: FINISH. Reutiliza automáticamente exclusiones históricas idénticas y acredita antes de publicar.
 Verifica la publicación interna acreditada antes de activar; activa proveedores individuales con diario de recuperación,
 comprueba integridad, ejecuta retención e informe de trabajo original → publicado. --simular no escribe ni activa.
@@ -53,7 +54,7 @@ export const consolidate = async (workspace: string): Promise<void> => {
     if (processResult.error || processResult.code !== 0) {
       const reason = processResult.error?.message ?? (processResult.signal
         ? `señal ${processResult.signal}` : `código ${processResult.code}`);
-      throw new Error(`RETENCIÓN PENDIENTE | Publicaciones activas conservadas. ${reason}. Corrige el bloqueo; si hay una transacción interrumpida, resuelve primero con node scripts/maintenance/consolidate-local-artifacts.mjs --aplicar y repite catalogo:publicar`);
+      throw new Error(`RETENCIÓN PENDIENTE | Publicaciones activas conservadas. ${reason}. Corrige el bloqueo; si hay una transacción interrumpida, resuelve primero con node scripts/maintenance/consolidate-local-artifacts.mjs --aplicar y repite publicar`);
     }
   } finally {
     progress.stop();
@@ -131,7 +132,7 @@ export const runPublishIndividual = async (
   }
   const detailed = args.includes("--detalle");
   if (args.filter((arg) => arg === "--detalle").length > 1) throw new Error("--detalle repetido");
-  const parsed = parseIndividualCatalogProviders(args.filter((arg) => arg !== "--detalle"), true);
+  const parsed = parseIndividualCatalogProviders(args.filter((arg) => arg !== "--detalle"), true, true);
   printCommandHeader("PASO 2/2 · FINISH", parsed.dryRun);
   const root = resolve(workspace);
   printReportLine("VALIDACIÓN Y ACREDITACIÓN");
@@ -222,7 +223,7 @@ export const runPublishIndividual = async (
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   runPublishIndividual(process.argv.slice(2), fileURLToPath(new URL("../../../../../", import.meta.url))).catch((error: unknown) => {
-    printCommandError("catalogo:publicar", error);
+    printCommandError("publicar", error);
     process.exitCode = 1;
   });
 }

@@ -17,7 +17,7 @@
 | Extracción incompleta, errores HTTP/HTML o paginación              | Reparar adaptador, descubrimiento, navegación, reintentos o recuperación, con evidencia real de cobertura                              | Universo esperado contrastado, sin pérdidas ni fallos imputables al motor. `PASS` local o páginas leídas no prueba cobertura exterior.                         |
 | Fichas ausentes o diferencias entre campañas                       | Determinar internamente si cambia la fuente o falla el descubrimiento; reparar código si falla; preservar la identidad de cada máquina | Diferencia explicada con evidencia y cobertura contrastada. Un `changes.json` no es solución ni autoriza bajas.                                                |
 | `review`, valor no normalizable o atributo mal asociado            | Reparar parser, semántica, normalizador, contratos y calidad con reglas seguras, reutilizando módulos                                  | **0 reviews reales sobre el catálogo íntegro** para declararlo completamente `ready`; pruebas y validación integral. Una lista de motivos no cierra el frente. |
-| Descripciones, imágenes o características incompletas              | Mejorar la extracción o preparación cuando el proveedor publique el dato; preservar ausencias genuinas                                 | Recuperación acreditada de lo disponible y conservación del origen. Un informe `huecos` o rellenar por analogía no vale.                                       |
+| Descripciones, imágenes o características incompletas              | Mejorar la extracción o preparación cuando el proveedor publique el dato; preservar ausencias genuinas                                 | Recuperación acreditada de lo disponible y conservación del origen. Un informe `auditar:huecos` o rellenar por analogía no vale.                                       |
 | Referencias duplicadas, series, identidad o modelos discordantes   | Corregir errores del motor de identidad, deduplicación o lectura; distinguir publicaciones diferentes y conflictos genuinos            | Identidades estables, sin fusiones, pérdidas ni referencias inventadas; ambigüedad real conservada y sometida al control editorial.                            |
 | Fallos de preparación, selección o acreditación                    | Corregir reglas, vínculo de procedencia o pipeline cuando sean defectuosos; mantener separados validación técnica y decisión humana    | Preparación verificable y selección acreditada conforme al contrato; ni un `ready` técnico ni una exclusión equivalen a autorización.                          |
 | Campaña parcial, publicación rota o artefacto inconsistente        | Reparar continuidad operativa, persistencia atómica o recuperación sin sobrescribir datos válidos                                      | Originales, manifests, derivados y entregas verificables; última salida correcta protegida. Un reintento ciego no cierra el defecto.                           |
@@ -35,7 +35,7 @@ La corrección debe respetar el **alcance realmente pedido**: una consulta, una 
 
 Esta sección traduce la matriz de objetivos a **decisiones de ejecución**, también en conversaciones nuevas. El asistente conserva la responsabilidad técnica del problema que se le ha encargado; no puede convertir una avería en un servicio de enumeración de averías.
 
-1. **Interpretar el encargo por el resultado, no por el último comando.** Si el propietario está resolviendo calidad, extracción, cobertura, importación, publicación o continuidad, una salida de `validar`, `estado`, `revisar` o `huecos` es evidencia **para actuar sobre ese objetivo**. Un «seguimos» continúa el trabajo productivo vigente: no abre automáticamente un frente distinto ni autoriza acciones destructivas.
+1. **Interpretar el encargo por el resultado, no por el último comando.** Si el propietario está resolviendo calidad, extracción, cobertura, importación, publicación o continuidad, una salida de `validar`, `estado`, `revisar` o `auditar:huecos` es evidencia **para actuar sobre ese objetivo**. Un «seguimos» continúa el trabajo productivo vigente: no abre automáticamente un frente distinto ni autoriza acciones destructivas.
 2. **Distinguir petición informativa de ejecución autorizada.** Si pide una explicación, responder sin editar; si pide un plan, estructurarlo sin aplicarlo; si ha aprobado una intervención productiva, **programar dentro de ese alcance sin renegociar cada comprobación**. Respetar el protocolo vigente de intervención y aprobaciones. La documentación no autoriza operaciones fuera del encargo.
 3. **Investigar por cuenta propia.** Leer contratos, código, tests, artefactos y casos representativos que estén disponibles; aprovechar herramientas existentes. No delegar inspección ficha a ficha, consultas reiteradas ni cadenas de comandos para conocer algo que el asistente pueda determinar con los materiales accesibles.
 4. **Modificar la causa real.** Para defectos reproducibles bajo control del scraper, entregar **código productivo efectivo**, no solo informes, tests, utilidades nuevas, parches de JSON, filtros de salida o excepciones por ID. Elegir la capa que produce el dato incorrecto; reutilizar y corregir los mecanismos existentes antes de ampliar arquitectura.
@@ -52,7 +52,7 @@ Esta sección traduce la matriz de objetivos a **decisiones de ejecución**, tam
 
 ## Orden de trabajo al continuar el catálogo
 
-Cuando el propietario diga «lee la documentación y seguimos» sin definir otro frente, continuar la **mejora de fichas**. Leer primero las reglas de [Gobernanza](REPOSITORY_GOVERNANCE.md); después consultar los indicadores actuales mediante los comandos existentes de `revisar`, `huecos` y, cuando proceda, `auditar:comercial`. No abrir un nuevo frente de infraestructura, normalización, publicación o tooling porque aparezca una oportunidad secundaria.
+Cuando el propietario diga «lee la documentación y seguimos» sin definir otro frente, continuar la **mejora de fichas**. Leer primero las reglas de [Gobernanza](REPOSITORY_GOVERNANCE.md); después consultar los indicadores actuales mediante los comandos existentes de `revisar`, `auditar:huecos` y, cuando proceda, `comercial:auditar`. No abrir un nuevo frente de infraestructura, normalización, publicación o tooling porque aparezca una oportunidad secundaria.
 
 **Elección de la siguiente intervención, en este orden:**
 
@@ -109,7 +109,7 @@ Cada corrección del motor exige pruebas según el riesgo, validación del catá
 
 ## Tratamiento productivo por clase de defecto
 
-Un origen parcialmente leído exige mejorar el **descubrimiento/extractor**; un texto o especificación transformados erróneamente exige corregir la **asociación, el parser o el normalizador**; una identidad colisionada exige corregir el **modelo de identidad/deduplicación** sin fusionar productos; una preparación técnica que genera reviews repetibles exige corregir sus **reglas de calidad**; un conjunto incoherente exige reparar la **publicación y la verificación de integridad**. `huecos`, `estado`, `comparar` y los expedientes permiten observar esos defectos, **no resolverlos**. Las correcciones se prueban contra el universo real relevante y no sobrescriben originales publicados.
+Un origen parcialmente leído exige mejorar el **descubrimiento/extractor**; un texto o especificación transformados erróneamente exige corregir la **asociación, el parser o el normalizador**; una identidad colisionada exige corregir el **modelo de identidad/deduplicación** sin fusionar productos; una preparación técnica que genera reviews repetibles exige corregir sus **reglas de calidad**; un conjunto incoherente exige reparar la **publicación y la verificación de integridad**. `auditar:huecos`, `estado`, `comparar` y los expedientes permiten observar esos defectos, **no resolverlos**. Las correcciones se prueban contra el universo real relevante y no sobrescriben originales publicados.
 
 Para la responsabilidad de cada frente, la evidencia de aceptación y la diferencia entre bloqueo humano y defecto reparable, consultar [Objetivos](CATALOG_OPERATIONS.md).
 
@@ -119,7 +119,7 @@ Para errores de extracción hay que reparar el parser y **recapturar el canónic
 
 Las evidencias por unidad/modelo no son intercambiables: el dato de un fabricante puede describir un **modelo** sin acreditar la configuración de la **unidad**. Las correcciones de textos por procedencia pueden apoyarse en evidencia firmada de `data/editorial/knowledge/` y en `src/preparation/editorial/core/knowledge-editorial.ts`, pero **no** sustituyen la recaptura del original ni una aprobación editorial cuando el contrato la exige. Ver [Motor editorial](EDITORIAL_ENGINE.md).
 
-Una regla corregida no modifica la publicación activa por sí sola. Ejecutar `catalogo:preparar`, preflight `catalogo:publicar -- --simular --detalle`, FINISH y verificaciones de estado; las exclusiones nuevas necesitan las decisiones acreditadas que correspondan. Si un paso posterior a la activación falla, continuar la recuperación idempotente sin editar `manifest.json`, selectores o huellas. La proyección y exportación comercial son un circuito posterior e independiente.
+Una regla corregida no modifica la publicación activa por sí sola. Ejecutar `preparar`, preflight `publicar -- --simular --detalle`, FINISH y verificaciones de estado; las exclusiones nuevas necesitan las decisiones acreditadas que correspondan. Si un paso posterior a la activación falla, continuar la recuperación idempotente sin editar `manifest.json`, selectores o huellas. La proyección y exportación comercial son un circuito posterior e independiente.
 
 Los avisos tienen propósitos diferentes: `technicalSpecs` de huecos mide claves y reconciliaciones; la semántica técnica comprueba valores; la auditoría comercial distingue pendiente/controlada/heredada/introducida. Una señal estadística sin evidencia directa no autoriza agregar información ni silenciar el auditor. Para la matriz de reparación y ejemplos reales ver [Mejora acreditada del catálogo](CATALOG_QUALITY.md).
 
@@ -133,7 +133,7 @@ La mejora no es una transformación indiscriminada de JSON finales. Hay que enco
 
 La publicación técnica de GAM, Gomariz y Mercaeleva está separada de su proyección comercial. El registro de MANAIN no acredita por sí mismo una publicación individual/comercial completa. Nunca se importa a la base de datos desde este proceso.
 
-**Separación de frentes:** un snapshot técnico independiente puede incorporarse con `review` y servir para medir mejoras posteriores, sin obligar a resolverlas en el hilo de extracción. Las correcciones editoriales y la elegibilidad comercial conservan su validación propia. No utilizar las señales orientativas de `huecos --tecnicas` como acreditaciones automáticas. Consultar [Publicaciones técnicas](PUBLICATIONS.md).
+**Separación de frentes:** un snapshot técnico independiente puede incorporarse con `review` y servir para medir mejoras posteriores, sin obligar a resolverlas en el hilo de extracción. Las correcciones editoriales y la elegibilidad comercial conservan su validación propia. No utilizar las señales orientativas de `auditar:huecos --tecnicas` como acreditaciones automáticas. Consultar [Publicaciones técnicas](PUBLICATIONS.md).
 
 ## Ruta de decisión: síntoma, mecanismo y prueba
 
@@ -171,14 +171,14 @@ Las evidencias técnicas/editoriales suelen estar limitadas por referencia, URL,
 Una preparación correcta **no es una publicación**. Usar los circuitos oficiales y comprobar diferencias de identidad, especificaciones, textos, exclusiones y estado:
 
 ```powershell
-npm run catalogo:preparar -- --proveedor gam
-npm run catalogo:publicar -- --proveedor gam --simular --detalle
-npm run catalogo:publicar -- --proveedor gam
+npm run preparar -- --proveedor gam
+npm run publicar -- --proveedor gam --simular --detalle
+npm run publicar -- --proveedor gam
 npm run estado
-npm run auditar:comercial -- --coherencia
-npm run auditar:comercial -- --acreditacion
-npm run auditar:comercial -- --revision
-npm run exportar:comercial -- --simular
+npm run comercial:auditar -- --coherencia
+npm run comercial:auditar -- --acreditacion
+npm run comercial:auditar -- --revision
+npm run comercial:simular
 ```
 
 Sustituir `gam` por el proveedor **realmente afectado**. FINISH puede reutilizar exclusiones acreditadas idénticas; no inventa aprobaciones humanas. Si el preflight detecta casos distintos, corresponde la acreditación editorial explícita. Si se activa una publicación pero falla la retención o el informe posterior, consultar el diario `storage/publication/individual-finish/` y **reanudar el mismo FINISH**, sin editar selectores ni volver a publicar ciegamente. El derivado comercial puede generarse y verificarse aparte; `--simular` no equivale a la exportación real ni a una integración en BD.
@@ -199,17 +199,17 @@ Son **ejemplos de mecanismos y límites**, no reglas para reutilizar sus datos t
 
 ## Diagnóstico y significado de los avisos
 
-Elegir el diagnóstico por el objetivo de desarrollo autorizado: `normalizar:auditar` investiga el tratamiento de prestaciones disponibles; `huecos` investiga carencias, cobertura, diferenciación y semántica de contenido. Son consultas independientes del cierre operativo.
+Elegir el diagnóstico por el objetivo de desarrollo autorizado: `auditar:normalizacion` investiga el tratamiento de prestaciones disponibles; `auditar:huecos` investiga carencias, cobertura, diferenciación y semántica de contenido. Son consultas independientes del cierre operativo.
 
 ```powershell
-npm run normalizar:auditar
-npm run huecos -- --comparar --json
-npm run huecos -- --comparar --specs --json
-npm run huecos -- --comparar --titulos --json
-npm run huecos -- --finales --json
-npm run auditar:comercial -- --contenido-revision
-npm run auditar:comercial -- --revision
-npm run auditar:comercial -- --acreditacion
+npm run auditar:normalizacion
+npm run auditar:huecos -- --comparar --json
+npm run auditar:huecos -- --comparar --specs --json
+npm run auditar:huecos -- --comparar --titulos --json
+npm run auditar:huecos -- --finales --json
+npm run comercial:auditar -- --contenido-revision
+npm run comercial:auditar -- --revision
+npm run comercial:auditar -- --acreditacion
 ```
 
 - `technicalSpecs.cases[].stage` separa `diferencia_origen_preparacion`, `reconciliacion_acreditada`, `pendiente_publicacion`, `perdida_tras_publicacion`, `normalizacion_ambigua` y `sin_evidencia_directa`. La última es **observación**, no una prestación debida.
@@ -245,9 +245,9 @@ Las coincidencias exactas del resultado interpretado (o de presentación técnic
 ### Ejecución bajo demanda
 
 ```powershell
-npm run normalizar:auditar
-npm run normalizar:auditar -- --top 10 --detalle
-npm run --silent normalizar:auditar -- --json
+npm run auditar:normalizacion
+npm run auditar:normalizacion -- --top 10 --detalle
+npm run --silent auditar:normalizacion -- --json
 ```
 
 El comando inspecciona los proveedores definidos por `CAMPAIGN_PROVIDERS`. Reutiliza el lector acreditado de originales y del registro parcial de Manain, recalcula en memoria con `prepareImportBatch` y concilia cada publicación comercial vigente con su original acreditado. No sustituye una fuente no disponible por datos reconstruidos. La salida declara proveedores esperados, seleccionados, procesados, no disponibles e incompletos, huellas de origen y publicación y reglas de preparación. Si un proveedor no puede conciliarse, se omite del cálculo, se identifica la causa y se devuelve código 1 con cobertura parcial; las cifras restantes no representan el universo completo. Las fichas sin publicación se distinguen de los proveedores ausentes. Las observaciones no bloquean por sí mismas el comando ni la publicación.
@@ -266,17 +266,17 @@ El auditor sirve para localizar causas, no para alterar automáticamente origina
 
 ### Finalidad y límites
 
-`npm run huecos` es el auditor de **descripciones y especificaciones técnicas** ya existente. Permite distinguir el contenido de las publicaciones acreditadas, el que producen las reglas de preparación actuales y las ausencias observables en sus fuentes. Sus señales ayudan a **elegir qué máquinas merecen una intervención productiva**, no constituyen por sí solas defectos verificados ni requisitos del backend.
+`npm run auditar:huecos` es el auditor de **descripciones y especificaciones técnicas** ya existente. Permite distinguir el contenido de las publicaciones acreditadas, el que producen las reglas de preparación actuales y las ausencias observables en sus fuentes. Sus señales ayudan a **elegir qué máquinas merecen una intervención productiva**, no constituyen por sí solas defectos verificados ni requisitos del backend.
 
 El auditor es **de solo lectura** respecto a originales, preparaciones guardadas, decisiones, acreditaciones y publicaciones. No completa textos, no añade `spec`, no aprueba exclusiones y no activa una publicación. La mejora se implementa en los productores, mapeadores, normalizadores o mecanismos editoriales existentes y se acredita después mediante el flujo de preparación/publicación.
 
 ### Fuentes y modos de consulta
 
-**Nuevo origen explícito:** `npm run huecos -- --tecnicas --detalle` consulta las publicaciones técnicas independientes vigentes (`technical/active.json`) e incluye `ready`, `review`, incidencias, análisis editorial y densidad/semántica. Es independiente de `--comparar`, que contrasta fuentes y preparaciones contra publicaciones individuales acreditadas. `--tecnicas` no se combina con `--comparar`, `--finales`, `--catalogo`, `--publicacion`, `--titulos` o `--specs`; `--json` permite obtener el universo completo de casos. Ver [Publicaciones técnicas](PUBLICATIONS.md).
+**Nuevo origen explícito:** `npm run auditar:huecos -- --tecnicas --detalle` consulta las publicaciones técnicas independientes vigentes (`technical/active.json`) e incluye `ready`, `review`, incidencias, análisis editorial y densidad/semántica. Es independiente de `--comparar`, que contrasta fuentes y preparaciones contra publicaciones individuales acreditadas. `--tecnicas` no se combina con `--comparar`, `--finales`, `--catalogo`, `--publicacion`, `--titulos` o `--specs`; `--json` permite obtener el universo completo de casos. Ver [Publicaciones técnicas](PUBLICATIONS.md).
 
 | Modo                   | Qué analiza                                                                                                                                  | Alcance / precaución                                                                                            |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `npm run huecos`       | Campaña íntegra conservada o referencia histórica verificable; si faltan, comparación de publicaciones acreditadas con la preparación actual | La fuente elegida determina la población: consultar `provenance` antes de comparar cifras                       |
+| `npm run auditar:huecos`       | Campaña íntegra conservada o referencia histórica verificable; si faltan, comparación de publicaciones acreditadas con la preparación actual | La fuente elegida determina la población: consultar `provenance` antes de comparar cifras                       |
 | `--comparar`           | Publicaciones acreditadas seleccionadas frente a preparación recalculada para sus mismas identidades                                         | Muestra vacíos recuperados, pendientes, pérdidas y prioridades editoriales; **no** publica resultados           |
 | `--comparar --specs`   | Comparación de claves técnicas y semántica técnica publicada, separada del diagnóstico editorial                                             | `technicalSpecs` y `technicalSemantics` responden a criterios diferentes; ninguno inventa atributos comerciales |
 | `--comparar --titulos` | Compara títulos de publicaciones acreditadas con originales y preparación recalculada; genera `titles`                                       | Requiere `--comparar`; no admite `--specs` simultáneamente                                                      |
@@ -285,7 +285,7 @@ El auditor es **de solo lectura** respecto a originales, preparaciones guardadas
 | `--publicacion <ruta>` | Calidad editorial y densidad técnica de uno o varios `-publishable.json` acreditados explícitos                                              | No mezclar proveedores repetidos ni confundir una publicación histórica con la vigente                          |
 | `--catalogo <ruta>`    | Originales canónicos completos aportados explícitamente; aplica en memoria las reglas actuales                                               | Requiere canónico verificable; admite varias rutas, no CSV parciales                                            |
 
-La selección de `--comparar` y `--finales` usa `discoverAccreditedPublications` y el mecanismo de **publicación vigente**, no el último directorio SHA por su fecha. El versionado, la activación y la reversión se gestionan por el flujo de publicaciones, **fuera de `huecos`**. Para comparar con una versión histórica, utilizar el modo de publicación explícita o el selector correspondiente, sin modificar el índice para una simple consulta.
+La selección de `--comparar` y `--finales` usa `discoverAccreditedPublications` y el mecanismo de **publicación vigente**, no el último directorio SHA por su fecha. El versionado, la activación y la reversión se gestionan por el flujo de publicaciones, **fuera de `auditar:huecos`**. Para comparar con una versión histórica, utilizar el modo de publicación explícita o el selector correspondiente, sin modificar el índice para una simple consulta.
 
 La comparación vincula por **identidad de producto**, no por posición en un array. GAM y Gomariz pueden tomar el original canónico existente en `catalogs/providers/<proveedor>/original/`; cuando falte el canónico independiente de Mercaeleva, la entrada se reconstruye **solo con los campos de su publicación**, etiquetada `reconstruccion_publicada`. Esto **no** equivale a recuperar evidencia desde la web ni acredita una extracción original completa. La comparación de un proveedor distinto sin canónico exige resolver esa ausencia: no genera uno ficticio.
 
@@ -336,24 +336,24 @@ Antes de incorporar una especificación, preferir datos de la **misma máquina**
 
 El panel clasifica exclusivamente las **specs añadidas entre original y publicación individual**; no asigna un color a las specs conservadas del original. `src/preparation/provenance/technical-spec-classification.ts` aplica las condiciones de identidad, valor, huella del original y procedencia técnica acreditada; la cohorte editorial permite distinguir incorporaciones exclusivas (`own`, azul) de incorporaciones compartidas (`reused`, naranja) y exige coincidencia de regla, campo y valor cuando corresponde. La pertenencia no demostrada permanece `pending` (gris), sin forzar una decisión. Las reutilizaciones editoriales se muestran con vínculos recíprocos a otras fichas.
 
-La preparación del derivado pertenece a `src/panel/evidence/prepare-explorer-technical-evidence.ts`; el lector valida la versión, las huellas y los vínculos en `src/panel/evidence/explorer-technical-evidence-cache.ts`. Los módulos de `src/tools/catalog/` son fachadas de compatibilidad. El archivo `catalogs/reports/revision/explorer-technical-evidence.json` es una **caché de presentación ligada al corte**, no una nueva base de conocimiento, un origen de specs ni un segundo clasificador. No confundir este color con los estados de `technicalSpecs.cases[].stage` del auditor `huecos`, que diagnostican diferencias y posibles pérdidas de claves. Ver [Panel local](COMMERCIAL_EXPORT.md#panel-local-de-evidencias).
+La preparación del derivado pertenece a `src/panel/evidence/prepare-explorer-technical-evidence.ts`; el lector valida la versión, las huellas y los vínculos en `src/panel/evidence/explorer-technical-evidence-cache.ts`. Los módulos de `src/tools/catalog/` son fachadas de compatibilidad. El archivo `catalogs/reports/revision/explorer-technical-evidence.json` es una **caché de presentación ligada al corte**, no una nueva base de conocimiento, un origen de specs ni un segundo clasificador. No confundir este color con los estados de `technicalSpecs.cases[].stage` del auditor `auditar:huecos`, que diagnostican diferencias y posibles pérdidas de claves. Ver [Panel local](COMMERCIAL_EXPORT.md#panel-local-de-evidencias).
 
 ### Ejecución
 
 Desde la raíz del repositorio:
 
 ```powershell
-npm run huecos -- --tecnicas --detalle
-npm run huecos -- --tecnicas --json
-npm run huecos -- --comparar
-npm run huecos -- --comparar --specs
-npm run huecos -- --comparar --specs --json
-npm run huecos -- --comparar --titulos --json
-npm run huecos -- --finales
-npm run huecos -- --comparar --top 20
-npm run huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-catalog.json --agrupar marca --top 20
-npm run huecos -- --publicacion <ruta-a-publicacion-acreditada> --json
-npm run huecos -- --help
+npm run auditar:huecos -- --tecnicas --detalle
+npm run auditar:huecos -- --tecnicas --json
+npm run auditar:huecos -- --comparar
+npm run auditar:huecos -- --comparar --specs
+npm run auditar:huecos -- --comparar --specs --json
+npm run auditar:huecos -- --comparar --titulos --json
+npm run auditar:huecos -- --finales
+npm run auditar:huecos -- --comparar --top 20
+npm run auditar:huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-catalog.json --agrupar marca --top 20
+npm run auditar:huecos -- --publicacion <ruta-a-publicacion-acreditada> --json
+npm run auditar:huecos -- --help
 ```
 
 | Opción                                                                 | Restricción / efecto                                                                                    |

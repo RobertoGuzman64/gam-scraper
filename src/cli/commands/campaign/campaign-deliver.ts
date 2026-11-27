@@ -18,7 +18,7 @@ export const parseGroupedDelivery = (args: readonly string[]): GroupedDeliveryRe
 
 export const runCampaignDelivery = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    printReportLine("Uso: npm run entregar\nValida la selección acreditada del lote actual y entrega en el Escritorio equipzilla-AAAA-MM-DD.zip con los cuatro JSON publicables. Conserva la entrega anterior si falla.\n  --publicos: cuatro publicaciones vigentes acreditadas.\n  --informes --entorno develop|production: informes internos vigentes.");
+    printReportLine("Uso: npm run entregar\nValida la selección acreditada del lote actual y entrega en el Escritorio equipzilla-AAAA-MM-DD.zip con los cuatro JSON publicables. Conserva la entrega anterior si falla.\n  npm run entregar:publicos: cuatro publicaciones vigentes acreditadas.\n  npm run entregar:informes [-- --entorno develop|production]: informes internos vigentes (develop por defecto).");
     return;
   }
   const grouped = parseGroupedDelivery(args);

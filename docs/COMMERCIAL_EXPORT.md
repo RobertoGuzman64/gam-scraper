@@ -15,7 +15,7 @@ El scraper produce y conserva **datos técnicos acreditados**. También dispone 
 ```text
 Proveedores → extracción → originales / registro parcial → preparación (ready/review)
                                                ├──→ snapshot técnico versionado
-                                               │      (incluye review; auditor huecos --tecnicas)
+                                               │      (incluye review; auditor auditar:huecos --tecnicas)
                                                ↓
                             selección editorial y JSON acreditados
                                                ↓
@@ -26,23 +26,23 @@ Proveedores → extracción → originales / registro parcial → preparación (
             integración e importación externas al scraper (backend)
 ```
 
-La campaña global tiene un contrato de cuatro proveedores (GAM, Gomariz, Mercaeleva, Manain). Las publicaciones individuales acreditadas utilizadas por la exportación comercial actual corresponden a **GAM, Gomariz y Mercaeleva**; eso no convierte a Manain en una publicación completa ni sustituye la campaña global.
+La campaña global tiene un contrato de cuatro proveedores (GAM, Gomariz, Mercaeleva, Manain). La exportación comercial consume las publicaciones individuales vigentes acreditadas de GAM, Gomariz, Mercaeleva y Manain, conservando la admisión histórica de conjuntos válidos de tres proveedores. La incorporación de Manain no convierte su fuente parcial en una publicación completa ni sustituye la campaña global.
 
-El comando `publicacion:tecnica` crea un registro de consulta independiente, con `ready/review`, índice y retención propios. Gomariz usa un original canónico completo; Manain puede conservar un corte `partial` acreditado por registro, CSV y censo. Ninguno de esos snapshots altera la vigencia de las publicaciones individuales de GAM, Gomariz y Mercaeleva ni habilita la exportación comercial de Manain. Ver [Publicaciones técnicas](PUBLICATIONS.md).
+El comando `publicacion:tecnica` crea un registro de consulta independiente, con `ready/review`, índice y retención propios. Gomariz usa un original canónico completo; Manain puede conservar un corte `partial` acreditado por registro, CSV y censo. Ninguno de esos snapshots altera la vigencia de las publicaciones individuales ni habilita por sí solo la exportación comercial de Manain. Ver [Publicaciones técnicas](PUBLICATIONS.md).
 
 ## Fuente y contratos
 
 - Fuente: publicación individual acreditada de cada proveedor comercial, contrastada con el **original históricamente acreditado** y con el inventario vigente cuando se prepara una exportación nueva. No utilizar el snapshot `technical/` como fuente de elegibilidad.
 - Categorías y `categorySellID`: `data/category/categorySell-flat.json`, respetando jerarquía y condición. Priorizar categorías hoja; admitir una categoría general existente solo con correspondencia semántica acreditada y una regla comercial explícita. Una categoría sin relaciones de atributos no autoriza a inventarlas: conservar las especificaciones técnicas sin cambios.
 - Atributos: `data/import/attributeCatalog.json`; usar solo `attributeID` y valores válidos para el tipo, las opciones y la relación con la categoría.
-- Logos y empresas por entorno: `data/commercial-reference/`; `logoID` solo con correspondencia inequívoca y `companyID` únicamente con entorno explícito.
+- Logos y empresas por entorno: `data/commercial-reference/`; `logoID` solo con correspondencia inequívoca y `companyID` únicamente con entorno seleccionado (develop por defecto desde npm).
 - Mantener `providerId`, `reference`, `externalReference` y `sourceUrl`. La referencia comercial visible no identifica por sí sola una máquina.
 
 ### Versiones históricas y disponibilidad actual
 
 Un original puede evolucionar por cambios de stock. La auditoría histórica verifica cada publicación individual contra el **origen acreditado por su manifest y SHA-256**, no contra una captura posterior. Por el contrario, la exportación de un inventario actualmente obsoleto **debe bloquearse** hasta reconciliar sus bajas, aunque el histórico sea íntegro. En Gomariz, el corte del 11 de noviembre de 2026 retiró 86 fichas «Sin existencias» y dejó 11 identidades que figuraban en la publicación comercial anterior; no restaurarlas ni ignorar el bloqueo para conseguir `PASS`.
 
-El guard ejecutable `tests-commercial-contract-guard.mjs` protege el contrato comercial v2; se ejecuta con `npm test`, puede invocarse con `npm run contrato:comercial` y se comprueba en la vía de exportación. No sustituye auditoría, identidad, procedencia ni revisión de disponibilidad. Ver [Publicaciones técnicas](PUBLICATIONS.md).
+El guard ejecutable `tests-commercial-contract-guard.mjs` protege el contrato comercial v2; se ejecuta con `npm test`, puede invocarse con `npm run comercial:contrato` y se comprueba en la vía de exportación. No sustituye auditoría, identidad, procedencia ni revisión de disponibilidad. Ver [Publicaciones técnicas](PUBLICATIONS.md).
 
 ## Qué se exporta
 
@@ -89,33 +89,34 @@ Las decisiones de semántica (año, altura, capacidad, unidad, atributos) se imp
 Desde la raíz del repositorio:
 
 ```powershell
-npm run auditar:comercial
-npm run auditar:comercial -- --arbol
-npm run auditar:comercial -- --pendientes
-npm run auditar:comercial -- --revision
-npm run auditar:comercial -- --coherencia
-npm run auditar:comercial -- --contenido-revision
-npm run auditar:comercial -- --atributos-revision
-npm run auditar:comercial -- --acreditacion
-npm run auditar:comercial -- --acreditacion-json
-npm run auditar:comercial -- --json
-npm run exportar:comercial -- --help
-npm run exportar:comercial -- --simular
-npm run exportar:comercial -- --salida <directorio-nuevo-fuera-del-repo>
-npm run auditar:comercial -- --verificar=<directorio-existente>
+npm run comercial:auditar
+npm run comercial:auditar -- --arbol
+npm run comercial:auditar -- --pendientes
+npm run comercial:auditar -- --revision
+npm run comercial:auditar -- --coherencia
+npm run comercial:auditar -- --contenido-revision
+npm run comercial:auditar -- --atributos-revision
+npm run comercial:auditar -- --acreditacion
+npm run comercial:auditar -- --acreditacion-json
+npm run comercial:auditar -- --json
+npm run comercial -- --help
+npm run comercial:simular
+npm run comercial
+npm run comercial -- --salida <directorio-nuevo-fuera-del-repo>
+npm run comercial:auditar -- --verificar=<directorio-existente>
 ```
 
 La CLI separa la **coordinación** en `src/cli/commands/catalog/commercial/commercial-audit.ts` de la **presentación** en `src/cli/reporting/commercial/commercial-audit.ts`. La política está en `src/commercial/projection/category-projection.ts` y las evidencias de procedencia en `source-category-evidence.ts` y `gam-category-evidence.ts`; la exportación y verificación están en `src/commercial/export/`. `--verificar=RUTA` compara el manifiesto comercial y los archivos exportados con el corte vigente, sin reescribirlos.
 
-El exportador real, sin `--salida`, genera **un ZIP comercial verificado** en el Escritorio configurado y actualiza el informe interno versionado en `catalogs/reports/commercial/<entorno>/`. Con `--salida` escribe **un JSON por proveedor acreditado y `commercial-manifest.json`** en un directorio nuevo fuera del repositorio, en lugar del ZIP. Con `--entorno develop|production` incluye el `companyID` correspondiente si está acreditado; sin entorno no se incluye. `--simular` calcula/verifica sin escribir. El informe y la exportación no prueban importación efectiva al backend.
+El exportador real, sin `--salida`, genera **un ZIP comercial verificado** en el Escritorio configurado y actualiza el informe interno versionado en `catalogs/reports/commercial/<entorno>/`. Con `--salida` escribe **un JSON por proveedor acreditado y `commercial-manifest.json`** en un directorio nuevo fuera del repositorio, en lugar del ZIP. Los comandos npm `comercial` y `comercial:simular` seleccionan `develop` por defecto e incluyen el `companyID` correspondiente si está acreditado; `production` exige `--entorno production`. `--simular` calcula/verifica sin escribir. El informe y la exportación no prueban importación efectiva al backend.
 
-La opción `--arbol` es una vista de inspección: presenta la jerarquía real con IDs, conteos y una línea por producto (proveedor, referencia y título), además de las fichas pendientes. No añade incidencias ni modifica las decisiones del auditor. Para guardarla en un fichero: `npm run --silent auditar:comercial -- --arbol > categorias-comerciales.txt`.
+La opción `--arbol` es una vista de inspección: presenta la jerarquía real con IDs, conteos y una línea por producto (proveedor, referencia y título), además de las fichas pendientes. No añade incidencias ni modifica las decisiones del auditor. Para guardarla en un fichero: `npm run --silent comercial:auditar -- --arbol > categorias-comerciales.txt`.
 
 El diagnóstico y el derivado comercial son independientes de los **nuevos snapshots técnicos bajo `technical/`**; siguen vinculados a las publicaciones individuales acreditadas y su procedencia histórica. Las categorías, opciones y relaciones se validan contra los recursos locales vigentes; una exportación con categorías pendientes no equivale a una importación autorizada.
 
 ## Panel local de evidencias
 
-La exportación efectiva `npm run exportar:comercial -- --entorno develop`, **sin** `--salida` y **sin** `--simular`, entrega primero su ZIP comercial y actualiza el informe interno y después intenta actualizar el panel local. Ni `production`, ni una simulación, ni la salida a un directorio explícito actualizan el panel. Si la generación falla tras la entrega comercial, el comando lo informa como un fallo **posterior a la entrega**; no debe interpretarse como ausencia del ZIP comercial ya generado.
+La exportación efectiva `npm run comercial`, **sin** `--salida` y **sin** `--simular`, entrega primero su ZIP comercial y actualiza el informe interno y después intenta actualizar el panel local. Ni `production`, ni una simulación, ni la salida a un directorio explícito actualizan el panel. Si la generación falla tras la entrega comercial, el comando lo informa como un fallo **posterior a la entrega**; no debe interpretarse como ausencia del ZIP comercial ya generado.
 
 `src/panel/evidence/prepare-explorer-technical-evidence.ts` prepara `catalogs/reports/revision/explorer-technical-evidence.json` desde originales, publicaciones y procedencias técnicas cotejadas; `src/panel/evidence/explorer-technical-evidence-cache.ts` verifica la caché y `src/panel/explorer/read-panel-explorer.ts` reúne la lectura por ficha. Los módulos homónimos en `src/tools/catalog/` son fachadas de compatibilidad hacia `panel/`. `src/panel/application/write-local-panel.ts` verifica el corte y escribe `panel/index.html`. El HTML integra su interfaz y datos para consulta local sin servidor. El panel presenta resumen, transformación, controles de calidad y explorador de fichas, con estados de selección editorial/comercial y comparación entre original, FINISH y comercial cuando hay evidencia disponible.
 
@@ -136,14 +137,14 @@ El panel no ejecuta scraping, no revisa editorialmente, no cambia las publicacio
 - `src/commercial/projection/category-projection.ts` mantiene la política; `source-category-evidence.ts` y `gam-category-evidence.ts` aíslan las comprobaciones de procedencia. La extracción de evidencia no cambia las reglas comerciales.
 - `src/commercial/export/` produce los JSON derivados y su `commercial-manifest.json`, con hashes de archivos, snapshot y referencias relevantes. La exportación consulta las publicaciones **individuales acreditadas** y sus originales históricos sin modificarlos; contrasta el original vigente para impedir exportaciones de stock obsoleto.
 - `src/cli/commands/catalog/commercial/commercial-audit.ts` coordina la auditoría y `src/cli/reporting/commercial/commercial-audit.ts` presenta informes. `--verificar=RUTA` contrasta una exportación existente con las fuentes vigentes.
-- `data/commercial-reference/` contiene logos y correspondencias de empresas; `companyID` solo se incluye con entorno explícito. Las categorías, opciones, valores, condición, identidad y metadata se validan, no se inventan.
+- `data/commercial-reference/` contiene logos y correspondencias de empresas; `companyID` solo se incluye con entorno seleccionado (develop por defecto desde npm). Las categorías, opciones, valores, condición, identidad y metadata se validan, no se inventan.
 
 ```powershell
-npm run auditar:comercial
-npm run auditar:comercial -- --acreditacion
-npm run exportar:comercial -- --salida <directorio-nuevo> --simular
-npm run exportar:comercial -- --salida <directorio-nuevo> --entorno production
-npm run auditar:comercial -- --verificar=<directorio-existente>
+npm run comercial:auditar
+npm run comercial:auditar -- --acreditacion
+npm run comercial:simular -- --salida <directorio-nuevo>
+npm run comercial -- --salida <directorio-nuevo> --entorno production
+npm run comercial:auditar -- --verificar=<directorio-existente>
 ```
 
 Los comandos de exportación definitiva crean un directorio nuevo y archivos verificables; **no envían solicitudes HTTP al backend**. La exportación comercial no modifica la selección editorial ni los originales. Una incompatibilidad en la proyección debe resolverse en el mapeador o contrato comercial, no degradando `ready/review` de la preparación canónica.
@@ -169,4 +170,4 @@ Estos puntos describen **cambios acordados y todavía no aplicados al backend**.
 
 ### Entrega agrupada de informes bajo demanda
 
-`npm run entregar -- --informes --entorno develop` (o `production`) entrega un ZIP externo con `tecnico/INFORME.txt` y `comercial/<entorno>/INFORME.txt`, leyendo exclusivamente las versiones activas verificadas. El informe comercial debe corresponder al paquete comercial interno vigente del entorno solicitado. No actualiza informes, catálogos ni panel; no ejecuta auditorías, exportación ni retención. El ZIP es idempotente por contenido y no sobrescribe archivos distintos.
+`npm run entregar:informes` (develop por defecto; `npm run entregar:informes -- --entorno production` para producción) entrega un ZIP externo con `tecnico/INFORME.txt` y `comercial/<entorno>/INFORME.txt`, leyendo exclusivamente las versiones activas verificadas. El informe comercial debe corresponder al paquete comercial interno vigente del entorno solicitado. No actualiza informes, catálogos ni panel; no ejecuta auditorías, exportación ni retención. El ZIP es idempotente por contenido y no sobrescribe archivos distintos.

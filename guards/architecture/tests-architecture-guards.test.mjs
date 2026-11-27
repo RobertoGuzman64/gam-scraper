@@ -252,7 +252,7 @@ test("detecta reconstrucciones Manain multiplicadas por helpers, aliases e itera
 
 test("el comando comercial invoca el guard protegido desde guards", () => {
   const root = fileURLToPath(new URL("../../", import.meta.url));
-  const invocation = spawnSync(process.execPath, [join(root, "scripts/tooling.mjs"), "contrato:comercial"], {
+  const invocation = spawnSync(process.execPath, [join(root, "scripts/tooling.mjs"), "comercial:contrato"], {
     cwd: root, encoding: "utf8"
   });
   assert.equal(invocation.error, undefined);

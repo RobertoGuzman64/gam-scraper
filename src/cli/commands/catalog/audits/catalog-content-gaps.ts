@@ -261,7 +261,7 @@ const reportDescriptionComparison = async (options: CommandOptions): Promise<voi
 
 export const runCatalogContentGaps = async (args: readonly string[]): Promise<void> => {
   if (args.length === 1 && args[0] === "--help") {
-    printReportLine("Uso: npm run huecos -- [--comparar | --finales | --tecnicas | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--detalle] [--json] [--specs] [--titulos]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, comparación de publicaciones acreditadas frente a preparación actual. --comparar fuerza esa comparación. --finales analiza solo las publicaciones acreditadas. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. --finales incluye la auditoría semántica de valores técnicos publicados; --comparar separa publicación, preparación conciliada y preparación completa de fuentes vigentes. --comparar --specs contrasta claves, valores y oportunidades de cada etapa; las ausencias familiares no son atributos obligatorios. --comparar --titulos analiza señales de títulos técnicos, sin modificar fichas. --json entrega el diagnóstico íntegro en formato compacto; --top y --detalle solo controlan la presentación.");
+    printReportLine("Uso: npm run auditar:huecos -- [--comparar | --finales | --tecnicas | --catalogo ruta/-catalog.json ... | --publicacion ruta/-publishable.json ...] [--agrupar categoria|marca|modelo] [--min-grupo N] [--min-ausentes N] [--top N] [--detalle] [--json] [--specs] [--titulos]\nSin fuente explícita: campaña entregada o referencia histórica; si faltan, comparación de publicaciones acreditadas frente a preparación actual. --comparar fuerza esa comparación. --finales analiza solo las publicaciones acreditadas. --catalogo analiza originales canónicos; --publicacion analiza exclusivamente textos finales acreditados. --finales incluye la auditoría semántica de valores técnicos publicados; --comparar separa publicación, preparación conciliada y preparación completa de fuentes vigentes. --comparar --specs contrasta claves, valores y oportunidades de cada etapa; las ausencias familiares no son atributos obligatorios. --comparar --titulos analiza señales de títulos técnicos, sin modificar fichas. --json entrega el diagnóstico íntegro en formato compacto; --top y --detalle solo controlan la presentación.");
     return;
   }
   const options = readContentGapOptions(args);
@@ -359,7 +359,7 @@ export const runCatalogContentGaps = async (args: readonly string[]): Promise<vo
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   runCatalogContentGaps(process.argv.slice(2)).catch((error: unknown) => {
     if (process.argv.includes("--json")) console.log(JSON.stringify({ error: errorDetail(error), status: "ERROR" }));
-    printCommandError("huecos", error);
+    printCommandError("auditar:huecos", error);
     process.exitCode = 1;
   });
 }

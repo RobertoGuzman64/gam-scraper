@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 
-type CatalogCommand = "catalogo:preparar" | "catalogo:acreditar" | "catalogo:publicar";
+type CatalogCommand = "preparar" | "catalogo:acreditar" | "publicar";
 
 export const createToolingTestWorkspace = (command: CatalogCommand, prefix: string) => {
   const workspace = mkdtempSync(join(tmpdir(), prefix));
@@ -22,7 +22,7 @@ export const createToolingTestWorkspace = (command: CatalogCommand, prefix: stri
     }
     copyFileSync(join(root, "scripts", "build", "build-cache.mjs"), join(workspace, "scripts", "build", "build-cache.mjs"));
     writeFileSync(join(workspace, "scripts", "build", "run-build.mjs"), "process.exitCode = 0;\n");
-    const entry = command === "catalogo:preparar" ? "prepare-individual.js" :
+    const entry = command === "preparar" ? "prepare-individual.js" :
       command === "catalogo:acreditar" ? "accredit-individual.js" : "publish-individual.js";
     writeFileSync(join(workspace, "dist", "cli", "commands", "catalog", "individual", entry),
       "console.log('ARGS ' + JSON.stringify(process.argv.slice(2)));\n");

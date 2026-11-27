@@ -16,7 +16,7 @@ try {
     import(pathToFileURL(resolve(root, "dist/cli/options/individual-catalog.js")).href),
     import(pathToFileURL(resolve(root, "dist/publication/individual/finish-preflight.js")).href)
   ]);
-  const { providerIds } = parseIndividualCatalogProviders(process.argv.slice(2));
+  const { providerIds } = parseIndividualCatalogProviders(process.argv.slice(2), true, true);
   const report = await inspectIndividualFinishPreflight(root, providerIds);
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   for (const item of report.providers) {

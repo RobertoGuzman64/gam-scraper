@@ -80,10 +80,10 @@ test("preflight sin preparación recorre los tres proveedores y no genera decisi
   }, "original");
 });
 
-test("FINISH productivo diagnostica los tres proveedores sin abrir diario", async () => {
+test("FINISH ordinario diagnostica los cuatro proveedores aunque falte Manain, sin abrir diario", async () => {
   await withWorkspace(async (root, desktop) => {
     await assert.rejects(runPublishIndividual([], root, { desktopDirectory: desktop }),
-      /FINISH \/ PREFLIGHT BLOQUEADO.*3 proveedores/s);
+      /FINISH \/ PREFLIGHT BLOQUEADO.*4 proveedores/s);
     assert.deepEqual(await readdir(desktop), []);
     await assert.rejects(lstat(join(root, "storage")), { code: "ENOENT" });
   }, "original");

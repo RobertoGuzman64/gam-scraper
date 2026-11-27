@@ -65,8 +65,8 @@ test("npm ci no ejecuta preparación de catálogos como lifecycle", () => {
 test("ayuda española y validación de proveedor funcionan sin compilar", async () => {
   const [help, commandHelp, missing, unknown, campaignHelp, referenceHelp, editorialHelp] = await Promise.all([
     run(script, ["ayuda"]),
-    run(script, ["ayuda", "preparar"]),
-    run(script, ["preparar"]),
+    run(script, ["ayuda", "preparar:manual"]),
+    run(script, ["preparar:manual"]),
     run(script, ["ayuda", "no-existe"]),
     run(script, ["ayuda", "extraer"]),
     run(script, ["ayuda", "referencia"]),
@@ -99,7 +99,7 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     mkdirSync(join(temp, "dist/cli"), { recursive: true });
     writeFileSync(join(temp, "package.json"), JSON.stringify({
       name: "equipzilla-tooling-test", type: "module", scripts: {
-        "preparacion-prueba": "node scripts/tooling.mjs preparar",
+        "preparacion-prueba": "node scripts/tooling.mjs preparar:manual",
         "publicacion-prueba": "node scripts/tooling.mjs entregar:proveedor"
       }
     }));
@@ -120,7 +120,7 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
     writeFileSync(join(temp, "dist/cli/commands/interventions/intervene.js"), 'console.log("MANUAL " + JSON.stringify(process.argv.slice(2)));\n');
     const fake = join(temp, "scripts/tooling.mjs");
     const [spanish, providerExtract, validate, campaignHelp, cleanup, applied, simulation, denied, campaignExtract, campaignReview, campaignStatus, referenceRead, referenceUpdate, referenceRecovery, referenceExport, referenceImport, referenceDenied, gaps, gapsComparison, legacyCatalog] = await Promise.all([
-      run(fake, ["preparar", "gam", "--origen", "origen-catalog.json", "--simular"]),
+      run(fake, ["preparar:manual", "gam", "--origen", "origen-catalog.json", "--simular"]),
       run(fake, ["extraer:proveedor", "gam", "--categoria", "venta"]),
       run(fake, ["validar", "gam", "--etapa", "preparacion", "--preparacion", "x-preparation.json"]),
       run(fake, ["extraer", "--help"]),
@@ -137,9 +137,9 @@ test("el despachador utiliza comandos únicos y traduce las opciones antes de ej
       run(fake, ["referencia", "--exportar", "copia-nueva"]),
       run(fake, ["referencia", "--importar", "copia", "--sustituir"]),
       run(fake, ["referencia", "--aplicar"]),
-      run(fake, ["huecos", "--catalogo", "fixture-catalog.json", "--top", "10"]),
-      run(fake, ["huecos", "--comparar", "--specs", "--json"]),
-      run(fake, ["preparar", "gam", "--catalogo", "fixture-catalog.json"])
+      run(fake, ["auditar:huecos", "--catalogo", "fixture-catalog.json", "--top", "10"]),
+      run(fake, ["auditar:huecos", "--comparar", "--specs", "--json"]),
+      run(fake, ["preparar:manual", "gam", "--catalogo", "fixture-catalog.json"])
     ]);
     const [migrationPreview, migrationApply, migrationConflict] = await Promise.all([
       run(fake, ["migrar:catalogos"]),

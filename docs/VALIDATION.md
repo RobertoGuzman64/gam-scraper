@@ -20,9 +20,9 @@ En cambios productivos comparar todas las máquinas originales relevantes y las 
 
 ## Validación de publicaciones técnicas independientes
 
-`publicacion:tecnica` acepta `review` para que la incorporación del proveedor y el trabajo editorial avancen en frentes distintos. Sus garantías son **integridad, identidad, procedencia, estados/diagnósticos preservados y retención máxima de dos versiones**; no exige convertir artificialmente las incidencias en `ready`. Manain mantiene el registro `partial`, mientras Gomariz exige original `complete` y preparación vigente. Se valida con una simulación sin escrituras, activación explícita, lectura de `--ver/--listar` y `npm run estado`. `huecos --tecnicas` puede ejecutarse después, bajo demanda, para diagnosticar contenido; no forma parte de la activación. Ninguna de estas operaciones implica aprobación comercial.
+`publicacion:tecnica` acepta `review` para que la incorporación del proveedor y el trabajo editorial avancen en frentes distintos. Sus garantías son **integridad, identidad, procedencia, estados/diagnósticos preservados y retención máxima de dos versiones**; no exige convertir artificialmente las incidencias en `ready`. Manain mantiene el registro `partial`, mientras Gomariz exige original `complete` y preparación vigente. Se valida con una simulación sin escrituras, activación explícita, lectura de `--ver/--listar` y `npm run estado`. `auditar:huecos --tecnicas` puede ejecutarse después, bajo demanda, para diagnosticar contenido; no forma parte de la activación. Ninguna de estas operaciones implica aprobación comercial.
 
-El guard del contrato comercial v2 se ejecuta con `npm run contrato:comercial`, con `npm test` y antes de la exportación. Las auditorías de publicaciones individuales históricas pueden pasar con el origen acreditado por SHA mientras la **exportación comercial del inventario obsoleto debe seguir bloqueada**. En el corte de noviembre de 2026 se constataron once bajas de Gomariz por «Sin existencias» frente a la publicación comercial anterior; requieren reconciliación, no restaurar los originales por conveniencia. Consultar [Publicaciones técnicas](PUBLICATIONS.md).
+El guard del contrato comercial v2 se ejecuta con `npm run comercial:contrato`, con `npm test` y antes de la exportación. Las auditorías de publicaciones individuales históricas pueden pasar con el origen acreditado por SHA mientras la **exportación comercial del inventario obsoleto debe seguir bloqueada**. En el corte de noviembre de 2026 se constataron once bajas de Gomariz por «Sin existencias» frente a la publicación comercial anterior; requieren reconciliación, no restaurar los originales por conveniencia. Consultar [Publicaciones técnicas](PUBLICATIONS.md).
 
 ## Qué debe hacer el desarrollador con un resultado de validación
 
@@ -37,33 +37,33 @@ No basta con que un test del resolutor pase: comprobar **en qué etapa está** e
 Para investigar y medir una mejora autorizada, seleccionar las consultas de desarrollo pertinentes. No son pasos de FINISH ni sustituyen las comprobaciones formales de acreditación, integridad o contrato comercial.
 
 ```powershell
-npm run normalizar:auditar
-npm run huecos -- --comparar --specs --json
-npm run huecos -- --comparar --titulos --json
-npm run huecos -- --finales --json
-npm run auditar:comercial -- --coherencia
-npm run auditar:comercial -- --revision
-npm run auditar:comercial -- --acreditacion
+npm run auditar:normalizacion
+npm run auditar:huecos -- --comparar --specs --json
+npm run auditar:huecos -- --comparar --titulos --json
+npm run auditar:huecos -- --finales --json
+npm run comercial:auditar -- --coherencia
+npm run comercial:auditar -- --revision
+npm run comercial:auditar -- --acreditacion
 ```
 
 Cuando el cambio afecte a la salida comercial, comprobar además su preflight:
 
 ```powershell
-npm run exportar:comercial -- --simular
+npm run comercial:simular
 ```
 
-En `normalizar:auditar`, verificar la cobertura y procedencia de las tres etapas antes de comparar resultados. El código 1 por fuentes ausentes o incompletas impide declarar completa esa auditoría, no altera la publicación vigente. La igualdad del parser no demuestra equivalencia técnica universal; los grupos y sus fichas candidatas son oportunidades de investigación. Comparar el impacto antes/después sobre poblaciones conciliadas y comprobar valores, condiciones y procedencias, no solo contadores. Consultar [Diagnóstico de normalización técnica](CATALOG_QUALITY.md#diagnóstico-de-normalización-técnica).
+En `auditar:normalizacion`, verificar la cobertura y procedencia de las tres etapas antes de comparar resultados. El código 1 por fuentes ausentes o incompletas impide declarar completa esa auditoría, no altera la publicación vigente. La igualdad del parser no demuestra equivalencia técnica universal; los grupos y sus fichas candidatas son oportunidades de investigación. Comparar el impacto antes/después sobre poblaciones conciliadas y comprobar valores, condiciones y procedencias, no solo contadores. Consultar [Diagnóstico de normalización técnica](CATALOG_QUALITY.md#diagnóstico-de-normalización-técnica).
 
-En `huecos`, contrastar `population`, `checkCoverage` y `provenance` antes de interpretar un contador. Separar la publicación comercial, la preparación de las mismas identidades conciliadas, la preparación de toda la fuente vigente y los snapshots técnicos independientes. Una ausencia de fuente no es un cero de hallazgos; una ficha no publicada no forma parte de la comparación comercial. Los estados de `auditClosure` en `--comparar --specs --json` mantienen el criterio histórico de cierre: una cobertura parcial no acredita conformidad completa y las nuevas oportunidades orientativas no añaden bloqueos. Comparar los mismos cortes y huellas; distinguir fichas únicas de ocurrencias, conservar las hipótesis como tales y verificar los datos con sus propietarios antes de intervenir. El JSON compacto conserva los casos completos aunque se indique `--top`.
+En `auditar:huecos`, contrastar `population`, `checkCoverage` y `provenance` antes de interpretar un contador. Separar la publicación comercial, la preparación de las mismas identidades conciliadas, la preparación de toda la fuente vigente y los snapshots técnicos independientes. Una ausencia de fuente no es un cero de hallazgos; una ficha no publicada no forma parte de la comparación comercial. Los estados de `auditClosure` en `--comparar --specs --json` mantienen el criterio histórico de cierre: una cobertura parcial no acredita conformidad completa y las nuevas oportunidades orientativas no añaden bloqueos. Comparar los mismos cortes y huellas; distinguir fichas únicas de ocurrencias, conservar las hipótesis como tales y verificar los datos con sus propietarios antes de intervenir. El JSON compacto conserva los casos completos aunque se indique `--top`.
 
 Interpretar `technicalSpecs.cases[].stage`: `pendiente_publicacion` indica un cambio preparado no publicado; `perdida_tras_publicacion` exige investigar antes de activar; `diferencia_origen_preparacion` requiere una causa; `reconciliacion_acreditada` documenta una diferencia justificada; `normalizacion_ambigua` exige fuente; `sin_evidencia_directa` es orientativa. `technicalSemantics` observa el significado de valores publicados, no solo presencia de claves. Las señales comerciales **heredadas/controladas** no equivalen a las **introducidas/pendientes**.
 
 Si cambia la preparación, ejecutar los controles formales por proveedor afectado:
 
 ```powershell
-npm run catalogo:preparar -- --proveedor gam
-npm run catalogo:publicar -- --proveedor gam --simular --detalle
-npm run catalogo:publicar -- --proveedor gam
+npm run preparar -- --proveedor gam
+npm run publicar -- --proveedor gam --simular --detalle
+npm run publicar -- --proveedor gam
 npm run estado
 ```
 

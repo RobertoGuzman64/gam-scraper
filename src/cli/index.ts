@@ -19,7 +19,7 @@ export const cliHelp = `EQUIPZILLA SCRAPER
   npm run extraer:todos                    Extraer los cuatro proveedores
   npm run extraer:todos -- --simular          Simular el lote
   npm run validar -- gam                 Validar último catálogo de GAM
-  npm run preparar -- --help               Preparación independiente offline
+  npm run preparar:manual -- --help               Preparación independiente offline
   npm run exportar -- --help                Consultar exportación segura
 
   npm run ayuda -- extraer:proveedor                Ayuda extracción

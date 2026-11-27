@@ -9,16 +9,16 @@ import { renderHistoricalReferenceMismatches } from "../../../reporting/catalog/
 import { OperationProgress } from "../../../reporting/progress/operation-progress.js";
 
 export const prepareIndividualHelp = `Uso:
-  npm run catalogo:preparar
-  npm run catalogo:preparar -- --proveedor gam
-  npm run catalogo:preparar -- --simular
-  npm run catalogo:preparar -- --proveedor gomariz --simular
-  npm run catalogo:preparar -- --proveedor manain
-  npm run catalogo:preparar -- --detalle
+  npm run preparar
+  npm run preparar -- --proveedor gam
+  npm run preparar -- --simular
+  npm run preparar -- --proveedor gomariz --simular
+  npm run preparar -- --proveedor manain
+  npm run preparar -- --detalle
 
-Proveedores por defecto: gam, gomariz y mercaeleva. Manain se prepara solo si se solicita explícitamente.
+Proveedores por defecto: gam, gomariz, mercaeleva y manain.
 --simular consulta y calcula sin escribir nada; --detalle muestra progreso por proveedor, diagnósticos, rutas y referencias históricas.
-La preparación de Manain verifica su registro parcial y conserva esa procedencia; no habilita FINISH.
+La preparación de Manain verifica su registro parcial y conserva esa procedencia; FINISH exige su propio preflight y acreditación.
 Reutiliza preparaciones verificadas; nunca aprueba, publica, extrae ni altera originales.`;
 
 export const runPrepareIndividual = async (args: readonly string[], workspace: string): Promise<boolean> => {
@@ -29,7 +29,7 @@ export const runPrepareIndividual = async (args: readonly string[], workspace: s
   if (args.includes("--help")) throw new Error("--help no admite otros argumentos");
   const detailed = args.includes("--detalle");
   if (args.filter((arg) => arg === "--detalle").length > 1) throw new Error("--detalle repetido");
-  const options = parseIndividualCatalogProviders(args.filter((arg) => arg !== "--detalle"), true);
+  const options = parseIndividualCatalogProviders(args.filter((arg) => arg !== "--detalle"), true, true);
   printCommandHeader("PASO 1/2 · PREPARAR", options.dryRun);
   const progress = new OperationProgress("PREPARAR", detailed);
   let results: Awaited<ReturnType<typeof prepareIndividualCatalogs>>;
@@ -97,11 +97,8 @@ export const runPrepareIndividual = async (args: readonly string[], workspace: s
     printCommandResult("PASO 1 BLOQUEADO · Corrige los bloqueos antes de publicar", "FAIL");
     return false;
   }
-  printCommandResult(options.providerIds.includes("manain")
-    ? options.dryRun ? "SIMULACIÓN DE MANAIN COMPLETA · SIN ESCRITURAS · FINISH NO HABILITADO"
-      : "PREPARACIÓN DE MANAIN GUARDADA · REVISIÓN EDITORIAL PENDIENTE · FINISH NO HABILITADO"
-    : options.dryRun ? "SIMULACIÓN COMPLETA · SIN ESCRITURAS"
-      : "PASO 1 COMPLETO · Siguiente: npm run catalogo:publicar");
+  printCommandResult(options.dryRun ? "SIMULACIÓN COMPLETA · SIN ESCRITURAS"
+    : "PASO 1 COMPLETO · Siguiente: npm run publicar:simular");
   return true;
 };
 
@@ -110,7 +107,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
   runPrepareIndividual(process.argv.slice(2), root).then((ok) => {
     if (!ok) process.exitCode = 1;
   }).catch((error: unknown) => {
-    printCommandError("catalogo:preparar", error);
+    printCommandError("preparar", error);
     process.exitCode = 1;
   });
 }

@@ -69,7 +69,7 @@ export const shouldRefreshLocalPanel = (options: CommercialExportOptions): boole
 export const runCommercialExport = async (args: readonly string[]): Promise<void> => {
   const options = parseCommercialExportOptions(args);
   if (options === "help") {
-    printReportLine("Uso: npm run exportar:comercial -- --entorno develop|production [--simular] [--salida <directorio-nuevo>] [--detalle]\nPor defecto genera un ZIP comercial verificado en el Escritorio (un JSON por proveedor acreditado y manifiesto) y actualiza el informe interno de integración. --salida conserva los archivos sueltos en un directorio nuevo. --simular permite verificar sin elegir entorno. --detalle muestra el progreso por proveedor, rutas, huellas e identificadores. También admite --out, --environment y --dry-run. No publica ni importa en backend.");
+    printReportLine("Uso: npm run comercial [-- --entorno develop|production] [--simular] [--salida <directorio-nuevo>] [--detalle]\nPor defecto genera un ZIP comercial verificado en el Escritorio (un JSON por proveedor acreditado y manifiesto) y actualiza el informe interno de integración. --salida conserva los archivos sueltos en un directorio nuevo. npm run comercial:simular verifica en develop por defecto; production requiere selección explícita. --detalle muestra el progreso por proveedor, rutas, huellas e identificadores. También admite --out, --environment y --dry-run. No publica ni importa en backend.");
     return;
   }
   printCommandHeader("EXPORTACIÓN COMERCIAL", options.dryRun);
@@ -171,7 +171,7 @@ export const runCommercialExport = async (args: readonly string[]): Promise<void
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   runCommercialExport(process.argv.slice(2)).catch((error: unknown) => {
-    printCommandError("exportar:comercial", error);
+    printCommandError("comercial", error);
     process.exitCode = 1;
   });
 }

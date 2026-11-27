@@ -7,9 +7,9 @@ type ParsedIndividualCatalogProviders<T extends IndividualPreparationProvider> =
 };
 
 export function parseIndividualCatalogProviders(args: readonly string[]): ParsedIndividualCatalogProviders<IndividualCatalogProvider>;
-export function parseIndividualCatalogProviders(args: readonly string[], allowManain: true): ParsedIndividualCatalogProviders<IndividualPreparationProvider>;
+export function parseIndividualCatalogProviders(args: readonly string[], allowManain: true, includeManainByDefault?: boolean): ParsedIndividualCatalogProviders<IndividualPreparationProvider>;
 export function parseIndividualCatalogProviders(
-  args: readonly string[], allowManain: boolean = false
+  args: readonly string[], allowManain: boolean = false, includeManainByDefault = false
 ): ParsedIndividualCatalogProviders<IndividualPreparationProvider> {
   let provider: IndividualPreparationProvider | null = null;
   let dryRun = false;
@@ -30,5 +30,5 @@ export function parseIndividualCatalogProviders(
       throw new Error(`Opción desconocida: ${arg ?? ""}. Usa --proveedor <id> o --simular`);
     }
   }
-  return { providerIds: provider ? [provider] : LEGACY_CAMPAIGN_PROVIDERS, dryRun };
+  return { providerIds: provider ? [provider] : includeManainByDefault ? permitted : LEGACY_CAMPAIGN_PROVIDERS, dryRun };
 }

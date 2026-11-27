@@ -37,7 +37,7 @@ export const runNormalizationAudit = async (args: readonly string[], workspace =
   if (options.json) {
     try { await writeNormalizationAuditJson(report); }
     catch (error) {
-      printCommandError("normalizar:auditar", error);
+      printCommandError("auditar:normalizacion", error);
       process.exitCode = 1;
       return;
     }
@@ -50,7 +50,7 @@ export const runNormalizationAudit = async (args: readonly string[], workspace =
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   runNormalizationAudit(process.argv.slice(2)).catch((error: unknown) => {
     if (process.argv.includes("--json")) console.log(JSON.stringify({ version: 1, complete: false, status: "ERROR", error: errorDetail(error) }));
-    printCommandError("normalizar:auditar", error);
+    printCommandError("auditar:normalizacion", error);
     process.exitCode = 1;
   });
 }

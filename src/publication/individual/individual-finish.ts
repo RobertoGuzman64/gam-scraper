@@ -220,7 +220,7 @@ export const publishIndividualCatalogs = async (options: {
       const actual = await reconcile(root, journal).catch(() => completed);
       throw new Error(`FINISH PARCIAL/BLOQUEADO | Activados y comprobados: ${actual.join(", ") || "ninguno"}. ` +
         `Las publicaciones anteriores no se han reescrito. Diario: ${journalPath}. ` +
-        `Corrige la causa y repite catalogo:publicar para recuperar el mismo conjunto: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+        `Corrige la causa y repite publicar para recuperar el mismo conjunto: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
     }
   };
   if (options.dryRun) return execute();

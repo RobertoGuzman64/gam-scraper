@@ -37,7 +37,7 @@ storage/                   Trabajo y recuperación locales, excluidos de Git
 dist/                      Compilados regenerables, excluidos de Git
 ```
 
-El registro de proveedores está en `src/scraping/registry.ts` y el contrato de campaña de cuatro proveedores (GAM, Gomariz, Mercaeleva y Manain) en `src/contracts/campaign-providers.ts`. Las publicaciones individuales comerciales vigentes pueden operar para GAM, Gomariz y Mercaeleva; Manain mantiene su flujo parcial y no debe darse por completo sin acreditación. **En paralelo**, las publicaciones técnicas independientes admiten Gomariz y Manain, entre otros proveedores, con estados `ready/review` y procedencia explícita. La lectura de históricos de tres proveedores no cambia el contrato de campaña actual.
+El registro de proveedores está en `src/scraping/registry.ts` y el contrato de campaña de cuatro proveedores (GAM, Gomariz, Mercaeleva y Manain) en `src/contracts/campaign-providers.ts`. Las publicaciones individuales comerciales vigentes pueden operar para los cuatro proveedores; Manain mantiene su flujo parcial y no debe darse por completo sin acreditación. **En paralelo**, las publicaciones técnicas independientes admiten Gomariz y Manain, entre otros proveedores, con estados `ready/review` y procedencia explícita. La lectura de históricos de tres proveedores no cambia el contrato de campaña actual.
 
 ## Fronteras y dirección de dependencias
 
@@ -97,7 +97,7 @@ No ejecutar retiradas ni consolidaciones reales como parte de una auditoría doc
 
 `src/publication/technical/technical-snapshot.ts` define y valida el corte; `src/publication/technical/technical-publication.ts` prepara, contrasta y simula/activa; `src/cli/commands/catalog/publications/technical-publication.ts` expone el comando, mientras `src/infrastructure/filesystem/catalog/publications/technical-publication.ts` conserva y verifica `technical/active.json` y `technical/versions/<sha256>/{snapshot,manifest}.json`. Los originales completos se contrastan con sus preparaciones; Manain se reconstruye y valida con registro `partial`, CSV y censo. Los `review` permanecen en el snapshot y no autorizan la publicación comercial.
 
-La versión técnica activa y la anterior son las dos protegidas en la retención. Los índices, hashes, locks y temporales son propios; el publicador técnico no toca `publications/` ni activa FINISH. `huecos --tecnicas` lee estos snapshots y es independiente del auditor comercial. Ver [Publicaciones técnicas](PUBLICATIONS.md).
+La versión técnica activa y la anterior son las dos protegidas en la retención. Los índices, hashes, locks y temporales son propios; el publicador técnico no toca `publications/` ni activa FINISH. `auditar:huecos --tecnicas` lee estos snapshots y es independiente del auditor comercial. Ver [Publicaciones técnicas](PUBLICATIONS.md).
 
 ### Publicaciones individuales y acreditación
 
@@ -107,7 +107,7 @@ Los finales y aprobaciones acreditados no se reescriben para acomodar refactors 
 
 ### Proyección comercial y exportación legada
 
-**El catálogo técnico acreditado y su derivado comercial son contratos distintos.** La proyección comercial actual vive en `src/commercial/projection/`, con la política en `category-projection.ts` y evidencia de origen en `source-category-evidence.ts` y `gam-category-evidence.ts`. `src/commercial/export/` prepara, acredita y verifica salidas comerciales procedentes de publicaciones técnicas y snapshots locales; `src/cli/commands/catalog/commercial/commercial-audit.ts` realiza la coordinación y `src/cli/reporting/commercial/commercial-audit.ts` presenta los informes. El comando `exportar:comercial` no importa datos al backend.
+**El catálogo técnico acreditado y su derivado comercial son contratos distintos.** La proyección comercial actual vive en `src/commercial/projection/`, con la política en `category-projection.ts` y evidencia de origen en `source-category-evidence.ts` y `gam-category-evidence.ts`. `src/commercial/export/` prepara, acredita y verifica salidas comerciales procedentes de publicaciones técnicas y snapshots locales; `src/cli/commands/catalog/commercial/commercial-audit.ts` realiza la coordinación y `src/cli/reporting/commercial/commercial-audit.ts` presenta los informes. El comando `comercial` no importa datos al backend.
 
 Por separado, `npm run exportar` es un exportador **heredado** para preparaciones comerciales compatibles: `src/commercial/legacy-export/`, `src/cli/commands/legacy-export.ts` y `src/infrastructure/filesystem/legacy-export/`. No debe aplicarse a nuevas preparaciones técnicas sin asignaciones. La importación HTTP, la persistencia de productos y los permisos operativos pertenecen al backend. Ver [Comercialización](COMMERCIAL_EXPORT.md) e [Integración](COMMERCIAL_EXPORT.md).
 

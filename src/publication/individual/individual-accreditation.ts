@@ -87,7 +87,7 @@ export const preflightIndividualAccreditations = async (
         proposed: proposeIndividualExclusions(selection.draft), antecedents });
       onProgress?.(providerId, checked.length, providers.length);
     } catch (error) {
-      throw new Error(`ACREDITACIÓN | ${providerId.toUpperCase()} | Sin aprobación ni publicación. ${error instanceof Error ? error.message : String(error)}. Corrige la causa y repite catalogo:preparar o catalogo:publicar`, { cause: error });
+      throw new Error(`ACREDITACIÓN | ${providerId.toUpperCase()} | Sin aprobación ni publicación. ${error instanceof Error ? error.message : String(error)}. Corrige la causa y repite preparar o publicar`, { cause: error });
     }
   }
   return checked;
@@ -101,7 +101,7 @@ export const openIndividualAccreditations = async (
     try {
       opened.push(await startIndividualEditorial(context.options));
     } catch (error) {
-      throw new Error(`ACREDITACIÓN | ${context.providerId.toUpperCase()} | Borradores abiertos: ${opened.map((item) => item.accreditation.sources[0]?.providerId).join(", ") || "ninguno"}. Sin aprobaciones nuevas. Corrige el bloqueo y reanuda catalogo:publicar: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+      throw new Error(`ACREDITACIÓN | ${context.providerId.toUpperCase()} | Borradores abiertos: ${opened.map((item) => item.accreditation.sources[0]?.providerId).join(", ") || "ninguno"}. Sin aprobaciones nuevas. Corrige el bloqueo y reanuda publicar: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
     }
   }
   return opened;
@@ -155,7 +155,7 @@ export const approveIndividualAccreditations = async (
       approved.push(await approveIndividualEditorial(context.options, `Aprobación expresa del conjunto (${scope}): ${reason.trim()}`));
     } catch (error) {
       const completed = approved.filter((item) => item.inspection.approved).map((item) => item.accreditation.sources[0]?.providerId).join(", ");
-      throw new Error(`Aprobación PARCIAL | completados: ${completed || "ninguno"} | falló ${context.providerId}. No se publicó nada. Consulta las acreditaciones y reanuda catalogo:publicar: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+      throw new Error(`Aprobación PARCIAL | completados: ${completed || "ninguno"} | falló ${context.providerId}. No se publicó nada. Consulta las acreditaciones y reanuda publicar: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
     }
   }
   return approved;

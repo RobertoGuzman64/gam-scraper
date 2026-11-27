@@ -17,7 +17,7 @@ test("FINISH exige preparar y bloquea incidencias nuevas sin antecedente acredit
     await assert.rejects(publishIndividualCatalogs({
       workspace: root, providers: finishProviders, dryRun: true, desktopDirectory: null,
       onProgress: (stage, providerId, completed, total) => progress.push(`${stage} ${providerId} ${completed}/${total}`)
-    }), /catalogo:preparar/);
+    }), /preparar/);
     assert.deepEqual(progress, ["ACREDITACIÓN gam 0/3"]);
     await prepareIndividualTestWorkspace(root);
     await assert.rejects(publishIndividualCatalogs({ workspace: root, providers: finishProviders, dryRun: false, desktopDirectory: root }),

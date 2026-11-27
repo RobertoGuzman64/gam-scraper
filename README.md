@@ -14,7 +14,7 @@ El **original canónico vigente** conserva las máquinas elegibles por el criter
 
 **Dirección permanente de calidad:** si aparecen reviews, el trabajo de desarrollo consiste en **corregir el código productivo reutilizable que origina los problemas**, no terminar en informes, comandos o revisión manual ficha a ficha. La meta para declarar todo el universo de un proveedor `ready` es **0 reviews verificadas sobre todas sus fichas**; no es condición para publicar un **snapshot técnico independiente** que conserve las revisiones, conservando los originales y sin inventar valores ni relajar validaciones. Los diagnósticos son herramientas internas del desarrollador; las contradicciones de origen realmente irresolubles permanecen identificadas y requieren una decisión editorial distinta. Ver [Operativa de catálogos](docs/CATALOG_OPERATIONS.md) y [Validación](docs/VALIDATION.md).
 
-Este repositorio no ofrece una API HTTP, no realiza altas en el backend y no automatiza importaciones. Los JSON canónicos y las selecciones acreditadas **no son solicitudes de creación de productos del backend**. Existe, por separado, una **proyección comercial propia** que asigna categorías y atributos conforme a los snapshots locales y entrega JSON comerciales auditables. La persistencia, permisos e importación siguen en el backend. `npm run exportar` (Excel/JSON histórico) es compatibilidad heredada, mientras `npm run exportar:comercial` es el circuito comercial actual. Ver [Exportación comercial](docs/COMMERCIAL_EXPORT.md).
+Este repositorio no ofrece una API HTTP, no realiza altas en el backend y no automatiza importaciones. Los JSON canónicos y las selecciones acreditadas **no son solicitudes de creación de productos del backend**. Existe, por separado, una **proyección comercial propia** que asigna categorías y atributos conforme a los snapshots locales y entrega JSON comerciales auditables. La persistencia, permisos e importación siguen en el backend. `npm run exportar` (Excel/JSON histórico) es compatibilidad heredada, mientras `npm run comercial` es el circuito comercial actual. Ver [Exportación comercial](docs/COMMERCIAL_EXPORT.md).
 
 **Para sacar o actualizar el catálogo de un proveedor**, basta con pedirlo en lenguaje natural (por ejemplo: «Saca el nuevo catálogo de GAM»). Se aplica el recorrido de [Operativa de catálogos](docs/CATALOG_OPERATIONS.md), desde el origen hasta los JSON comerciales verificables. Este recorrido no desplaza una petición expresa de mejora del código.
 
@@ -22,7 +22,7 @@ Para los criterios funcionales y de cierre, consultar [Operativa de catálogos](
 
 ## Regla de ejecución y cierre
 
-El trabajo técnico se orienta al **resultado productivo**: extracción completa, fichas correctas, cobertura comprobada, catálogo íntegro `ready`, campaña acreditable y entrega verificable, según el frente que corresponda. `estado`, `revisar`, `huecos`, `validar` y los diagnósticos no son metas por sí mismos: sus resultados alimentan correcciones en los motores existentes. Cuando el error es reproducible y generalizable, se modifica el código y se verifica contra el conjunto afectado; el trabajo no se da por terminado con un listado de incidencias o con comandos para analizarlas manualmente.
+El trabajo técnico se orienta al **resultado productivo**: extracción completa, fichas correctas, cobertura comprobada, catálogo íntegro `ready`, campaña acreditable y entrega verificable, según el frente que corresponda. `estado`, `revisar`, `auditar:huecos`, `validar` y los diagnósticos no son metas por sí mismos: sus resultados alimentan correcciones en los motores existentes. Cuando el error es reproducible y generalizable, se modifica el código y se verifica contra el conjunto afectado; el trabajo no se da por terminado con un listado de incidencias o con comandos para analizarlas manualmente.
 
 Los criterios **según el tipo de problema**, las protecciones de seguridad y los límites entre catálogo técnico, selección e importación están definidos en [Calidad del catálogo](docs/CATALOG_QUALITY.md). Ninguna automatización evita las aprobaciones editoriales reales, ni un `PASS` de extracción garantiza por sí solo cobertura completa o `0 review`.
 
@@ -38,7 +38,7 @@ Una consulta o un plan no equivalen a permiso para editar; una intervención pro
 
 La autorización para mejorar fichas alcanza **los módulos productivos necesarios dentro de `src/`**, no una reforma general del proyecto. Para cambiar Markdown, scripts, guards, comandos npm, carpetas protegidas, datos acreditados, contratos o publicaciones se necesita autorización explícita para el cambio concreto. **No crear documentación ni scripts temporales**, tampoco como paso intermedio, y no incorporar nombres de fases a rutas o ficheros. Reutilizar código, herramientas, tests y documentos existentes; una consulta o planificación no autoriza editar.
 
-El guard de gobernanza protege **17 rutas Markdown y 57 rutas de scripts**, además de los **58 comandos npm**; permite editar el contenido de los archivos inventariados, pero la política anterior exige permiso humano. Los guards de integridad, arquitectura editorial y tests protegen las fronteras del código. Consultar [Gobernanza](docs/REPOSITORY_GOVERNANCE.md), [Arquitectura](docs/ARCHITECTURE.md), [Pruebas](docs/TESTING.md) y [Calidad del catálogo](docs/CATALOG_QUALITY.md) antes de intervenir. No confundir un PASS de guards con permiso para cambiar contratos o datos.
+El guard de gobernanza protege **17 rutas Markdown y 57 rutas de scripts**, además de los **62 comandos npm**; permite editar el contenido de los archivos inventariados, pero la política anterior exige permiso humano. Los guards de integridad, arquitectura editorial y tests protegen las fronteras del código. Consultar [Gobernanza](docs/REPOSITORY_GOVERNANCE.md), [Arquitectura](docs/ARCHITECTURE.md), [Pruebas](docs/TESTING.md) y [Calidad del catálogo](docs/CATALOG_QUALITY.md) antes de intervenir. No confundir un PASS de guards con permiso para cambiar contratos o datos.
 
 ## Instalaciones existentes
 
@@ -78,7 +78,7 @@ La estructura de `src/` agrupa responsabilidades y no hitos temporales del desar
 
 Los nombres **internos** de archivos, directorios y módulos técnicos se mantienen en inglés; los comandos npm y la salida operativa conservan sus nombres en español. No se traducen IDs de proveedores, rutas persistidas, campos de contratos ni formatos acreditados por una cuestión estética. Ver [Arquitectura](docs/ARCHITECTURE.md).
 
-`npm test` encadena, en el orden de `package.json`, gobernanza y sus autopruebas, integridad de módulos, motor editorial compartido, frontera comercial/editorial, **guard de arquitectura editorial**, **guard de arquitectura de tests y sus autopruebas**, verificación de conocimiento, rendimiento, contrato comercial v2, build si es necesario, **comprobación de consenso de modelos** y `scripts/testing/run-tests.mjs`. Los guards arquitectónicos **son obligatorios y pueden bloquear la ejecución antes de compilar**; sus comprobaciones detalladas pueden invocarse individualmente para diagnosticar. Requieren el TypeScript **local** instalado mediante `npm ci`, no una resolución implícita del compilador global. `npm run contrato:comercial` permite comprobar el contrato comercial v2 de manera explícita; este guard también protege la exportación. El runner descubre recursivamente `src/**/*.test.ts`, ejecuta sus equivalentes compilados en `dist/` e incluye `scripts/**/*.test.mjs`. No fijar un número constante de archivos; para diagnosticar se puede ejecutar `node scripts/testing/run-tests.mjs --concurrencia 2` después del build o generar una medición JSON con `--medicion <ruta.json>`. Un guard correcto no equivale a `npm test` global completo.
+`npm test` encadena, en el orden de `package.json`, gobernanza y sus autopruebas, integridad de módulos, motor editorial compartido, frontera comercial/editorial, **guard de arquitectura editorial**, **guard de arquitectura de tests y sus autopruebas**, verificación de conocimiento, rendimiento, contrato comercial v2, build si es necesario, **comprobación de consenso de modelos** y `scripts/testing/run-tests.mjs`. Los guards arquitectónicos **son obligatorios y pueden bloquear la ejecución antes de compilar**; sus comprobaciones detalladas pueden invocarse individualmente para diagnosticar. Requieren el TypeScript **local** instalado mediante `npm ci`, no una resolución implícita del compilador global. `npm run comercial:contrato` permite comprobar el contrato comercial v2 de manera explícita; este guard también protege la exportación. El runner descubre recursivamente `src/**/*.test.ts`, ejecuta sus equivalentes compilados en `dist/` e incluye `scripts/**/*.test.mjs`. No fijar un número constante de archivos; para diagnosticar se puede ejecutar `node scripts/testing/run-tests.mjs --concurrencia 2` después del build o generar una medición JSON con `--medicion <ruta.json>`. Un guard correcto no equivale a `npm test` global completo.
 
 **Protección de los módulos de salida:** `src/scraping/output/publish.ts` y `csv-serializer.ts` deben mantenerse versionados. `.gitignore` excluye directorios genéricos `output/`, pero contiene la excepción `!src/scraping/output/`; no eliminarla al limpiar archivos generados. Ver [Mantenimiento](docs/OPERATIONS_AND_MAINTENANCE.md).
 
@@ -107,11 +107,39 @@ Git registra los datos de `catalogs/` **cuando tú los añades y haces commit**.
 
 ## Publicación técnica independiente para auditores
 
-`npm run publicacion:tecnica` habilita una **vía distinta de FINISH** para activar cortes técnicos con `ready` y `review`, sin cambiar publicaciones comerciales. Un proveedor completo se basa en original canónico y preparación validada; Manain usa su registro `partial` conciliado con CSV y censo. La simulación por defecto no escribe y `--activar` selecciona solo la versión técnica. `npm run huecos -- --tecnicas --detalle` analiza estos cortes, incluido el inventario de revisiones, sin mutar fichas. La retención mantiene la versión activa y la anterior; no acumula versiones ilimitadamente.
+`npm run publicacion:tecnica` habilita una **vía distinta de FINISH** para activar cortes técnicos con `ready` y `review`, sin cambiar publicaciones comerciales. Un proveedor completo se basa en original canónico y preparación validada; Manain usa su registro `partial` conciliado con CSV y censo. La simulación por defecto no escribe y `--activar` selecciona solo la versión técnica. `npm run auditar:huecos -- --tecnicas --detalle` analiza estos cortes, incluido el inventario de revisiones, sin mutar fichas. La retención mantiene la versión activa y la anterior; no acumula versiones ilimitadamente.
 
 El corte acreditado en noviembre de 2026 era Gomariz 547 (535 `ready`, 12 `review`) y Manain 384 (383 `ready`, 1 `review`); son **cifras observadas**, no expectativas fijas para los tests. Una publicación técnica puede contener pendientes editoriales y **no acredita comercialmente** sus unidades. La publicación comercial vigente de Gomariz procede de un corte anterior y requiere reconciliar bajas por falta de existencias antes de volver a exportarla. Ver [Publicaciones](docs/PUBLICATIONS.md) y [Exportación comercial](docs/COMMERCIAL_EXPORT.md).
 
-## Uso habitual: de una instalación limpia al ZIP final
+## Operativa habitual — Preparación, FINISH y comercial
+
+Desde la raíz del repositorio, con los originales acreditables disponibles y las dependencias instaladas:
+
+```powershell
+npm run preparar
+npm run publicar:simular
+npm run publicar
+npm run comercial:simular
+npm run comercial
+npm run estado
+```
+
+Preparar y FINISH seleccionan los cuatro proveedores; Manain conserva su procedencia parcial. El comercial utiliza `develop` por defecto y consume las publicaciones vigentes, sin volver a publicarlas. Revisar el resultado de cada simulación antes de ejecutar la acción definitiva; detenerse ante cualquier bloqueo. No encadenar comandos ignorando errores. Producción requiere `npm run comercial -- --entorno production` y su simulación equivalente `npm run comercial:simular -- --entorno production`.
+
+| Comando complementario | Propósito |
+| --- | --- |
+| `npm run auditar:huecos` | Calidad y huecos de contenido, bajo demanda. |
+| `npm run auditar:normalizacion` | Diagnóstico de normalización técnica, bajo demanda. |
+| `npm run comercial:auditar` | Auditoría comercial, sin escrituras. |
+| `npm run comercial:contrato` | Verificar el contrato comercial. |
+| `npm run auditar:bateria` | Batería de auditores de desarrollo. |
+| `npm run entregar:publicos` | ZIP de los cuatro públicos vigentes, bajo demanda. |
+| `npm run entregar:informes` | ZIP de informes vigentes de develop, bajo demanda. |
+| `npm run ayuda` | Inventario de comandos por familias y opciones. |
+
+Los dos puntos identifican variantes y familias. Los argumentos variables mantienen el separador npm: por ejemplo, `npm run publicar:simular -- --proveedor manain`. La preparación manual con origen explícito se conserva como `preparar:manual`. No hay alias para los nombres sustituidos. La campaña global continúa siendo independiente.
+
+## Campaña global — De una instalación limpia al ZIP final
 
 Ejecutar desde la raíz del repositorio:
 
@@ -147,15 +175,15 @@ Si una ficha necesita una corrección puntual acreditada, consulta los scripts e
 
 ### Publicación individual simplificada — Preparar y FINISH
 
-`npm run catalogo:preparar` ya prepara **GAM, Gomariz y Mercaeleva** en una sola operación desde los originales completos verificados de `catalogs/providers/<proveedor>/original/`. No pide rutas ni selecciona ficheros por fecha. Reutiliza una preparación vigente con idéntico SHA de origen y reglas, o genera otra versión offline con manifest y diagnósticos, sin tocar la anterior ni las publicaciones acreditadas. El modo `--simular` no escribe archivos:
+`npm run preparar` ya prepara **GAM, Gomariz, Mercaeleva y Manain** en una sola operación: originales completos verificados para los tres primeros y registro parcial oficial verificado para Manain. No pide rutas ni selecciona ficheros por fecha. Reutiliza una preparación vigente con idéntico SHA de origen y reglas, o genera otra versión offline con manifest y diagnósticos, sin tocar la anterior ni las publicaciones acreditadas. El modo `--simular` no escribe archivos:
 
 ```powershell
-npm run catalogo:preparar
-npm run catalogo:preparar -- --proveedor gam
-npm run catalogo:preparar -- --simular
+npm run preparar
+npm run preparar -- --proveedor gam
+npm run preparar -- --simular
 ```
 
-El resumen incluye `ready`, `review`, incidencias, referencias y diferencias **provisionales** respecto a la publicación vigente. Las ausencias observadas no autorizan exclusiones ni bajas. Si los originales son ambiguos, faltan evidencias, hay un manifest corrupto o dos preparaciones coincidentes, el proveedor queda bloqueado con diagnóstico; no se elige un fichero «más reciente» ni se sobrescribe nada. Manain y las campañas globales de cuatro conservan sus circuitos. **El ciclo individual ordinario tiene dos pasos:** preparar y publicar. `catalogo:publicar` realiza el preflight y reutiliza automáticamente solo exclusiones históricas idénticas con evidencia acreditada; un caso nuevo o distinto queda bloqueado, sin aprobación inventada. `catalogo:acreditar` es una operación opcional y no interactiva. Ver [Publicación individual](docs/PUBLICATIONS.md).
+El resumen incluye `ready`, `review`, incidencias, referencias y diferencias **provisionales** respecto a la publicación vigente. Las ausencias observadas no autorizan exclusiones ni bajas. Si los originales son ambiguos, faltan evidencias, hay un manifest corrupto o dos preparaciones coincidentes, el proveedor queda bloqueado con diagnóstico; no se elige un fichero «más reciente» ni se sobrescribe nada. Manain conserva su procedencia parcial; las campañas globales de cuatro conservan su circuito independiente. **El ciclo individual ordinario tiene dos pasos:** preparar y publicar. `publicar` realiza el preflight y reutiliza automáticamente solo exclusiones históricas idénticas con evidencia acreditada; un caso nuevo o distinto queda bloqueado, sin aprobación inventada. `catalogo:acreditar` es una operación opcional y no interactiva. Ver [Publicación individual](docs/PUBLICATIONS.md).
 
 **Operación opcional — acreditación automática por separado:**
 
@@ -165,14 +193,14 @@ npm run catalogo:acreditar
 npm run catalogo:acreditar -- --proveedor gam
 ```
 
-No abre una sesión interactiva: valida las preparaciones y únicamente puede reutilizar exclusiones históricas cuya referencia, fuente, estado e incidencias coincidan con los antecedentes acreditados. `--simular` no escribe. Si aparece una incidencia nueva, una exclusión distinta o una incompatibilidad, se bloquea; las decisiones nuevas requieren el procedimiento editorial explícito de `acreditar:proveedor`, no una aceptación automática. Ejecutar este comando no es obligatorio antes de FINISH.
+Por defecto acredita GAM, Gomariz y Mercaeleva; para Manain se requiere `-- --proveedor manain`. No abre una sesión interactiva: valida las preparaciones y únicamente puede reutilizar exclusiones históricas cuya referencia, fuente, estado e incidencias coincidan con los antecedentes acreditados. `--simular` no escribe. Si aparece una incidencia nueva, una exclusión distinta o una incompatibilidad, se bloquea; las decisiones nuevas requieren el procedimiento editorial explícito de `acreditar:proveedor`, no una aceptación automática. Ejecutar este comando no es obligatorio antes de FINISH.
 
 **Paso 2 — FINISH**, con las preparaciones verificadas:
 
 ```powershell
-npm run catalogo:publicar
-npm run catalogo:publicar -- --proveedor gam
-npm run catalogo:publicar -- --simular
+npm run publicar:simular
+npm run publicar
+npm run publicar -- --proveedor gam
 ```
 
 FINISH realiza el preflight del conjunto, contrasta diferencias y pérdidas, crea y verifica las candidatas internas acreditadas sin ZIP, y solo después activa y comprueba las publicaciones individuales. Un diario en `storage/publication/individual-finish/` permite recuperar activaciones parciales repitiendo el mismo comando. Después de activar, FINISH ejecuta retención y actualiza el `INFORME.txt` interno versionado y verificable que resume el trabajo sobre los originales hasta las publicaciones vigentes. Un fallo posterior a la activación se informa por separado: repetir FINISH completa los pasos pendientes sin republicar las mismas acreditaciones. Cuando ya están vigentes no genera nuevas publicaciones ni ZIP externos; el informe se vuelve a comprobar o crear si corresponde. Los auditores de huecos y normalización técnica se ejecutan bajo demanda, fuera de FINISH. Siguen existiendo las campañas globales de cuatro proveedores. Si hay bloqueo previo a la activación, se preservan las publicaciones anteriores. Ver [Publicación individual](docs/PUBLICATIONS.md).
@@ -189,7 +217,7 @@ npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion --li
 npm run acreditar:proveedor -- gam --origen $gam --preparacion $preparacion --consultar 6682
 ```
 
-Antes de usar `$preparacion`, comprobar su procedencia, versión del original y `rulesSha256`; **no elegirla solo por fecha de modificación**. Puede prepararse mediante `npm run catalogo:preparar -- --proveedor gam --detalle` y utilizarse la ruta verificada que comunique el circuito. El comando de acreditación vuelve a validar esas huellas. Tras contrastar la ficha con su origen, se puede registrar una decisión con `--decidir 6682 excluir --motivo "..." --evidencia <URL original mostrada por --consultar>`, repitiendo `--evidencia` para pruebas adicionales. `--validar` comprueba decisiones sin escritura y `--aprobar --motivo "..."` exige una aprobación humana global y bloquea cambios posteriores. El borrador se conserva en `storage/providers/<proveedor>/editorial/` con huella de las fuentes: no se reutiliza después de cambiar la preparación. Una vez aprobadas las decisiones y la aprobación global individual, el JSON comercial de un solo proveedor puede generarse sin campaña global:
+Antes de usar `$preparacion`, comprobar su procedencia, versión del original y `rulesSha256`; **no elegirla solo por fecha de modificación**. Puede prepararse mediante `npm run preparar -- --proveedor gam --detalle` y utilizarse la ruta verificada que comunique el circuito. El comando de acreditación vuelve a validar esas huellas. Tras contrastar la ficha con su origen, se puede registrar una decisión con `--decidir 6682 excluir --motivo "..." --evidencia <URL original mostrada por --consultar>`, repitiendo `--evidencia` para pruebas adicionales. `--validar` comprueba decisiones sin escritura y `--aprobar --motivo "..."` exige una aprobación humana global y bloquea cambios posteriores. El borrador se conserva en `storage/providers/<proveedor>/editorial/` con huella de las fuentes: no se reutiliza después de cambiar la preparación. Una vez aprobadas las decisiones y la aprobación global individual, el JSON comercial de un solo proveedor puede generarse sin campaña global:
 
 ```powershell
 npm run entregar:proveedor -- gam --source $gam --preparation $preparacion --dry-run
@@ -206,7 +234,7 @@ La entrega se guarda en `catalogs/providers/<proveedor>/publications/<alias-o-sh
 - `npm run ayuda` y `npm run ayuda -- <comando>`: ayuda desde la terminal; distingue lectura, preparación, escritura y autorización destructiva.
 - `npm run estado`: inventario de fuentes operativas, originales de `catalogs/`, JSON finales acreditados, integridad y discrepancias, sin escritura.
 - `npm run build` y `npm test`: compilación y pruebas del repositorio.
-- `npm run extraer:proveedor`, `extraer:todos`, `intervenir:manual`, `preparar`, `validar`, `seleccionar`, `seleccionar:proveedor`, `acreditar:proveedor`, `entregar:proveedor` y `cobertura`: operaciones avanzadas con finalidades distintas del flujo principal.
+- `npm run extraer:proveedor`, `extraer:todos`, `intervenir:manual`, `preparar:manual`, `validar`, `seleccionar`, `seleccionar:proveedor`, `acreditar:proveedor`, `entregar:proveedor` y `cobertura`: operaciones avanzadas con finalidades distintas del flujo principal.
 - `npm run manain:muestra` y `npm run manain:censo`: herramientas de diagnóstico específicas de Manain; no acreditan por sí solas una extracción completa.
 - `npm run recuperar -- <runId>`: inspección sin borrados de un intento fallido; `--recuperar`, `--abandonar ... --confirmar ...` y `--reanudar-rotacion` son operaciones explícitas de recuperación. Ver [Protocolo de campañas](docs/CAMPAIGNS.md).
 - `npm run referencia`: consulta y mantenimiento **legado** de `data/reference/`; `--actualizar` ya no es un paso habitual.
@@ -220,18 +248,18 @@ Ambos auditores se ejecutan explícitamente, antes o después de una intervenci�
 
 #### Auditor de normalización técnica
 
-`npm run normalizar:auditar` contrasta las representaciones de las prestaciones disponibles entre origen, preparación actual en memoria y publicación acreditada. Ejecuta los cuatro proveedores bajo demanda, con `--top N`, `--detalle` o `--json` (salida completa, usar `npm run --silent` para JSON limpio). Las señales no son defectos confirmados ni bloqueos de publicación. No escribe catálogos ni informes y no forma parte de FINISH. Ver [Diagnóstico de normalización técnica](docs/CATALOG_QUALITY.md#diagnóstico-de-normalización-técnica).
+`npm run auditar:normalizacion` contrasta las representaciones de las prestaciones disponibles entre origen, preparación actual en memoria y publicación acreditada. Ejecuta los cuatro proveedores bajo demanda, con `--top N`, `--detalle` o `--json` (salida completa, usar `npm run --silent` para JSON limpio). Las señales no son defectos confirmados ni bloqueos de publicación. No escribe catálogos ni informes y no forma parte de FINISH. Ver [Diagnóstico de normalización técnica](docs/CATALOG_QUALITY.md#diagnóstico-de-normalización-técnica).
 
 #### Auditor de huecos de contenido
 
-`npm run huecos` es un diagnóstico de desarrollo independiente de la publicación, la retención y la entrega comercial. Permite seleccionar el trabajo editorial o técnico por **carencia real**. Con `--comparar` analiza por identidad las descripciones publicadas y la preparación recalculada, muestra vacíos recuperados, pendientes, extremos, diferencias familiares y posibles pérdidas. Con `--comparar --specs` añade un informe separado de claves técnicas del original, la preparación y el final: sus ausencias familiares son **observaciones, no datos obligatorios**. `--finales` mide contenido editorial, densidad y semántica técnica de las publicaciones seleccionadas. `--comparar --titulos` es un modo alternativo a `--comparar --specs`. Para originales de campaña/referencia o canónicos explícitos mantiene el diagnóstico agrupado por proveedor y categoría original.
+`npm run auditar:huecos` es un diagnóstico de desarrollo independiente de la publicación, la retención y la entrega comercial. Permite seleccionar el trabajo editorial o técnico por **carencia real**. Con `--comparar` analiza por identidad las descripciones publicadas y la preparación recalculada, muestra vacíos recuperados, pendientes, extremos, diferencias familiares y posibles pérdidas. Con `--comparar --specs` añade un informe separado de claves técnicas del original, la preparación y el final: sus ausencias familiares son **observaciones, no datos obligatorios**. `--finales` mide contenido editorial, densidad y semántica técnica de las publicaciones seleccionadas. `--comparar --titulos` es un modo alternativo a `--comparar --specs`. Para originales de campaña/referencia o canónicos explícitos mantiene el diagnóstico agrupado por proveedor y categoría original.
 
 ```powershell
-npm run huecos -- --comparar
-npm run huecos -- --comparar --specs --json
-npm run huecos -- --comparar --titulos --json
-npm run huecos -- --finales
-npm run huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-catalog.json --agrupar marca --top 10
+npm run auditar:huecos -- --comparar
+npm run auditar:huecos -- --comparar --specs --json
+npm run auditar:huecos -- --comparar --titulos --json
+npm run auditar:huecos -- --finales
+npm run auditar:huecos -- --catalogo catalogs/providers/gam/original/scrape-gam-catalog.json --agrupar marca --top 10
 ```
 
 La población depende de la **publicación vigente seleccionada** o de la fuente explícita; no asumir que la última carpeta SHA está activa. En Mercaeleva la comparación parte de su publicación si no existe un original canónico independiente: no debe atribuirse a extracción original. El auditor es de **solo lectura**: no rellena fichas, no genera `review`, no acredita ni publica. La recuperación se implementa en el motor, con evidencia y comparación antes/después. Ver [Auditor de huecos](docs/CATALOG_QUALITY.md) para criterios, prioridades y límites.
@@ -272,7 +300,7 @@ Las operaciones GAM con rutas preconfiguradas son **herramientas de compatibilid
 - **Escritorio del usuario:** `equipzilla-AAAA-MM-DD-<runId>.zip` con los cuatro JSON publicables, sin artefactos internos; su ausencia posterior no invalida por sí sola la acreditación local.
 - `data/category/` y `data/import/`: snapshots usados por la proyección comercial actual y por compatibilidad histórica; **no son dependencias de la preparación canónica técnica**.
 - `catalogs/reports/`: resultados de auditoría y evidencias de informes versionados que consulta el panel. `catalogs/reports/revision/explorer-technical-evidence.json` contiene la clasificación técnica precalculada del corte; no es una fuente editorial independiente ni una publicación.
-- `panel/index.html`: panel local autónomo, de solo lectura, generado desde publicaciones, originales, informes y salida comercial acreditados. Se actualiza al ejecutar `npm run exportar:comercial -- --entorno develop` con entrega predeterminada; no con `--simular`, `--salida` ni `production`. Ver [Panel local](docs/COMMERCIAL_EXPORT.md#panel-local-de-evidencias).
+- `panel/index.html`: panel local autónomo, de solo lectura, generado desde publicaciones, originales, informes y salida comercial acreditados. Se actualiza al ejecutar `npm run comercial` con entrega predeterminada; no con `--simular`, `--salida` ni `production`. Ver [Panel local](docs/COMMERCIAL_EXPORT.md#panel-local-de-evidencias).
 
 Los nombres individuales de catálogo pueden variar por proveedor: `run.json`, la procedencia y los manifests determinan qué datos pertenecen a una campaña. `storage/` está excluido de Git y conserva los datos operativos sujetos a la retención segura de campañas; no debe vaciarse manualmente. `catalogs/` es la copia portátil de los datos **ya consolidados**, no una autorización para editar manualmente originales ni selecciones. Los originales completos individuales y las instantáneas por `runId` tienen ciclos de vida distintos. No borrar originales para corregir decisiones editoriales.
 

@@ -3,10 +3,10 @@ import type { PrepareOptions } from "../../preparation/workflow/prepare.js";
 import type { ManainRecordOptions } from "../../preparation/workflow/manain-record.js";
 
 export const prepareHelp = `Uso:
-  npm run preparar -- gam --source storage/scraped/gam/scrape-gam-catalog.json
-  npm run preparar -- gam --source <catalog.json> --out <preparation.json> --dry-run
-  npm run preparar -- gam --source <catalog.json> --out <preparation.json> --compare <preparacion-anterior.json>
-  npm run preparar -- manain --origen storage/scraped/manain/scrape-manain-partial-all.csv --censo storage/diagnostics/manain/<censo-.json> [--simular]
+  npm run preparar:manual -- gam --source storage/scraped/gam/scrape-gam-catalog.json
+  npm run preparar:manual -- gam --source <catalog.json> --out <preparation.json> --dry-run
+  npm run preparar:manual -- gam --source <catalog.json> --out <preparation.json> --compare <preparacion-anterior.json>
+  npm run preparar:manual -- manain --origen storage/scraped/manain/scrape-manain-partial-all.csv --censo storage/diagnostics/manain/<censo-.json> [--simular]
 
 Opciones: --source (obligatoria), --out, --dry-run, --compare, --help.
 Sin --out, escribe en storage/prepared/<proveedor>/<prefijo>-preparation.json.

@@ -47,8 +47,10 @@ const preparationFile = async (workspace: string): Promise<string> => {
   return join(directory, names[0]!);
 };
 
-test("la preparación admite Manain por selección explícita y conserva FINISH restringido", () => {
+test("la selección ordinaria incluye Manain y la acreditación opcional conserva su alcance", () => {
   assert.deepEqual(parseIndividualCatalogProviders([], true).providerIds, ["gam", "gomariz", "mercaeleva"]);
+  assert.deepEqual(parseIndividualCatalogProviders([], true, true).providerIds, ["gam", "gomariz", "mercaeleva", "manain"]);
+  assert.deepEqual(parseIndividualCatalogProviders(["--proveedor", "gam", "--simular"], true, true), { providerIds: ["gam"], dryRun: true });
   assert.deepEqual(parseIndividualCatalogProviders(["--proveedor", "manain"], true).providerIds, ["manain"]);
   assert.throws(() => parseIndividualCatalogProviders(["--proveedor", "manain"]), /requiere/);
 });

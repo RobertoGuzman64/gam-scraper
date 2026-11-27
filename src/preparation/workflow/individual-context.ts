@@ -184,7 +184,7 @@ export const requireIndividualPreparationContext = async (
 ): Promise<IndividualPreparationContext<IndividualCatalogProvider> & { readonly preparationFile: string; readonly preparation: OfflinePreparation }> => {
   const context = await resolveIndividualPreparationContext(workspace, providerId);
   if (!context.preparation || !context.preparationFile) {
-    throw new Error(`Falta preparación actual de ${providerId}. Ejecuta npm run catalogo:preparar; no uses rutas de storage manuales`);
+    throw new Error(`Falta preparación actual de ${providerId}. Ejecuta npm run preparar; no uses rutas de storage manuales`);
   }
   return { ...context, preparation: context.preparation, preparationFile: context.preparationFile };
 };

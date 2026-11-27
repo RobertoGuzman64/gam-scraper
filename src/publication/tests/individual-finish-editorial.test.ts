@@ -5,9 +5,10 @@ import test from "node:test";
 import { consolidate, runPublishIndividual } from "../../cli/commands/catalog/individual/publish-individual.js";
 import { preflightIndividualAccreditations } from "../individual/individual-accreditation.js";
 import { publishIndividualCatalogs } from "../individual/individual-finish.js";
+import { CAMPAIGN_PROVIDERS } from "../../contracts/campaign-providers.js";
 import { createIndividualFinishWorkspace, publishIndividualTestWorkspace } from "../../testing/builders/individual-finish-fixture.js";
 
-const withWorkspace = createIndividualFinishWorkspace();
+const withWorkspace = createIndividualFinishWorkspace(CAMPAIGN_PROVIDERS);
 
 test("FINISH reutiliza una publicación para comprobar cierre y reacreditación", async (context) => {
   await withWorkspace(async (root, desktop) => {
@@ -23,6 +24,7 @@ test("FINISH reutiliza una publicación para comprobar cierre y reacreditación"
         desktopDirectory: desktop, retention: () => { retentionCount++; }
       });
       assert.equal(finished?.mode, "complete");
+      assert.deepEqual(finished?.providers.map((item) => item.providerId), CAMPAIGN_PROVIDERS);
       assert.equal(retentionCount, 1);
       assert.deepEqual(await readdir(desktop), []);
       assert.ok((await lstat(join(root, "catalogs", "reports", "individual-finish", "active.json"))).isFile());
@@ -75,7 +77,7 @@ test("FINISH conserva publicaciones si falla el informe y permite reintentar sin
       desktopDirectory: desktop, retention: () => undefined,
       reporter: async () => { throw new Error("Informe interno sin permiso"); }
     }), /INFORME PENDIENTE.*Informe interno sin permiso/);
-    const archives = (await readdir(desktop)).filter((name) => /^equipzilla-(gam|gomariz|mercaeleva)-/.test(name));
+    const archives = (await readdir(desktop)).filter((name) => /^equipzilla-(gam|gomariz|mercaeleva|manain)-/.test(name));
     assert.equal(archives.length, 0);
     const recovered = await runPublishIndividual([], root, {
       desktopDirectory: desktop, retention: () => undefined

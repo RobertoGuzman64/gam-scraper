@@ -14,7 +14,7 @@ Sirve para registrar cortes técnicos trazables, incluidas revisiones, sin conve
 
 ### Finalidad y frontera comercial
 
-`publicacion:tecnica` activa un **snapshot técnico independiente** destinado a comparación y mejora del catálogo. Conserva `PreparedProduct`, `status`, `issues`, identidades y huellas; no transforma `review` en `ready` ni constituye una acreditación editorial o comercial. No sustituye `catalogo:publicar`, `acreditar:proveedor`, FINISH ni la campaña global.
+`publicacion:tecnica` activa un **snapshot técnico independiente** destinado a comparación y mejora del catálogo. Conserva `PreparedProduct`, `status`, `issues`, identidades y huellas; no transforma `review` en `ready` ni constituye una acreditación editorial o comercial. No sustituye `publicar`, `acreditar:proveedor`, FINISH ni la campaña global.
 
 - **GAM, Gomariz y Mercaeleva**: entrada desde original canónico completo y preparación offline **compatible con las huellas vigentes**.
 - **Manain**: entrada desde `manain-record.json`, CSV parcial y censo contrastados. El corte se identifica como `partial`; no es legítimo declararlo `complete` ni incorporarlo como publicación comercial individual mediante este comando. `publicacion:tecnica -- manain --ver` comprueba también el registro preservado frente al corte técnico activo (huella, identidades, preparados y descartes) sin reconstruir los CSV ni el censo ausentes; esta verificación interna no acredita la adquisición original ni habilita FINISH.
@@ -65,8 +65,8 @@ No editar manualmente JSON, hashes ni índices para corregir diferencias. Si fal
 ### Auditoría técnica y revisión editorial
 
 ```powershell
-npm run huecos -- --tecnicas --detalle
-npm run huecos -- --tecnicas --json
+npm run auditar:huecos -- --tecnicas --detalle
+npm run auditar:huecos -- --tecnicas --json
 ```
 
 `--tecnicas` examina los snapshots técnicos activos, **incluidos** los `review` y sus incidencias. Es un modo de consulta exclusivo: no combinarlo con `--finales`, `--comparar`, `--specs`, `--titulos`, `--catalogo` o `--publicacion`. Las señales de longitud, repetición editorial, densidad y semántica son **orientativas**, no defectos acreditados ni permisos para rellenar valores. Si una familia presenta textos ausentes de forma masiva, contrastar primero el mapper y la proyección técnica antes de iniciar una campaña de correcciones.
@@ -82,7 +82,7 @@ En el corte del 11 de noviembre de 2026 se descubrieron 633 URLs, se incluyeron 
 ### Validación de cambios
 
 ```powershell
-npm run contrato:comercial
+npm run comercial:contrato
 npm run test:guard
 npm test
 npm run build
@@ -91,7 +91,7 @@ npm run publicacion:tecnica -- gomariz --ver
 npm run publicacion:tecnica -- manain --ver
 ```
 
-`npm test` incluye el guard de rendimiento, el guard del contrato comercial v2, la compilación requerida y las suites; `npm run exportar:comercial` también ejecuta el guard por el despachador. Un resultado verde no sustituye la validación de datos y procedencia. No generar nuevas versiones de un catálogo para validar un cambio documental.
+`npm test` incluye el guard de rendimiento, el guard del contrato comercial v2, la compilación requerida y las suites; `npm run comercial` también ejecuta el guard por el despachador. Un resultado verde no sustituye la validación de datos y procedencia. No generar nuevas versiones de un catálogo para validar un cambio documental.
 
 Consultar también [Arquitectura](ARCHITECTURE.md), [Publicación individual](PUBLICATIONS.md), [Comercialización](COMMERCIAL_EXPORT.md), [Auditor de huecos](CATALOG_QUALITY.md) y [Mantenimiento](OPERATIONS_AND_MAINTENANCE.md).
 
@@ -101,7 +101,7 @@ Es el circuito de proveedor que produce los datos publicables acreditados y las 
 
 ### Alcance y condiciones previas
 
-El circuito individual usa los originales canónicos completos y verificables de `catalogs/providers/{gam,gomariz,mercaeleva}/original/`. Para **Manain**, admite exclusivamente el registro oficial `catalogs/providers/manain/records/manain-record.json` conciliado por huella e identidades con su publicación técnica; su procedencia permanece identificada como `partial` y no se presenta como una extracción canónica completa. No reemplaza la campaña global de cuatro proveedores. `catalogo:preparar` produce preparaciones offline; `catalogo:publicar` realiza la comprobación previa, la acreditación estrictamente limitada y FINISH. La operación intermedia `catalogo:acreditar` es opcional y no interactiva.
+El circuito individual usa los originales canónicos completos y verificables de `catalogs/providers/{gam,gomariz,mercaeleva}/original/`. Para **Manain**, admite exclusivamente el registro oficial `catalogs/providers/manain/records/manain-record.json` conciliado por huella e identidades con su publicación técnica; su procedencia permanece identificada como `partial` y no se presenta como una extracción canónica completa. No reemplaza la campaña global de cuatro proveedores. `preparar` produce preparaciones offline; `publicar` realiza la comprobación previa, la acreditación estrictamente limitada y FINISH. La operación intermedia `catalogo:acreditar` es opcional y no interactiva.
 
 Los originales, las aprobaciones y los finales son conjuntos distintos. Una ficha `review` no cambia a `ready` por ser excluida de una selección; un catálogo con publicaciones vigentes no acredita por ello todas las fichas originales como `ready`. Ningún comando aquí importa productos al backend.
 
@@ -109,7 +109,7 @@ Si una mejora nace de un defecto de extracción, primero debe existir un **origi
 
 #### Diferencia con la publicación técnica independiente
 
-`npm run publicacion:tecnica` conserva `ready` y `review` para análisis y puede activar Gomariz o el registro parcial de Manain sin ejecutar FINISH. **No** escribe en `publications/`, no selecciona candidatos comerciales ni reutiliza aprobaciones editoriales. El `catalogo:publicar` descrito en esta guía mantiene su preflight, su acreditación y su bloqueo ante decisiones nuevas. Ver [Publicaciones técnicas](PUBLICATIONS.md).
+`npm run publicacion:tecnica` conserva `ready` y `review` para análisis y puede activar Gomariz o el registro parcial de Manain sin ejecutar FINISH. **No** escribe en `publications/`, no selecciona candidatos comerciales ni reutiliza aprobaciones editoriales. El `publicar` descrito en esta guía mantiene su preflight, su acreditación y su bloqueo ante decisiones nuevas. Ver [Publicaciones técnicas](PUBLICATIONS.md).
 
 ### Recorrido ordinario
 
@@ -117,13 +117,13 @@ Desde PowerShell, en la raíz del repositorio:
 
 ```powershell
 npm ci
-npm run catalogo:preparar
-npm run catalogo:publicar -- --simular
-npm run catalogo:publicar
+npm run preparar
+npm run publicar:simular
+npm run publicar
 npm run estado
 ```
 
-Para operar solo un proveedor, añadir `-- --proveedor gam` (o `gomariz`, `mercaeleva` o `manain`) a los comandos `catalogo:*`. `--simular` consulta y calcula sin efectuar escrituras ni activar publicaciones. El flujo por defecto sigue incluyendo únicamente los tres proveedores con original canónico; Manain debe solicitarse expresamente. Ninguno se elige por la fecha del fichero.
+Para operar solo un proveedor, añadir `-- --proveedor gam` (o `gomariz`, `mercaeleva` o `manain`) a `preparar` o `publicar`. `publicar:simular` consulta y calcula sin efectuar escrituras ni activar publicaciones; acepta la misma selección individual. `preparar -- --simular` conserva el modo de consulta de preparación. `npm run diagnosticar:finish` inspecciona el preflight de los cuatro proveedores, o del proveedor explícito. El flujo ordinario incluye los cuatro proveedores por defecto; Manain conserva la procedencia parcial y sus requisitos específicos. Ninguno se elige por la fecha del fichero.
 
 **Manain:** la preparación oficial debe existir y su acreditación editorial debe estar aprobada expresamente mediante `acreditar:proveedor`. La revisión `MA3727` solo se excluye cuando consta una decisión válida con motivo y evidencia; la exclusión no modifica el registro original. FINISH genera la publicación individual con las fichas seleccionadas, verifica su procedencia y ejecuta el cierre ordinario. La exportación comercial por el circuito compartido requiere una integración independiente y no se presupone por la activación de esta publicación.
 
@@ -155,11 +155,11 @@ Tras una activación comprobada, FINISH ejecuta por separado:
 
 El informe se conserva en `catalogs/reports/individual-finish/versions/<sha256>/INFORME.txt`, con selección activa y recibo de cierre vinculado a su huella. Los recibos previos basados en ZIP siguen verificándose. Si una versión interna ya no está retenida legítimamente, repetir FINISH verifica el conjunto activo y renueva el recibo sin repetir la retención. Resume por proveedor y en total fichas originales/publicadas/excluidas, transformaciones, textos, títulos, campos y valores de specs, precios, condiciones, categorías y galerías. Se calcula al contrastar las publicaciones acreditadas con sus originales, no mediante estimaciones de trabajo previo ni copias de una publicación anterior. Su huella identifica los bytes del informe, que contiene la trazabilidad de orígenes, aprobaciones y publicaciones. **No sustituye un JSON publicable**, un expediente de calidad, ni una validación de completitud externa.
 
-FINISH conserva un diario en `storage/publication/individual-finish/` para recuperar activaciones parciales. Si falla retención o informe **después** de activar, las publicaciones ya comprobadas se conservan: el error identifica el paso pendiente y se puede repetir `npm run catalogo:publicar` tras corregir la causa. Con las mismas aprobaciones ya vigentes, el comando no crea ZIP externos ni vuelve a publicar; verifica o completa las operaciones posteriores. No borrar manualmente el diario, originales, recibos o publicaciones. Si se interrumpe la retirada, resolver primero la transacción conforme a [Mantenimiento](OPERATIONS_AND_MAINTENANCE.md#publicación-y-recuperación).
+FINISH conserva un diario en `storage/publication/individual-finish/` para recuperar activaciones parciales. Si falla retención o informe **después** de activar, las publicaciones ya comprobadas se conservan: el error identifica el paso pendiente y se puede repetir `npm run publicar` tras corregir la causa. Con las mismas aprobaciones ya vigentes, el comando no crea ZIP externos ni vuelve a publicar; verifica o completa las operaciones posteriores. No borrar manualmente el diario, originales, recibos o publicaciones. Si se interrumpe la retirada, resolver primero la transacción conforme a [Mantenimiento](OPERATIONS_AND_MAINTENANCE.md#publicación-y-recuperación).
 
 **Estados observables distintos:** (a) preparación correcta y preflight conforme, pero publicación aún no activa; (b) publicación activada y verificada, con un paso posactivación pendiente; (c) FINISH completo, incluidos retención e informe. Acreditar cada afirmación con su recibo, selector activo y diario. En un fallo tardío no restaurar ni sobrescribir una publicación verificada; resolver el paso pendiente y repetir FINISH de forma idempotente. Una exportación comercial posterior no sustituye la retención. La mejora continua del catálogo sigue el [manual de mejora](CATALOG_QUALITY.md).
 
-Los auditores de huecos (`npm run huecos -- --comparar --specs`) y normalización técnica (`npm run normalizar:auditar`) son herramientas de desarrollo de solo lectura, ejecutadas bajo demanda y fuera de FINISH. Sus resultados o fallos no condicionan el cierre operativo. Los diarios anteriores con etapa `retained` o `audited` se recuperan directamente desde el informe pendiente; no se repite la retención ni se exige ejecutar el auditor. `--estado` consulta esos diarios sin modificarlos.
+Los auditores de huecos (`npm run auditar:huecos -- --comparar --specs`) y normalización técnica (`npm run auditar:normalizacion`) son herramientas de desarrollo de solo lectura, ejecutadas bajo demanda y fuera de FINISH. Sus resultados o fallos no condicionan el cierre operativo. Los diarios anteriores con etapa `retained` o `audited` se recuperan directamente desde el informe pendiente; no se repite la retención ni se exige ejecutar el auditor. `--estado` consulta esos diarios sin modificarlos.
 
 Una campaña global de cuatro proveedores mantiene su propio flujo y retención; no se debe confundir con este FINISH individual. Para su operación consultar [Campañas](CAMPAIGNS.md) y [Acreditación de campaña](CAMPAIGNS.md).
 
@@ -174,12 +174,12 @@ npm run estado
 Diagnósticos de desarrollo opcionales, separados del cierre:
 
 ```powershell
-npm run huecos -- --comparar --specs
-npm run normalizar:auditar
+npm run auditar:huecos -- --comparar --specs
+npm run auditar:normalizacion
 ```
 
-Un build verde y un FINISH completo prueban contratos distintos. `estado` inspecciona integridad y publicaciones vigentes, pero no garantiza cobertura web; `huecos` y `normalizar:auditar` son de solo lectura. La preparación, los cambios editoriales y la acreditación requieren verificar los casos reales según [Validación](VALIDATION.md), [Arquitectura](ARCHITECTURE.md) y [Reglas de datos](DATA_CONTRACTS.md).
+Un build verde y un FINISH completo prueban contratos distintos. `estado` inspecciona integridad y publicaciones vigentes, pero no garantiza cobertura web; `auditar:huecos` y `auditar:normalizacion` son de solo lectura. La preparación, los cambios editoriales y la acreditación requieren verificar los casos reales según [Validación](VALIDATION.md), [Arquitectura](ARCHITECTURE.md) y [Reglas de datos](DATA_CONTRACTS.md).
 
 ### Entrega agrupada de públicos bajo demanda
 
-`npm run entregar -- --publicos` empaqueta exclusivamente los cuatro JSON de las publicaciones seleccionadas como vigentes, con sus nombres `<proveedor>-publishable.json`. Verifica las acreditaciones y huellas antes y después de la entrega, sin preparar, publicar, activar ni ejecutar retención. Si falta una selección explícita o una fuente es inválida, no entrega un ZIP parcial. El nombre se deriva de las huellas del contenido; una reejecución idéntica reutiliza el ZIP verificado y nunca sustituye otro. `npm run entregar` sin argumentos conserva el circuito de campaña global.
+`npm run entregar:publicos` empaqueta exclusivamente los cuatro JSON de las publicaciones seleccionadas como vigentes, con sus nombres `<proveedor>-publishable.json`. Verifica las acreditaciones y huellas antes y después de la entrega, sin preparar, publicar, activar ni ejecutar retención. Si falta una selección explícita o una fuente es inválida, no entrega un ZIP parcial. El nombre se deriva de las huellas del contenido; una reejecución idéntica reutiliza el ZIP verificado y nunca sustituye otro. `npm run entregar` sin argumentos conserva el circuito de campaña global.

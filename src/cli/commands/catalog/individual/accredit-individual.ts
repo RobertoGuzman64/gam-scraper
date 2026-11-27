@@ -46,7 +46,7 @@ export const runAccreditIndividual = async (args: readonly string[], workspace: 
     if (!provider) throw new Error("Acreditación automática sin proveedor");
     printStatus("PASS", `${provider.toUpperCase()} | ${review.inspection.completed} exclusiones acreditadas | APROBADA`);
   }
-  printStatus("PASS", "ACREDITACIONES COMPLETAS | Sin publicaciones. El paso es opcional; utiliza catalogo:publicar");
+  printStatus("PASS", "ACREDITACIONES COMPLETAS | Sin publicaciones. El paso es opcional; utiliza publicar");
   return true;
 };
 

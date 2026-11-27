@@ -42,7 +42,7 @@ const fakeAudit = async (_root, args) => {
 test("se conservan los once modos inventariados y solo lectura", () => {
   assert.equal(AUDIT_MODES.length, 11);
   assert.equal(new Set(AUDIT_MODES.map((item) => item.id)).size, 11);
-  assert.ok(AUDIT_MODES.every((item) => ["huecos", "auditar:comercial"].includes(item.command)));
+  assert.ok(AUDIT_MODES.every((item) => ["auditar:huecos", "comercial:auditar"].includes(item.command)));
   assert.equal(AUDIT_MODES.filter((item) => item.format === "json").length, 7);
   assert.ok(AUDIT_MODES.every((item) => !item.args.includes("--aplicar") && !item.args.includes("--simular")));
 });
@@ -101,7 +101,7 @@ test("JSON inválido, error de original y ejecución técnica se reflejan en el 
     const report = await runAuditBattery({ root, prepare: async () => okRun(),
       sources: async () => testSources(1), execute: async (...args) => {
         const result = await fakeAudit(...args);
-        if (args[1][1] === "huecos" && args[1].includes("--finales")) return okRun("texto inesperado");
+        if (args[1][1] === "auditar:huecos" && args[1].includes("--finales")) return okRun("texto inesperado");
         if (args[1].includes("--acreditacion-json")) return okRun(JSON.stringify({
           ...partial, auditCoverage: { requested: 3, evaluated: 1, incompleteSource: 1, errors: 1 } }), "", 1);
         return result;
