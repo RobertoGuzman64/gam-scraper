@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
-import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { spawnRunner, withRunner } from "./test-runner-fixture.js";
 const addCacheableSuites = (root: string): void => {
@@ -63,6 +62,12 @@ test("un nombre histórico no acredita lecturas externas ni invalida suites inde
     const failed = spawnRunner(root, []);
     assert.notEqual(failed.status, 0);
     assert.match(failed.stdout, /caché 2 suites \/ 2 tests/);
+    for (const prefix of ["src", "dist"]) {
+      const file = join(root, prefix, "publication", "tests", `individual-finish.test.${prefix === "src" ? "ts" : "js"}`);
+      writeFileSync(file, 'import test from "node:test"; test("independiente", () => {});');
+    }
+    assertCacheReuse(spawnRunner(root, []).stdout, 2, 3);
+    assertCacheReuse(spawnRunner(root, []).stdout, 3, 2);
   });
 });
 test("mediciones, concurrencia personalizada y CI ejecutan toda la batería", () => {
@@ -113,10 +118,11 @@ test("caché corrupta y resultados fallidos nunca acreditan tests", () => {
     const failed = spawnRunner(root, []);
     assert.equal(failed.status, 1, `${failed.stdout}${failed.stderr}`);
     assert.match(failed.stdout, /1 fallidos/);
+    assert.match(failed.stdout, /caché 2 suites \/ 2 tests/);
     writeFileSync(script, 'import test from "node:test"; test("prueba MJS", () => {});\n');
     const following = spawnRunner(root, []);
     assert.equal(following.status, 0, `${following.stdout}${following.stderr}`);
-    assertNoCacheReuse(following.stdout);
+    assertCacheReuse(following.stdout, 2, 2);
   });
 });
 test("la caché automática abarca suites de preparación auditadas sin nuevos comandos", () => {
@@ -165,7 +171,7 @@ test("los identificadores de sesión solo se normalizan en grafos independientes
     assert.match(failed.stdout, /caché 2 suites \/ 2 tests/);
     const recovered = spawnRunner(root, [], secondEnv);
     assert.equal(recovered.status, 0, `${recovered.stdout}${recovered.stderr}`);
-    assertCacheReuse(recovered.stdout, 0, 7);
+    assertCacheReuse(recovered.stdout, 2, 5);
     const unknown = spawnRunner(root, [], { ...secondEnv, EQUIPZILLA_TEST_CONTEXT: "unknown" });
     assert.equal(unknown.status, 0, `${unknown.stdout}${unknown.stderr}`);
     assertCacheReuse(unknown.stdout, 0, 7);
@@ -340,7 +346,7 @@ test("las nuevas admisiones puras reutilizan resultados sin ampliar automáticam
     changeNewPureDependency(root, "export const value = 1;\n");
     const recovered = spawnRunner(root, []);
     assert.equal(recovered.status, 0, `${recovered.stdout}${recovered.stderr}`);
-    assertCacheReuse(recovered.stdout, 0, 5);
+    assertCacheReuse(recovered.stdout, 1, 4);
   });
 });
 test("una nueva admisión pura deja de cachearse si su grafo incorpora entradas no acreditadas", () => {
@@ -389,9 +395,6 @@ test("la admisión por año UTC no autoriza otras dependencias del reloj", () =>
 });
 const addScopedDataSuites = (root: string): void => {
   const project = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
-  const compilerDirectory = join(root, "node_modules", "typescript");
-  mkdirSync(compilerDirectory, { recursive: true });
-  copyFileSync(createRequire(import.meta.url).resolve("typescript"), join(compilerDirectory, "index.js"));
   for (const prefix of ["src", "dist"]) {
     const extension = prefix === "src" ? "ts" : "js";
     for (const module of ["infrastructure/filesystem/editorial-knowledge", "infrastructure/filesystem/legacy-export/import-catalog-loader",
@@ -454,7 +457,7 @@ test("los lectores de datos acreditados conservan huellas independientes y ejecu
     assert.match(failed.stdout, /FAIL \| metadata/);
     assert.match(failed.stdout, /2 fallidos/);
     writeFileSync(metadata, '{"attributes":[],"relations":[]}');
-    assertCacheReuse(run(), 0, 5);
+    assertCacheReuse(run(), 1, 4);
     assertCacheReuse(run(), 3, 2);
     const reader = join(root, "src", "infrastructure", "filesystem", "legacy-export", "import-catalog-loader.ts");
     writeFileSync(reader, `${readFileSync(reader, "utf8")}\n`);
@@ -480,9 +483,6 @@ test("un fixture temporal acreditado se reutiliza solo mientras su grafo conserv
       mkdirSync(dirname(join(root, file)), { recursive: true });
       copyFileSync(join(project, file), join(root, file));
     }
-    const compilerDirectory = join(root, "node_modules", "typescript");
-    mkdirSync(compilerDirectory, { recursive: true });
-    copyFileSync(createRequire(import.meta.url).resolve("typescript"), join(compilerDirectory, "index.js"));
     const env = { NODE_OPTIONS: "" };
     assert.equal(spawnRunner(root, [], env).status, 0);
     const warm = spawnRunner(root, [], env);

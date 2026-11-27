@@ -3,7 +3,7 @@ import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync, renameS
 import { createRequire, isBuiltin } from "node:module";
 import { extname, join, relative, resolve } from "node:path";
 
-const VERSION = 9;
+const VERSION = 11;
 const CACHE_PATH = resolve("dist", ".test-results-cache.json");
 const DATA_DIRECTORIES = ["catalogs", "data", "docs"];
 const DATA_SCOPE_KNOWLEDGE = 1;
@@ -58,12 +58,12 @@ const AUDITED_FILESYSTEM_GRAPHS = new Map([
   ["dist/infrastructure/filesystem/catalog/tests/campaign-accreditation.test.js", { digest: "297233340d4f5415bf039246fe16266a768e2009a3871f6d10a8e28e3050c9f4", syntaxDigest: "a80ee6859762b08bedaace48520f348d42cc41f10c64ca1d0cd102450cd65b53", scope: DATA_SCOPE_ALL | DATA_SCOPE_RULES }],
   ["dist/infrastructure/filesystem/catalog/tests/finding-recognition-store.test.js", { digest: "66025b5855bc8926f2355829e655cd07c965ad42ccb2dfb2488f77deb82ae240", syntaxDigest: "43c36904fc042573f97a6b03f3a699fd36d769ed04d46cdcba7e471549bb7c95", scope: 0 }],
   ["dist/infrastructure/filesystem/campaign/tests/campaign-reference.test.js", { digest: "dfcb6aaf04ca83b6dcfe06954823fec09f5647c16a470d4538f95b03c93afb8b", syntaxDigest: "0985de5cb9d1a652860f00405114b60a794df5fc5a4d42a17485a5763b492195", scope: 0 }],
-  ["dist/publication/tests/individual-finish.test.js", { digest: "f92f712a2cbf4c5a096c240f26a10c4caf89b662a2a1e3353902c3c43b0dcb1c", syntaxDigest: "01a67e4a3ff5d34e7359e918c8e12c7ac0cb7c007fff6dc7b62112180aac7d59", scope: DATA_SCOPE_ALL | DATA_SCOPE_RULES }],
-  ["dist/publication/tests/individual-finish-cycle.test.js", { digest: "1c939b68f3dc4546a061d1273812098dd48e3b0197c821e4a6ed8c0224141050", syntaxDigest: "9e17f059cfa36685fdbee171ee540f3920303fc7ea58ff6893ddf2093c056815", scope: DATA_SCOPE_ALL | DATA_SCOPE_RULES }],
-  ["dist/publication/tests/individual-finish-editorial.test.js", { digest: "2c640fdd49e137571266e6672691581ec478d23518571417d84296cdcb384c3e", syntaxDigest: "ada79517ae4f61d32ade00cc1d66808b641cffbf42cb5fbdefeaa47864aa232d", scope: DATA_SCOPE_ALL | DATA_SCOPE_RULES }],
-  ["dist/publication/tests/individual-accreditation-session.test.js", { digest: "2c1b8d1014b35355d3c3a656357918ac2178f80344f172dd58773590f422083e", syntaxDigest: "e95091d27de13287d0ee6dd015c90c5de12f6b054298d7b707044c64b22b4326", scope: DATA_SCOPE_ALL | DATA_SCOPE_RULES }],
+  ["dist/publication/tests/individual-finish.test.js", { digest: "909f9adc70046f8af9b45056c87976f89b5af5312248600984f5bd86d929593f", syntaxDigest: "9112570046173a91852be53008d2550bcc47971c851f7331878a7da64e36b292", scope: DATA_SCOPE_ALL | DATA_SCOPE_RULES }],
+  ["dist/publication/tests/individual-finish-cycle.test.js", { digest: "d8a331c443cff4250110845e566ac892f439f36dc9ad30c9b075b2f99d640077", syntaxDigest: "69c9afd77428a42b0f1bbd0103c0fdc959ddbc4fd0f025da338cb0bf54653cc9", scope: DATA_SCOPE_ALL | DATA_SCOPE_RULES }],
+  ["dist/publication/tests/individual-finish-editorial.test.js", { digest: "7658a2d79694ebcb6080092d5f5b4e3e7198cf2f77f34fc636565f2c48c8cdd7", syntaxDigest: "67d3d6ea2caaf051c3628e5f0cd89113013c561fc637ed1a4f2601860e9c3218", scope: DATA_SCOPE_ALL | DATA_SCOPE_RULES }],
+  ["dist/publication/tests/individual-accreditation-session.test.js", { digest: "d66fcf4a6692b4956959aa1a63f1c4f3bcec4cc591f8a4fbbdb108ef68e2ec72", syntaxDigest: "b76be0c19f1c71d5553754505ed417466473d2d73ae8ebd0a046718ff537e931", scope: DATA_SCOPE_ALL | DATA_SCOPE_RULES }],
   ["dist/publication/tests/individual-selection.test.js", { digest: "22537765f55581e15ab87057b06fb5ef4edb3499b15889ca3b21e919fff1bbf8", syntaxDigest: "8c7f7c72e564ba74bc9dbc9e5f73229c4632f55e5d2fdbdac4a66771c89ff206", scope: DATA_SCOPE_ALL | DATA_SCOPE_RULES }],
-  ["dist/publication/tests/individual-work-report.test.js", { digest: "93b7ad2d99ad57e9a9aa35eea4cb4a0c6bdff0f7eb5e27bc2336306f7c4cf2b3", syntaxDigest: "09d4db448596f22ec1bf2d9841b0b00b0df35ef7bceef50fe7ae6df47216abea", scope: DATA_SCOPE_ALL | DATA_SCOPE_RULES }],
+  ["dist/publication/tests/individual-work-report.test.js", { digest: "05e38f4531a0343a476b88548847b6684c0ef7d37555ca62048491780eb7aeaa", syntaxDigest: "fa8b617b62fdb404cc2035b0998bcb596031d2e0e55c628fa5aaf75a4f154c53", scope: DATA_SCOPE_ALL | DATA_SCOPE_RULES }],
   ["dist/publication/tests/individual-finish-journal.test.js", { digest: "68d81a85a80391b88def3a2f61d8f9f931e0a0000be7644c47a5996afe6ec7d7", syntaxDigest: "79a0af561510455af207cbf9f55c8042f1fa41ff015f2f1ca9185ebdf01a1f68", scope: 0 }],
   ["dist/publication/tests/identity-conflict.test.js", { digest: "e5284a343dcc2850d8121fb463caacbed316b1423668c825efaea4b1c0883cb0", syntaxDigest: "490cd6ed1c5955be1b7869a46d12f6febf67607427fc765ee594681d6e422946", scope: DATA_SCOPE_ALL | DATA_SCOPE_RULES }],
   ["dist/infrastructure/filesystem/catalog/tests/repository-artifact-snapshot.test.js", { digest: "23bb65d76dffd557d3755b88f8be5d96ce5df8553915fcc90240f0c6d48bbd64", syntaxDigest: "96a159b64bf3b1d7df38a247a0f39e2555dd73200fbcfa51ddc6f15c2b6a5d02", scope: 0 }],
@@ -241,7 +241,40 @@ const ruleInputs = () => [
     "dist/catalog/identity.js", "dist/catalog/identity-conflicts.js"].filter(existsSync).map((path) => resolve(path))
 ];
 
-const sharedFingerprint = (withExternalData, withFullEnvironment, dataScope) => {
+const isOrdinaryToolingScript = (name, command, scripts) => {
+  if (command !== `node scripts/tooling.mjs ${name}` || !/^[a-z][a-z0-9:-]*$/u.test(name)) return false;
+  if (["install", "uninstall", "prepare", "publish", "pack", "dependencies", "start", "stop", "restart", "test", "build", "clean", "version"].includes(name)) return false;
+  if (name.startsWith("post")) return false;
+  if (name.startsWith("pre")) return (name === "preparar" || name === "preparar:manual") && !Object.hasOwn(scripts, name.slice(3));
+  return true;
+};
+
+const structuredRootInput = (file, content) => {
+  try {
+    const value = JSON.parse(content.toString("utf8"));
+    if (!value || typeof value !== "object" || Array.isArray(value)) return content;
+    if (file === "package.json" && Object.hasOwn(value, "scripts")) {
+      if (!value.scripts || typeof value.scripts !== "object" || Array.isArray(value.scripts) ||
+        Object.values(value.scripts).some((command) => typeof command !== "string")) return content;
+      value.scripts = Object.fromEntries(Object.entries(value.scripts).filter(([name, command]) =>
+        !isOrdinaryToolingScript(name, command, value.scripts)));
+    }
+    return Buffer.from(JSON.stringify(value));
+  } catch { return content; }
+};
+
+const sharedInputDigest = (file, preciseRoot, inputs) => {
+  const name = canonical(file);
+  const structured = preciseRoot && ["package.json", "package-lock.json", "node_modules/.package-lock.json"].includes(name);
+  const key = `${structured}:${name}`;
+  if (!inputs.has(key)) {
+    const content = readRegular(file);
+    inputs.set(key, hashBytes(structured ? structuredRootInput(name, content) : content));
+  }
+  return inputs.get(key);
+};
+
+const sharedFingerprint = (withExternalData, withFullEnvironment, dataScope, preciseRoot, inputDigests) => {
   const directories = [];
   const inputs = [
     ...(withExternalData ? scopedDataFiles(dataScope, directories) : []),
@@ -249,42 +282,99 @@ const sharedFingerprint = (withExternalData, withFullEnvironment, dataScope) => 
     ...(dataScope & DATA_SCOPE_EDITORIAL_SOURCE ? walkFiles(resolve("src/preparation/editorial"), undefined, directories) : []),
     ...(withExternalData ? SOURCE_DIRECTORIES.flatMap((directory) => walkFiles(resolve(directory), (path) =>
       !/\.(?:ts|tsx|js|mjs|cjs)$/u.test(path))) : []),
-    ...ROOT_FILES.filter((path) => (withExternalData || PURE_ROOT_FILES.has(path)) && existsSync(path))
+    ...ROOT_FILES.filter((path) => (withExternalData || PURE_ROOT_FILES.has(path)) &&
+      !(preciseRoot && path === "README.md") && existsSync(path))
       .map((path) => resolve(path))
   ].sort((left, right) => canonical(left).localeCompare(canonical(right)));
   const sha = createHash("sha256");
   const now = new Date();
-  sha.update(JSON.stringify({ version: VERSION, withExternalData, withFullEnvironment, dataScope, root: process.cwd(), node: process.version,
+  sha.update(JSON.stringify({ version: VERSION, withExternalData, withFullEnvironment, dataScope, preciseRoot, root: process.cwd(), node: process.version,
     executable: process.execPath, platform: process.platform, architecture: process.arch,
     env: environmentFingerprint(withFullEnvironment),
-    year: now.getUTCFullYear(),
+    year: now.getUTCFullYear(), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     ...(dataScope & DATA_SCOPE_RULES ? { date: now.toISOString().slice(0, 10), localDate: now.toDateString(), offset: now.getTimezoneOffset() } : {}) }));
   sha.update(JSON.stringify(directories.sort()));
   for (const file of inputs) {
     sha.update(canonical(file));
     sha.update("\0");
-    sha.update(readRegular(file));
+    sha.update(sharedInputDigest(file, preciseRoot, inputDigests));
     sha.update("\0");
   }
   return sha.digest("hex");
 };
 
-const importsOf = (code) => {
-  if (/\b(?:require|createRequire|eval)\s*\(|\bimport\s*\(/u.test(code)) return null;
-  const imports = [];
-  const statements = /\b(?:import|export)\s+[^;]{0,2000}?\bfrom\s*["']([^"']+)["']/gu;
-  for (const match of code.matchAll(statements)) imports.push(match[1]);
-  const sideEffects = /\bimport\s*["']([^"']+)["']/gu;
-  for (const match of code.matchAll(sideEffects)) imports.push(match[1]);
-  return imports;
+const LOADER_CAPABILITIES = new Set(["require", "createRequire", "getBuiltinModule", "binding", "_linkedBinding", "dlopen", "mainModule", "eval", "Function", "WebAssembly"]);
+const LOADER_BUILTINS = new Set(["module", "vm", "inspector", "inspector/promises", "v8", "repl"]);
+const TRACKED_PROCESS_MEMBERS = new Set(["env", "cwd", "platform", "arch", "version", "versions", "execPath"]);
+const RESTRICTED_RUNTIME_MEMBERS = new Set(["random", "randomUUID", "randomBytes", "randomInt", "randomFill", "randomFillSync", "getRandomValues", "hrtime", "performance", "setTimeout", "setInterval", "setImmediate", "fetch", "subtle", "mock", "pid", "uptime", "memoryUsage", "cpuUsage", "getPrototypeOf", "setPrototypeOf", "__proto__", "WebSocket", "EventSource", "BroadcastChannel", "SharedArrayBuffer", "Atomics", "WeakRef", "FinalizationRegistry"]);
+
+const moduleAnalyses = new Map();
+const analyzeModule = (code) => {
+  const key = hashBytes(Buffer.from(code));
+  if (moduleAnalyses.has(key)) return moduleAnalyses.get(key);
+  const ts = dataScopeCompiler();
+  if (!ts) return null;
+  const tree = ts.createSourceFile("module.js", code, ts.ScriptTarget.ES2022, true, ts.ScriptKind.JS);
+  if (tree.parseDiagnostics.length !== 0) return null;
+  const imports = [], sideEffects = [];
+  let unknownLoader = false, restrictedRuntime = false, readsClock = false, readsUtcYear = false;
+  const visit = (node) => {
+    if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
+      if (node.moduleSpecifier) {
+        if (!ts.isStringLiteral(node.moduleSpecifier) || node.attributes || node.assertClause) unknownLoader = true;
+        else {
+          const specifier = node.moduleSpecifier.text;
+          const builtin = specifier.replace(/^node:/u, "");
+          if (LOADER_BUILTINS.has(builtin) && isBuiltin(specifier)) unknownLoader = true;
+          (ts.isImportDeclaration(node) && !node.importClause ? sideEffects : imports).push(specifier);
+          if (isBuiltin(specifier) && ["process", "crypto"].includes(builtin)) {
+            const allowed = builtin === "process" ? TRACKED_PROCESS_MEMBERS : new Set(["createHash"]);
+            const bindings = node.importClause?.namedBindings;
+            if (node.importClause?.name || !bindings || !ts.isNamedImports(bindings) ||
+              bindings.elements.some((item) => !allowed.has((item.propertyName ?? item.name).text))) restrictedRuntime = true;
+          }
+          if (isBuiltin(specifier) && !SESSION_INDEPENDENT_BUILTINS.has(builtin) && !["fs", "fs/promises", "process"].includes(builtin)) restrictedRuntime = true;
+        }
+      }
+    }
+    if (ts.isImportEqualsDeclaration(node) || ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) unknownLoader = true;
+    const property = ts.isElementAccessExpression(node) && ts.isStringLiteralLike(node.argumentExpression) ? node.argumentExpression.text : undefined;
+    if (property !== undefined && LOADER_CAPABILITIES.has(property)) unknownLoader = true;
+    if (property !== undefined && RESTRICTED_RUNTIME_MEMBERS.has(property)) restrictedRuntime = true;
+    if (ts.isIdentifier(node)) {
+      const name = node.text;
+      if (LOADER_CAPABILITIES.has(name)) unknownLoader = true;
+      if (RESTRICTED_RUNTIME_MEMBERS.has(name) || ["globalThis", "global", "Reflect", "crypto"].includes(name) || name === "constructor" && !ts.isConstructorDeclaration(node.parent)) restrictedRuntime = true;
+      if (name === "process" && !(ts.isPropertyAccessExpression(node.parent) && node.parent.expression === node && TRACKED_PROCESS_MEMBERS.has(node.parent.name.text))) restrictedRuntime = true;
+      if (name === "Math" && !(ts.isPropertyAccessExpression(node.parent) && node.parent.expression === node)) restrictedRuntime = true;
+      if (name === "Date") {
+        const parent = node.parent;
+        const explicitDate = ts.isPropertyAccessExpression(parent) && parent.expression === node && ["parse", "UTC"].includes(parent.name.text) ||
+          ts.isNewExpression(parent) && parent.expression === node && Boolean(parent.arguments?.length) && !parent.arguments.some(ts.isSpreadElement);
+        if (!explicitDate && ts.isNewExpression(parent) && parent.expression === node && (parent.arguments?.length ?? 0) === 0 && ts.isPropertyAccessExpression(parent.parent) &&
+          parent.parent.expression === parent && parent.parent.name.text === "getUTCFullYear" && ts.isCallExpression(parent.parent.parent) &&
+          parent.parent.parent.expression === parent.parent && parent.parent.parent.arguments.length === 0) readsUtcYear = true;
+        else if (!explicitDate) readsClock = true;
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  const result = unknownLoader ? null : { imports: [...imports, ...sideEffects], restrictedRuntime, readsClock, readsUtcYear };
+  if (moduleAnalyses.size >= 2048) moduleAnalyses.clear();
+  moduleAnalyses.set(key, result);
+  return result;
 };
+
+const importsOf = (code) => analyzeModule(code)?.imports ?? null;
 
 const hasUncertainEnvironmentAccess = (code) => UNCERTAIN_ENVIRONMENT_ACCESS.test(code) ||
   /\b(?:import|export|from)\s*(?:\/\*|\/\/)/u.test(code);
 
 const resolveDependency = (importer, specifier) => {
   if (isBuiltin(specifier)) return undefined;
-  if (!specifier.startsWith("./") && !specifier.startsWith("../")) return null;
+  if ((!specifier.startsWith("./") && !specifier.startsWith("../")) || /[?#%\\:]/u.test(specifier) ||
+    ![".js", ".mjs"].includes(extname(specifier))) return null;
   const candidate = resolve(importer, "..", specifier);
   if (!candidate.startsWith(`${resolve("dist")}/`) && !candidate.startsWith(`${resolve("dist")}\\`) &&
     !candidate.startsWith(`${resolve("scripts")}/`) && !candidate.startsWith(`${resolve("scripts")}\\`)) return null;
@@ -298,11 +388,14 @@ const sourceOf = (path) => {
   return resolve("src", name.slice(5).replace(/\.js$/u, ".ts"));
 };
 
+const ordinaryTestOperationsAllowed = (source, text) => !REJECTED_TEST_OPERATIONS.some((expression) =>
+  expression.test(AUDITED_YEAR_SUITES.has(canonical(source)) ? withoutUtcYear(text) : text));
+
 const auditedSource = (file) => {
   const source = sourceOf(file);
   if (!source || !existsSync(source) || !(AUDITED_FAMILIES.some((prefix) => canonical(source).startsWith(prefix)) || AUDITED_INTEGRATION_SUITES.has(canonical(source)) || AUDITED_PURE_SUITES.has(canonical(source)) || AUDITED_INPUT_SUITES.has(canonical(source)) || AUDITED_YEAR_SUITES.has(canonical(source)) || AUDITED_FILESYSTEM_GRAPHS.has(canonical(file)))) return null;
   const text = readRegular(source).toString("utf8");
-  if (!AUDITED_FILESYSTEM_GRAPHS.has(canonical(file)) && REJECTED_TEST_OPERATIONS.some((expression) => expression.test(AUDITED_YEAR_SUITES.has(canonical(source)) ? withoutUtcYear(text) : text))) return null;
+  if (!AUDITED_FILESYSTEM_GRAPHS.has(canonical(file)) && !ordinaryTestOperationsAllowed(source, text)) return null;
   return source;
 };
 
@@ -357,20 +450,25 @@ const moduleFingerprint = (file, hashes, visiting = new Set()) => {
   const path = resolve(file);
   if (hashes.has(path)) return hashes.get(path);
   if (visiting.has(path)) return null;
+  for (let directory = resolve(path, ".."); directory !== process.cwd(); directory = resolve(directory, "..")) {
+    if (directory === resolve(directory, "..") || existsSync(join(directory, "package.json"))) return null;
+  }
   visiting.add(path);
   const content = readRegular(path);
   const code = content.toString("utf8");
   const restrictedModule = REJECTED_MODULE_OPERATIONS.some((pattern) => pattern.test(code));
   if (restrictedModule && canonical(path) !== "dist/cli/commands/catalog/individual/publish-individual.js") return null;
-  const dependencies = importsOf(code);
-  if (dependencies === null) return null;
+  const analysis = analyzeModule(code);
+  if (analysis === null) return null;
+  const dependencies = analysis.imports;
   const parts = [canonical(path), hashBytes(content)];
   const auditParts = [canonical(path), hashBytes(Buffer.from(normalizeLines(code)))];
-  let withExternalData = EXTERNAL_DATA_ACCESS.test(code) || /\b(?:node:)?fs(?:\/promises)?["']/u.test(code);
+  let withExternalData = dependencies.some((specifier) => ["fs", "fs/promises"].includes(specifier.replace(/^node:/u, ""))) || EXTERNAL_DATA_ACCESS.test(code);
   let withFullEnvironment = hasUncertainEnvironmentAccess(code) ||
     [...code.matchAll(/\b(?:from|import)\s*["']/gu)].length !== dependencies.length;
-  let restrictedPureOperations = hasRestrictedPureOperations(code);
-  let restrictedBeyondUtcYear = hasRestrictedPureOperations(withoutUtcYear(code));
+  let restrictedRuntime = analysis.restrictedRuntime || analysis.readsClock;
+  let restrictedPureOperations = hasRestrictedPureOperations(code) || restrictedRuntime || analysis.readsUtcYear;
+  let restrictedBeyondUtcYear = hasRestrictedPureOperations(withoutUtcYear(code)) || restrictedRuntime;
   let dataScope = 0;
   let unverifiedDataAccess = restrictedModule;
   let regularGraph = canonical(realpathSync(path)) === canonical(path);
@@ -413,6 +511,7 @@ const moduleFingerprint = (file, hashes, visiting = new Set()) => {
     regularGraph &&= fingerprint.regularGraph;
     withExternalData ||= fingerprint.withExternalData;
     withFullEnvironment ||= fingerprint.withFullEnvironment;
+    restrictedRuntime ||= fingerprint.restrictedRuntime;
     restrictedPureOperations ||= fingerprint.restrictedPureOperations;
     restrictedBeyondUtcYear ||= fingerprint.restrictedBeyondUtcYear;
     dataScope |= fingerprint.dataScope;
@@ -420,7 +519,7 @@ const moduleFingerprint = (file, hashes, visiting = new Set()) => {
   visiting.delete(path);
   const fingerprint = { digest: hashBytes(Buffer.from(parts.join("\0"))),
     auditDigest: hashBytes(Buffer.from(auditParts.join("\0"))),
-    withExternalData, withFullEnvironment, restrictedPureOperations, restrictedBeyondUtcYear, dataScope, unverifiedDataAccess, regularGraph };
+    withExternalData, withFullEnvironment, restrictedRuntime, restrictedPureOperations, restrictedBeyondUtcYear, dataScope, unverifiedDataAccess, regularGraph };
   hashes.set(path, fingerprint);
   return fingerprint;
 };
@@ -462,17 +561,21 @@ const syntaxGraphDigest = (file, hashes) => {
 };
 
 export const fingerprintTestInputs = (files) => {
+  const fingerprints = new Map();
+  if (!dataScopeCompiler() || (process.env.NODE_OPTIONS?.trim() && process.env.NODE_OPTIONS.trim() !== "--no-warnings") ||
+    process.execArgv.some((argument) => /^(?:-r|--(?:require|import|loader|experimental-loader))(?:.|$)/u.test(argument))) return fingerprints;
   const shared = new Map();
-  const sharedFor = (withExternalData, withFullEnvironment, dataScope = DATA_SCOPE_ALL) => {
+  const inputDigests = new Map();
+  const sharedFor = (withExternalData, withFullEnvironment, dataScope = DATA_SCOPE_ALL, preciseRoot = false) => {
     const fullEnvironment = withExternalData || withFullEnvironment || Boolean(process.env.NODE_OPTIONS);
     const scope = !withExternalData ? 0 : process.env.NODE_OPTIONS
       ? dataScope | DATA_SCOPE_ALL : dataScope || DATA_SCOPE_ALL;
-    const key = `${withExternalData}:${fullEnvironment}:${scope}`;
-    if (!shared.has(key)) shared.set(key, sharedFingerprint(withExternalData, fullEnvironment, scope));
+    preciseRoot &&= !(scope & DATA_SCOPE_ALL);
+    const key = `${withExternalData}:${fullEnvironment}:${scope}:${preciseRoot}`;
+    if (!shared.has(key)) shared.set(key, sharedFingerprint(withExternalData, fullEnvironment, scope, preciseRoot, inputDigests));
     return shared.get(key);
   };
   const hashes = new Map();
-  const fingerprints = new Map();
   const syntaxHashes = new Map();
   for (const file of files) {
     const name = canonical(file);
@@ -485,13 +588,16 @@ export const fingerprintTestInputs = (files) => {
       (digest.withExternalData || digest.withFullEnvironment || digest.restrictedBeyondUtcYear)) continue;
     const audited = AUDITED_FILESYSTEM_GRAPHS.get(name);
     if (audited) {
-      if (process.env.NODE_OPTIONS || !digest.regularGraph || (audited.digest !== digest.auditDigest &&
-        (!audited.syntaxDigest || audited.syntaxDigest !== syntaxGraphDigest(file, syntaxHashes)))) continue;
-      fingerprints.set(name, hashBytes(Buffer.from(`${sharedFor(audited.scope !== 0, true, audited.scope)}\0${digest.digest}`)));
-      continue;
+      if (!process.env.NODE_OPTIONS && digest.regularGraph && (audited.digest === digest.auditDigest ||
+        audited.syntaxDigest && audited.syntaxDigest === syntaxGraphDigest(file, syntaxHashes))) {
+        fingerprints.set(name, hashBytes(Buffer.from(`${sharedFor(audited.scope !== 0, true, audited.scope)}\0${digest.digest}`)));
+        continue;
+      }
+      if (!ordinaryTestOperationsAllowed(source, readRegular(source).toString("utf8"))) continue;
     }
-    if (digest.unverifiedDataAccess) continue;
-    fingerprints.set(name, hashBytes(Buffer.from(`${sharedFor(digest.withExternalData, digest.withFullEnvironment, digest.dataScope)}\0${digest.digest}`)));
+    if (digest.unverifiedDataAccess || digest.restrictedRuntime || !digest.regularGraph) continue;
+    fingerprints.set(name, hashBytes(Buffer.from(`${sharedFor(digest.withExternalData, digest.withFullEnvironment, digest.dataScope,
+      !digest.withExternalData || !(digest.dataScope & DATA_SCOPE_ALL))}\0${digest.digest}`)));
   }
   return fingerprints;
 };

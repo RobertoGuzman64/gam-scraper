@@ -360,7 +360,15 @@ if (success && inputFingerprints) {
     process.stdout.write(`${formatScriptStatus("WARN", `CACHÉ | No se pudo guardar: ${error instanceof Error ? error.message : String(error)}`)}\n`);
   }
 } else if (automaticCache && !success) {
-  try { discardTestResultsCache(); } catch (error) {
+  try {
+    const independentFailure = inputFingerprints && stableInputs && completeReports &&
+      summaries.some(({ success, counts }) => success === false && counts?.failed > 0) &&
+      summaries.every(({ success, counts }) => Number.isSafeInteger(counts?.failed) && counts.failed >= 0 &&
+        Number.isSafeInteger(counts.passed) && counts.passed >= 0 && counts.cancelled === 0 &&
+        counts.skipped === 0 && counts.todo === 0 && success === (counts.failed === 0));
+    if (independentFailure) saveTestResultsCache(inputFingerprints, cachedResults);
+    else discardTestResultsCache();
+  } catch (error) {
     process.stdout.write(`${formatScriptStatus("WARN", `CACHÉ | No se pudo invalidar: ${error instanceof Error ? error.message : String(error)}`)}\n`);
   }
 }
