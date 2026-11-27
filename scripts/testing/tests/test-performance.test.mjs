@@ -88,7 +88,7 @@ test("los perfiles guardan las duraciones de distintas concurrencias y siguen le
   }
 });
 
-test("redistribuye capacidad solo cuando un perfil completo acredita desequilibrio", () => {
+test("redistribuye capacidad con perfiles completos o suficientemente representativos", () => {
   const heavy = Array.from({ length: 10 }, (_, index) => `dist/intensiva-${index}.test.js`);
   const general = Array.from({ length: 120 }, (_, index) => `dist/general-${index}.test.js`);
   const files = [...heavy, ...general];
@@ -100,7 +100,11 @@ test("redistribuye capacidad solo cuando un perfil completo acredita desequilibr
   assert.deepEqual(lanes.flatMap((lane) => lane.files), files);
   assert.equal(lanes.reduce((sum, lane) => sum + lane.concurrency, 0), 12);
   measured.delete(general[0]);
+  assert.equal(planTestLanes(files, 12, measured, [])[0].concurrency, 5);
+  assert.equal(measured.has(general[0]), false);
+  for (const file of general.slice(0, 13)) measured.delete(file);
   assert.equal(planTestLanes(files, 12, measured, [])[0].concurrency, 4);
+  assert.equal(lanes[0].maxConcurrency, 6);
 });
 
 test("mantiene el reparto conocido ante perfiles equilibrados o cambios pequeños", () => {

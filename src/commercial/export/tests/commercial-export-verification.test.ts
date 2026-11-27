@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import test from "node:test";
+import type { FindingRecognitionRegistry } from "../../../catalog/diagnostics/findings/finding-recognitions.js";
+import { createTemporaryTestWorkspace } from "../../../testing/builders/reusable-workspace-fixture.js";
+import { createPublishedIndividualFinishWorkspace } from "../../../testing/builders/individual-finish-fixture.js";
 import { createCommercialReferenceFixture, type CommercialReferenceFixture } from "../../../testing/builders/commercial-reference-fixture.js";
-import { buildCommercialExportFiles, type CommercialExportFile } from "../commercial-export.js";
+import { buildCommercialExportFiles } from "../commercial-export.js";
 import { validateCommercialExportFiles, verifyCommercialExportSources } from "../commercial-export-verification.js";
 import { readZipArchive } from "../../../infrastructure/archive/zip.js";
 import { inspectCommercialPackage } from "../commercial-package-snapshot.js";
@@ -13,6 +15,8 @@ import { inspectRepositoryArtifact } from "../../../infrastructure/filesystem/ca
 import { renderCommercialIntegrationReport } from "../../../cli/reporting/commercial/commercial-integration-report.js";
 import { deliverCommercialPackages } from "../../../cli/reporting/commercial/commercial-package-delivery.js";
 import { createFile, isRecord, withManifest } from "./commercial-export-verification-fixture.js";
+
+const withPublishedWorkspace = createPublishedIndividualFinishWorkspace();
 
 let historicalFixturePromise: Promise<CommercialReferenceFixture> | undefined;
 
@@ -25,64 +29,63 @@ test.after(async () => {
   if (historicalFixturePromise) await (await historicalFixturePromise).cleanup();
 });
 
-let latestFilesPromise: Promise<readonly CommercialExportFile[]> | undefined;
-
-const currentCommercialFiles = (): Promise<readonly CommercialExportFile[]> =>
-  latestFilesPromise ??= commercialFixtureRoot().then((root) => buildCommercialExportFiles(root, null));
-
 test("impide exportaciones con fuentes comerciales cambiadas o selección de publicaciones obsoleta", async () => {
-  const root = await commercialFixtureRoot();
-  const files = await currentCommercialFiles();
-  assert.equal(files.length, 4);
+  await withPublishedWorkspace(async (root) => {
+    const registry: FindingRecognitionRegistry = { version: 1, recognitions: [] };
+    await mkdir(join(root, "data"), { recursive: true });
+    await writeFile(join(root, "data", "audit-finding-recognitions.json"), JSON.stringify(registry));
+    const files = await buildCommercialExportFiles(root, null);
+    assert.equal(files.length, 4);
 
-  const alteredReferences = withManifest(files, (manifest) => {
-    manifest.taxonomySha256 = "0".repeat(64);
-  });
-  await assert.rejects(verifyCommercialExportSources(root, alteredReferences), /referencias comerciales cambiaron/);
+    const alteredReferences = withManifest(files, (manifest) => {
+      manifest.taxonomySha256 = "0".repeat(64);
+    });
+    await assert.rejects(verifyCommercialExportSources(root, alteredReferences), /referencias comerciales cambiaron/);
 
-  const product = files.find((entry) => entry.name === "gam-commercial.json");
-  assert.ok(product);
-  const plan: unknown = JSON.parse(product.content);
-  assert.ok(isRecord(plan));
-  plan.publicationSha256 = "f".repeat(64);
-  const alteredProduct = createFile(product.name, `${JSON.stringify(plan, null, 2)}\n`);
-  const replaced = files.map((entry) => entry.name === product.name ? alteredProduct : entry);
-  const alteredPublication = withManifest(replaced, (manifest) => {
-    assert.ok(Array.isArray(manifest.providers));
-    const provider: unknown = manifest.providers.find((item: unknown) => isRecord(item) && item.providerId === "gam");
-    assert.ok(isRecord(provider));
-    provider.publicationSha256 = plan.publicationSha256;
-    provider.sha256 = alteredProduct.sha256;
-    provider.bytes = alteredProduct.bytes;
-  });
-  await assert.rejects(verifyCommercialExportSources(root, alteredPublication), /publicación activa de gam cambió/);
+    const product = files.find((entry) => entry.name === "gam-commercial.json");
+    assert.ok(product);
+    const plan: unknown = JSON.parse(product.content);
+    assert.ok(isRecord(plan));
+    plan.publicationSha256 = "f".repeat(64);
+    const alteredProduct = createFile(product.name, `${JSON.stringify(plan, null, 2)}\n`);
+    const replaced = files.map((entry) => entry.name === product.name ? alteredProduct : entry);
+    const alteredPublication = withManifest(replaced, (manifest) => {
+      assert.ok(Array.isArray(manifest.providers));
+      const provider: unknown = manifest.providers.find((item: unknown) => isRecord(item) && item.providerId === "gam");
+      assert.ok(isRecord(provider));
+      provider.publicationSha256 = plan.publicationSha256;
+      provider.sha256 = alteredProduct.sha256;
+      provider.bytes = alteredProduct.bytes;
+    });
+    await assert.rejects(verifyCommercialExportSources(root, alteredPublication), /publicación activa de gam cambió/);
 
-  const rewrittenPlan: unknown = JSON.parse(product.content);
-  assert.ok(isRecord(rewrittenPlan) && Array.isArray(rewrittenPlan.products));
-  const firstProduct: unknown = rewrittenPlan.products[0];
-  assert.ok(isRecord(firstProduct) && typeof firstProduct.title === "string");
-  firstProduct.title = `${firstProduct.title} alterado`;
-  const rewrittenProduct = createFile(product.name, `${JSON.stringify(rewrittenPlan, null, 2)}\n`);
-  const rewrittenExport = withManifest(files.map((entry) =>
-    entry.name === product.name ? rewrittenProduct : entry), (manifest) => {
-    assert.ok(Array.isArray(manifest.providers));
-    const provider: unknown = manifest.providers.find((item: unknown) => isRecord(item) && item.providerId === "gam");
-    assert.ok(isRecord(provider));
-    provider.sha256 = rewrittenProduct.sha256;
-    provider.bytes = rewrittenProduct.bytes;
-  });
-  await assert.rejects(verifyCommercialExportSources(root, rewrittenExport),
-    /fuentes originales o la proyección comercial cambiaron/);
+    const rewrittenPlan: unknown = JSON.parse(product.content);
+    assert.ok(isRecord(rewrittenPlan) && Array.isArray(rewrittenPlan.products));
+    const firstProduct: unknown = rewrittenPlan.products[0];
+    assert.ok(isRecord(firstProduct) && typeof firstProduct.title === "string");
+    firstProduct.title = `${firstProduct.title} alterado`;
+    const rewrittenProduct = createFile(product.name, `${JSON.stringify(rewrittenPlan, null, 2)}\n`);
+    const rewrittenExport = withManifest(files.map((entry) =>
+      entry.name === product.name ? rewrittenProduct : entry), (manifest) => {
+      assert.ok(Array.isArray(manifest.providers));
+      const provider: unknown = manifest.providers.find((item: unknown) => isRecord(item) && item.providerId === "gam");
+      assert.ok(isRecord(provider));
+      provider.sha256 = rewrittenProduct.sha256;
+      provider.bytes = rewrittenProduct.bytes;
+    });
+    await assert.rejects(verifyCommercialExportSources(root, rewrittenExport),
+      /fuentes originales o la proyección comercial cambiaron/);
 
-  const subset = withManifest(files.filter((entry) => entry.name !== "mercaeleva-commercial.json"), (manifest) => {
-    assert.ok(Array.isArray(manifest.providers));
-    manifest.providers = manifest.providers.filter((item: unknown) => isRecord(item) && item.providerId !== "mercaeleva");
+    const subset = withManifest(files.filter((entry) => entry.name !== "mercaeleva-commercial.json"), (manifest) => {
+      assert.ok(Array.isArray(manifest.providers));
+      manifest.providers = manifest.providers.filter((item: unknown) => isRecord(item) && item.providerId !== "mercaeleva");
+    });
+    await assert.rejects(verifyCommercialExportSources(root, subset), /conjunto de publicaciones activas cambió/);
   });
-  await assert.rejects(verifyCommercialExportSources(root, subset), /conjunto de publicaciones activas cambió/);
 });
 
 test("acredita el contrato real de los tres proveedores y la identidad de cada unidad", async () => {
-  const files = await currentCommercialFiles();
+  const files = await buildCommercialExportFiles(await commercialFixtureRoot(), null);
   validateCommercialExportFiles(files);
   const actual = files.filter((entry) => entry.name !== "commercial-manifest.json");
   assert.deepEqual(actual.map((entry) => entry.name).sort(), [
@@ -110,7 +113,7 @@ test("acredita el contrato real de los tres proveedores y la identidad de cada u
 });
 
 test("entrega un ZIP acreditado y conserva el informe interno de develop sin modificar entregas anteriores", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "equipzilla-pair-"));
+  const directory = await createTemporaryTestWorkspace("equipzilla-pair-");
   const root = await commercialFixtureRoot();
   const files = await buildCommercialExportFiles(root, "develop");
   const date = new Date("2026-11-06T11:00:00.000Z");

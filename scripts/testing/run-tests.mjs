@@ -314,7 +314,7 @@ if (profile) {
         }))
       })),
       estado_final: timelineMetrics.final_progress,
-      nota: "Los tiempos de finalización de archivos calculados a partir de duración e inicio son estimaciones. La recepción tardía de un informe no demuestra trabajo activo ni espera de cierre."
+      nota: "Los tiempos de finalización de archivos calculados a partir de duración e inicio son estimaciones. La recepción tardía de un informe no demuestra trabajo activo ni espera de cierre. La concurrencia por cola es la asignación inicial; las colas pueden aprovechar capacidad libre sin superar el límite global ni el máximo intensivo de planificación."
     },
     diagnostico: {
       tiempo_acumulado_archivos_ms: totalFileDuration,

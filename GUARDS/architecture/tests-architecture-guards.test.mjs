@@ -10,7 +10,7 @@ import { inspectEditorialArchitecture } from "./tests-editorial-architecture-gua
 import { inspectTestArchitecture } from "./tests-domain-tests-guard.mjs";
 import { inspectModuleIntegrity, inspectSourceStructure } from "./tests-module-integrity-guard.mjs";
 import { ts } from "./guards-architecture-core.mjs";
-import { inspectPanelHeavyPreparations } from "../tests-performance-guard.mjs";
+import { inspectPanelHeavyPreparations, inspectTestPerformance } from "../tests-performance-guard.mjs";
 
 const fixture = (t) => {
   const root = mkdtempSync(join(tmpdir(), "eqz-architecture-guard-"));
@@ -161,6 +161,11 @@ test("detecta preparaciones censales repetidas en el panel sin impedir lecturas 
   assert.notEqual(uncachedSelection, selectionSource);
   repeated.set(selection, uncachedSelection);
   assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("source: preparación costosa repetible")));
+  const localCache = selectionSource.replace("staticSource ??= prepareSource();",
+    "{ let staticSource: ReturnType<typeof prepareSource> | undefined; return staticSource ??= prepareSource(); }");
+  assert.notEqual(localCache, selectionSource);
+  repeated.set(selection, localCache);
+  assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("source: preparación costosa repetible")));
   const renamedSelection = selectionSource.replaceAll("staticSource", "memoizedSource");
   assert.notEqual(renamedSelection, selectionSource);
   repeated.set(selection, renamedSelection);
@@ -188,6 +193,61 @@ test("detecta preparaciones censales repetidas en el panel sin impedir lecturas 
   assert.notEqual(uncachedSnapshot, snapshotSource);
   repeated.set(snapshotTest, uncachedSnapshot);
   assert.ok(inspectPanelHeavyPreparations(repeated).some((finding) => finding.includes("readStaticSnapshot: preparación costosa repetible")));
+});
+
+const manainPerformanceFixture = () => {
+  const builder = "src/testing/builders/manain-individual-selection-fixture.ts";
+  const selection = "src/publication/tests/manain-individual-selection.test.ts";
+  const finish = "src/publication/tests/manain-individual-finish.test.ts";
+  const editorial = "src/preparation/workflow/tests/manain-editorial-integration.test.ts";
+  const build = "import { createManainSelectionWorkspace as build } from '../../testing/builders/manain-individual-selection-fixture.js';";
+  const prepare = "import { prepareVerifiedManainRecord as prepare } from '../../preparation/workflow/prepare.js';";
+  const sources = new Map([
+    ["src/testing/builders/individual-finish-fixture.ts", ""],
+    ["src/publication/tests/individual-finish-editorial.test.ts", "import { createIndividualFinishWorkspace as create } from '../../testing/builders/individual-finish-fixture.js'; create();"],
+    ["src/publication/tests/individual-finish.test.ts", "import { createIndividualFinishWorkspace as create } from '../../testing/builders/individual-finish-fixture.js'; create();"],
+    ["src/publication/tests/individual-work-report.test.ts", "import { createPublishedIndividualFinishWorkspace as create } from '../../testing/builders/individual-finish-fixture.js'; create();"],
+    ["src/panel/application/tests/dashboard.test.ts", ""],
+    ["src/panel/explorer/tests/read-panel-explorer.test.ts", ""],
+    ["src/tools/catalog/explorer-technical-evidence-cache.test.ts", ""],
+    ["src/panel/explorer/tests/explorer-selection.test.ts", ""],
+    ["src/panel/evidence/read-panel-snapshot.test.ts", ""],
+    ["src/preparation/workflow/prepare.ts", ""],
+    ["src/preparation/workflow/individual-prepare.ts", "import { prepareVerifiedManainRecord as prepare } from './prepare.js'; prepare();"],
+    [builder, `${prepare} export const createManainSelectionWorkspace = () => prepare();`],
+    [selection, `${build} import { reuseWorkspaceTestFixture } from '../../testing/builders/reusable-workspace-fixture.js'; const fixture = reuseWorkspaceTestFixture(() => build()); fixture.fixture(); fixture.fixture();`],
+    [finish, `${build} build();`],
+    [editorial, "import { prepareVerifiedManainRecord as prepare } from '../prepare.js'; prepare();"]
+  ]);
+  const check = (file, text, expected) => {
+    const changed = new Map(sources);
+    changed.set(file, text);
+    const result = inspectTestPerformance(changed);
+    assert.ok(result.errors.some((error) => error.startsWith(file) && error.includes(expected)), result.errors.join("\n"));
+  };
+  return { sources, builder, selection, build, prepare, check };
+};
+
+test("protege la preparación Manain sin impedir la selección aislada, FINISH ni la integración censal", () => {
+  const { sources, builder, selection, build, prepare, check } = manainPerformanceFixture();
+  assert.deepEqual(inspectTestPerformance(sources).errors, []);
+  check(selection, `${build} build(); build(); build(); build();`, "manain-workspace: 4 ejecuciones declaradas");
+  check(selection, `${build} const alias = build; [1, 2].map(alias);`, "manain-workspace dentro de iteración");
+  check(selection, `${build} for (const item of [1, 2]) build();`, "manain-workspace dentro de iteración");
+  check(builder, `${prepare} export const createManainSelectionWorkspace = () => { prepare(); return prepare(); };`, "manain-prepare: 2 ejecuciones declaradas");
+  const consumer = "src/publication/tests/manain-new-consumer.ts";
+  check(consumer, `${build} export const load = () => build();`, "nueva vía de manain-workspace");
+  check(consumer, "export { createManainSelectionWorkspace as load } from '../../testing/builders/manain-individual-selection-fixture.js';", "acceso indirecto a operación costosa (manain-workspace)");
+  check(consumer, "import { prepareVerifiedManainRecord as prepare } from '../../preparation/workflow/prepare.js'; export const load = () => prepare();", "nueva vía de manain-prepare");
+});
+
+test("detecta reconstrucciones Manain multiplicadas por helpers, aliases e iteraciones", () => {
+  const { selection, build, check } = manainPerformanceFixture();
+  const helpers = `${build} const initialize = () => build(); const load = () => initialize(); const alias = load;`;
+  check(selection, `${helpers} alias(); alias();`, "load: preparación costosa repetible");
+  check(selection, `${helpers} for (const item of [1, 2]) alias();`, "load: preparación costosa repetible");
+  check(selection, `${helpers} [1, 2].map(alias);`, "load: preparación costosa repetible");
+  check(selection, `${build} const load = () => { let local; return local ??= build(); }; load(); load();`, "load: preparación costosa repetible");
 });
 
 test("el comando comercial invoca el guard protegido desde guards", () => {

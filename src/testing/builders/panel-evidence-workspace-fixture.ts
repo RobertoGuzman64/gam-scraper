@@ -4,7 +4,7 @@ import { after } from "node:test";
 import { copyTestWorkspace, createTemporaryTestWorkspace } from "./reusable-workspace-fixture.js";
 import { prepareExplorerTechnicalEvidence } from "../../tools/catalog/prepare-explorer-technical-evidence.js";
 
-export const createPanelEvidenceWorkspaceFixture = (): {
+export const createPanelEvidenceWorkspaceFixture = (prepareTechnicalEvidence = true): {
   readonly root: () => Promise<string>;
   readonly withCopy: (action: (workspace: string) => Promise<void>) => Promise<void>;
 } => {
@@ -15,7 +15,7 @@ export const createPanelEvidenceWorkspaceFixture = (): {
         const directory = await createTemporaryTestWorkspace("eqz-panel-evidence-");
         try {
           await copyTestWorkspace(resolve(process.cwd(), "catalogs"), join(directory, "catalogs"));
-          await prepareExplorerTechnicalEvidence(directory);
+          if (prepareTechnicalEvidence) await prepareExplorerTechnicalEvidence(directory);
           return directory;
         } catch (error) {
           await rm(directory, { recursive: true, force: true });

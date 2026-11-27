@@ -16,7 +16,20 @@ const shared = {
   individual: "src/testing/builders/individual-workspace-fixture.ts",
   gaps: "src/cli/commands/catalog/tests/catalog-content-gaps-fixtures.ts"
 };
+const manain = {
+  builder: "src/testing/builders/manain-individual-selection-fixture.ts",
+  preparation: "src/preparation/workflow/prepare.ts",
+  selection: "src/publication/tests/manain-individual-selection.test.ts",
+  finish: "src/publication/tests/manain-individual-finish.test.ts",
+  editorial: "src/preparation/workflow/tests/manain-editorial-integration.test.ts"
+};
 const contracts = {
+  [manain.builder]: {
+    createManainSelectionWorkspace: ["manain-workspace", "reuseWorkspaceTestFixture"]
+  },
+  [manain.preparation]: {
+    prepareVerifiedManainRecord: ["manain-prepare", "createManainSelectionWorkspace", "tests"]
+  },
   "src/publication/individual/individual-finish.ts": {
     publishIndividualCatalogs: ["publish", "createIndividualFinishWorkspace / publishIndividualTestWorkspace"]
   },
@@ -46,6 +59,9 @@ const contracts = {
   },
 };
 const limits = {
+  [manain.selection]: { "manain-workspace": 1 },
+  [manain.editorial]: { "manain-prepare": 1 },
+  [manain.builder]: { "manain-prepare": 1 },
   "src/publication/tests/individual-finish-editorial.test.ts": {
     "finish-cli": 5, publish: 1, "publish-helper": 1, "finish-factory": 1
   },
@@ -61,8 +77,8 @@ const limits = {
   "src/publication/tests/finish-preflight.test.ts": {
     "finish-cli": 1, "prepare-helper": 1, "finish-factory": 1
   },
-  "src/publication/tests/manain-individual-finish.test.ts": {
-    "finish-cli": 1, "work-report": 1, "work-collection": 1
+  [manain.finish]: {
+    "finish-cli": 1, "work-report": 1, "work-collection": 1, "manain-workspace": 1
   },
   "src/publication/tests/individual-finish-recovery.test.ts": {
     "finish-cli": 6, "finish-factory": 1
@@ -164,6 +180,16 @@ const resolveModule = (source, specifier, files) => {
   const options = [base, base.replace(/\.(?:m?js)$/u, ".ts"), `${base}.ts`, `${base}.mjs`, `${base}/index.ts`];
   return options.find((candidate) => files.has(candidate)) ?? base;
 };
+const iterationCallback = (node) => ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) &&
+  ["map", "forEach", "flatMap", "reduce"].includes(node.expression.name.text);
+const isRepeated = (node) => {
+  for (let current = node.parent; current; current = current.parent) {
+    if (ts.isForStatement(current) || ts.isForOfStatement(current) || ts.isForInStatement(current) ||
+      ts.isWhileStatement(current) || ts.isDoStatement(current)) return true;
+    if ((ts.isArrowFunction(current) || ts.isFunctionExpression(current)) && iterationCallback(current.parent)) return true;
+  }
+  return false;
+};
 const namesFor = (file, sources) => {
   const source = ts.createSourceFile(file, sources.get(file), ts.ScriptTarget.Latest, true,
     extname(file) === ".ts" ? ts.ScriptKind.TS : ts.ScriptKind.JS);
@@ -235,22 +261,18 @@ const namesFor = (file, sources) => {
   };
   visitAliases(source);
   const calls = [];
-  const append = (node, target, kind = "call") => {
+  const append = (node, target, kind = "call", inIteration = false) => {
     if (!target) return;
     const position = source.getLineAndCharacterOfPosition(node.getStart(source));
-    let repeated = false;
-    for (let current = node.parent; current; current = current.parent) {
-      if (ts.isForStatement(current) || ts.isForOfStatement(current) || ts.isForInStatement(current) ||
-        ts.isWhileStatement(current) || ts.isDoStatement(current)) repeated = true;
-      if ((ts.isArrowFunction(current) || ts.isFunctionExpression(current)) &&
-        ts.isCallExpression(current.parent) && ts.isPropertyAccessExpression(current.parent.expression) &&
-        ["map", "forEach", "flatMap", "reduce"].includes(current.parent.expression.name.text)) repeated = true;
-    }
-    calls.push({ ...target, kind, repeated, line: position.line + 1, column: position.character + 1 });
+    calls.push({ ...target, kind, repeated: inIteration || isRepeated(node), line: position.line + 1, column: position.character + 1 });
   };
   const visit = (node) => {
     if (ts.isCallExpression(node)) {
       append(node, resolveName(node.expression));
+      if (iterationCallback(node)) {
+        const callback = node.arguments[0];
+        if (callback) append(callback, resolveName(callback), "call", true);
+      }
       if ((node.expression.kind === ts.SyntaxKind.ImportKeyword ||
         (ts.isIdentifier(node.expression) && node.expression.text === "require")) &&
         node.arguments.length && ts.isStringLiteral(node.arguments[0])) {
@@ -282,22 +304,22 @@ const namesFor = (file, sources) => {
   return { modules, calls, bindings: [...imports.values()] };
 };
 
-const inspectRepeatedPanelHelpers = (file, sources) => {
-  const entry = namesFor(file, sources);
-  const expensive = new Set(Object.values(panelPreparationLimits)
-    .flatMap((limits) => limits.filter(([, imported]) => imported !== "renderPanelHtml")
-      .map(([module, imported]) => `${module}#${imported}`)));
+const inspectRepeatedPreparationHelpers = (file, sources, expensive, entry = namesFor(file, sources)) => {
   const positions = new Set(entry.calls
     .filter((call) => call.kind === "call" && expensive.has(`${call.module}#${call.imported}`))
     .map((call) => `${call.line}:${call.column}`));
   const source = ts.createSourceFile(file, sources.get(file), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const functions = new Map();
+  const moduleVariables = new Set();
   for (const statement of source.statements) {
     if (ts.isFunctionDeclaration(statement) && statement.name && statement.body) {
       functions.set(statement.name.text, statement);
     }
     if (ts.isVariableStatement(statement)) {
       for (const declaration of statement.declarationList.declarations) {
+        if (ts.isIdentifier(declaration.name) && !(statement.declarationList.flags & ts.NodeFlags.Const)) {
+          moduleVariables.add(declaration.name.text);
+        }
         if (ts.isIdentifier(declaration.name) && declaration.initializer &&
           (ts.isArrowFunction(declaration.initializer) || ts.isFunctionExpression(declaration.initializer))) {
           functions.set(declaration.name.text, declaration.initializer);
@@ -305,44 +327,63 @@ const inspectRepeatedPanelHelpers = (file, sources) => {
       }
     }
   }
+  const functionAliases = new Map();
+  const localFunction = (expression) => {
+    if (ts.isParenthesizedExpression(expression)) return localFunction(expression.expression);
+    if (!ts.isIdentifier(expression)) return undefined;
+    return functions.has(expression.text) ? expression.text : functionAliases.get(expression.text);
+  };
+  for (const statement of source.statements) {
+    if (!ts.isVariableStatement(statement) || !(statement.declarationList.flags & ts.NodeFlags.Const)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (ts.isIdentifier(declaration.name) && declaration.initializer) {
+        const target = localFunction(declaration.initializer);
+        if (target) functionAliases.set(declaration.name.text, target);
+      }
+    }
+  }
   const invocations = new Map();
   const repeated = new Set();
-  const isRepeated = (node) => {
-    for (let current = node.parent; current; current = current.parent) {
-      if (ts.isForStatement(current) || ts.isForOfStatement(current) || ts.isForInStatement(current) ||
-        ts.isWhileStatement(current) || ts.isDoStatement(current)) return true;
-      if ((ts.isArrowFunction(current) || ts.isFunctionExpression(current)) &&
-        ts.isCallExpression(current.parent) && ts.isPropertyAccessExpression(current.parent.expression) &&
-        ["map", "forEach", "flatMap", "reduce"].includes(current.parent.expression.name.text)) return true;
-    }
-    return false;
+  const record = (name, inIteration) => {
+    if (!name) return;
+    invocations.set(name, (invocations.get(name) ?? 0) + 1);
+    if (inIteration) repeated.add(name);
   };
   const visitInvocations = (node) => {
-    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && functions.has(node.expression.text)) {
-      const name = node.expression.text;
-      invocations.set(name, (invocations.get(name) ?? 0) + 1);
-      if (isRepeated(node)) repeated.add(name);
+    if (ts.isCallExpression(node)) {
+      record(localFunction(node.expression), isRepeated(node));
+      if (iterationCallback(node) && node.arguments[0]) record(localFunction(node.arguments[0]), true);
     }
     ts.forEachChild(node, visitInvocations);
   };
   visitInvocations(source);
   const dependencies = new Map();
-  const isMemoized = (node, boundary) => {
+  const isMemoized = (node, boundary, localBindings) => {
     for (let current = node.parent; current && current !== boundary; current = current.parent) {
       if (ts.isBinaryExpression(current) &&
         [ts.SyntaxKind.QuestionQuestionEqualsToken, ts.SyntaxKind.BarBarEqualsToken]
-          .includes(current.operatorToken.kind)) return true;
+          .includes(current.operatorToken.kind) && ts.isIdentifier(current.left) &&
+        moduleVariables.has(current.left.text) && !localBindings.has(current.left.text)) return true;
     }
     return false;
   };
   for (const [name, fn] of functions) {
+    const localBindings = new Set();
+    const collectBindings = (node) => {
+      if ((ts.isVariableDeclaration(node) || ts.isParameter(node) || ts.isBindingElement(node)) && ts.isIdentifier(node.name)) {
+        localBindings.add(node.name.text);
+      }
+      ts.forEachChild(node, collectBindings);
+    };
+    collectBindings(fn);
     const calls = [];
     let direct = false;
     const visit = (node) => {
-      if (ts.isCallExpression(node) && !isMemoized(node, fn)) {
+      if (ts.isCallExpression(node) && !isMemoized(node, fn, localBindings)) {
         const position = source.getLineAndCharacterOfPosition(node.getStart(source));
         if (positions.has(`${position.line + 1}:${position.character + 1}`)) direct = true;
-        if (ts.isIdentifier(node.expression) && functions.has(node.expression.text)) calls.push(node.expression.text);
+        const callee = localFunction(node.expression);
+        if (callee) calls.push(callee);
       }
       ts.forEachChild(node, visit);
     };
@@ -385,8 +426,11 @@ export const inspectPanelHeavyPreparations = (sources) => {
       }
     }
   }
+  const expensive = new Set(Object.values(panelPreparationLimits)
+    .flatMap((limits) => limits.filter(([, imported]) => imported !== "renderPanelHtml")
+      .map(([module, imported]) => `${module}#${imported}`)));
   for (const file of panelSharedPreparationSuites) {
-    if (sources.has(file)) findings.push(...inspectRepeatedPanelHelpers(file, sources));
+    if (sources.has(file)) findings.push(...inspectRepeatedPreparationHelpers(file, sources, expensive));
     else if (!(file in panelPreparationLimits)) findings.push(`${file} | suite protegida ausente`);
   }
   return findings;
@@ -396,7 +440,16 @@ const testSupport = (path) => path.startsWith("src/testing/") || /(?:^|\/)tests\
   /\.test\.[cm]?[jt]s$/u.test(path);
 const isProtectedSource = (path, discovered) => protectedSuites.includes(path) || Object.values(shared).includes(path) ||
   discovered.has(path);
-const guard = (sources) => {
+const operationContract = (file, target) => {
+  const contract = contracts[target.module]?.[target.imported];
+  return contract && (contract[2] !== "tests" || testSupport(file)) ? contract : undefined;
+};
+const manainPreparationSources = [manain.builder, manain.selection, manain.finish, manain.editorial];
+const manainExpensive = new Set([
+  `${manain.builder}#createManainSelectionWorkspace`,
+  `${manain.preparation}#prepareVerifiedManainRecord`
+]);
+export const inspectTestPerformance = (sources) => {
   const parsed = new Map([...sources].map(([file]) => [file, namesFor(file, sources)]));
   const related = new Set(protectedSuites);
   const queue = [...protectedSuites];
@@ -428,6 +481,10 @@ const guard = (sources) => {
     protectedSuites.includes(file) || (testSupport(file) && discovered.has(file)))
     .flatMap(([, entry]) => [...entry.modules]));
   const errors = inspectPanelHeavyPreparations(sources);
+  for (const file of manainPreparationSources) {
+    if (!sources.has(file)) errors.push(`${file} | preparación protegida ausente`);
+    else errors.push(...inspectRepeatedPreparationHelpers(file, sources, manainExpensive, parsed.get(file)));
+  }
   const count = new Map();
   const rawCount = new Map();
   const add = (file, call, message) => errors.push(`${file}:${call.line}:${call.column} | ${message}`);
@@ -440,7 +497,7 @@ const guard = (sources) => {
     const isNewRelatedHelper = helperImports.has(file) && !testSupport(file) && !trustedDirectImports.has(file) &&
       !trustedProduction.has(file);
     for (const call of entry.calls) {
-      const contract = contracts[call.module]?.[call.imported];
+      const contract = operationContract(file, call);
       if (contract && !trustedProduction.has(file)) {
         if (call.kind !== "call") {
           add(file, call, `acceso indirecto a operación costosa (${contract[0]}); reutiliza ${contract[1]}`);
@@ -473,7 +530,7 @@ const guard = (sources) => {
   for (const [file, entry] of parsed) {
     if (trustedProduction.has(file)) continue;
     for (const binding of entry.bindings) {
-      const contract = contracts[binding.module]?.[binding.imported];
+      const contract = operationContract(file, binding);
       if (!contract) continue;
       const allowed = limits[file]?.[contract[0]] ??
         (["finish-factory", "published-factory"].includes(contract[0]) && testSupport(file) ? 1 : 0);
@@ -509,12 +566,12 @@ const guard = (sources) => {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const sources = loadSources();
-  const result = guard(sources);
+  const result = inspectTestPerformance(sources);
   if (result.errors.length) {
     console.error(formatScriptStatus("FAIL", `PROTECCIÓN DE TESTS | ${result.errors.length} incumplimientos`, process.stderr));
     for (const problem of result.errors) console.error(`  ${problem}`);
     process.exitCode = 1;
   } else {
-    console.log(formatScriptStatus("PASS", `PROTECCIÓN DE TESTS | ${protectedSuites.length + panelSharedPreparationSuites.length} suites | ${result.files} módulos | ${result.contracts} cuotas de ejecución | ${result.raw} cuotas de infraestructura`));
+    console.log(formatScriptStatus("PASS", `PROTECCIÓN DE TESTS | ${protectedSuites.length + panelSharedPreparationSuites.length + manainPreparationSources.filter((file) => file.endsWith(".test.ts")).length} suites | ${result.files} módulos | ${result.contracts} cuotas de ejecución | ${result.raw} cuotas de infraestructura`));
   }
 }

@@ -16,7 +16,7 @@ const workspace = async (task: (root: string) => Promise<void>): Promise<void> =
   finally { await rm(root, { recursive: true, force: true }); }
 };
 
-const fixture = createPanelEvidenceWorkspaceFixture();
+const fixture = createPanelEvidenceWorkspaceFixture(false);
 
 let staticSnapshot: ReturnType<typeof readPanelSnapshot> | undefined;
 const readStaticSnapshot = (): ReturnType<typeof readPanelSnapshot> =>

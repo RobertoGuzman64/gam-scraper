@@ -3,6 +3,7 @@ import { existsSync, lstatSync, readFileSync, renameSync, rmSync, writeFileSync 
 import { relative, resolve } from "node:path";
 
 const PROFILE_VERSION = 1;
+const MIN_PROFILE_COVERAGE = 0.9;
 const PROFILE_PATH = resolve("dist", ".test-runner-durations.json");
 const canonical = (path) => relative(process.cwd(), resolve(path)).replaceAll("\\", "/");
 
@@ -27,9 +28,19 @@ export const loadTestDurations = (concurrency) => {
   }
 };
 
-const estimatedLaneTime = (files, workers, previous) => {
+const intensiveLimit = (concurrency) => Math.min(6, concurrency - 4);
+
+const estimateDurations = (files, previous) => {
+  const measured = files.map((file) => previous.get(canonical(file)));
+  const known = measured.filter((duration) => duration !== undefined);
+  if (known.length < Math.ceil(files.length * MIN_PROFILE_COVERAGE)) return null;
+  const conservative = Math.max(...known);
+  return measured.map((duration) => duration ?? conservative);
+};
+
+const estimatedLaneTime = (durations, workers) => {
   const slots = Array.from({ length: workers }, () => 0);
-  for (const duration of files.map((file) => previous.get(canonical(file))).sort((left, right) => right - left)) {
+  for (const duration of [...durations].sort((left, right) => right - left)) {
     const slot = slots.indexOf(Math.min(...slots));
     slots[slot] += duration;
   }
@@ -38,18 +49,20 @@ const estimatedLaneTime = (files, workers, previous) => {
 
 const balancedConcurrency = (intensive, remaining, concurrency, previous) => {
   const standard = Math.min(4, Math.max(2, Math.floor(concurrency / 3)));
-  if (!previous || intensive.length < 6 || remaining.length < 10 ||
-    [...intensive, ...remaining].some((file) => !previous.has(canonical(file)))) return standard;
+  if (!previous || intensive.length < 6 || remaining.length < 10) return standard;
+  const intensiveDurations = estimateDurations(intensive, previous);
+  const generalDurations = estimateDurations(remaining, previous);
+  if (!intensiveDurations || !generalDurations) return standard;
   const baseline = Math.max(
-    estimatedLaneTime(intensive, standard, previous),
-    estimatedLaneTime(remaining, concurrency - standard, previous)
+    estimatedLaneTime(intensiveDurations, standard),
+    estimatedLaneTime(generalDurations, concurrency - standard)
   );
   let chosen = standard;
   let best = baseline;
-  for (let intensiveWorkers = 2; intensiveWorkers <= Math.min(6, concurrency - 4); intensiveWorkers += 1) {
+  for (let intensiveWorkers = 2; intensiveWorkers <= intensiveLimit(concurrency); intensiveWorkers += 1) {
     const estimate = Math.max(
-      estimatedLaneTime(intensive, intensiveWorkers, previous),
-      estimatedLaneTime(remaining, concurrency - intensiveWorkers, previous)
+      estimatedLaneTime(intensiveDurations, intensiveWorkers),
+      estimatedLaneTime(generalDurations, concurrency - intensiveWorkers)
     );
     if (estimate < best) {
       best = estimate;
@@ -75,7 +88,7 @@ export const planTestLanes = (files, concurrency, previous, defaults) => {
   if (intensive.length < 2 || remaining.length === 0) return single;
   const intensiveConcurrency = balancedConcurrency(intensive, remaining, concurrency, previous);
   return [
-    { name: "intensiva", files: intensive, concurrency: intensiveConcurrency },
+    { name: "intensiva", files: intensive, concurrency: intensiveConcurrency, maxConcurrency: intensiveLimit(concurrency) },
     { name: "general", files: remaining, concurrency: concurrency - intensiveConcurrency }
   ];
 };

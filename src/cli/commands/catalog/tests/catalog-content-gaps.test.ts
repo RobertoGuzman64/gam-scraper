@@ -1,12 +1,44 @@
 import assert from "node:assert/strict";
-import { copyFile, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
-import test from "node:test";
-import { execute, gam, gomariz, mercaeleva } from "./catalog-content-gaps-fixtures.js";
+import { join } from "node:path";
+import test, { type TestContext } from "node:test";
+import { execute } from "./catalog-content-gaps-fixtures.js";
+import { writeCanonicalCatalog } from "../../../../infrastructure/filesystem/catalog/originals/canonical-catalog.js";
+import type { ProductRecord } from "../../../../contracts/catalog.js";
 
-test("huecos analiza catálogos canónicos explícitos sin exigir referencia global", async () => {
-  const before = await readFile(gam, "utf8");
+const workspace = async (t: TestContext): Promise<string> => {
+  const directory = await mkdtemp(join(tmpdir(), "gaps-catalogo-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  return directory;
+};
+
+const original = async (root: string, providerId: string): Promise<string> => {
+  const directory = join(root, providerId);
+  await mkdir(directory);
+  const prefix = `scrape-${providerId}`;
+  const startedAt = "2026-01-01T00:00:00Z";
+  const endedAt = "2026-01-02T00:00:00Z";
+  const products: ProductRecord[] = ["1", "2"].map((reference) => ({
+    providerId, reference, url: `https://example.test/${providerId}/${reference}`,
+    categoryKey: "plataformas", categoryName: "Plataformas", title: "Plataforma de tijera eléctrica",
+    brand: "Marca", model: "Modelo", shortDescription: "Plataforma eléctrica", longDescription: null,
+    price: null, year: null, location: null, country: null, horometer: null, serialNumber: null, image: null,
+    specs: reference === "1" ? { "Altura de trabajo": "8 m" } : {}
+  }));
+  const catalogSha256 = await writeCanonicalCatalog(directory, prefix, "a".repeat(16), startedAt, endedAt, products);
+  await writeFile(join(directory, `${prefix}-summary.json`), JSON.stringify({ startedAt, endedAt,
+    quality: { status: "complete", published: true }, totals: { scrapedProducts: products.length }, artifacts: { catalogSha256 } }));
+  return join(directory, `${prefix}-catalog.json`);
+};
+
+test("huecos analiza catálogos canónicos explícitos sin exigir referencia global", async (t) => {
+  const directory = await workspace(t);
+  const gam = await original(directory, "gam");
+  const gomariz = await original(directory, "gomariz");
+  const mercaeleva = await original(directory, "mercaeleva");
+  const paths = [gam, gomariz, mercaeleva].flatMap((path) => [path, path.replace(/-catalog\.json$/u, "-catalog.manifest.json"), path.replace(/-catalog\.json$/u, "-summary.json")]);
+  const before = await Promise.all(paths.map((path) => readFile(path)));
   const single = JSON.parse(await execute(["--catalogo", gam, "--json"])) as {
     provenance: { source: string; catalogs: { providerId: string; contentSha256: string }[] };
     universe: { total: number; providers: { providerId: string }[] };
@@ -15,7 +47,7 @@ test("huecos analiza catálogos canónicos explícitos sin exigir referencia glo
     technicalDensity: { totals: { products: number } };
   };
   assert.equal(single.provenance.source, "catalogos_canonicos");
-  assert.ok(single.universe.total > 0);
+  assert.equal(single.universe.total, 2);
   assert.equal(single.editorial.providers[0]?.providerId, "gam");
   assert.equal(single.technicalDensity.totals.products, single.universe.total);
   assert.equal(single.editorialReuse.analyzed, single.universe.total);
@@ -27,38 +59,33 @@ test("huecos analiza catálogos canónicos explícitos sin exigir referencia glo
   assert.match(combined, /catálogos explícitos \(gam, gomariz, mercaeleva\)/);
   const originalCount = /HUECOS \|[^\n]*\| originales (\d+)/u.exec(combined);
   assert.ok(originalCount);
-  assert.ok(Number(originalCount[1]) >= single.universe.total);
+  assert.equal(Number(originalCount[1]), 6);
   assert.match(combined, /CALIDAD EDITORIAL/);
   assert.match(combined, /SEÑALES EDITORIALES/);
   assert.match(combined, /REUTILIZACIÓN EDITORIAL/);
   assert.match(combined, /DENSIDAD TÉCNICA \| PRIORIDAD EDITORIAL/);
-  assert.equal(await readFile(gam, "utf8"), before);
+  assert.deepEqual(await Promise.all(paths.map((path) => readFile(path))), before);
 });
 
-test("huecos rechaza fuentes parciales y proveedores repetidos", async () => {
-  await assert.rejects(execute(["--catalogo", "storage/scraped/manain/scrape-manain-partial-all.csv"]));
+test("huecos rechaza fuentes parciales y proveedores repetidos", async (t) => {
+  const directory = await workspace(t);
+  const gam = await original(directory, "gam");
+  const partial = join(directory, "scrape-manain-partial-all.csv");
+  await writeFile(partial, "providerId,reference\nmanain,1\n");
+  await assert.rejects(execute(["--catalogo", partial]), /fichero -catalog\.json/);
   await assert.rejects(execute(["--catalogo", gam, "--catalogo", gam]), /Proveedor duplicado/);
   await assert.rejects(execute(["--catalogo", "--json"]), /requiere la ruta/);
 });
 
-test("huecos exige manifiesto y publicación completa coherentes para la fuente explícita", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "gaps-catalogo-"));
-  try {
-    const catalog = join(dir, "scrape-gomariz-catalog.json");
-    const sourceDir = resolve(gomariz, "..");
-    for (const name of ["scrape-gomariz-catalog.json", "scrape-gomariz-catalog.manifest.json", "scrape-gomariz-summary.json"]) {
-      await copyFile(join(sourceDir, name), join(dir, name));
-    }
-    const valid = await execute(["--catalogo", catalog, "--top", "1"]);
-    assert.match(valid, /HUECOS \|[^\n]*\| originales [1-9]\d*/u);
-    const original = await readFile(catalog, "utf8");
-    await writeFile(catalog, `${original} `);
-    await assert.rejects(execute(["--catalogo", catalog]), /ejecuciones distintas/);
-    await writeFile(catalog, original);
-    await rm(join(dir, "scrape-gomariz-summary.json"));
-    await assert.rejects(execute(["--catalogo", catalog]));
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
+test("huecos exige manifiesto y publicación completa coherentes para la fuente explícita", async (t) => {
+  const directory = await workspace(t);
+  const catalog = await original(directory, "gomariz");
+  const valid = await execute(["--catalogo", catalog, "--top", "1"]);
+  assert.match(valid, /HUECOS \|[^\n]*\| originales [1-9]\d*/u);
+  const content = await readFile(catalog, "utf8");
+  await writeFile(catalog, `${content} `);
+  await assert.rejects(execute(["--catalogo", catalog]), /ejecuciones distintas/);
+  await writeFile(catalog, content);
+  await rm(join(directory, "gomariz", "scrape-gomariz-summary.json"));
+  await assert.rejects(execute(["--catalogo", catalog]));
 });
-

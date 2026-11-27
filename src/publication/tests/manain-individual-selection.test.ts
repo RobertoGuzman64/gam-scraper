@@ -7,11 +7,18 @@ import { offlinePreparationManifestPath } from "../../infrastructure/filesystem/
 import { approveIndividualEditorial, decideIndividualEditorial, inspectIndividualEditorial, startIndividualEditorial } from "../individual/individual-editorial.js";
 import { readIndividualSelection, selectIndividualPublishable } from "../individual/individual-selection.js";
 import { createManainSelectionWorkspace } from "../../testing/builders/manain-individual-selection-fixture.js";
+import { reuseWorkspaceTestFixture } from "../../testing/builders/reusable-workspace-fixture.js";
 import { stageReviewedTestExclusions } from "./stage-reviewed-test-exclusions.js";
 
 
+const fixture = reuseWorkspaceTestFixture(async () => {
+  const data = await createManainSelectionWorkspace();
+  return { ...data, cleanup: () => rm(data.root, { recursive: true, force: true }) };
+});
+test.after(() => fixture.close());
+
 test("Manain: selección verificable conserva revisiones sin aprobación ni publicación", async () => {
-  const { root, source, preparation } = await createManainSelectionWorkspace();
+  const { root, source, preparation } = await fixture.fixture();
   try {
     const original = await readFile(source);
     const selected = await readIndividualSelection("manain", source, preparation);
@@ -37,7 +44,7 @@ test("Manain: selección verificable conserva revisiones sin aprobación ni publ
 });
 
 test("Manain: selección rechaza ruta de origen ajena y procedencia modificada", async () => {
-  const { root, source, preparation } = await createManainSelectionWorkspace();
+  const { root, source, preparation } = await fixture.fixture();
   try {
     const alternative = join(root, "catalogs", "providers", "manain", "records", "otro-record.json");
     await copyFile(source, alternative);
@@ -51,7 +58,7 @@ test("Manain: selección rechaza ruta de origen ajena y procedencia modificada",
 });
 
 test("Manain: selección rechaza preparación o manifest manipulados", async () => {
-  const { root, source, preparation } = await createManainSelectionWorkspace();
+  const { root, source, preparation } = await fixture.fixture();
   try {
     const contents = await readFile(preparation, "utf8");
     await writeFile(preparation, `${contents} `);
@@ -65,7 +72,7 @@ test("Manain: selección rechaza preparación o manifest manipulados", async () 
 });
 
 test("Manain: admite el registro parcial verificado solo con exclusión y aprobación humana", async () => {
-  const { root, source, preparation } = await createManainSelectionWorkspace();
+  const { root, source, preparation } = await fixture.fixture();
   try {
     const selection = await readIndividualSelection("manain", source, preparation);
     const pending = selection.draft.exclusions;

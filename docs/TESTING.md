@@ -128,7 +128,7 @@ Los tests de regresión históricos de Gomariz deben utilizar snapshots y public
 
 ### Runner y medición reproducible
 
-`scripts/testing/run-tests.mjs` distribuye pruebas por carriles, ordena cargas por duración histórica y escoge una concurrencia apropiada para la máquina mediante `scripts/testing/test-performance.mjs` y `test-runner-execution.mjs`. `test-runner-observability.mjs` y `test-runner-ui.mjs` presentan tiempos, omisiones y regresiones. `test-result-cache.mjs` puede reutilizar resultados en condiciones controladas; `test-runner-completion.mjs` decide si una ejecución es acreditable. No reducir la cobertura ni eliminar un test lento solo para mejorar la cifra global.
+`scripts/testing/run-tests.mjs` distribuye pruebas por carriles, ordena cargas por duración histórica y escoge una concurrencia apropiada para la máquina mediante `scripts/testing/test-performance.mjs` y `test-runner-execution.mjs`. `test-runner-observability.mjs` y `test-runner-ui.mjs` presentan tiempos, omisiones y regresiones. `test-result-cache.mjs` puede reutilizar resultados en condiciones controladas; `test-runner-completion.mjs` decide si una ejecución es acreditable. No reducir la cobertura ni eliminar un test lento solo para mejorar la cifra global. Los ejecutores de cada carril toman archivos de una cola compartida de pendientes. Cuando no quedan archivos intensivos por iniciar, su capacidad disponible puede ejecutar pendientes del carril general; cada informe conserva el carril original y no aumenta el límite global ni el de suites intensivas. La concurrencia por carril del perfil describe la asignación inicial.
 
 ```powershell
 npm ci
