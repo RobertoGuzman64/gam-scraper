@@ -1,6 +1,8 @@
+import { editorialFamilyOf, editorialFamilyName, resolveConsistentEditorialFamily, type EditorialFamily } from "../../../preparation/editorial/core/editorial-families.js";
 import { fold } from "../../../preparation/classification/category-utils.js";
 import { normalizedSpecKey, specHasValue } from "./content-gaps-source.js";
 import type { SpecValue } from "../../../contracts/catalog.js";
+import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 import type { DescriptionCoverageInput } from "./description-coverage.js";
 
 export type TechnicalPriority = "P1" | "P2";
@@ -95,8 +97,8 @@ const classify = (text: string): PriorityTechnicalFamily | null => {
   return null;
 };
 
-export const technicalPriorityFamily = (input: DescriptionCoverageInput): PriorityTechnicalFamily | null => {
-  const title = fold(input.published.title ?? input.source.title ?? "");
+export const technicalPriorityFamilyFor = (input: Pick<DescriptionCoverageInput, "source">, product: ImportCandidate): PriorityTechnicalFamily | null => {
+  const title = fold(product.title ?? input.source.title ?? "");
   if (/\b(?:lotes?|packs?|conjunto|varias unidades)\b/u.test(title)) return null;
   const url = fold(new URL(input.source.url).pathname.replace(/-/gu, " "));
   const byTitle = classify(title);
@@ -107,6 +109,9 @@ export const technicalPriorityFamily = (input: DescriptionCoverageInput): Priori
   }
   return byTitle ?? byUrl;
 };
+
+export const technicalPriorityFamily = (input: DescriptionCoverageInput): PriorityTechnicalFamily | null =>
+  technicalPriorityFamilyFor(input, input.published);
 
 export const publishedTechnicalKeys = (specs: Readonly<Record<string, SpecValue>>): readonly string[] => [
   ...new Set(Object.entries(specs).filter(([, value]) => specHasValue(value))
@@ -120,3 +125,90 @@ export const hasEssentialTechnicalSpec = (keys: readonly string[], essential: Es
     (matches.some((key) => /^longitud de plataforma\b/u.test(key)) &&
       matches.some((key) => /^anchura de plataforma\b/u.test(key)));
 };
+
+const sharedPriorityFamilies: Partial<Record<EditorialFamily, PriorityTechnicalFamily>> = {
+  "plataforma-articulada": articulated, "plataforma-telescopica": telescopic,
+  "plataforma-tijera": scissors, "plataforma-oruga": tracked, "plataforma-mastil": vertical,
+  "plataforma-unipersonal": vertical, "camion-cesta": truck, "manipulador-telescopico": handler,
+  excavadora: excavator, miniexcavadora: excavator, cargadora: loader, dumper, compactadora: roller,
+  "carretilla-elevadora": forklift, "carretilla-retractil": reachForklift, recogepedidos: orderPicker
+};
+
+const compatiblePriorityFamily = (left: PriorityTechnicalFamily, right: PriorityTechnicalFamily): boolean =>
+  left.name === right.name ||
+  (left === otherPlatform && [articulated, telescopic, scissors, tracked, vertical, truck].includes(right)) ||
+  (left === forklift && [reachForklift, roughTerrainForklift, orderPicker].includes(right)) ||
+  (left === excavator && right === backhoe);
+
+export const assessQualitativeTechnicalFamily = (product: ImportCandidate): {
+  readonly family: PriorityTechnicalFamily | null;
+  readonly name: string | null;
+  readonly status: "identificada" | "sin_criterio" | "desconocida" | "contradictoria";
+} => {
+  const title = fold(product.title ?? "");
+  const path = URL.canParse(product.sourceUrl) ? fold(new URL(product.sourceUrl).pathname.replace(/-/gu, " ")) : "";
+  const category = fold(product.category ?? "");
+  const additional = product.spec["Título adicional"];
+  const clues = [title, path, category, typeof additional === "string" ? fold(additional) : ""];
+  if (clues.some((clue) => /\b(?:lotes?|packs?|conjunto|varias unidades)\b/u.test(clue))) {
+    return { family: null, name: null, status: "desconocida" };
+  }
+  const shared = clues.map(editorialFamilyOf);
+  for (const [index, family] of shared.entries()) {
+    if (family && clues.some((clue, other) => other !== index && shared[other] !== null &&
+      resolveConsistentEditorialFamily(clues[index]!, clue, null, "", family) === null)) {
+      return { family: null, name: null, status: "contradictoria" };
+    }
+  }
+  const legacyFamilies = clues.map(classify);
+  if (legacyFamilies.some((legacy, index) => {
+    const resolved = shared[index];
+    const mapped = resolved ? sharedPriorityFamilies[resolved] : undefined;
+    return legacy && mapped && !compatiblePriorityFamily(legacy, mapped) && !compatiblePriorityFamily(mapped, legacy);
+  })) return { family: null, name: null, status: "contradictoria" };
+  const candidates = clues.map((_, index) => {
+    const legacy = legacyFamilies[index] ?? null;
+    const resolved = shared[index];
+    if (!resolved) return legacy;
+    const mapped = sharedPriorityFamilies[resolved];
+    if (!mapped) return null;
+    if (!legacy || compatiblePriorityFamily(legacy, mapped)) return mapped;
+    if (compatiblePriorityFamily(mapped, legacy)) return legacy;
+    return null;
+  });
+  const families = candidates.filter((item): item is PriorityTechnicalFamily => item !== null);
+  if (families.some((left, index) => families.slice(index + 1).some((right) =>
+    !compatiblePriorityFamily(left, right) && !compatiblePriorityFamily(right, left)))) {
+    return { family: null, name: null, status: "contradictoria" };
+  }
+  if (shared.some((item) => item !== null && !sharedPriorityFamilies[item]) && families.length) {
+    return { family: null, name: null, status: "contradictoria" };
+  }
+  const family = families.find((item) => !families.some((other) => item !== other && compatiblePriorityFamily(item, other))) ?? null;
+  const known = shared.find((item) => item !== null);
+  if (family) return { family, name: family.name, status: "identificada" };
+  return known ? { family: null, name: editorialFamilyName(known), status: "sin_criterio" } :
+    { family: null, name: null, status: "desconocida" };
+};
+
+const unqualifiedEssentialKey = (key: string, essential: EssentialTechnicalSpec): boolean => {
+  const base = fold(key).replace(/ \((?:mm|m|kg|kw|cv)\)$/u, "");
+  if (essential.key === weight.key) return /^(?:peso|peso operativo|peso maquina|peso de servicio|peso en orden de marcha del modelo|masa operativa)$/u.test(base);
+  if (essential.key === enginePower.key) return /^(?:potencia del motor|potencia maxima del motor|potencia nominal del motor|potencia maxima din|potencia de motor publicada para la unidad)$/u.test(base);
+  if (essential.key === capacity.key) return /^(?:capacidad|capacidad (?:nominal |maxima )?(?:de (?:carga|elevacion|plataforma|(?:la )?cesta)|nominal)|carga (?:maxima|nominal|util))$/u.test(base);
+  if (essential.key === platformSize.key) return /^(?:dimensiones (?:de )?(?:cesta|plataforma)|(?:longitud|anchura) de plataforma)$/u.test(base);
+  if (essential.key === horizontalReach.key) return /^(?:alcance (?:horizontal|lateral)(?: maximo| max\.)?)$/u.test(base);
+  if (essential.key === drumWidth.key) return /^(?:anchura|ancho) (?:de )?(?:trabajo|rodillo|tambor|compactacion)$/u.test(base);
+  if (essential.key === loadCenter.key) return /^(?:centro de carga|centro de carga nominal del modelo)$/u.test(base);
+  return essential.alternatives.some((pattern) => pattern.exec(base)?.[0] === base);
+};
+
+export const assessEssentialTechnicalCoverage = (family: PriorityTechnicalFamily, interpreted: readonly string[], unresolved: readonly string[]) =>
+  family.essential.map((essential) => {
+    const accepted = interpreted.filter((key) => unqualifiedEssentialKey(key, essential));
+    const observed = essential.key === platformSize.key ? hasEssentialTechnicalSpec(accepted.map(fold), essential) : accepted.length > 0;
+    const candidates = [...new Set([...interpreted, ...unresolved].filter((key) =>
+      essential.alternatives.some((pattern) => pattern.test(fold(key))) || unqualifiedEssentialKey(key, essential)))].sort();
+    const status: "observada" | "no_observada" | "no_evaluable" = observed ? "observada" : candidates.length ? "no_evaluable" : "no_observada";
+    return { key: essential.key, label: essential.label, priority: family.priority, status, keys: candidates };
+  });

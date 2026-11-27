@@ -1,10 +1,10 @@
-import { hasCompleteCatalogAuditEvidence, hasUnresolvedCatalogAuditContracts } from "../../../../catalog/diagnostics/findings/audit-closure.js";
+import { assessCatalogAuditClosure } from "../../../../catalog/diagnostics/findings/audit-closure.js";
 import type { DescriptionCoverage } from "../../../../catalog/diagnostics/coverage/description-coverage.js";
 import type { DescriptionPriorities } from "../../../../catalog/diagnostics/coverage/description-priorities.js";
 import type { SpecificationCoverage } from "../../../../catalog/diagnostics/coverage/specification-coverage.js";
 
 export const formatCatalogAuditClosureReport = (
-  coverage: DescriptionCoverage, priorities: DescriptionPriorities, specifications: SpecificationCoverage
+  coverage: DescriptionCoverage, priorities: DescriptionPriorities, specifications: SpecificationCoverage, completePopulation = true
 ): readonly string[] => {
   const pending = coverage.totals.pending.description + coverage.totals.pending.description_general;
   const lost = coverage.totals.lost.description + coverage.totals.lost.description_general;
@@ -13,9 +13,10 @@ export const formatCatalogAuditClosureReport = (
     `CIERRE AUDITOR | descripciones pendientes ${pending} | pérdidas de descripción ${lost} | incidencias de preparación ${priorities.totals.technical}`,
     `CIERRE AUDITOR | diferencias técnicas ${technical.sourceNotPreserved} | pérdidas técnicas ${technical.lostAfterPublication} | ambigüedades ${technical.ambiguousNormalization} | pendientes de publicar ${technical.pendingPublication}`
   ];
-  if (hasUnresolvedCatalogAuditContracts(coverage, priorities, specifications)) {
+  const closure = assessCatalogAuditClosure(coverage, priorities, specifications, completePopulation);
+  if (closure.status === "requiere_intervencion") {
     lines.push("CIERRE AUDITOR | REQUIERE INTERVENCIÓN: hay contratos pendientes; revisar los casos existentes del informe");
-  } else if (!hasCompleteCatalogAuditEvidence(coverage, specifications)) {
+  } else if (closure.status === "alcance_limitado") {
     lines.push("CIERRE AUDITOR | ALCANCE LIMITADO: faltan originales canónicos o fichas comparables, o hay registros parciales; no se acredita cierre técnico completo");
   } else {
     lines.push(`CIERRE AUDITOR | CONFORME EN ALCANCE COMPARADO: ${coverage.totals.products} fichas, sin incidencias obligatorias abiertas`);

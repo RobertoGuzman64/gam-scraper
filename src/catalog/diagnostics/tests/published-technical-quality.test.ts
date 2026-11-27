@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { analyzePublishedTechnicalQuality } from "../technical/published-technical-quality.js";
+import { analyzePublishedTechnicalQuality, analyzePreparedTechnicalQuality } from "../technical/published-technical-quality.js";
 import { formatPublishedTechnicalQualityReport } from "../../../cli/commands/catalog/audits/published-technical-quality-report.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 
@@ -125,4 +125,15 @@ test("detecta unidades repetidas y centinelas sin confundir medidas legítimas",
   ]);
   assert.equal(report.totals.affectedProducts, 4);
   assert.match(report.patterns.find((item) => item.code === "spec:valor-centinela-no-utilizable")?.action ?? "", /centinela/);
+});
+
+
+test("la inspección de preparación conserva las reglas semánticas sin atribuir sus valores a una publicación", () => {
+  const published = product("a", { "Altura plataforma": "2 m" });
+  const prepared = { ...published, spec: { "Altura plataforma": "2240 metros" } };
+  assert.equal(analyzePublishedTechnicalQuality([published]).totals.findings, 0);
+  const report = analyzePreparedTechnicalQuality([prepared]);
+  assert.equal(report.totals.findings, 1);
+  assert.match(report.note, /preparación recalculada/);
+  assert.deepEqual(report.cases, analyzePublishedTechnicalQuality([prepared]).cases);
 });

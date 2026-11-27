@@ -6,9 +6,11 @@ import type { DescriptionCoverageInput } from "./description-coverage.js";
 import type { SpecValue } from "../../../contracts/catalog.js";
 
 type Stage = "pendiente_publicacion" | "diferencia_origen_preparacion" | "perdida_tras_publicacion" | "sin_evidencia_directa" | "normalizacion_ambigua" | "reconciliacion_acreditada";
+type PreparationCoverageInput = Pick<DescriptionCoverageInput, "source" | "prepared" | "origin">;
+type CoverageInput = PreparationCoverageInput & Partial<Pick<DescriptionCoverageInput, "published">>;
 type SpecMap = Readonly<Record<string, SpecValue>>;
 type Indexed = {
-  readonly input: DescriptionCoverageInput;
+  readonly input: CoverageInput;
   readonly identity: string;
   readonly family: string;
   readonly original: ReadonlySet<string>;
@@ -81,7 +83,7 @@ const normalizeValues = (specs: SpecMap): { keys: ReadonlySet<string>; ambiguous
   };
 };
 
-export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverageInput[]): SpecificationCoverage => {
+const analyzeStageCoverage = (inputs: readonly CoverageInput[], authority: "publicacion" | "preparacion"): SpecificationCoverage => {
   const grouped = new Map<string, Group>();
   const seen = new Set<string>();
   const cases: SpecificationCase[] = [];
@@ -93,10 +95,14 @@ export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverag
     const identity = buildProductIdentity(input.source).key;
     if (seen.has(identity)) throw new Error(`Identidad duplicada en auditor técnico: ${identity}`);
     seen.add(identity);
-    const publishedIdentity = buildProductIdentity({ providerId: input.published.providerId,
-      reference: input.published.reference, serialNumber: null, url: input.published.sourceUrl }).key;
-    if (identity !== publishedIdentity || input.prepared.product.providerId !== input.source.providerId ||
-      input.prepared.product.sourceUrl !== input.published.sourceUrl || input.prepared.product.reference !== input.published.reference) {
+    const published = authority === "publicacion" ? input.published : undefined;
+    if (authority === "publicacion" && !published) throw new Error(`Publicación ausente en auditor técnico: ${identity}`);
+    const product = input.prepared.product;
+    const stageProduct = published ?? product;
+    const stageIdentity = buildProductIdentity({ providerId: stageProduct.providerId,
+      reference: stageProduct.reference, serialNumber: null, url: stageProduct.sourceUrl }).key;
+    if (identity !== stageIdentity || product.providerId !== input.source.providerId ||
+      product.sourceUrl !== stageProduct.sourceUrl || product.reference !== stageProduct.reference) {
       throw new Error(`Identidad inconsistente en auditor técnico: ${identity}`);
     }
     if (input.origin === "original_canonico") canonicalOriginals++;
@@ -111,9 +117,9 @@ export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverag
     }
     const original = normalizeValues(input.source.specs ?? {});
     const prepared = normalizeValues(input.prepared.product.spec);
-    const published = normalizeValues(input.published.spec);
+    const final = normalizeValues(published?.spec ?? {});
     group.items.push({ input, identity, family, original: original.keys, prepared: prepared.keys,
-      published: published.keys, ambiguous: new Set([...original.ambiguous, ...prepared.ambiguous, ...published.ambiguous]),
+      published: final.keys, ambiguous: new Set([...original.ambiguous, ...prepared.ambiguous, ...final.ambiguous]),
       reconciliations: accreditedSpecificationReconciliations(input) });
   }
   for (const group of grouped.values()) {
@@ -135,8 +141,8 @@ export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverag
         if (item.ambiguous.has(key)) stage = "normalizacion_ambigua";
         else if (inSource && !inPrepared && hasIndependentDescriptionSource(item.input.origin)) stage =
           item.reconciliations.has(key) ? "reconciliacion_acreditada" : "diferencia_origen_preparacion";
-        else if (inPrepared && !inPublished) stage = "pendiente_publicacion";
-        else if (inPublished && !inPrepared) stage = "perdida_tras_publicacion";
+        else if (authority === "publicacion" && inPrepared && !inPublished) stage = "pendiente_publicacion";
+        else if (authority === "publicacion" && inPublished && !inPrepared) stage = "perdida_tras_publicacion";
         else if (!inPrepared && !inPublished && !inSource && comparable) stage = "sin_evidencia_directa";
         if (!stage) continue;
         missing.push(item);
@@ -170,6 +176,12 @@ export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverag
     patterns, cases
   };
 };
+
+export const analyzeSpecificationCoverage = (inputs: readonly DescriptionCoverageInput[]): SpecificationCoverage =>
+  analyzeStageCoverage(inputs, "publicacion");
+
+export const analyzePreparedSpecificationCases = (inputs: readonly PreparationCoverageInput[]): readonly SpecificationCase[] =>
+  analyzeStageCoverage(inputs, "preparacion").cases;
 
 export type SpecificationWorkload = {
   readonly requiresReview: readonly SpecificationCase[];

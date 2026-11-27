@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { analyzeSpecificationImprovement, parseSpecificationImprovementExceptions, type SpecificationImprovementExceptionRegistry } from "../coverage/specification-improvement.js";
+import { analyzeSpecificationImprovement, analyzePreparedSpecificationImprovement, parseSpecificationImprovementExceptions, type SpecificationImprovementExceptionRegistry } from "../coverage/specification-improvement.js";
+import { analyzePreparedSpecificationStage, compareSpecificationStages } from "../coverage/specification-stages.js";
 import { technicalPriorityFamily } from "../coverage/specification-family-priorities.js";
 import type { DescriptionCoverageInput } from "../coverage/description-coverage.js";
 import type { ProductRecord, SpecValue } from "../../../contracts/catalog.js";
@@ -135,4 +136,52 @@ test("las excepciones inválidas, duplicados y alteraciones de entradas se detec
   assert.throws(() => analyzeSpecificationImprovement([...items, ...items], empty), /duplicada/);
   analyzeSpecificationImprovement(items, empty);
   assert.equal(JSON.stringify(items), before);
+});
+
+const withPreparation = (item: DescriptionCoverageInput, spec: ImportCandidate["spec"]): DescriptionCoverageInput => ({
+  ...item, prepared: { ...item.prepared, product: { ...item.prepared.product, spec } }
+});
+
+test("la comparación de etapas distingue prestaciones incorporadas, pérdidas y avisos persistentes", () => {
+  const items = [
+    ...articulatedCohort().map((item) => item.source.reference === "4" ?
+      withPreparation(item, { ...item.prepared.product.spec, "Altura de trabajo": "15 m" }) : item),
+    withPreparation(input("5", "Barredora", { Peso: "200 kg" }), six),
+    withPreparation(input("6", "Barredora", six), { Peso: "200 kg" }),
+    input("7", "Barredora", { Peso: "100 kg" })
+  ];
+  const before = JSON.stringify(items);
+  const published = analyzeSpecificationImprovement(items, empty);
+  const prepared = analyzePreparedSpecificationImprovement(items);
+  const comparison = compareSpecificationStages(items, published, prepared);
+  assert.deepEqual(comparison.totals, { persiste: 1, resuelto_en_preparacion: 2, aparecido_en_preparacion: 1, no_comparable: 0 });
+  assert.equal(prepared.cases.some((item) => item.reference === "4" || item.reference === "5"), false);
+  assert.equal(JSON.stringify(items), before);
+});
+
+test("la desaparición de respaldo de cohorte no acredita que se haya incorporado la prestación", () => {
+  const items = articulatedCohort().map((item) => item.source.reference === "4" ? item : withPreparation(item, six));
+  const comparison = compareSpecificationStages(items, analyzeSpecificationImprovement(items, empty),
+    analyzePreparedSpecificationImprovement(items));
+  assert.equal(comparison.totals.resuelto_en_preparacion, 0);
+  assert.equal(comparison.totals.no_comparable, 1);
+  assert.equal(comparison.cases[0]?.published?.reference, "4");
+});
+
+test("la preparación tiene huella propia y no hereda excepciones publicadas ni requiere publicación", () => {
+  const item = input("1", "Barredora", { Peso: "100 kg" });
+  const initial = analyzeSpecificationImprovement([item], empty).cases[0];
+  assert.ok(initial);
+  const registry: SpecificationImprovementExceptionRegistry = { version: 1, exceptions: [{
+    id: initial.id, fingerprint: initial.fingerprint, reviewedBy: "Técnico", reviewedAt: "2026-01-01T00:00:00Z",
+    rationale: "Variante verificada", evidence: "Documento técnico"
+  }] };
+  const published = analyzeSpecificationImprovement([item], registry);
+  const current = analyzePreparedSpecificationStage([{ source: item.source, origin: item.origin,
+    prepared: { ...item.prepared, status: "review" } }], true);
+  assert.deepEqual(current.population, { products: 1, ready: 0, review: 1 });
+  assert.equal(published.cases[0]?.status, "exceptuado");
+  assert.equal(current.specificationImprovements?.cases[0]?.status, "pendiente");
+  assert.notEqual(current.specificationImprovements?.cases[0]?.fingerprint, initial.fingerprint);
+  assert.equal(current.technicalSemantics?.totals.products, 1);
 });

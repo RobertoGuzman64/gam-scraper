@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import { buildProductIdentity } from "../../identity.js";
 import { fold } from "../../../preparation/classification/category-utils.js";
-import { technicalPriorityFamily, publishedTechnicalKeys, hasEssentialTechnicalSpec, type PriorityTechnicalFamily, type TechnicalPriority } from "./specification-family-priorities.js";
-import { analyzeTechnicalDensity, isTechnicalSpecificationKey, type TechnicalDensity } from "../technical/technical-density.js";
-import { normalizedSpecKey, specHasValue } from "./content-gaps-source.js";
+import { technicalPriorityFamilyFor, publishedTechnicalKeys, hasEssentialTechnicalSpec, type PriorityTechnicalFamily, type TechnicalPriority } from "./specification-family-priorities.js";
+import { analyzeTechnicalDensity, technicalSpecificationKeys, type TechnicalDensity } from "../technical/technical-density.js";
+import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
 import type { DescriptionCoverageInput } from "./description-coverage.js";
 
 export type SpecificationImprovementException = {
@@ -78,8 +78,10 @@ export type SpecificationImprovementAudit = {
   readonly staleExceptions: readonly SpecificationImprovementException[];
 };
 
+type SpecificationStageProduct = Pick<DescriptionCoverageInput, "source" | "origin"> & { readonly product: ImportCandidate };
+
 type AnalyzedProduct = {
-  readonly input: DescriptionCoverageInput;
+  readonly input: SpecificationStageProduct;
   readonly identity: string;
   readonly family: PriorityTechnicalFamily | null;
   readonly keys: readonly string[];
@@ -119,16 +121,16 @@ export const parseSpecificationImprovementExceptions = (raw: unknown): Specifica
   return { version: 1, exceptions };
 };
 
-const modelIdentity = (input: DescriptionCoverageInput): string | null => {
-  const brand = input.source.brand ?? input.published.spec.Marca;
-  const model = input.source.model ?? input.published.spec.Modelo;
+const modelIdentity = (input: SpecificationStageProduct): string | null => {
+  const brand = input.source.brand ?? input.product.spec.Marca;
+  const model = input.source.model ?? input.product.spec.Modelo;
   if (typeof brand !== "string" || typeof model !== "string" || !brand.trim() || !model.trim()) return null;
   return JSON.stringify([input.source.providerId, fold(brand), fold(model)]);
 };
 
-export const analyzeSpecificationImprovement = (
-  inputs: readonly DescriptionCoverageInput[], registry: SpecificationImprovementExceptionRegistry,
-  density: TechnicalDensity = analyzeTechnicalDensity(inputs.map((input) => input.published))
+const analyzeStageSpecificationImprovement = (
+  inputs: readonly SpecificationStageProduct[], registry: SpecificationImprovementExceptionRegistry,
+  density: TechnicalDensity, stage: "publicacion" | "preparacion"
 ): SpecificationImprovementAudit => {
   const verified = parseSpecificationImprovementExceptions(registry);
   if (density.totals.products !== inputs.length) throw new Error("Poblaciones incompatibles para auditoría de specs");
@@ -145,25 +147,23 @@ export const analyzeSpecificationImprovement = (
     const identity = buildProductIdentity(input.source).key;
     if (seen.has(identity)) throw new Error(`Identidad duplicada en auditoría de specs: ${identity}`);
     seen.add(identity);
-    const publishedIdentity = buildProductIdentity({ providerId: input.published.providerId,
-      reference: input.published.reference, serialNumber: null, url: input.published.sourceUrl }).key;
-    if (identity !== publishedIdentity) throw new Error(`Identidad publicada inconsistente: ${identity}`);
-    const family = technicalPriorityFamily(input);
+    const stageIdentity = buildProductIdentity({ providerId: input.product.providerId,
+      reference: input.product.reference, serialNumber: null, url: input.product.sourceUrl }).key;
+    if (identity !== stageIdentity) throw new Error(`Identidad ${stage === "publicacion" ? "publicada" : "preparada"} inconsistente: ${identity}`);
+    const family = technicalPriorityFamilyFor(input, input.product);
     if (family) {
       const state = familyState.get(family.name) ?? { priority: family.priority, products: 0, pending: 0, coverage: 0, differentiation: 0 };
       state.products++;
       familyState.set(family.name, state);
     }
-    const count = new Set(Object.entries(input.published.spec)
-      .filter(([key, value]) => isTechnicalSpecificationKey(key) && specHasValue(value))
-      .map(([key]) => normalizedSpecKey(key))).size;
-    const fingerprint = digest(JSON.stringify({ identity, title: input.published.title,
-      specs: Object.entries(input.published.spec).sort(([a], [b]) => compare(a, b)) }));
-    const current: AnalyzedProduct = { input, identity, family, keys: publishedTechnicalKeys(input.published.spec),
+    const count = technicalSpecificationKeys(input.product.spec).length;
+    const fingerprint = digest(JSON.stringify({ ...(stage === "preparacion" ? { stage } : {}), identity, title: input.product.title,
+      specs: Object.entries(input.product.spec).sort(([a], [b]) => compare(a, b)) }));
+    const current: AnalyzedProduct = { input, identity, family, keys: publishedTechnicalKeys(input.product.spec),
       model: modelIdentity(input), technicalCount: count, fingerprint };
     products.push(current);
     if (!family) continue;
-    const groupKey = JSON.stringify([input.published.providerId, family.name]);
+    const groupKey = JSON.stringify([input.product.providerId, family.name]);
     const group = grouped.get(groupKey) ?? [];
     group.push(current);
     grouped.set(groupKey, group);
@@ -188,8 +188,8 @@ export const analyzeSpecificationImprovement = (
       if (kind === "cobertura") state.coverage++;
       else state.differentiation++;
     }
-    cases.push({ id, fingerprint, providerId: input.published.providerId, reference: input.published.reference,
-      url: input.published.sourceUrl, title: input.published.title, priority: family?.priority ?? "P3",
+    cases.push({ id, fingerprint, providerId: input.product.providerId, reference: input.product.reference,
+      url: input.product.sourceUrl, title: input.product.title, priority: family?.priority ?? "P3",
       family: family?.name ?? null, field, kind, technicalCount, missingToTarget, status,
       ...(evidence ? { evidence } : {}) });
   };
@@ -197,7 +197,7 @@ export const analyzeSpecificationImprovement = (
     if (product.technicalCount < minimum) add(product, "cobertura", `mínimo ${minimum} specs`, minimum - product.technicalCount);
     const { family } = product;
     if (!family) continue;
-    const peers = grouped.get(JSON.stringify([product.input.published.providerId, family.name])) ?? [];
+    const peers = grouped.get(JSON.stringify([product.input.product.providerId, family.name])) ?? [];
     const exactModel = product.model ? (modelGrouped.get(JSON.stringify([family.name, product.model])) ?? []) : [];
     for (const essential of family.essential) {
       if (hasEssentialTechnicalSpec(product.keys, essential)) continue;
@@ -236,7 +236,7 @@ export const analyzeSpecificationImprovement = (
   const campaigns = [...campaignGroups.values()].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority] ||
     b.pending - a.pending || compare(a.family, b.family) || compare(a.providerId, b.providerId) || compare(a.field, b.field));
   return {
-    note: "Objetivo cerrable: enriquecimiento acreditado o excepción individual revisable. La diferenciación se activa solo con respaldo de al menos dos pares del mismo modelo o cohorte de la misma subfamilia y proveedor (mínimo 3 unidades, 2 observaciones, 60 % y 2 modelos). Las alturas de trabajo, plataforma y elevación conservan su concepto: solo se constata presencia de una magnitud vertical, sin equiparar sus valores. Ninguna cifra se transfiere automáticamente entre unidades. No modifica publicaciones.",
+    note: (stage === "preparacion" ? "Vista orientativa de preparación; no hereda excepciones publicadas. " : "") + "Objetivo cerrable: enriquecimiento acreditado o excepción individual revisable. La diferenciación se activa solo con respaldo de al menos dos pares del mismo modelo o cohorte de la misma subfamilia y proveedor (mínimo 3 unidades, 2 observaciones, 60 % y 2 modelos). Las alturas de trabajo, plataforma y elevación conservan su concepto: solo se constata presencia de una magnitud vertical, sin equiparar sus valores. Ninguna cifra se transfiere automáticamente entre unidades. No modifica publicaciones.",
     criteria: { minimumTechnicalSpecs: minimum, minimumComparable: MIN_COMPARABLE,
       minimumObserved: MIN_OBSERVED, minimumCoveragePercent: MIN_COVERAGE_PERCENT,
       minimumSameModelPeers: MIN_SAME_MODEL_PEERS },
@@ -253,4 +253,29 @@ export const analyzeSpecificationImprovement = (
       .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority] || b.pending - a.pending || compare(a.name, b.name)),
     campaigns, cases, staleExceptions
   };
+};
+
+export const analyzeSpecificationImprovement = (
+  inputs: readonly DescriptionCoverageInput[], registry: SpecificationImprovementExceptionRegistry,
+  density: TechnicalDensity = analyzeTechnicalDensity(inputs.map((input) => input.published))
+): SpecificationImprovementAudit => analyzeStageSpecificationImprovement(
+  inputs.map(({ source, origin, published }) => ({ source, origin, product: published })), registry, density, "publicacion");
+
+export const analyzePreparedSpecificationImprovement = (
+  inputs: readonly Pick<DescriptionCoverageInput, "source" | "prepared" | "origin">[],
+  density: TechnicalDensity = analyzeTechnicalDensity(inputs.map((input) => input.prepared.product))
+): SpecificationImprovementAudit => analyzeStageSpecificationImprovement(
+  inputs.map(({ source, origin, prepared }) => ({ source, origin, product: prepared.product })),
+  { version: 1, exceptions: [] }, density, "preparacion");
+
+export const specificationEssentialHints = (audit: SpecificationImprovementAudit): ReadonlyMap<string, readonly SpecificationImprovementCase[]> => {
+  const result = new Map<string, SpecificationImprovementCase[]>();
+  for (const item of audit.cases) {
+    if (item.kind !== "diferenciacion" || item.status !== "pendiente") continue;
+    const identity = buildProductIdentity({ providerId: item.providerId, reference: item.reference, serialNumber: null, url: item.url }).key;
+    const list = result.get(identity) ?? [];
+    list.push(item);
+    result.set(identity, list);
+  }
+  return result;
 };

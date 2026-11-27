@@ -43,7 +43,7 @@ const reconciledSource = (source: ProductRecord, sourceUnits = true): ProductRec
 };
 
 const legacyReconciliations = (
-  input: DescriptionCoverageInput
+  input: Pick<DescriptionCoverageInput, "source" | "prepared" | "origin">
 ): ReadonlyMap<string, AccreditedSpecificationReconciliation> => {
   const original = presentSpecs(input.source.specs ?? {});
   const reconciled = presentSpecs(reconciledSource(input.source).specs ?? {});
@@ -94,7 +94,7 @@ const legacyReconciliations = (
 };
 
 export const accreditedSpecificationReconciliations = (
-  input: DescriptionCoverageInput
+  input: Pick<DescriptionCoverageInput, "source" | "prepared" | "origin">
 ): ReadonlyMap<string, AccreditedSpecificationReconciliation> => {
   if (!hasIndependentDescriptionSource(input.origin)) return new Map();
   const original = presentSpecs(input.source.specs ?? {});

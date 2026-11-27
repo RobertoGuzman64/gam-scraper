@@ -4,7 +4,10 @@ import { normalizedSpecKey, specHasValue } from "./content-gaps-source.js";
 import { isTechnicalSpecificationKey, type TechnicalDensity } from "../technical/technical-density.js";
 import { familyOf } from "./description-coverage.js";
 import type { DescriptionCoverageInput } from "./description-coverage.js";
-import type { SpecificationCoverage } from "./specification-coverage.js";
+import { analyzePreparedSpecificationCases, type SpecificationCase, type SpecificationCoverage } from "./specification-coverage.js";
+import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
+import { analyzeSpecificationValueOpportunities } from "./specification-value-opportunities.js";
+import { analyzeSpecificationImprovement, analyzePreparedSpecificationImprovement, type SpecificationImprovementAudit } from "./specification-improvement.js";
 import type { SpecValue } from "../../../contracts/catalog.js";
 
 export type SpecificationOpportunityEvidence = "preparada_sin_publicar" | "origen_sin_preparar" | "mismo_modelo" | "patron_familiar" | "sin_pista";
@@ -25,6 +28,7 @@ export type SpecificationOpportunityCase = {
   readonly familyKeys: readonly string[];
 };
 export type SpecificationOpportunities = {
+  readonly value?: ReturnType<typeof analyzeSpecificationValueOpportunities>;
   readonly note: string;
   readonly criteria: { readonly minimumTechnicalSpecs: number; readonly minimumModelPeers: number };
   readonly totals: {
@@ -46,20 +50,21 @@ const technicalKeys = (specs: Readonly<Record<string, SpecValue>>): ReadonlySet<
   Object.entries(specs).filter(([key, value]) => isTechnicalSpecificationKey(key) && specHasValue(value))
     .map(([key]) => normalizedSpecKey(key))
 );
-const modelIdentity = (input: DescriptionCoverageInput): string | null => {
-  const brand = input.source.brand?.trim() || input.published.spec.Marca;
-  const model = input.source.model?.trim() || input.published.spec.Modelo;
+type OpportunityInput = Pick<DescriptionCoverageInput, "source" | "origin"> & { readonly product: ImportCandidate };
+const modelIdentity = (input: OpportunityInput): string | null => {
+  const brand = input.source.brand?.trim() || input.product.spec.Marca;
+  const model = input.source.model?.trim() || input.product.spec.Modelo;
   if (typeof brand !== "string" || typeof model !== "string" || !brand.trim() || !model.trim()) return null;
   return JSON.stringify([input.source.providerId, fold(brand), fold(model)]);
 };
 
-export const analyzeSpecificationOpportunities = (
-  inputs: readonly DescriptionCoverageInput[], density: TechnicalDensity, coverage: SpecificationCoverage
+const analyzeStageOpportunities = (
+  inputs: readonly OpportunityInput[], density: TechnicalDensity, cases: readonly SpecificationCase[]
 ): SpecificationOpportunities => {
-  if (coverage.totals.products !== inputs.length || density.totals.products !== inputs.length) {
+  if (density.totals.products !== inputs.length) {
     throw new Error("Poblaciones incompatibles en oportunidades técnicas");
   }
-  const indexed = new Map<string, DescriptionCoverageInput>();
+  const indexed = new Map<string, OpportunityInput>();
   const modelGroups = new Map<string, ModelItem[]>();
   for (const input of inputs) {
     const identity = buildProductIdentity(input.source).key;
@@ -68,11 +73,11 @@ export const analyzeSpecificationOpportunities = (
     const model = modelIdentity(input);
     if (!model) continue;
     const group = modelGroups.get(model) ?? [];
-    group.push({ identity, keys: technicalKeys(input.published.spec) });
+    group.push({ identity, keys: technicalKeys(input.product.spec) });
     modelGroups.set(model, group);
   }
-  const indexedCases = new Map<string, typeof coverage.cases[number][]>();
-  for (const item of coverage.cases) {
+  const indexedCases = new Map<string, SpecificationCase[]>();
+  for (const item of cases) {
     if (!isTechnicalSpecificationKey(item.key)) continue;
     const matches = indexedCases.get(item.identity) ?? [];
     matches.push(item);
@@ -89,12 +94,12 @@ export const analyzeSpecificationOpportunities = (
       .map((item) => item.key))].sort(compare);
     const sourceKeys = [...new Set(details.filter((item) => item.stage === "diferencia_origen_preparacion")
       .map((item) => item.key))].sort(compare);
-    const publishedKeys = technicalKeys(input.published.spec);
+    const stageKeys = technicalKeys(input.product.spec);
     const model = modelIdentity(input);
     const peers = model ? (modelGroups.get(model) ?? []).filter((item) => item.identity !== identity) : [];
     const peerCounts = new Map<string, number>();
     for (const peer of peers) for (const key of peer.keys) {
-      if (!publishedKeys.has(key)) peerCounts.set(key, (peerCounts.get(key) ?? 0) + 1);
+      if (!stageKeys.has(key)) peerCounts.set(key, (peerCounts.get(key) ?? 0) + 1);
     }
     const sameModelKeys = [...peerCounts].filter(([, count]) => count >= MIN_MODEL_PEERS)
       .map(([key]) => key).sort(compare);
@@ -123,4 +128,24 @@ export const analyzeSpecificationOpportunities = (
       withoutClues: count("sin_pista") },
     cases: results
   };
+};
+
+export const analyzeSpecificationOpportunities = (
+  inputs: readonly DescriptionCoverageInput[], density: TechnicalDensity, coverage: SpecificationCoverage,
+  improvements: SpecificationImprovementAudit = analyzeSpecificationImprovement(inputs, { version: 1, exceptions: [] }, density)
+) => {
+  if (coverage.totals.products !== inputs.length) throw new Error("Poblaciones incompatibles en oportunidades técnicas");
+  const stageInputs = inputs.map(({ source, origin, published, prepared }) => ({ source, origin, product: published, prepared }));
+  return { ...analyzeStageOpportunities(stageInputs, density, coverage.cases),
+    value: analyzeSpecificationValueOpportunities(stageInputs, density, coverage.cases, "publicacion", improvements) };
+};
+
+export const analyzePreparedSpecificationOpportunities = (
+  inputs: readonly Pick<DescriptionCoverageInput, "source" | "prepared" | "origin">[], density: TechnicalDensity,
+  improvements: SpecificationImprovementAudit = analyzePreparedSpecificationImprovement(inputs, density)
+) => {
+  const stageInputs = inputs.map(({ source, origin, prepared }) => ({ source, origin, product: prepared.product, prepared }));
+  const cases = analyzePreparedSpecificationCases(inputs);
+  return { ...analyzeStageOpportunities(stageInputs, density, cases),
+    value: analyzeSpecificationValueOpportunities(stageInputs, density, cases, "preparacion", improvements) };
 };

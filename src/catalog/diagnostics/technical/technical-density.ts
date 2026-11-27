@@ -1,3 +1,4 @@
+import { analyzeTechnicalRichness } from "./technical-richness.js";
 import { fold } from "../../../preparation/classification/category-utils.js";
 import { normalizedSpecKey, specHasValue } from "../coverage/content-gaps-source.js";
 import type { ImportCandidate } from "../../../commercial/legacy-export/contracts.js";
@@ -48,6 +49,7 @@ export type TechnicalDensityModel = {
 };
 
 export type TechnicalDensity = {
+  readonly richness: ReturnType<typeof analyzeTechnicalRichness>;
   readonly criteria: typeof TECHNICAL_DENSITY_CRITERIA;
   readonly note: string;
   readonly totals: { readonly products: number; readonly sparse: number; readonly medium: number };
@@ -68,6 +70,10 @@ const compare = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
 const display = (value: string | undefined): string | null => value?.trim() || null;
 export const isTechnicalSpecificationKey = (key: string): boolean => !NON_PERFORMANCE_SPEC_KEYS.has(fold(key));
 
+export const technicalSpecificationKeys = (specs: ImportCandidate["spec"]): readonly string[] => [...new Set(Object.entries(specs)
+  .filter(([key, value]) => isTechnicalSpecificationKey(key) && specHasValue(value))
+  .map(([key]) => normalizedSpecKey(key)))].sort(compare);
+
 const field = (product: ImportCandidate, name: string): string | null => {
   const value = product.spec[name];
   return typeof value === "string" ? display(value) : null;
@@ -85,9 +91,7 @@ export const analyzeTechnicalDensity = (products: readonly ImportCandidate[]): T
     const identity = JSON.stringify([product.providerId, product.reference, product.sourceUrl]);
     if (identities.has(identity)) throw new Error(`Ficha duplicada en densidad técnica: ${identity}`);
     identities.add(identity);
-    const technicalKeys = [...new Set(Object.entries(product.spec)
-      .filter(([key, value]) => isTechnicalSpecificationKey(key) && specHasValue(value))
-      .map(([key]) => normalizedSpecKey(key)))].sort(compare);
+    const technicalKeys = technicalSpecificationKeys(product.spec);
     const technicalCount = technicalKeys.length;
     if (technicalCount < MINIMUM_TECHNICAL_SPECS_TARGET) {
       const missingToTarget = MINIMUM_TECHNICAL_SPECS_TARGET - technicalCount;
@@ -133,6 +137,7 @@ export const analyzeTechnicalDensity = (products: readonly ImportCandidate[]): T
     if (group) group.products++;
   }
   return {
+    richness: analyzeTechnicalRichness(products, isTechnicalSpecificationKey),
     criteria: TECHNICAL_DENSITY_CRITERIA,
     note: "Prioridad editorial exploratoria: alta con 0–2 prestaciones, media con 3 y sin incidencia desde 4; objetivo de mejora en 6. La densidad por sí sola no acredita una carencia. Excluye metadatos de identificación, uso, estado y certificación; requiere comprobación por tipo, modelo y unidad. Sin bloqueo de publicación.",
     totals: { products: products.length, sparse: cases.length, medium: mediumCases.length },

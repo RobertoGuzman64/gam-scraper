@@ -20,3 +20,12 @@ export const hasCompleteCatalogAuditEvidence = (
   coverage.totals.products === specifications.totals.products &&
   specifications.totals.canonicalOriginals === specifications.totals.products &&
   specifications.totals.partialOriginals === 0 && specifications.totals.reconstructedSources === 0;
+
+export const assessCatalogAuditClosure = (
+  coverage: DescriptionCoverage, priorities: DescriptionPriorities, specifications: SpecificationCoverage, completePopulation: boolean
+) => {
+  const unresolved = hasUnresolvedCatalogAuditContracts(coverage, priorities, specifications);
+  const completeEvidence = hasCompleteCatalogAuditEvidence(coverage, specifications);
+  return { status: unresolved ? "requiere_intervencion" as const : !completePopulation || !completeEvidence ?
+    "alcance_limitado" as const : "conforme_en_alcance_comparado" as const, unresolved, completePopulation, completeEvidence };
+};

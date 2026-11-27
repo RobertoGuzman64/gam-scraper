@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { hasCompleteCatalogAuditEvidence, hasUnresolvedCatalogAuditContracts } from "../findings/audit-closure.js";
+import { hasCompleteCatalogAuditEvidence, hasUnresolvedCatalogAuditContracts, assessCatalogAuditClosure } from "../findings/audit-closure.js";
 import { analyzeDescriptionCoverage } from "../coverage/description-coverage.js";
 import { analyzeDescriptionPriorities } from "../coverage/description-priorities.js";
 import { analyzeEditorialQuality } from "../editorial/editorial-quality.js";
@@ -54,10 +54,23 @@ test("el informe distingue cierre conforme, alcance limitado y contratos pendien
   const render = (specs: typeof completeSpecifications) =>
     formatCatalogAuditClosureReport(completeCoverage, priorities, specs).join("\n");
   assert.match(render(completeSpecifications), /CONFORME EN ALCANCE COMPARADO/);
+  assert.match(formatCatalogAuditClosureReport(completeCoverage, priorities, completeSpecifications, false).join("\n"), /ALCANCE LIMITADO/);
   assert.match(render({ ...completeSpecifications, totals: {
     ...completeSpecifications.totals, canonicalOriginals: 0
   } }), /ALCANCE LIMITADO/);
   assert.match(render({ ...completeSpecifications, totals: {
     ...completeSpecifications.totals, sourceNotPreserved: 1
   } }), /REQUIERE INTERVENCIÓN/);
+});
+
+test("el estado estructurado de cierre conserva la precedencia y no acredita cobertura parcial", () => {
+  assert.deepEqual(assessCatalogAuditClosure(completeCoverage, priorities, completeSpecifications, true), {
+    status: "conforme_en_alcance_comparado", unresolved: false, completePopulation: true, completeEvidence: true
+  });
+  assert.equal(assessCatalogAuditClosure(completeCoverage, priorities, completeSpecifications, false).status, "alcance_limitado");
+  const pending = { ...completeSpecifications, totals: { ...completeSpecifications.totals, pendingPublication: 1 } };
+  assert.deepEqual(assessCatalogAuditClosure(completeCoverage, priorities, pending, false), {
+    status: "requiere_intervencion", unresolved: true, completePopulation: false, completeEvidence: true
+  });
+  assert.equal(assessCatalogAuditClosure(coverage, priorities, specifications, true).status, "alcance_limitado");
 });

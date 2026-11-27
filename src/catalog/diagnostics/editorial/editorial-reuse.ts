@@ -86,3 +86,5 @@ export const analyzeEditorialReuse = (inputs: readonly GapInput[]): ReuseReport 
 };
 
 export type { ReuseReport, ReuseCase, ReuseCause };
+
+export { analyzeEditorialKnowledgeUsage, analyzeEditorialKnowledgeComparison, type EditorialKnowledgeUsage } from "./editorial-knowledge-usage.js";

@@ -1,6 +1,6 @@
 import { printReportLine } from "../terminal.js";
 import type { EditorialAnalysis } from "../../../catalog/diagnostics/editorial/editorial-quality.js";
-import type { ReuseReport } from "../../../catalog/diagnostics/editorial/editorial-reuse.js";
+import type { ReuseReport, EditorialKnowledgeUsage } from "../../../catalog/diagnostics/editorial/editorial-reuse.js";
 import { analyzeDescriptionCoverage } from "../../../catalog/diagnostics/coverage/description-coverage.js";
 import type { DescriptionPriorities } from "../../../catalog/diagnostics/coverage/description-priorities.js";
 
@@ -94,6 +94,16 @@ export const printEditorialReuse = (report: ReuseReport, limit: number, detailed
   printReportLine(`CAUSAS DE VACÍO | origen no validado ${counts.origen_no_validado} | familia/evidencia incompatible ${counts.familia_o_evidencia_no_compatible} | preparación en revisión ${counts.preparacion_en_revision} | sin composición ${counts.sin_composicion_de_familia}`);
   for (const item of report.cases.filter((entry) => entry.cause === "capacidad_disponible_sin_aplicar").slice(0, limit)) {
     printReportLine(`  REVISAR FALLBACK | ${item.providerId} | ${item.reference ?? item.identity} | ${item.field} | ${item.family ?? "sin familia"} | ${item.url}`);
+  }
+  printReportLine(report.note);
+};
+
+export const printEditorialKnowledgeUsage = (report: EditorialKnowledgeUsage, label: string, limit: number, detailed: boolean): void => {
+  const counts = report.totals;
+  printReportLine(`APROVECHAMIENTO EDITORIAL | ${label} | ${report.analyzed} fichas | oportunidades ${report.affected.opportunities} fichas / ${counts.oportunidad_respaldada} campos | hipótesis ${report.affected.hypotheses} fichas / ${counts.hipotesis_composicion} campos | protegidos ${counts.precedencia_protegida} campos | límite orientativo ${counts.limite_orientativo} campos | no evaluables ${counts.no_evaluable} campos`);
+  if (!detailed) return;
+  for (const item of report.cases.filter((entry) => entry.state === "oportunidad_respaldada").slice(0, limit)) {
+    printReportLine(`  REVISAR APROVECHAMIENTO | ${item.providerId} | ${item.reference ?? item.identity} | ${item.field} | ${item.evidence?.map(({ mechanism }) => mechanism).join(", ")} | ${item.url}`);
   }
   printReportLine(report.note);
 };

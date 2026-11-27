@@ -71,7 +71,7 @@ const classify = (detail: string): string => {
   return "relacion-otros";
 };
 
-const asPublishedRecord = (product: ImportCandidate): ProductRecord => ({
+const asTechnicalRecord = (product: ImportCandidate): ProductRecord => ({
   providerId: product.providerId,
   categoryKey: product.providerId === "gomariz" && product.condition === "Segunda_Mano" ? "venta" : "",
   categoryName: product.category ?? "",
@@ -93,7 +93,7 @@ const asPublishedRecord = (product: ImportCandidate): ProductRecord => ({
   specs: product.spec
 });
 
-export const analyzePublishedTechnicalQuality = (products: readonly ImportCandidate[]): PublishedTechnicalQuality => {
+const analyzeTechnicalQuality = (products: readonly ImportCandidate[], stage: "publicacion" | "preparacion"): PublishedTechnicalQuality => {
   const identities = new Set<string>();
   const cases: PublishedTechnicalIssue[] = [];
   for (const product of products) {
@@ -124,7 +124,7 @@ export const analyzePublishedTechnicalQuality = (products: readonly ImportCandid
       add("capacidad-titulo-spec-discordante",
         `Título «${product.title}» frente a «${key}»: ${JSON.stringify(product.spec[key])}`, key);
     }
-    const record = asPublishedRecord(product);
+    const record = asTechnicalRecord(product);
     for (const detail of preparedTechnicalConsistencyIssues(record, product.spec)) {
       add(classify(detail), detail);
     }
@@ -151,9 +151,15 @@ export const analyzePublishedTechnicalQuality = (products: readonly ImportCandid
     b.products - a.products || b.cases - a.cases ||
     compare(a.providerId, b.providerId) || compare(a.code, b.code));
   return {
-    note: "Anomalías observadas en especificaciones y afirmaciones de publicaciones acreditadas; no modifican datos ni implican por sí solas un defecto probado. Las reglas reutilizadas solo detectan contradicciones expresamente reconocibles; ausencia de avisos no acredita todas las magnitudes.",
+    note: `Anomalías observadas en especificaciones y afirmaciones de ${stage === "publicacion" ? "publicaciones acreditadas" : "preparación recalculada"}; no modifican datos ni implican por sí solas un defecto probado. Las reglas reutilizadas solo detectan contradicciones expresamente reconocibles; ausencia de avisos no acredita todas las magnitudes.`,
     totals: { products: products.length, affectedProducts: new Set(cases.map((issue) => issue.identity)).size,
       findings: cases.length },
     patterns, cases
   };
 };
+
+export const analyzePublishedTechnicalQuality = (products: readonly ImportCandidate[]): PublishedTechnicalQuality =>
+  analyzeTechnicalQuality(products, "publicacion");
+
+export const analyzePreparedTechnicalQuality = (products: readonly ImportCandidate[]): PublishedTechnicalQuality =>
+  analyzeTechnicalQuality(products, "preparacion");

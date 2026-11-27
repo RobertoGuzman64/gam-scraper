@@ -54,9 +54,9 @@ const mapCatalog = (catalog: Pick<CanonicalCatalog, "products">): Map<string, Pr
   return products;
 };
 
-export const accreditedPublicationOriginalSources = async (
+export const readAccreditedPublicationOriginal = async (
   rootDirectory: string, publicationFile: string, providerId: string
-): Promise<Map<string, ProductRecord>> => {
+): Promise<{ readonly sources: Map<string, ProductRecord>; readonly sourceSha256: string }> => {
   const root = resolve(rootDirectory);
   const publication = resolve(publicationFile);
   if (basename(publication) === "publishable.json") {
@@ -66,7 +66,9 @@ export const accreditedPublicationOriginalSources = async (
     if (!item) throw new Error(`Campaña acreditada sin original de ${providerId}`);
     const catalog = await readCanonicalCatalog(join(root, "catalogs", "campaigns", runId, item));
     if (catalog.providerId !== providerId) throw new Error(`Original de campaña incompatible con ${providerId}`);
-    return mapCatalog(catalog);
+    const sourceSha256 = manifest.files[item];
+    if (!sourceSha256) throw new Error(`Campaña acreditada sin huella de original de ${providerId}`);
+    return { sources: mapCatalog(catalog), sourceSha256 };
   }
   const manifestPath = join(dirname(publication), "manifest.json");
   const metadata: unknown = JSON.parse(await regularFile(manifestPath));
@@ -91,7 +93,7 @@ export const accreditedPublicationOriginalSources = async (
       metadata.source.intervention !== undefined) {
       throw new Error("Publicación Manain sin procedencia parcial verificada coincidente");
     }
-    return mapCatalog({ products: verified.originalProducts });
+    return { sources: mapCatalog({ products: verified.originalProducts }), sourceSha256: catalogSha256 };
   }
   const currentArtifacts = await readPortableOriginalArtifacts(root, providerId);
   const prefix = metadata.source.prefix ?? currentArtifacts.catalog.prefix;
@@ -103,7 +105,7 @@ export const accreditedPublicationOriginalSources = async (
   if (!activeName) throw new Error(`Original portátil sin catálogo canónico de ${providerId}`);
   const current = join(root, "catalogs", "providers", providerId, "original", activeName);
   const active = await matchingCatalog(current, providerId, catalogSha256, prefix, scope, productCount);
-  if (active) return mapCatalog(active);
+  if (active) return { sources: mapCatalog(active), sourceSha256: catalogSha256 };
   const archiveRoot = join(root, "storage", "scraped", providerId, ".history", prefix);
   let archives: Dirent[];
   try { archives = await readdir(archiveRoot, { withFileTypes: true }); }
@@ -115,10 +117,14 @@ export const accreditedPublicationOriginalSources = async (
     }
     const candidate = await matchingCatalog(join(archiveRoot, archive.name, `${prefix}-catalog.json`),
       providerId, catalogSha256, prefix, scope, productCount);
-    if (candidate) return mapCatalog(candidate);
+    if (candidate) return { sources: mapCatalog(candidate), sourceSha256: catalogSha256 };
   }
   throw new Error(`No se conserva el original acreditado de ${providerId} (SHA-256 ${catalogSha256}, ${productCount} productos, prefijo ${prefix}, scope ${scope ?? "no declarado"}). Original vigente distinto: ${current}. Histórico buscado en: ${archiveRoot}. No se sustituye por el inventario vigente ni se presume una comparación sin hallazgos`);
 };
+
+export const accreditedPublicationOriginalSources = async (
+  root: string, publicationFile: string, providerId: string
+): Promise<Map<string, ProductRecord>> => (await readAccreditedPublicationOriginal(root, publicationFile, providerId)).sources;
 
 export const publicationOriginalSources = async (
   root: string, publicationFile: string, providerId: string, published: readonly ImportCandidate[]

@@ -61,7 +61,7 @@ export type DescriptionCoverage = {
   readonly lostCases: readonly CoverageCase[];
 };
 
-export const familyOf = (input: DescriptionCoverageInput): { family: string; method: string } => {
+export const familyOf = (input: Pick<DescriptionCoverageInput, "source">): { family: string; method: string } => {
   if (input.source.providerId === "gomariz") {
     const path = new URL(input.source.url).pathname.split("/").filter(Boolean);
     if (path[0] === "venta" && path[1] === "elevacion-y-trabajos-en-altura" && path[2]) {

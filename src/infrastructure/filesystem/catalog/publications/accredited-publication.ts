@@ -104,7 +104,7 @@ export const resolveAccreditedPublication = async (root: string, providerId: str
   return file;
 };
 
-export const discoverAccreditedPublications = async (root: string): Promise<readonly string[]> => {
+export const discoverPublicationProviderIds = async (root: string): Promise<readonly string[]> => {
   const providersRoot = join(root, "catalogs", "providers");
   let providers: Dirent[];
   try {
@@ -113,12 +113,18 @@ export const discoverAccreditedPublications = async (root: string): Promise<read
     if (isRecord(error) && error.code === "ENOENT") providers = [];
     else throw error;
   }
-  const publications: string[] = [];
   const global = await readActiveCatalogIndex(root);
   const names = new Set([...providers.filter((entry) => entry.isDirectory()).map((entry) => entry.name),
     ...Object.keys(global?.providers ?? {})]);
-  for (const name of [...names].sort()) {
+  for (const name of names) {
     if (!CAMPAIGN_PROVIDERS.some((id) => id === name)) throw new Error(`Proveedor de publicación no reconocido: ${name}`);
+  }
+  return [...names].sort();
+};
+
+export const discoverAccreditedPublications = async (root: string): Promise<readonly string[]> => {
+  const publications: string[] = [];
+  for (const name of await discoverPublicationProviderIds(root)) {
     const file = await resolveAccreditedPublication(root, name);
     if (file) publications.push(file);
   }
