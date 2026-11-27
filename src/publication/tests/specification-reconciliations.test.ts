@@ -109,6 +109,45 @@ test("reconcilia únicamente retiradas de peso reproducibles desde el original d
   }
 });
 
+test("acredita el peso específico de Manain sin admitir pérdidas ni equivalencias ambiguas", () => {
+  for (const [family, destination] of [
+    ["miniexcavadora", "Peso operativo"], ["minicargadora", "Peso sin carga"]
+  ] as const) {
+    const source: ProductRecord = { ...platform,
+      url: `https://manain.com/producto/venta-movimiento-tierra-${family}-equiptest-tx1/`,
+      specs: { Marca: "EQUIPTEST", Modelo: "TX1", Motor: "Diésel", "Nueva o usada": "usada",
+        Peso: "1.550 kg", [destination]: "1550 kg" } };
+    const prepared = prepareSourceProduct(source);
+    assert.equal(prepared.status, "ready");
+    const updated = prepared.product;
+    assert.equal(Object.hasOwn(updated.spec, "Peso"), false);
+    assert.equal(updated.spec[destination], "1550 kg");
+    const withoutDestination = Object.fromEntries(Object.entries(updated.spec).filter(([key]) => key !== destination));
+    const old = { ...updated, spec: { ...withoutDestination, Peso: "1.550 kg" } };
+    const evaluate = (originals: readonly ProductRecord[], before: ImportCandidate = old, after = updated) => {
+      const diff = differenceBetween("before", "after", [before], [after]);
+      assert.ok(diff.removedSpecifications.includes("ref:test-tx1:Peso"));
+      return evaluateIndividualPublicationDifference(source.providerId, diff, [before], [after], null, originals);
+    };
+    assert.equal(evaluate([source]).accepted, true, family);
+    assert.equal(evaluate([source], { ...old, spec: { ...old.spec, [destination]: "1550 kg" } }).accepted, true);
+    const alternative = destination === "Peso operativo" ? "Peso sin carga" : "Peso operativo";
+    for (const originals of [[], [source, source], [{ ...source, providerId: "gomariz" }],
+      [{ ...source, url: "https://example.com/otra-unidad" }],
+      [{ ...source, shortDescription: "Plataforma de tijera" }],
+      [{ ...source, specs: { ...source.specs, [destination]: "1600 kg" } }],
+      [{ ...source, specs: { ...source.specs, [alternative]: "1550 kg" } }],
+      [{ ...source, specs: { ...source.specs, [destination]: "1550" } }]]) {
+      assert.equal(evaluate(originals).accepted, false, family);
+    }
+    assert.equal(evaluate([source], { ...old, spec: { ...old.spec, Peso: "1600 kg" } }).accepted, false);
+    assert.equal(evaluate([source], { ...old, spec: { ...old.spec, [destination]: "1600 kg" } }).accepted, false);
+    assert.equal(evaluate([source], old, { ...updated, spec: withoutDestination }).accepted, false);
+    assert.equal(evaluate([source], old, { ...updated, spec: { ...updated.spec, [destination]: "1600 kg" } }).accepted, false);
+    assert.equal(evaluate([source], old, { ...updated, description_general: "Descripción alterada" }).accepted, false);
+  }
+});
+
 test("la omisión del peso inverosímil es aplicable a otros proveedores y no admite pesos válidos", () => {
   const source: ProductRecord = { ...platform, providerId: "gomariz", title: "EQUIPTEST TX1 Plataforma articulada",
     url: "https://www.gomarizrent.com/elevacion-y-trabajos-en-altura/brazo-articulado/equiptest-tx1/",

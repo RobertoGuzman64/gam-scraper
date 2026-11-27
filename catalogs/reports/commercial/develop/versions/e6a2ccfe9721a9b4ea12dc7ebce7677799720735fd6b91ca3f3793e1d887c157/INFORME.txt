@@ -1,0 +1,109 @@
+# EQUIPZILLA — Informe comercial de integración
+
+- Fecha del paquete (UTC): 2026-11-27
+- Etapa de preparación: NO EJECUTADA por este comando.
+- Origen: publicaciones técnicas acreditadas seleccionadas como vigentes ANTES de la exportación; no son nuevas publicaciones generadas ahora.
+- Fecha de cada publicación de origen: NO DECLARADA por el contrato de publicación; no se deduce de la fecha del paquete.
+- Etapa de exportación: 5 JSON generados desde esas publicaciones y sus referencias comerciales vigentes.
+- Huella comercial: c653b8cf4fbd199f13e036b1007aaab195b7339a5ce7bb04c908107cc41c8c82
+- Entorno: develop
+- Proveedores: GAM, GOMARIZ, MERCAELEVA, MANAIN
+- Integración en base de datos: NO VERIFICADO EN BD
+
+## Resumen del corte
+
+- Fichas técnicas incluidas en las publicaciones: 2126; elegibles: 2108; excluidas: 18.
+- Categorizadas: 2105; pendientes de categoría: 3.
+- Aptitud para importación: PENDIENTE · 3 productos elegibles sin categoría comercial; el paquete verificable NO está listo para importar íntegramente.
+- Atributos aceptados: 14234; con precio: 445; con logo: 2108; con companyID: 2108.
+- Excepciones registradas: 6; grupos de referencias visibles coincidentes entre productos exportados: 4.
+- El recuento de origen corresponde a las fichas de la publicación técnica incluida; no acredita el total del catálogo original del proveedor.
+
+## Archivos y trazabilidad por proveedor
+
+### GAM — gam-commercial.json
+
+- Publicación técnica SHA256: e6e360448669926c0986796a65322f0ac772dcca0179662736fbe94a9e941073
+- JSON SHA256: f58c35bf650a7c2aafe8dd1aad783336219c60d2e383de785231cccaa1268656; bytes UTF-8: 3405339.
+- Técnicas incluidas: 976; exportadas: 966; categorizadas: 966; pendientes: 0.
+- Exclusiones: 10 (lotes 7, herramientas 0, accesorios 3).
+- Atributos aceptados: 5737; con precio: 244; con logo: 966; con companyID: 966.
+- Excepciones: 3; grupos de referencias visibles coincidentes: 4.
+- Campos comerciales presentes: reference, categorySellID, attributes, price, companyID, logoID, image, images, metadata.
+
+Señales y excepciones documentadas:
+- ano-url-atributo-discordante: 3
+
+### GOMARIZ — gomariz-commercial.json
+
+- Publicación técnica SHA256: 9f306f9e22fc96ed76f1987f2d24fd8b2a1410188d237faecd072d934b2b582f
+- JSON SHA256: 31756243410fdcd30adf8edef95f76ca2d341edd0f9880a5ac3b97fbd733a9bb; bytes UTF-8: 2508386.
+- Técnicas incluidas: 546; exportadas: 546; categorizadas: 544; pendientes: 2.
+- Exclusiones: 0 (lotes 0, herramientas 0, accesorios 0).
+- Atributos aceptados: 3817; con precio: 0; con logo: 546; con companyID: 546.
+- Excepciones: 2; grupos de referencias visibles coincidentes: 0.
+- Campos comerciales presentes: reference, categorySellID, attributes, price, companyID, logoID, image, images, metadata.
+
+Productos elegibles pendientes de categoría (no listos para importar):
+- BR901 | https://www.gomarizrent.com/limpieza/barredora/eureka-compact-1150-1/
+- BR954 | https://www.gomarizrent.com/limpieza/barredora/johnston-cn201/
+
+Señales y excepciones documentadas:
+- sin-categoria: 2
+
+### MERCAELEVA — mercaeleva-commercial.json
+
+- Publicación técnica SHA256: 1af2fc6acef3ec75c8e80bc1e1db52a04c054abd8e7e0f8ca4cdb0527aff9547
+- JSON SHA256: 7505198caa7419091eb2bb46e1dbe2e633a2e5708a32dcbbb20ae0ffe59f4ae3; bytes UTF-8: 1088904.
+- Técnicas incluidas: 221; exportadas: 221; categorizadas: 221; pendientes: 0.
+- Exclusiones: 0 (lotes 0, herramientas 0, accesorios 0).
+- Atributos aceptados: 1546; con precio: 201; con logo: 221; con companyID: 221.
+- Excepciones: 0; grupos de referencias visibles coincidentes: 0.
+- Campos comerciales presentes: reference, categorySellID, attributes, price, companyID, logoID, image, images, metadata.
+
+### MANAIN — manain-commercial.json
+
+- Publicación técnica SHA256: 5e733cc2fa8949155a75de3659a6d079c21b5c61912a614043ef941db4f462f1
+- JSON SHA256: 315b43666da9991b9f27f702f90d90b1c6091798a124dacdbbdc86c882f0779f; bytes UTF-8: 1514559.
+- Técnicas incluidas: 383; exportadas: 375; categorizadas: 374; pendientes: 1.
+- Exclusiones: 8 (lotes 0, herramientas 8, accesorios 0).
+- Atributos aceptados: 3134; con precio: 0; con logo: 375; con companyID: 375.
+- Excepciones: 1; grupos de referencias visibles coincidentes: 0.
+- Campos comerciales presentes: reference, categorySellID, attributes, price, companyID, logoID, image, images, metadata.
+
+Productos elegibles pendientes de categoría (no listos para importar):
+- MAN1188 | https://manain.com/producto/venta-pequena-maquinaria-demolicion-holzstar-tks-316-e/
+
+Señales y excepciones documentadas:
+- sin-categoria: 1
+
+## Mapa de campos para la integración
+
+- `reference`: referencia estable de la unidad en su proveedor.
+- `categorySellID`: identificador de categoría comercial propuesto.
+- `attributes`: identificadores y valores de atributos comerciales aceptados.
+- `price`: precio exportado; null no equivale a cero.
+- `companyID`: empresa del entorno declarado, cuando está disponible.
+- `logoID`: identificador del logo acreditado o de Otras Marcas.
+- `image`: imagen principal exportada.
+- `images`: galería exportada.
+- `metadata`: metadatos comerciales del producto.
+
+## Comprobaciones pendientes en el destino
+
+- NO VERIFICADO EN BD: validar correspondencia de categorySellID y attributeID con la taxonomía, relaciones, tipos y opciones reales del importador.
+- NO VERIFICADO EN BD: comprobar companyID del entorno, unicidad por proveedor y origen, deduplicación de referencias visibles y política de precios null.
+- NO VERIFICADO EN BD: confirmar accesibilidad y persistencia de las URLs de imágenes, logos y galerías.
+- NO VERIFICADO EN BD: revisar categorías sin relaciones directas de atributos mediante `npm run auditar:comercial -- --atributos-vacios`.
+- La procedencia técnica de cada unidad se conserva en sources, por índice, fuera del objeto Product; incluye identidad, URL y referencia externa cuando exista.
+- Los grupos de referencias coincidentes solo incluyen productos exportados; la auditoría del catálogo puede detectar además coincidencias en los excluidos.
+- Las comprobaciones acreditan integridad y proyección comercial; no garantizan aceptación semántica ni importación efectiva por el backend.
+
+## Integridad y reproducción
+
+- Los 5 JSON exactos y sus huellas SHA256 están dentro del paquete comercial; `commercial-manifest.json` identifica las publicaciones técnicas de origen por SHA256, el entorno y cada archivo.
+- La verificación de fuentes activas debe ejecutarse contra el mismo corte: el SHA256 de publicación no permite por sí solo atribuir una fecha de activación.
+- Las discrepancias del manifiesto histórico de referencias son diagnóstico de procedencia independiente y no autorizan modificarlo ni alterar el contrato comercial v2.
+- Exportar el corte vigente: `npm run exportar:comercial -- --entorno develop` (o production según el destino).
+- Verificar el paquete: `npm run auditar:comercial -- --verificar=<ruta-zip-comercial> --informe=<ruta-zip-informe>`.
+- La verificación compara la exportación con las publicaciones y referencias activas; un corte antiguo no podrá acreditarse como vigente tras su modificación.

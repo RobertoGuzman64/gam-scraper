@@ -93,7 +93,12 @@ const reconcilesPreparedTechnicalRemoval = (
     !isDeepStrictEqual(old.spec[field], specs[field]) || Object.hasOwn(updated.spec, field)) return false;
   if (!isEmptyTechnicalMeasure(field, specs[field])) {
     if (field === "Peso") {
-      if (!editorialHasImplausibleWeight(source)) return false;
+      if (!editorialHasImplausibleWeight(source)) {
+        const normalized = normalizeManainTechnicalSpecs(source, specs);
+        if (Object.hasOwn(normalized, field) || !["Peso operativo", "Peso sin carga"].some((destination) =>
+          Object.hasOwn(normalized, destination) && isDeepStrictEqual(normalized[destination], updated.spec[destination]) &&
+          (!Object.hasOwn(old.spec, destination) || isDeepStrictEqual(old.spec[destination], normalized[destination])))) return false;
+      }
     } else {
       const normalized = normalizeManainTechnicalSpecs(source, specs);
       if (Object.hasOwn(normalized, field) || normalized.Peso === undefined ||
